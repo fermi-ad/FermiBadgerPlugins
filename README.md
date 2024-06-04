@@ -1,4 +1,4 @@
-# XoptBadger
+# XoptBadger - can we make it work? We can!
 From a clean conda environment:
 
 ```bash
