@@ -1,0 +1,5 @@
+---
+name: FNAL_Linac_Energy
+version: "0.1"
+dependencies:
+  - badger-opt

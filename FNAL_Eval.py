@@ -2,7 +2,8 @@ from xopt import VOCS, Evaluator, Xopt
 from xopt.generators.bayesian import UpperConfidenceBoundGenerator
 
 import math
-from scanner import scanner
+#from scanner import scanner
+from acsys_get_set import acsys_get_set
 import argparse
 import requests
 
@@ -39,7 +40,7 @@ def sq2D (input_dict):
 # Outputs: a dict of the result returned (VOCS objective)
 def set_and_get(inputs):
     role='testing' #'settings' #
-    sc = scanner(role)
+    sc = acsys_get_set(role)
 
     # apply settings for all variables
     sc.apply_settings_once(list(inputs.keys()), list(inputs.values()), role=role)
