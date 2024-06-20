@@ -6,6 +6,22 @@ from acsys.dpm import ItemData
 class Interface(interface.Interface):
 
     name = 'myintf'
+    """
+    
+    variables = 
+    observables = 
+    _variables = 
+    _observations ="""
+
+    # If params not specified, it would be an empty dict
+
+    # Private variables
+    _states: dict
+
+    def __init__(self, **data):
+        super().__init__(**data)
+
+        self._states = {}
 
 
     def get_values(self, drf_list):
