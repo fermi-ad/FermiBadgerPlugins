@@ -1,0 +1,7 @@
+name: myenv
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - myintf

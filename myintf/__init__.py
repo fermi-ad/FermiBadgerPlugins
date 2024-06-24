@@ -58,6 +58,7 @@ class Interface(interface.Interface):
             return None
         return acsys.run_client(wrapper)
     
-my = Interface()
-my.set_values(drf_list=['Z:CUBE_Z'], value_list=[12], settings_role='testing')
-print(my.get_values(drf_list=['Z:CUBE_Z']))
+##Testing acsys-python code   
+#my = Interface()
+#my.set_values(drf_list=['Z:CUBE_Z'], value_list=[12], settings_role='testing')
+#print(my.get_values(drf_list=['Z:CUBE_Z','Z:CUBE_X', 'Z:CUBE_Y']))
