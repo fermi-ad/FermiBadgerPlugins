@@ -41,24 +41,30 @@ class Interface(interface.Interface):
             
         
 
-    def set_values(self, drf_list, value_list, settings_role): #DICT ?
+    def set_values(self, drf_dict, settings_role): #DICT ?
         async def wrapper(con):
             #async def set_once(con,drf_list,value_list,settings_role):
+            drf_list = list(drf_dict.keys())
+            value_list = list(drf_dict.values())
+            print(drf_list)
+            print(value_list)
             async with acsys.dpm.DPMContext(con) as dpm:
                 await dpm.enable_settings(role=settings_role)
-                for i, dev in enumerate(drf_list):
-                    #await dpm.add_entry(i, dev+'@i')
-                    await dpm.add_entry(i, dev+'@N')
+                for i, key in enumerate(drf_dict.keys()):
+                    await dpm.add_entry(i, key+'@n')
                 await dpm.start()
-       
-                setpairs = list(enumerate(value_list))
+                setpairs = list(enumerate(drf_dict.values()))
                 await dpm.apply_settings(setpairs)
-                print('settings applied: ',value_list)
+                print('settings applied: ',setpairs)
+                
 
             return None
         return acsys.run_client(wrapper)
     
 ##Testing acsys-python code   
-#my = Interface()
-#my.set_values(drf_list=['Z:CUBE_Z'], value_list=[12], settings_role='testing')
-#print(my.get_values(drf_list=['Z:CUBE_Z','Z:CUBE_X', 'Z:CUBE_Y']))
+my = Interface()
+#my.set_values(
+#drf_dict = {
+#"Z:CUBE_Z": 10
+#}, settings_role='testing')
+print(my.get_values(drf_list=['Z:CUBE_Z','Z:CUBE_X', 'Z:CUBE_Y']))
