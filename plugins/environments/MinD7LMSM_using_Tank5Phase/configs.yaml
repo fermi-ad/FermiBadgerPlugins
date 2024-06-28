@@ -1,0 +1,7 @@
+name: myenv
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - MinD7LMSM_using_Tank5Phase
