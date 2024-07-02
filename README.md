@@ -12,3 +12,7 @@ badger -g
 python --version
 
 
+## Use the ```plugins``` directory
+Launch the GUI from the command line
+```badger -g```
+Then, from the gear menu (lower right corner), set the "Plugin Root" to the absolute path to the ```plugins/``` directory here in this repo. Now the GUI can access the interfaces and environments of this repo.
