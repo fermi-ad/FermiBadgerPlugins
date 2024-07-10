@@ -2,7 +2,7 @@ from badger import interface
 import acsys.dpm
 from acsys.dpm import ItemData
 class Interface(interface.Interface):
-    name = 'MinD7LMSM_using_Tank5Phase'
+    name = 'linac'
     """
     variables =
     observables =
@@ -68,6 +68,7 @@ class Interface(interface.Interface):
                 return readings
 
         return acsys.run_client(wrapper)
+    
     def set_values(self, drf_dict, settings_role): #DICT ?
         async def wrapper(con):
             #async def set_once(con,drf_list,value_list,settings_role):
@@ -78,5 +79,18 @@ class Interface(interface.Interface):
                 await dpm.start()
                 setpairs = list(enumerate(drf_dict.values()))
                 await dpm.apply_settings(setpairs)
-            return None
+
+            # Process incoming data
+            async for evt_res in dpm:
+                # You don't _need_ to check that it's a Status because that's all
+                # you expect from an `apply_settings` request, but I think this
+                # tells future readers what's going on.
+                if evt_res.is_status:
+                # Checking that it is a Status also guarantees that the
+                # `status.is_success` and `status.is_fatal` properties exist.
+                    if evt_res.status.is_fatal:
+                    # Here we raise the Status as an exception because we want
+                    # the script to halt
+                        raise evt_res.status
+                return None
         return acsys.run_client(wrapper)
