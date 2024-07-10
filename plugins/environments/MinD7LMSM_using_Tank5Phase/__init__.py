@@ -6,7 +6,7 @@ class Environment(environment.Environment):
     variables = {
         "Z:CUBE_X": [ -1.0, 1.0],
         "Z:CUBE_Y": [  0.0, 1.0],
-        "L:V5QSET": [ -35.8, -33.8]
+        "L:V5QSET": [ -34.51, -32.51]
     }
     observables = [
         # "Z:CUBE_X",
