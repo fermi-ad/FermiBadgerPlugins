@@ -2,7 +2,7 @@ from badger import interface
 import acsys.dpm
 from acsys.dpm import ItemData
 class Interface(interface.Interface):
-    name = 'linac'
+    name = 'MinD7LMSM_using_Tank5Phase'
     """
     variables =
     observables =
