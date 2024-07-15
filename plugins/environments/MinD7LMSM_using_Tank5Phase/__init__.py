@@ -4,9 +4,9 @@ from badger.errors import BadgerNoInterfaceError
 class Environment(environment.Environment):
     name = "MinD7LMSM_using_Tank5Phase"
     variables = {
-        "Z:CUBE_X": [ -1.0, 1.0],
+        "Z:CUBE_X": [ -10.0, 10.0],
         "Z:CUBE_Y": [  0.0, 1.0],
-        "L:V5QSET": [ -34.51, -32.51]
+        "L:V5QSET": [ -34., -32.]
     }
     observables = [
         # "Z:CUBE_X",
@@ -16,7 +16,7 @@ class Environment(environment.Environment):
         "G:AMANDA"
     ]
     sample_event: str='E,15,E,0'
-    settings_role: str='fake'
+    settings_role: str='testing'
     
     def get_variables(self, variable_names: list[str]) -> dict:
         if not self.interface:
@@ -26,7 +26,10 @@ class Environment(environment.Environment):
     def set_variables(self, variable_inputs: dict[str, float]):
         if not self.interface:
             raise BadgerNoInterfaceError
-        self.interface.set_values(variable_inputs, settings_role=self.settings_role)
+        set_dict = {}
+        for k in variable_inputs.keys():
+            set_dict[f'{k}.SETTING'] = variable_inputs[k]
+        self.interface.set_values(set_dict, settings_role=self.settings_role)
 
     def get_observables(self, observable_names: list[str]) -> dict:
         if not self.interface:
