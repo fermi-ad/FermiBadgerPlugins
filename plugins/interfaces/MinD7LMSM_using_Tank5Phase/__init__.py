@@ -1,7 +1,8 @@
 from badger import interface
 import acsys.dpm, acsys
 from acsys.dpm import ItemData
-from scanner import read_once
+from scanner import read_once,set_on
+
 
 class Interface(interface.Interface):
     name = 'MinD7LMSM_using_Tank5Phase'
