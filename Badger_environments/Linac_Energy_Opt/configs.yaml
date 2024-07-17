@@ -4,3 +4,5 @@ description: "Linac Output Energy Fine-Tuning"
 version: "0.1"
 dependencies:
   - badger-opt
+interface:
+  - FNAL_Linac_Energy
