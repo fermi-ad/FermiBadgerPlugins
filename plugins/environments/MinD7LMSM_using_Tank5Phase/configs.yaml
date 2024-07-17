@@ -1,4 +1,4 @@
-name: myenv
+name: "MinD7LMSM_using_Tank5Phase"
 version: "0.1"
 dependencies:
   - badger-opt
