@@ -4,4 +4,4 @@ dependencies:
   - badger-opt
   - numpy
 interface:
-  - MinD7LMSM_using_Tank5Phase
+  - BasicAcsysInterface
