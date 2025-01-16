@@ -2,7 +2,7 @@ from badger import interface
 import acsys.dpm, acsys
 from acsys.dpm import ItemData
 from scanner import read_once,set_once
-
+import re
 
 class Interface(interface.Interface):
     name = 'BasicAcsysInterface'
@@ -15,10 +15,19 @@ class Interface(interface.Interface):
     # Private variables
     _states: dict
 
+    read_set_pair_pattern = re.compile("^\(.\:.+,.\:.+\)$")#, aix)
+    
     def __init__(self, **data):
         super().__init__(**data)
         self._states = {}
-
+    
+    def extract_reading_devices(device_list):
+        ret_list = []
+        for device in device_list:
+            isreadsetpair = self.read_set_pair_pattern.fullmatch(device)
+            if isreadsetpair: print (f'Found read/set pair: {device} ({isreadsetpair})')
+            
+        
     def get_values(self, drf_list, sample_event='i'):
         readings = {}
         results = acsys.run_client(read_once, drf_list=drf_list)
