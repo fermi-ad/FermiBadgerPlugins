@@ -5,7 +5,7 @@ import time
 import os
 import pandas as pd
 from functools import reduce
-import datetime as dt
+
 
 async def set_many(con,thread_context):
     async with acsys.dpm.DPMContext(con) as dpm:
@@ -59,7 +59,7 @@ async def set_once(con,drf_list,value_list,settings_role):
         '''
         setpairs = list(enumerate(value_list))
         await dpm.apply_settings(setpairs)
-        print('settings applied: ',value_list)
+        print('settings applied')
 
     return None
 
@@ -115,32 +115,39 @@ async def read_once(con,drf_list):
     return settings
 
 class scanner:
-    def __init__(self,role):
+    def __init__(self):
         self.thread_dict = {}
 
         
     def _acnet_daq_scan(self,thread_name):
-        devs = [s for s in self.thread_dict[thread_name]['ramp_list'][0] if str(s).find(':')!=-1]
-        nominals = self.get_settings_once(devs)
+        devs = [s for s in self.thread_dict[thread_name]['ramp_list'][0] if str(s).find(':')!=-1] if len(self.thread_dict[thread_name]['ramp_list'])>0 else []
+        nominals = self.get_settings_once(devs) if len(devs)>0 else []
         
-        event_loop = asyncio.new_event_loop()
+        #event_loop = asyncio.new_event_loop()
         try:
-            asyncio.set_event_loop(event_loop)
+            #asyncio.set_event_loop(event_loop)
             if len(self.thread_dict[thread_name]['ramp_list'])==0:
                 acsys.run_client(read_many, thread_context=self.thread_dict[thread_name])
             else:
                 acsys.run_client(set_many, thread_context=self.thread_dict[thread_name])
         finally:
-            if event_loop.is_running():
-                event_loop.close()
+            #if event_loop.is_running():
+            #    event_loop.close()
             #write data
             timestr = time.strftime("%Y%m%d_%H%M%S")
-            self.fill_write_dataframe_oneTS(self.thread_dict[thread_name]['data'],
-                                            [par.split('@')[0] for par in self.thread_dict[thread_name]['param_list']],
-                                            os.path.join(os.getcwd(),'%s.csv'%(timestr)))
+            if len(self.thread_dict[thread_name]['data'])>0:
+                self.fill_write_dataframe(self.thread_dict[thread_name]['data'],
+                                          [par.split('@')[0] for par in self.thread_dict[thread_name]['param_list']],
+                                          os.path.join(os.getcwd(),'%s.csv'%(timestr)))
+                '''
+                self.fill_write_dataframe_oneTS(self.thread_dict[thread_name]['data'],
+                                                [par.split('@')[0] for par in self.thread_dict[thread_name]['param_list']],
+                                                os.path.join(os.getcwd(),'%s_oneTS.csv'%(timestr)))
+                '''
             self.thread_dict[thread_name]['stop'].set()
-            #Return to nominals    
-            self.apply_settings_once(devs,nominals, self.thread_dict[thread_name]['role'])
+            #Return to nominals
+            if len(self.thread_dict[thread_name]['ramp_list'])>0:
+                self.apply_settings_once(devs,nominals, self.thread_dict[thread_name]['role'])
 
             
     def get_thread_data(self, thread_name):
@@ -250,8 +257,10 @@ class scanner:
             if dev in devlist:
                 dfdev= df[df.name==dev][['stamp','data']]
                 dfdev['stamp']= pd.to_datetime(dfdev['stamp'])
-                dfdev['TS']=dfdev['stamp']
-                dfdev.rename(columns={'data':dev, 'TS':'%s Timestamp'%dev},inplace=True)
+                dfdev['TS']=dfdev['stamp'].dt.tz_convert('US/Central')
+                dfdev['TS'] = dfdev['TS'].dt.strftime('%x %X.%f')
+                devname = '%s(R)'%dev if dev.find(':')!=-1 else '%s:%s(S)'%(dev[0],dev[2:])
+                dfdev.rename(columns={'data':devname, 'TS':'%s Timestamp'%devname},inplace=True)
                 dfdev.set_index('stamp').reset_index(drop=False, inplace=True)
                 dflist.append(dfdev)        
         
@@ -271,12 +280,18 @@ class scanner:
             if dev in devlist:
                 dfdev= df[df.name==dev][['stamp','data']]
                 dfdev['stamp']= pd.to_datetime(dfdev['stamp'])
-                #dfdev['stamp'] = dfdev['stamp'].dt.strftime('%d%m%Y')
-                dfdev.rename(columns={'data':dev,'stamp':'Time'},inplace=True)
+                devname = '%s(R)'%dev if dev.find(':')!=-1 else '%s:%s(S)'%(dev[0],dev[2:])
+                dfdev.rename(columns={'data':devname,'stamp':'Time'},inplace=True)
                 dfdev.set_index('Time').reset_index(drop=False, inplace=True)
                 dflist.append(dfdev)        
         
         ddf = reduce(lambda  left,right: pd.merge_asof(left,right,on=['Time'],direction='nearest',tolerance=pd.Timedelta('10ms')), dflist)
+        ddf['Timestamp'] = ddf['Time'].dt.tz_convert('US/Central')
+        ddf['Timestamp'] = ddf['Timestamp'].dt.strftime('%x %X.%f')
+        #ddf.set_index('Timestamp').reset_index(drop=True, inplace=True)
+        ddf.drop(columns=['Time'],inplace=True)
+        col = ddf.pop('Timestamp')
+        ddf.insert(0, col.name, col)
         print( ddf.head() )
         
         #today = date.today().isoformat()
