@@ -1,7 +1,7 @@
 from badger import interface
 import acsys.dpm, acsys
 from acsys.dpm import ItemData
-from ..scanner import read_once,set_once
+from scanner import read_once,set_once
 
 
 class Interface(interface.Interface):

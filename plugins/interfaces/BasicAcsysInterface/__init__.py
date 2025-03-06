@@ -37,7 +37,7 @@ class Interface(interface.Interface):
             if isreadsetpair:
                 setting_device = device.split(',')[1]
                 ret_dict[setting_device] = val
-            else: ret_dict.ret_dict[device] = val
+            else: ret_dict[device] = val
         return ret_dict
 
     def get_values(self, drf_list, sample_event='i'):
