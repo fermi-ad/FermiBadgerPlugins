@@ -50,7 +50,7 @@ class Interface(interface.Interface):
         return readings
 
     def set_values(self, drf_dict, settings_role):
-        drf_dict = extract_setting_devices(drf_dict)
+        drf_dict = self.extract_setting_devices(drf_dict)
         drf_list = []
         value_list = []
         for key, val in drf_dict.items():
