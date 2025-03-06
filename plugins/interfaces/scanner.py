@@ -16,7 +16,7 @@ async def set_many(con,thread_context):
         await dpm.start()
         print("Start ramp")
         for rr in thread_context['ramp_list']:
-           one_data = [None]*len(thread_context['param_list'])
+            one_data = [None]*len(thread_context['param_list'])
             setpairs = list(enumerate([n for n in rr if isinstance(n,float)]))
             await dpm.apply_settings(setpairs)
 
