@@ -18,7 +18,8 @@ class Interface(interface.Interface):
     def __init__(self, **data):
         super().__init__(**data)
         self._states = {}
-        self._read_set_pair_pattern = re.compile("^.:.+,.:.+$")
+        self._read_set_pair_pattern = re.compile("^.:.+,.:.+")
+        self._read_set_pair_PIDreg_pattern = re.compile("^.:.+,.:.,PID.+$")
 
     def extract_reading_devices(self, device_list):
         ret_list = []
@@ -40,6 +41,12 @@ class Interface(interface.Interface):
             else: ret_dict[device] = val
         return ret_dict
 
+    def extract_PID_checknums(self, device_dict):
+        PID_checknums = {}
+        for device,val in device_dict:
+            PID_checknums[device] = val
+        return PID_checknums
+        
     def get_values(self, drf_list, sample_event='i'):
         readings_list = self.extract_reading_devices(drf_list)
         readings = {}
@@ -50,7 +57,8 @@ class Interface(interface.Interface):
         return readings
 
     def set_values(self, drf_dict, settings_role):
-        drf_dict = self.extract_setting_devices(drf_dict)
+        PID_checknums = extract_PID_checknums(drf_dict)
+        drf_dict = extract_setting_devices(drf_dict)
         drf_list = []
         value_list = []
         for key, val in drf_dict.items():
