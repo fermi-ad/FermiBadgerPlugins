@@ -23,18 +23,24 @@ class Interface(interface.Interface):
         super().__init__(**data)
         self._states = {}
         self._current_sumsq = 0.0
-        self._debug=False
+        self._debug = False
         self._read_set_pair_pattern = re.compile("^.:.+,.:.+")
         self._read_set_pair_settle_tol_pattern = re.compile("^.:.+,.:.+,tol.+@*")
-
+        self._setpoint_pattern = re.compile("^.:.+-SETPOINT")
+        self._holdvalue = None
+        
     # Handle read/set/[settling tolerance] devices, getting just the reading
     def extract_reading_devices(self, device_list):
         ret_list = []
         for device in device_list:
             isreadsetpair = self._read_set_pair_pattern.fullmatch(device)
             isreadsettolr = self._read_set_pair_settle_tol_pattern.fullmatch(device)
-            if isreadsetpair or isreadsettolr:
+            issetpoint_dev = self._setpoint_pattern.match(device)
+            if isreadsetpair or isreadsettolr: # Get just the reading device
                 reading_device = device.split(',')[0]
+                ret_list.append(reading_device)
+            elif issetpoint_dev: # Clean off keyword
+                reading_device = device.replace('-SETPOINT','').strip()
                 ret_list.append(reading_device)
             else: ret_list.append(device)
         return ret_list
@@ -80,12 +86,19 @@ class Interface(interface.Interface):
             circ_buffers[reading_dev] = np.empty(bufferlen, dtype=float)
             circ_buffers[reading_dev][:] = np.nan # Initialize all to NaN
         return settled_tols, circ_buffers
-        
+
+    # Any SETPOINTs in the list to read?
+    def get_setpoints(self, drf_list):
+        setpoint_list = []
+        for drf in drf_list:
+            if self._setpoint_pattern.match(drf): setpoint_list.append(drf)
+        return setpoint_list
+
     # Read values from devices
-    def get_values(self, drf_list, sample_event='i'):
+    def get_values(self, drf_list, sample_event='i', setpoint_str=''):
         readings_list = self.extract_reading_devices(drf_list)
         if self._debug: print ('BasicAcsysInterface.get_values() got readings_list: ',readings_list)
-        calcDummySumSq = False
+        setpoint_devs = self.get_setpoints(drf_list)
         if 'DummySumSq' in readings_list:
             if self._debug: print ('About to ask ACSYS to get readings of ',readings_list)
             readings = {'DummySumSq': self._current_sumsq}
@@ -94,10 +107,16 @@ class Interface(interface.Interface):
             results = acsys.run_client(read_once, drf_list=readings_list) # FIXME , sample_event=sample_event)
             for i, name in enumerate(drf_list):
                 readings[name] = results[i]
+        if len(setpoint_devs)>0:
+            if setpoint_str == '': exit(f'Setpoint parameter value not given for {setpoint_devs}.')
+            setpoint = float(setpoint_str)
+            for setpoints_dev in setpoint_devs:
+                print (f'{setpoints_dev} will go to value {readings[setpoints_dev]} - {setpoint} squared.')
+                readings[setpoints_dev] = (readings[setpoints_dev]-setpoint)**2.0
         if self._debug: print (f'BasicAcsysInterface.get_values() will return: {readings}')
         return readings
 
-    # Set values to devices
+    # Set devices to values
     def set_values(self, drf_dict, settings_role, dont_set=True):
         print (f'BasicAcsysInterface.set_values() was passed drf_dict: {drf_dict}')
 
