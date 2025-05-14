@@ -18,6 +18,7 @@ class Interface(interface.Interface):
     _states: dict
     _current_sumsq: float
     _debug: bool
+    _regulate_to: float
     
     def __init__(self, **data):
         super().__init__(**data)
@@ -27,7 +28,7 @@ class Interface(interface.Interface):
         self._read_set_pair_pattern = re.compile("^.:.+,.:.+")
         self._read_set_pair_settle_tol_pattern = re.compile("^.:.+,.:.+,tol.+@*")
         self._setpoint_pattern = re.compile("^.:.+-SETPOINT")
-        self._holdvalue = None
+        self._regulate_to = None
         
     # Handle read/set/[settling tolerance] devices, getting just the reading
     def extract_reading_devices(self, device_list):
@@ -79,7 +80,7 @@ class Interface(interface.Interface):
             reading_dev = device.split(',')[0]
             #settings_dev = device.split(',')[1]
             tol = device.split(',')[2].replace('tol','')
-            print (f'extract_PID_tolerances() sees tol: {tol}')
+            if debug: print (f'extract_PID_tolerances() sees tol: {tol}')
             bufferlen = int(tol.split('@')[0])
             tolerance = float(tol.split('@')[1])
             settled_tols[reading_dev] = tolerance # Use full device? Extract reading device?
@@ -95,29 +96,37 @@ class Interface(interface.Interface):
         return setpoint_list
 
     # Read values from devices
-    def get_values(self, drf_list, sample_event='i', setpoint_str=''):
+    def get_values(self, drf_list, sample_event='i', setpoint_str='', debug=False):
         readings_list = self.extract_reading_devices(drf_list)
         if self._debug: print ('BasicAcsysInterface.get_values() got readings_list: ',readings_list)
         setpoint_devs = self.get_setpoints(drf_list)
         if 'DummySumSq' in readings_list:
-            if self._debug: print ('About to ask ACSYS to get readings of ',readings_list)
+            if self._debug: print ('About to ask ACSYS to get readings of ',readings_list, ' but return only DummySumSq.')
             readings = {'DummySumSq': self._current_sumsq}
         else:
             readings = {} # dict of returned values
             results = acsys.run_client(read_once, drf_list=readings_list) # FIXME , sample_event=sample_event)
             for i, name in enumerate(drf_list):
                 readings[name] = results[i]
-        if len(setpoint_devs)>0:
-            if setpoint_str == '': exit(f'Setpoint parameter value not given for {setpoint_devs}.')
-            setpoint = float(setpoint_str)
-            for setpoints_dev in setpoint_devs:
-                print (f'{setpoints_dev} will go to value {readings[setpoints_dev]} - {setpoint} squared.')
-                readings[setpoints_dev] = (readings[setpoints_dev]-setpoint)**2.0
+            if len(setpoint_devs)>0: # When there's a device to regulate 
+                if setpoint_str == '': exit(f'Please give setpoint parameter value for {setpoint_devs}.')
+                # Interface's private variable: First readback value for a device.
+                if self._regulate_to is None: 
+                    if debug: print (f'self._regulate_to was None. Setting to read-back value for {setpoint_devs[0]}: {readings[setpoint_devs[0]]}.')
+                    self._regulate_to = readings[setpoint_devs[0]] 
+
+                if debug: print (f'setpoint_str = {setpoint_str}.')
+                if setpoint_str=='hold': setpoint = self._regulate_to
+                else: setpoint = float(setpoint_str)
+                if debug: print (f'... and so setpoint = {setpoint}')
+                for setpoints_dev in setpoint_devs:
+                    if debug: print (f'{setpoints_dev} will go to value {readings[setpoints_dev]} - {setpoint} squared.')
+                    readings[setpoints_dev] = (readings[setpoints_dev]-setpoint)**2.0
         if self._debug: print (f'BasicAcsysInterface.get_values() will return: {readings}')
         return readings
 
     # Set devices to values
-    def set_values(self, drf_dict, settings_role, dont_set=True):
+    def set_values(self, drf_dict, settings_role, dont_set=False, debug=False):
         print (f'BasicAcsysInterface.set_values() was passed drf_dict: {drf_dict}')
 
         # Testing option, when not making settings.
@@ -136,30 +145,30 @@ class Interface(interface.Interface):
         setvals = []
         for key, val in drf_dict.items():
             setvals.append(val)
-        if settings_role!='nosettings': 
-            # Send the setting values to their devices.
-            if not dont_set: acsys.run_client(set_once, drf_list=setvals, value_list=setvals, settings_role=settings_role)
+        #if settings_role!='nosettings': 
+        # Send the setting values to their devices.
+        if not dont_set and settings_role != 'nosettings': acsys.run_client(set_once, drf_list=setvals, value_list=setvals, settings_role=settings_role)
 
-            # Check that any specified tolerances have been met
-            settled_tols, circ_buffers = self.extract_PID_tolerances(drf_dict) # JMSJ Set a unitory-sized buffer for non-toleranced devices?
-            while len(circ_buffers)>0:
-                print ('BasicAcsysInterface.set_values() has circ_buffers: ',circ_buffers)
-                settling_devs = list(circ_buffers.keys())
-                newvals = self.get_values(settling_devs)
-                for i, setdev in enumerate(settling_devs):
-                    found_buff = circ_buffers[setdev]
-                    NaNs_here = np.where(np.isnan(found_buff))
-                    if np.array(NaNs_here).size > 0: # Buffer not full yet? Add the new value just read back for this device.
-                        print (f'Could write new value {newvals[setdev]} to buffer location: {NaNs_here[0][0]}')
-                        circ_buffers[setdev][NaNs_here[0][0]] = newvals[setdev]
-                        # If buffer is full now, do the check for being in tolerance.
-                        buffer_full = np.all(np.where(~np.isnan(circ_buffers[setdev])))
-                        if buffer_full and meets_tolerance(circ_buffers[setdev], settled_tols[setdev], debug=True):
-                            del circ_buffers[setdev] # Ok to do in these loops?
-                    else: # no NaNs; buffer was already full; move in newest value and recheck tolerance
-                        circ_buffers[setdev] = np.roll(circ_buffers[setdev], -1) # move oldest entry to the end, and...
-                        circ_buffers[setdev][-1] = newvals[setdev] #...overwrite with newest value
-                        if self.meets_tolerance(circ_buffers[setdev], settled_tols[setdev], debug=True):
-                            del circ_buffers[setdev] # Ok to do in these loops?
-                    sleep(0.7)
-                    
+        # Check that any specified tolerances have been met
+        settled_tols, circ_buffers = self.extract_PID_tolerances(drf_dict) # JMSJ Set a unitory-sized buffer for non-toleranced devices?
+        while len(circ_buffers)>0:
+            print ('BasicAcsysInterface.set_values() has circ_buffers: ',circ_buffers)
+            settling_devs = list(circ_buffers.keys())
+            newvals = self.get_values(settling_devs)
+            for i, setdev in enumerate(settling_devs):
+                found_buff = circ_buffers[setdev]
+                NaNs_here = np.where(np.isnan(found_buff))
+                if np.array(NaNs_here).size > 0: # Buffer not full yet? Add the new value just read back for this device.
+                    print (f'Could write new value {newvals[setdev]} to buffer location: {NaNs_here[0][0]}')
+                    circ_buffers[setdev][NaNs_here[0][0]] = newvals[setdev]
+                    # If buffer is full now, do the check for being in tolerance.
+                    buffer_full = np.all(np.where(~np.isnan(circ_buffers[setdev])))
+                    if buffer_full and meets_tolerance(circ_buffers[setdev], settled_tols[setdev], debug=True):
+                        del circ_buffers[setdev] # Ok to do in these loops?
+                else: # no NaNs; buffer was already full; move in newest value and recheck tolerance
+                    circ_buffers[setdev] = np.roll(circ_buffers[setdev], -1) # move oldest entry to the end, and...
+                    circ_buffers[setdev][-1] = newvals[setdev] #...overwrite with newest value
+                    if self.meets_tolerance(circ_buffers[setdev], settled_tols[setdev], debug=True):
+                        del circ_buffers[setdev] # Ok to do in these loops?
+                sleep(0.7)
+        return
