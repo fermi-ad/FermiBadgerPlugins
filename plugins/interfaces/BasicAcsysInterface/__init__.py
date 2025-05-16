@@ -130,22 +130,23 @@ class Interface(interface.Interface):
         print (f'BasicAcsysInterface.set_values() was passed drf_dict: {drf_dict}')
 
         # Testing option, when not making settings.
-        if settings_role == 'nosettings': 
-            self._current_sumsq = 0.0
-            if self._debug: print ('No settings. drf_dict: ',drf_dict)
-            read_devs = self.extract_reading_devices(drf_dict.keys())
-            newvals = self.get_values(read_devs, sample_event='i')
-            for drf, val in newvals.items():
-                self._current_sumsq += float(val)**2.0
-            if self._debug: print ('After BasicAcsysInterface.set_values() ran, now self._current_sumsq = ', self._current_sumsq)
-            return
+        # if settings_role == 'nosettings': 
+        #     self._current_sumsq = 0.0
+        #     if self._debug: print ('No settings. drf_dict: ',drf_dict)
+        #     read_devs = self.extract_reading_devices(drf_dict.keys())
+        #     newvals = self.get_values(read_devs, sample_event='i')
+        #     for drf, val in newvals.items():
+        #         self._current_sumsq += float(val)**2.0
+        #     if self._debug: print ('After BasicAcsysInterface.set_values() ran, now self._current_sumsq = ', self._current_sumsq)
+        #     return
 
         # Need a list of settings devices with the .SETTING suffix appended.
+        # Handle any devices with regex-enabled handling.
         setdevs = self.extract_setting_devices(drf_dict)
         setvals = []
         for key, val in drf_dict.items():
             setvals.append(val)
-        #if settings_role!='nosettings': 
+
         # Send the setting values to their devices.
         if not dont_set and settings_role != 'nosettings': acsys.run_client(set_once, drf_list=setvals, value_list=setvals, settings_role=settings_role)
 
