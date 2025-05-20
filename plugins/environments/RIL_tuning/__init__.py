@@ -4,8 +4,8 @@ from badger.errors import BadgerNoInterfaceError
 class Environment(environment.Environment):
     name = "RIL_tuning"
     variables = { # Also may be taken as Observables
-        "L:ATRMHU": [ 0.0, 5.0],
-        "L:ATRMVU": [-5.0, 1.0],
+        "L:ATRMHU": [ 0.0, 4.0],
+        "L:ATRMVU": [-4.0, 1.0],
         "L:ATRMHD": [ 0.0, 2.0],
         "L:ATRMVD": [ 0.0, 1.0],
         "L:LTRMH" : [-1.0, 1.0],
@@ -14,6 +14,7 @@ class Environment(environment.Environment):
         "L:ASOL" : [410.0, 430],
         "L:LSOL" : [450.0, 430],
 
+        #"multL:MUQ1*20,L:MUQ2*20",
         "L:MUQ1" : [ 275.0, 280.0],
         "L:MUQ2" : [ 250.0, 255.0],
         "L:MDQ1" : [ 220.0, 225.0],
@@ -29,29 +30,30 @@ class Environment(environment.Environment):
         "L:MUQ2V" : [-0.5, 0.1],
 
         "L:MDQ2H" : [-0.5, 0.5],
-        "L:MDQ2V" : [ 0.3, 0.7],
+        "L:MDQ2V" : [ 0.3, 0.7]
         
     }
     observables = [ # Also used as Constraints and Observables
-        "L:TUNERAD",
+        "L:TUNRAD",
         "L:TK1RAD", "L:TK4RAD", "L:D7LMSM",
         "L:DELM5",# top of the DS face of the Lambertson
-        "L:D23LM","L:D72", # These sum in quadr.?
+        "L:D23LM","L:D72LM", # These sum in quadr.?
         "G:LINEFF",
         "B:BLMS06", "B:BLMS13", "B:BLM125",
         "L:ATOR", "L:TO1IN", "L:TO3IN", "L:D7TOR",
         "DummySumSq"
     ]
-    sample_event:  str = 'E,52,E,0'
-    settings_role: str = 'nosettings'
+    sample_event:  str = '@e,52,e,0'
+    settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
     setpoint:      str = 'hold'
+    #mults:         str = 'multL:MUQ1*20,L:MUQ2*20;'
     
     def get_variables(self, variable_names: list[str]) -> dict:
         if not self.interface:
             raise BadgerNoInterfaceError
         if self.debug: print ('RIL_tuning asking for variables:', variable_names)
-        # Interface RIL_tuning handles (read,set) pairs and optional tolerances.
+        # Interface BasicAcsysInterface handles (read,set) pairs and optional tolerances.
         return self.interface.get_values(variable_names, sample_event=self.sample_event, debug=self.debug) 
 
     def set_variables(self, settable_devices: dict[str, float]):
@@ -60,12 +62,14 @@ class Environment(environment.Environment):
             raise BadgerNoInterfaceError
         self.interface.set_values(settable_devices, settings_role=self.settings_role, debug=self.debug)
 
-    #def get_observables(self, observable_names: list[str], sample_event=sample_event) -> dict:
+    #def get_observables(self, observable_names: list[str], sample_event=self.sample_event) -> dict:
     def get_observables(self, observable_names: list[str]) -> dict:        
         if not self.interface:
             raise BadgerNoInterfaceError
-        if self.debug or True: print ('get_observables() will ask for values of ', observable_names)
-        return self.interface.get_values(observable_names, sample_event=self.sample_event, setpoint_str=self.setpoint, debug=self.debug)
+        modified_observables = observable_names #[x+self.sample_event for x in observable_names]
+        if self.debug: print ('get_observables() will ask for values of ', modified_observables)
+        return self.interface.get_values(modified_observables, sample_event=self.sample_event, setpoint_str=self.setpoint, debug=self.debug)
+        
 
 
 
