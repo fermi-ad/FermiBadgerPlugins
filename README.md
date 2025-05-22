@@ -2,6 +2,20 @@
 From a clean conda environment:
 
 ```bash
+conda create -n xopt-dev2 python=3.12.1
+conda install -c conda-forge badger-opt==1.3.4 
+pip install “acsys[settings]“==0.12.8 --extra-index-url https://www-bd.fnal.gov/pip3 --no-cache-dir
+git clone https://github.com/fermi-ad/XoptBadgerTrial.git
+cd XoptBadgerTrial
+badger -g
+```
+Upon first launch, may need to initialize.
+Click the gear at the bottom right corner of the GUI, and set the PLUGIN_ROOT to the plugins directory in XoptBadgerTrial.
+Quit Badger and re-launch.
+
+<hr>
+ OLD WAY:
+```bash
 conda create -n xopt-dev python=3.12.1 xopt
 conda activate xopt-dev
 conda install numpy=1.26.4
