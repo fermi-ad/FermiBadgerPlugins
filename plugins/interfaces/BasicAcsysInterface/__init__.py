@@ -52,9 +52,9 @@ class Interface(interface.Interface):
         ret_dict = {}
         for device,val in device_dict.items():
             isreadsetpair = self._read_set_pair_pattern.fullmatch(device)
-            withSETTING = f'{device}.SETTING@N' # Needed to make all settings? 
+            withSETTING = f'{device}.SETTING' # Needed to make all settings? 
             if isreadsetpair:
-                withSETTING = device.split(',')[1]+'.SETTING@N'
+                withSETTING = device.split(',')[1]+'.SETTING'
                 ret_dict[withSETTING] = val
             else: ret_dict[withSETTING] = val
         return ret_dict

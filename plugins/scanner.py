@@ -49,17 +49,20 @@ async def set_once(con,drf_list,value_list,settings_role, debug=False):
         for i, dev in enumerate(drf_list):
             await dpm.add_entry(i, dev+'@N')
         await dpm.start()
-        '''
-        async for reply in dpm.replies():
-            if reply.isReading:
-                settings[reply.tag]= reply.data + value_list[reply.tag]
-            if settings.count(None)==0:
-                break
-
-        setpairs = list(enumerate(settings))
-        '''
         setpairs = list(enumerate(value_list))
         await dpm.apply_settings(setpairs)
+
+        replies = []
+        async for reply in dpm.replies():
+            if reply.isReading :
+                print (f'Setting reply: {reply.data}.')
+                replies.append(reply)
+            elif reply.isStatus:
+                print(f'Status: {reply}')
+                replies.append(reply)
+            if len(replies) == len(drf_list):
+                break
+
         if debug: print('settings applied: ',value_list)
 
     return None
