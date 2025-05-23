@@ -47,17 +47,17 @@ class Interface(interface.Interface):
         return ret_list
 
     # Handle read/set/[settling tolerance] devices, getting just the settable devices
-    def extract_setting_devices(self, device_dict):
-        if self._debug: print (f'extract_setting_devices() was passed {device_dict}.')
-        ret_dict = {}
-        for device,val in device_dict.items():
+    def extract_setting_devices(self, drf_list):
+        if self._debug or True: print (f'extract_setting_devices() was passed {drf_list}.')
+        ret_list = []
+        for device in drf_list:
             isreadsetpair = self._read_set_pair_pattern.fullmatch(device)
             withSETTING = f'{device}.SETTING' # Needed to make all settings? 
             if isreadsetpair:
                 withSETTING = device.split(',')[1]+'.SETTING'
-                ret_dict[withSETTING] = val
-            else: ret_dict[withSETTING] = val
-        return ret_dict
+                ret_list.append(withSETTING)
+            else: ret_list.append(withSETTING)
+        return ret_list
 
     def meets_tolerance(self, buff, tol, debug=False):
         spread = max(buff) - min(buff)
@@ -97,6 +97,8 @@ class Interface(interface.Interface):
         return setpoint_list
 
     # Read values from devices
+    # Use the reading device, not the setting device, if they have different names.
+    # If a setpoint exists, instead of the readback, return squared difference of readback-setpoint.
     def get_values(self, drf_list, sample_event='@i', setpoint_str='', debug=False):
         readings_list = self.extract_reading_devices(drf_list)
         if debug: print (f'BasicAcsysInterface.get_values() got readings_list: {readings_list} and sample_event:{sample_event}.')
@@ -127,12 +129,24 @@ class Interface(interface.Interface):
         if debug: print (f'BasicAcsysInterface.get_values() will return: {readings}')
         return readings
 
+    def get_settings(self, drf_list, debug=True):
+        if debug: print (f'BasicAcsysInterface.get_settings() was passed drf_list: {drf_list}')
+        setting_names  = self.extract_setting_devices(drf_list)
+        setting_values = acsys.run_client(read_once, drf_list=setting_names) # Is a role needed to read settings? A sample event? settings_role=settings_role, debug=debug
+        if debug: print (f'BasicAcsysInterface.get_settings() got back setting_values: {setting_values}')
+        assert (len(setting_values) == len(setting_names))
+        # package it up in a dictionary with the drf_list we we started from
+        settings_dict = {}
+        for set_name, set_val in zip(drf_list, setting_values):
+            settings_dict[set_name] = set_val
+        if debug: print (f'BasicAcsysInterface.get_settings() returning settings_dict: {settings_dict}')
+        return settings_dict
+    
     # Set devices to values settable_devices: dict[str, float]
     def set_values(self, drf_dict, settings_role, dont_set=False, debug=False):
         # Need a list of settings devices with the .SETTING suffix appended.
         # Handle any devices with regex-enabled handling.
-        setdevs = self.extract_setting_devices(drf_dict) # FIXME should just return a list, right?  
-        setdevs = list(setdevs.keys()) 
+        setdevs = self.extract_setting_devices(list(drf_dict.keys()))
         setvals = list(drf_dict.values())
 
         if debug: print(f' OK set_values() will send\n * setdevs:{setdevs}\n * setvals:{setvals}')

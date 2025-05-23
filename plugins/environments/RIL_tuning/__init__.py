@@ -12,7 +12,7 @@ class Environment(environment.Environment):
         "L:LTRMV" : [-1.0, 1.0],
 
         "L:ASOL" : [410.0, 430],
-        "L:LSOL" : [450.0, 430],
+        "L:LSOL" : [450.0, 480],
 
         #"multL:MUQ1*20,L:MUQ2*20",
         "L:MUQ1" : [ 275.0, 280.0],
@@ -54,7 +54,8 @@ class Environment(environment.Environment):
             raise BadgerNoInterfaceError
         if self.debug: print ('RIL_tuning asking for variables:', variable_names)
         # Interface BasicAcsysInterface handles (read,set) pairs and optional tolerances.
-        return self.interface.get_values(variable_names, sample_event=self.sample_event, debug=self.debug) 
+        #return self.interface.get_values(variable_names, sample_event=self.sample_event, debug=self.debug)
+        return self.interface.get_settings(variable_names, debug=self.debug) # sample_event=self.sample_event,
 
     def set_variables(self, settable_devices: dict[str, float]):
         if not self.interface:
