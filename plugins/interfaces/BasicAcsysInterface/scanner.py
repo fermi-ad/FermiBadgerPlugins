@@ -86,7 +86,7 @@ async def read_many(con, thread_context):
                         if (len(thread_context['data'])>5000000):
                             print("Buffer overflow, deleting",thread_context['data'][0]['name'],thread_context['data'][0]['name'])
                             thread_context['data'].pop(0)
-                elif reply.isStatus:
+                elif reply.isStatus and reply.status != '[0 0]':
                     print(f'Status: {reply}')
                 else:
                     print(f'Unknown response: {reply}')

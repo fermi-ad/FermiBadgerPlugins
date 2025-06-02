@@ -48,7 +48,7 @@ class Interface(interface.Interface):
 
     # Handle read/set/[settling tolerance] devices, getting just the settable devices
     def extract_setting_devices(self, drf_list):
-        if self._debug or True: print (f'extract_setting_devices() was passed {drf_list}.')
+        if self._debug: print (f'extract_setting_devices() was passed {drf_list}.')
         ret_list = []
         for device in drf_list:
             isreadsetpair = self._read_set_pair_pattern.fullmatch(device)
