@@ -15,10 +15,10 @@ class Environment(environment.Environment):
         "L:LSOL" : [450.0, 480],
 
         #"multL:MUQ1*20,L:MUQ2*20",
-        "L:MUQ1" : [ 275.0, 280.0],
-        "L:MUQ2" : [ 250.0, 255.0],
-        "L:MDQ1" : [ 220.0, 225.0],
-        "L:MDQ2" : [ 163.0, 167.0],
+        "L:MUQ1" : [ 250.0, 300.0],
+        "L:MUQ2" : [ 225.0, 275.0],
+        "L:MDQ1" : [ 200.0, 250.0],
+        "L:MDQ2" : [ 150.0, 200.0],
 
         "L:RFQPAH" : [ 210.0, 215.0], # Or are there reading,setting,(optional)setting? Like "L:C7PHAS,L:L7PADJ,tol3@0.45"?
         "L:RFBPAH" : [ 226.0, 227.0],
@@ -37,7 +37,7 @@ class Environment(environment.Environment):
         "L:TUNRAD",
         "L:TK1RAD", "L:TK4RAD", "L:D7LMSM",
         "L:DELM5",# top of the DS face of the Lambertson
-        "L:D23LM","L:D72LM", # These sum in quadr.?
+        "L:D23LM","L:D34LM","L:D72LM", # These sum in quadr.?
         "G:LINEFF",
         "B:BLMS06", "B:BLMS13", "B:BLM125",
         "L:ATOR", "L:TO1IN", "L:TO3IN", "L:D7TOR",
