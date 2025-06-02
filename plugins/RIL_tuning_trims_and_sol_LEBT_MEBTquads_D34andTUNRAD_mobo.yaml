@@ -1,0 +1,161 @@
+badger_version: 1.3.4
+critical_constraint_names: []
+description: '- Vary only Source trims L:ATRMHD, L:ATRMHU, L:ATRMVD, L:ATRMVU.
+
+  + and LEBT trims L:LTRMH and L:LTRMV
+
+  + solenoids A:SOL and L:LSOL
+
+  + MEBT Quads (indepently, not as mults) L:MUQ1, L:MUQ2, L:MDQ1, L:MDQ2
+
+  - Minimize L:D34LM and L:TUNRAD (MOBO)
+
+  - Constrain L:TK1RAD<18.0 and L:D7TOR>26.0 and L:TUNRAD<80.0
+
+  - Watch L:D7LSM, L:TK4RAD
+
+  - Turbo controller: safety
+
+  '
+environment:
+  name: RIL_tuning
+  params:
+    debug: false
+    sample_event: '@e,52,e,0'
+    setpoint: hold
+    settings_role: ril_tuning
+generator:
+  computation_time: null
+  custom_objective: null
+  fixed_features: null
+  gp_constructor:
+    covar_modules: {}
+    custom_noise_prior: null
+    mean_modules: {}
+    name: standard
+    trainable_mean_keys: []
+    transform_inputs: true
+    use_cached_hyperparameters: false
+    use_low_noise_prior: false
+  max_travel_distances: null
+  model: null
+  n_candidates: 1
+  n_interpolate_points: null
+  n_monte_carlo_samples: 128
+  name: mobo
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: null
+    n_restarts: 20
+    name: LBFGS
+  reference_point:
+    L:D34LM: 2.0
+    L:TUNRAD: 80.0
+  turbo_controller: null
+  use_cuda: false
+  use_pf_as_initial_points: false
+initial_point_actions: []
+name: ''
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints:
+    L:D7TOR:
+    - GREATER_THAN
+    - 26.0
+    L:TK1RAD:
+    - LESS_THAN
+    - 18.0
+  objectives:
+    L:D34LM: MINIMIZE
+    L:TUNRAD: MINIMIZE
+  observables:
+  - L:D7LMSM
+  - L:TK4RAD
+  variables:
+    L:ASOL:
+    - 410.0
+    - 430
+    L:ATRMHD:
+    - 0.0
+    - 2.0
+    L:ATRMHU:
+    - 0.0
+    - 4.0
+    L:ATRMVD:
+    - 0.0
+    - 1.0
+    L:ATRMVU:
+    - -4.0
+    - 1.0
+    L:LSOL:
+    - 450.0
+    - 480
+    L:LTRMH:
+    - -1.0
+    - 1.0
+    L:LTRMV:
+    - -1.0
+    - 1.0
+    L:MDQ1:
+    - 200.0
+    - 250.0
+    L:MDQ2:
+    - 150.0
+    - 200.0
+    L:MUQ1:
+    - 250.0
+    - 300.0
+    L:MUQ2:
+    - 225.0
+    - 275.0
+vrange_limit_options:
+  L:ASOL:
+    limit_option_idx: 1
+    ratio_curr: 0.047619047619047616
+    ratio_full: 1.0
+  L:ATRMHD:
+    limit_option_idx: 1
+    ratio_curr: 0.5
+    ratio_full: 0.256988525390625
+  L:ATRMHU:
+    limit_option_idx: 1
+    ratio_curr: 0.5
+    ratio_full: 0.0697479248046875
+  L:ATRMVD:
+    limit_option_idx: 1
+    ratio_curr: 0.5
+    ratio_full: 0.197509765625
+  L:ATRMVU:
+    limit_option_idx: 1
+    ratio_curr: 0.40122376821683414
+    ratio_full: 0.26734619140625
+  L:LSOL:
+    limit_option_idx: 1
+    ratio_curr: 0.06451612903225806
+    ratio_full: 1.0
+  L:LTRMH:
+    limit_option_idx: 1
+    ratio_curr: 0.5
+    ratio_full: 0.159759521484375
+  L:LTRMV:
+    limit_option_idx: 1
+    ratio_curr: 0.5
+    ratio_full: 0.139739990234375
+  L:MDQ1:
+    limit_option_idx: 1
+    ratio_curr: 0.2222222222222222
+    ratio_full: 1.0
+  L:MDQ2:
+    limit_option_idx: 1
+    ratio_curr: 0.2857142857142857
+    ratio_full: 1.0
+  L:MUQ1:
+    limit_option_idx: 1
+    ratio_curr: 0.18181818181818182
+    ratio_full: 1.0
+  L:MUQ2:
+    limit_option_idx: 1
+    ratio_curr: 0.2
+    ratio_full: 1.0
+xopt_version: 2.6.1
