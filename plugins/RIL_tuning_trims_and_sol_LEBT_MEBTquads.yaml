@@ -1,0 +1,141 @@
+badger_version: 1.3.4
+critical_constraint_names: []
+description: '- Vary only Source trims L:ATRMHD, L:ATRMHU, L:ATRMVD, L:ATRMVU.
+
+  + and LEBT trims L:LTRMH and L:LTRMV
+
+  + solenoids A:SOL and L:LSOL
+
+  + MEBT Quads (indepently, not as mults) L:MUQ1, L:MUQ2, L:MDQ1, L:MDQ2
+
+  - Minimize only L:TUNRAD
+
+  - Constrain L:TK1RAD<18.0 and L:D7TOR>25.0
+
+  - Watch L:D7LSM, L:TK4RAD, L:D34LM
+
+  - Turbo controller: safety
+
+  '
+environment:
+  name: RIL_tuning
+  params:
+    debug: false
+    sample_event: '@e,52,e,0'
+    setpoint: hold
+    settings_role: ril_tuning
+generator:
+  max_travel_distances: null
+  n_interpolate_points: null
+  name: expected_improvement
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: null
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller: safety
+initial_point_actions: []
+name: ''
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints:
+    L:D7TOR:
+    - GREATER_THAN
+    - 25.0
+    L:TK1RAD:
+    - LESS_THAN
+    - 18.0
+  objectives:
+    L:TUNRAD: MINIMIZE
+  observables:
+  - L:D7LMSM
+  - L:TK4RAD
+  - L:D34LM
+  variables:
+    L:ASOL:
+    - 410.0
+    - 430
+    L:ATRMHD:
+    - 0.0
+    - 2.0
+    L:ATRMHU:
+    - 0.0
+    - 4.0
+    L:ATRMVD:
+    - 0.0
+    - 1.0
+    L:ATRMVU:
+    - -4.0
+    - 1.0
+    L:LSOL:
+    - 450.0
+    - 480
+    L:LTRMH:
+    - -1.0
+    - 1.0
+    L:LTRMV:
+    - -1.0
+    - 1.0
+    L:MDQ1:
+    - 200.0
+    - 250.0
+    L:MDQ2:
+    - 150.0
+    - 200.0
+    L:MUQ1:
+    - 250.0
+    - 300.0
+    L:MUQ2:
+    - 225.0
+    - 275.0
+vrange_limit_options:
+  L:ASOL:
+    limit_option_idx: 1
+    ratio_curr: 0.034011147461564126
+    ratio_full: 0.719012451171875
+  L:ATRMHD:
+    limit_option_idx: 1
+    ratio_curr: 0.5685215785348985
+    ratio_full: 0.28939636016730064
+  L:ATRMHU:
+    limit_option_idx: 1
+    ratio_curr: 0.9702726026530059
+    ratio_full: 0.13751055806642332
+  L:ATRMVD:
+    limit_option_idx: 1
+    ratio_curr: 0.5596206380686597
+    ratio_full: 0.22338372637750453
+  L:ATRMVU:
+    limit_option_idx: 1
+    ratio_curr: 0.35298491340943045
+    ratio_full: 0.24002527948075078
+  L:LSOL:
+    limit_option_idx: 1
+    ratio_curr: 0.0562352489459249
+    ratio_full: 0.8751566569010417
+  L:LTRMH:
+    limit_option_idx: 1
+    ratio_curr: 0.6730091278884404
+    ratio_full: 0.21364260706468374
+  L:LTRMV:
+    limit_option_idx: 1
+    ratio_curr: 0.651332489719012
+    ratio_full: 0.1816766038828055
+  L:MDQ1:
+    limit_option_idx: 1
+    ratio_curr: 0.21544494063827468
+    ratio_full: 0.9658203125
+  L:MDQ2:
+    limit_option_idx: 1
+    ratio_curr: 0.25085064051091943
+    ratio_full: 0.8604776000976563
+  L:MUQ1:
+    limit_option_idx: 1
+    ratio_curr: 0.16684716562629723
+    ratio_full: 0.9239996337890625
+  L:MUQ2:
+    limit_option_idx: 1
+    ratio_curr: 0.18210663238479122
+    ratio_full: 0.9179995727539062
+xopt_version: 2.6.1
