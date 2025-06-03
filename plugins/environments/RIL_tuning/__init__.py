@@ -41,6 +41,7 @@ class Environment(environment.Environment):
         "G:LINEFF",
         "B:BLMS06", "B:BLMS13", "B:BLM125",
         "L:ATOR", "L:TO1IN", "L:TO3IN", "L:D7TOR",
+        "B:BLMLAM", "B:BLMQ3",
         "DummySumSq"
     ]
     sample_event:  str = '@e,52,e,0'
