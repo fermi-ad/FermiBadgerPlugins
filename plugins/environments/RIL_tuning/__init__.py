@@ -43,7 +43,7 @@ class Environment(environment.Environment):
         "L:ATOR", "L:TO1IN", "L:TO3IN", "L:D7TOR",
         "B:BLMLAM", "B:BLMQ3",
         "B:BLMS06", "B:BLMS13", "B:BLM125",
-        "B:BOOEFF",
+        "B:BOOEFF", "B:BLM011",
         "DummySumSq"
     ]
     sample_event:  str = '@e,52,e,0'
