@@ -99,7 +99,7 @@ class Interface(interface.Interface):
     # Read values from devices
     # Use the reading device, not the setting device, if they have different names.
     # If a setpoint exists, instead of the readback, return squared difference of readback-setpoint.
-    def get_values(self, drf_list, sample_event='@i', setpoint_str='', debug=False):
+    def get_values(self, drf_list, sample_event='@i', sample_events={}, setpoint_str='', debug=False):
         readings_list = self.extract_reading_devices(drf_list)
         if debug: print (f'BasicAcsysInterface.get_values() got readings_list: {readings_list} and sample_event:{sample_event}.')
         setpoint_devs = self.get_setpoints(drf_list)
@@ -109,7 +109,7 @@ class Interface(interface.Interface):
         else:
             readings = {} # dict of returned values
             if debug: print (f'About to run read_once().  setpoint_devs was :{setpoint_devs}.')
-            results = acsys.run_client(read_once, drf_list=readings_list, sample_event=sample_event)
+            results = acsys.run_client(read_once, drf_list=readings_list, sample_events=sample_events)
             for i, name in enumerate(drf_list):
                 readings[name] = results[i]
             if len(setpoint_devs)>0: # When there's a device to regulate 

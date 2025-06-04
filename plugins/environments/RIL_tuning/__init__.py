@@ -18,10 +18,10 @@ class Environment(environment.Environment):
         "L:MUQ1" : [ 250.0, 300.0],
         "L:MUQ2" : [ 225.0, 275.0],
         "L:MDQ1" : [ 200.0, 250.0],
-        "L:MDQ2" : [ 150.0, 200.0],
+        "L:MDQ2" : [ 150.0, 180.0],
 
-        "L:RFQPAH" : [ 210.0, 215.0], # Or are there reading,setting,(optional)setting? Like "L:C7PHAS,L:L7PADJ,tol3@0.45"?
-        "L:RFBPAH" : [ 226.0, 227.0],
+        "L:RFQPAH" : [ 185.0, 225.0], # Or are there reading,setting,(optional)setting? Like "L:C7PHAS,L:L7PADJ,tol3@0.45"?
+        "L:RFBPAH" : [ 210.0, 230.0],
 
         "L:MUQ1H" : [-5.0, 0.0],
         "L:MUQ1V" : [-5.0, 0.0],
@@ -30,7 +30,8 @@ class Environment(environment.Environment):
         "L:MUQ2V" : [-0.5, 0.1],
 
         "L:MDQ2H" : [-0.5, 0.5],
-        "L:MDQ2V" : [ 0.3, 0.7]
+        "L:MDQ2V" : [ 0.3, 0.7],
+        "L:V5QSET": [-40.0, -30.0]
         
     }
     observables = [ # Also used as Constraints and Observables
@@ -39,12 +40,14 @@ class Environment(environment.Environment):
         "L:DELM5",# top of the DS face of the Lambertson
         "L:D23LM","L:D34LM","L:D72LM", # These sum in quadr.?
         "G:LINEFF",
-        "B:BLMS06", "B:BLMS13", "B:BLM125",
         "L:ATOR", "L:TO1IN", "L:TO3IN", "L:D7TOR",
         "B:BLMLAM", "B:BLMQ3",
+        "B:BLMS06", "B:BLMS13", "B:BLM125",
+        "B:BOOEFF",
         "DummySumSq"
     ]
     sample_event:  str = '@e,52,e,0'
+    sample_events: dict = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
     settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
     setpoint:      str = 'hold'
@@ -70,7 +73,10 @@ class Environment(environment.Environment):
             raise BadgerNoInterfaceError
         modified_observables = observable_names #[x+self.sample_event for x in observable_names]
         if self.debug: print ('get_observables() will ask for values of ', modified_observables)
-        return self.interface.get_values(modified_observables, sample_event=self.sample_event, setpoint_str=self.setpoint, debug=self.debug)
+        return self.interface.get_values(modified_observables,
+                                         sample_event =self.sample_event ,
+                                         sample_events=self.sample_events,
+                                         setpoint_str=self.setpoint, debug=self.debug)
         
 
 
