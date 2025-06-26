@@ -99,35 +99,47 @@ class Interface(interface.Interface):
     # Read values from devices
     # Use the reading device, not the setting device, if they have different names.
     # If a setpoint exists, instead of the readback, return squared difference of readback-setpoint.
-    def get_values(self, drf_list, sample_event='@i', sample_events={}, setpoint_str='', debug=False):
+    def get_values(self, drf_list, sample_events={}, setpoints={}, debug=False):
         readings_list = self.extract_reading_devices(drf_list)
-        if debug: print (f'BasicAcsysInterface.get_values() got readings_list: {readings_list} and sample_event:{sample_event}.')
+        if debug: print (f'BasicAcsysInterface.get_values() got readings_list: {readings_list} and sample_events: {sample_events}.')
+        # List of the one with -SETPOINT keyword in the device name
         setpoint_devs = self.get_setpoints(drf_list)
         if 'DummySumSq' in readings_list:
             if debug: print ('About to ask ACSYS to get readings of ',readings_list, ' but return only DummySumSq.')
-            readings = {'DummySumSq': self._current_sumsq}
+            valdict_to_return = {'DummySumSq': self._current_sumsq}
         else:
-            readings = {} # dict of returned values
+            valdict_to_return = {} # Final dict of read & calculated values to return
             if debug: print (f'About to run read_once().  setpoint_devs was :{setpoint_devs}.')
-            results = acsys.run_client(read_once, drf_list=readings_list, sample_events=sample_events)
+            readbacks = acsys.run_client(read_once, drf_list=readings_list, sample_events=sample_events, debug=False)
+            if debug: print (f'read_once returned readbacks: {readbacks}.')
             for i, name in enumerate(drf_list):
-                readings[name] = results[i]
-            if len(setpoint_devs)>0: # When there's a device to regulate 
-                if setpoint_str == '': exit(f'Please give setpoint parameter value for {setpoint_devs}.')
-                # Interface's private variable: First readback value for a device.
+                if debug: print (f'drf_list[{i}] == {name}. Storing value as readbacks[i]={readbacks[i]}')
+                valdict_to_return[name] = readbacks[i]
+            if len(setpoint_devs)>0: # When there's a device (or more) to regulate 
+                if setpoints=={} or list(setpoints.values()) == []: exit(f'Please give setpoint(s) parameter value(s) for {setpoint_devs}.')
+                if debug: print(f'setpoint_devs: {setpoint_devs}')
+                # Interface's private variable: First readback value for these devices from this run.
                 if self._regulate_to is None: 
-                    if debug: print (f'self._regulate_to was None. Setting to read-back value for {setpoint_devs[0]}: {readings[setpoint_devs[0]]}.')
-                    self._regulate_to = readings[setpoint_devs[0]] 
+                    if debug:
+                        print (f'self._regulate_to was None. Setting to read-back values for {setpoint_devs}:')
+                    # Get the indices of the devices with setpoints
+                    self._regulate_to = {}
+                    for setpoint_dev in setpoint_devs:
+                        dev_index = readings_list.index(self.extract_reading_devices([setpoint_dev,])[0])
+                        if debug: print (f'{setpoint_dev}: {readbacks[dev_index]}')
+                        self._regulate_to[setpoint_dev] = readbacks[dev_index] 
+                # Ready to calculate square error for each setpoint device. 
+                for setpoint_dev in setpoint_devs:
+                    clean_device_name = self.extract_reading_devices([setpoint_dev,])[0]
+                    dev_index = readings_list.index(clean_device_name)
+                    if not clean_device_name in setpoints.keys(): exit (f'{clean_device_name} not found in {setpoints}. Please check Badger Environment parameters.')
+                    if setpoints[clean_device_name]=='hold': setpoint = self._regulate_to[setpoint_dev]
+                    else: setpoint = float(setpoints[clean_device_name])
 
-                if debug: print (f'setpoint_str = {setpoint_str}.')
-                if setpoint_str=='hold': setpoint = self._regulate_to
-                else: setpoint = float(setpoint_str)
-                if debug: print (f'... and so setpoint = {setpoint}')
-                for setpoints_dev in setpoint_devs:
-                    if debug: print (f'{setpoints_dev} will go to value {readings[setpoints_dev]} - {setpoint} squared.')
-                    readings[setpoints_dev] = (readings[setpoints_dev]-setpoint)**2.0
-        if debug: print (f'BasicAcsysInterface.get_values() will return: {readings}')
-        return readings
+                    if debug: print (f'{setpoint_dev} will be measured as ({readbacks[dev_index]} - {setpoint}) squared.')
+                    valdict_to_return[setpoint_dev] = (readbacks[dev_index]-setpoint)**2.0
+        if debug: print (f'BasicAcsysInterface.get_values() will return: {valdict_to_return}')
+        return valdict_to_return
 
     def get_settings(self, drf_list, debug=True):
         if debug: print (f'BasicAcsysInterface.get_settings() was passed drf_list: {drf_list}')

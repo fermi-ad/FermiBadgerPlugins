@@ -36,7 +36,7 @@ async def set_once(con,drf_list,value_list,settings_role, debug=False):
     return None
 
 async def read_once(con,drf_list, sample_events={'default':'@i'}, debug=False):
-    if debug: print (f'read_once() was passed list:{drf_list} and sample_event:{sample_event}.')
+    if debug: print (f'read_once() was passed list:{drf_list} and sample_events:{sample_events}.')
     readings = [None]*len(drf_list)
     # Optional DPMContext kwarg: dpm_node='DPM09'
     async with acsys.dpm.DPMContext(con) as dpm:
@@ -53,7 +53,7 @@ async def read_once(con,drf_list, sample_events={'default':'@i'}, debug=False):
             if reply.isStatus: print(f'Status: {reply}')
             else:  readings[reply.tag]=reply.data
             if readings.count(None) ==0:
-                if debug: print ('readings.count(None) ==0. Breaking out of read_once()')
+                if debug: print (f'readings.count(None) ==0. Breaking out of read_once() and returning {readings}')
                 break
     return readings
 
