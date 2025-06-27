@@ -15,10 +15,11 @@ class Environment(environment.Environment):
         "B:400DF2-SETPOINT",
         "DummySumSq"
     ]
-    sample_event:  str = 'E,15,E,0'
+    sample_events: dict = {'default':'@e,15,e,0',}
+    setpoints:     dict = {'defaults': hold,}
+    #setpoint:      str = 'hold'
     settings_role: str = 'nosettings'
     debug:         bool= False
-    setpoint:      str = 'hold'
     
     def get_variables(self, variable_names: list[str]) -> dict:
         if not self.interface:
