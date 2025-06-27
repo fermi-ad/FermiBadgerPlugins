@@ -1,4 +1,5 @@
-badger_version: 1.3.4
+additional_variables: []
+badger_version: 1.4.1
 critical_constraint_names: []
 description: '- Vary only Source trims L:ATRMHD, L:ATRMHU, L:ATRMVD, L:ATRMVU.
 
@@ -21,41 +22,37 @@ environment:
   name: RIL_tuning
   params:
     debug: false
-    sample_event: '@e,52,e,0'
-    setpoint: hold
-    settings_role: ril_tuning
+    sample_events:
+      B:BOOEFF: '@e,1f,e,0'
+      default: '@e,52,e,0'
+    setpoints:
+      B:HPQ2: 1.348
+      B:VPQ2: 16.2
+      L:D73BPH: 1.2
+      L:D73BPV: -0.53
+      L:D74BPH: 0.341
+      L:D74BPV: -1.7
+    settings_role: ril_tuning_fake
+formulas: {}
 generator:
-  computation_time: null
-  custom_objective: null
-  fixed_features: null
-  gp_constructor:
-    covar_modules: {}
-    custom_noise_prior: null
-    mean_modules: {}
-    name: standard
-    trainable_mean_keys: []
-    transform_inputs: true
-    use_cached_hyperparameters: false
-    use_low_noise_prior: false
   max_travel_distances: null
-  model: null
-  n_candidates: 1
-  n_interpolate_points: null
-  n_monte_carlo_samples: 128
   name: mobo
   numerical_optimizer:
     max_iter: 2000
-    max_time: null
+    max_time: 5.0
     n_restarts: 20
     name: LBFGS
   reference_point:
     L:D34LM: 2.0
     L:TUNRAD: 80.0
-  turbo_controller: null
-  use_cuda: false
-  use_pf_as_initial_points: false
-initial_point_actions: []
-name: ''
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: logical-toucan
 relative_to_current: false
 vocs:
   constants: {}
@@ -75,7 +72,7 @@ vocs:
   variables:
     L:ASOL:
     - 410.0
-    - 430
+    - 430.0
     L:ATRMHD:
     - 0.0
     - 2.0
@@ -90,7 +87,7 @@ vocs:
     - 1.0
     L:LSOL:
     - 450.0
-    - 480
+    - 480.0
     L:LTRMH:
     - -1.0
     - 1.0
@@ -109,6 +106,7 @@ vocs:
     L:MUQ2:
     - 225.0
     - 275.0
+vrange_hard_limit: {}
 vrange_limit_options:
   L:ASOL:
     limit_option_idx: 1
@@ -158,4 +156,4 @@ vrange_limit_options:
     limit_option_idx: 1
     ratio_curr: 0.2
     ratio_full: 1.0
-xopt_version: 2.6.1
+xopt_version: 2.6.3
