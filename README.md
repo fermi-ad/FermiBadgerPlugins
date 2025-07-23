@@ -1,9 +1,8 @@
-# XoptBadger - can we make it work? We can!
+# FermiBadgerPlugins - Use Badger at Fermilab
 From a clean conda environment:
 
 ```bash
-conda create -n xopt-dev2 python=3.12.1
-conda install -c conda-forge badger-opt==1.3.4 
+conda create -n badger-env python=3.12.1 badger-opt==1.4.2 
 pip install “acsys[settings]“==0.12.8 --extra-index-url https://www-bd.fnal.gov/pip3 --no-cache-dir
 git clone https://github.com/fermi-ad/XoptBadgerTrial.git
 cd XoptBadgerTrial
