@@ -22,7 +22,7 @@ conda install numpy=1.26.4
 conda install badger-opt
 pip install "acsys[settings]"==0.12.8 --extra-index-url https://www-bd.fnal.gov/pip3 --no-cache-dir
 pip install requests
-badger -g
+badger -g -cf config.yaml
 ```
 python --version
 
