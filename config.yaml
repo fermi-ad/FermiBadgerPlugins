@@ -1,0 +1,44 @@
+AUTO_REFRESH:
+  description: Permits each run to start from the initial points calculated based
+    on the current values and the rules
+  display_name: Auto-refresh
+  is_path: false
+  value: false
+BADGER_ARCHIVE_ROOT:
+  description: This setting (BADGER_ARCHIVE_ROOT) tells Badger where to archive the
+    historical optimization runs
+  display_name: archive root
+  is_path: true
+  value: /scratch/7DayLifetime//badger/archive/dev
+BADGER_DATA_DUMP_PERIOD:
+  description: Minimum time interval between data dumps, unit is second
+  display_name: data dump period
+  is_path: false
+  value: 1
+BADGER_ENABLE_ADVANCED:
+  description: Enable advanced features on the GUI
+  display_name: enable advanced features
+  is_path: false
+  value: false
+BADGER_LOGBOOK_ROOT:
+  description: This setting (BADGER_LOGBOOK_ROOT) tells Badger where to send the logs
+    (GUI mode)
+  display_name: logbook root
+  is_path: true
+  value: /scratch/7DayLifetime/badger/logbook/data
+BADGER_PLUGIN_ROOT:
+  description: This setting (BADGER_PLUGIN_ROOT) tells Badger where to look for the
+    plugins
+  display_name: plugin root
+  is_path: true
+  value: plugins
+BADGER_TEMPLATE_ROOT:
+  description: This setting (BADGER_TEMPLATE_ROOT) tells Badger where to store the routine templates
+  display_name: template root
+  is_path: true
+  value: plugins
+BADGER_THEME:
+  description: Theme for the Badger GUI
+  display_name: theme
+  is_path: false
+  value: dark
