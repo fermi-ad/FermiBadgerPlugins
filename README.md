@@ -3,7 +3,7 @@ Use this repo is one of two ways:
 
 ## 1. Install and run by hand:
 ```bash
-conda create -n badger-env python=3.12.1 badger-opt==1.4.2
+conda create -n badger-env python=3.12.1 --file requirements.txt
 conda activate badger-env 
 pip install "acsys[settings]"==0.12.8 --extra-index-url https://www-bd.fnal.gov/pip3 --no-cache-dir
 git clone git@github.com:fermi-ad/FermiBadgerPlugins.git
