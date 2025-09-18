@@ -12,17 +12,20 @@ badger -g -cf config.yaml
 ```
 
 ## 2. or Build a container image for running with Docker or podman
- - To build: 
+ - To build: (may require changes to your Docker descktop for sufficient RAM or other memory resources)
 ```bash
     cd root-of-this-repo/
-    docker build -t <image-name> .
+    docker build -t adregistry.fnal.gov/ml-autotune/testimage:latest --platform linux/amd64 .
+    docker login -u $USER adregistry.fnal.gov
+    ## Services password ##
+    docker push  adregistry.fnal.gov/ml-autotune/testimage:latest  
 ```
 
 - To run 
 ```bash
-    docker run --rm <image-name>
+    docker run --rm docker run --rm -v .:/app testimage:latest 
 ```
 - To run your script directly without rebuilding the image:
 ```bash
-    docker run --rm -v .:/app <image-name> <your-script>
+   docker run --rm -v .:/app testimage:latest 
 ```
