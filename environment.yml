@@ -1,0 +1,7 @@
+name: badger-envX
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - badger-opt=1.4.3
+prefix: /Users/stjohn/miniconda3/envs/badger-envX
