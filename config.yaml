@@ -36,7 +36,7 @@ BADGER_TEMPLATE_ROOT:
   description: This setting (BADGER_TEMPLATE_ROOT) tells Badger where to store the routine templates
   display_name: template root
   is_path: true
-  value: plugins
+  value: /opt/FermiBadgerPlugins/plugins
 BADGER_THEME:
   description: Theme for the Badger GUI
   display_name: theme
