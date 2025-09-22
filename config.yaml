@@ -25,13 +25,13 @@ BADGER_LOGBOOK_ROOT:
     (GUI mode)
   display_name: logbook root
   is_path: true
-  value: /tmp/data/BadgerData
+  value: /data/BadgerData
 BADGER_PLUGIN_ROOT:
   description: This setting (BADGER_PLUGIN_ROOT) tells Badger where to look for the
     plugins
   display_name: plugin root
   is_path: true
-  value: plugins
+  value: /opt/FermiBadgerPlugins/plugins
 BADGER_TEMPLATE_ROOT:
   description: This setting (BADGER_TEMPLATE_ROOT) tells Badger where to store the routine templates
   display_name: template root
