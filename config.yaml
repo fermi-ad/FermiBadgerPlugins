@@ -9,7 +9,7 @@ BADGER_ARCHIVE_ROOT:
     historical optimization runs
   display_name: archive root
   is_path: true
-  value: /tmp/data/BadgerData
+  value: /data/BadgerData
 BADGER_DATA_DUMP_PERIOD:
   description: Minimum time interval between data dumps, unit is second
   display_name: data dump period
