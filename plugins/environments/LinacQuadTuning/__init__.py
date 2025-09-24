@@ -76,16 +76,16 @@ class Environment(environment.Environment):
     sample_events: dict = {'default':'@e,0A,e,0'}
     settings_role: str = 'linac_quads'
     debug:         bool= False
-    w_sumsq:       dict = {"L:DELM18": 1.0, "L:D00LM": 1.0, "L:D00VLM": 1.0,
-                           "L:D11LM": 1.0, "L:D12LM": 1.0, "L:D13LM": 1.0, "L:D14LM": 1.0,
-                           "L:D21LM": 1.0, "L:D22LM": 1.0, "L:D23LM": 1.0, "L:D24LM": 1.0,
-                           "L:D31LM": 1.0, "L:D32LM": 1.0, "L:D33LM": 1.0, "L:D34LM": 1.0,
-                           "L:D41LM": 1.0, "L:D42LM": 1.0, "L:D43LM": 1.0, "L:D44LM": 1.0,
-                           "L:D51LM": 1.0, "L:D52LM": 1.0, "L:D53LM": 1.0, "L:D54LM": 1.0,
-                           "L:D61LM": 1.0, "L:D62LM": 1.0, "L:D63LM": 1.0, "L:D64LM": 1.0,
-                           "L:D71LM": 1.0, "L:D72LM": 1.0, "L:D73LM": 1.0, "L:D74LM": 1.0,
-                           "L:DELM15": 1.0, "L:DELM13": 1.0, "L:DELM1": 1.0, "L:DELM12": 1.0, "L:DELM11": 1.0, "L:DELM5": 1.0, "L:DELM6": 1.0, "L:DELM7": 1.0,
-                           "L:DELM8": 1.0, "L:DELM2": 1.0, "L:DELM3": 1.0, "L:DELM9": 1.0, "L:DELM4"}
+    w_sumsq:       dict = {"L:DELM18": 10., "L:D00LM": 10., "L:D00VLM": 10.,
+                           "L:D11LM": 10., "L:D12LM": 10., "L:D13LM": 10., "L:D14LM": 10.,
+                           "L:D21LM": 10., "L:D22LM": 10., "L:D23LM": 10., "L:D24LM": 10.,
+                           "L:D31LM": 10., "L:D32LM": 10., "L:D33LM": 10., "L:D34LM": 10.,
+                           "L:D41LM": 10., "L:D42LM": 10., "L:D43LM": 10., "L:D44LM": 10.,
+                           "L:D51LM": 10., "L:D52LM": 10., "L:D53LM": 10., "L:D54LM": 10.,
+                           "L:D61LM": 10., "L:D62LM": 10., "L:D63LM": 10., "L:D64LM": 10.,
+                           "L:D71LM": 10., "L:D72LM": 10., "L:D73LM": 10., "L:D74LM": 10.,
+                           "L:DELM15": 10., "L:DELM13": 10., "L:DELM1": 10., "L:DELM12": 10., "L:DELM11": 10., "L:DELM5": 10., "L:DELM6": 10., "L:DELM7": 10.,
+                           "L:DELM8": 10., "L:DELM2": 10., "L:DELM3": 10., "L:DELM9": 10., "L:DELM4"}
 
     #mults:         str = 'multL:MUQ1*20,L:MUQ2*20;'
     
@@ -127,7 +127,7 @@ class Environment(environment.Environment):
         if len(w_sumsq.keys())>0:
             sumsq = 0.0
             for dev_read, weight in w_sumsq.items():
-                sumsq += weight * result[dev_read] * result[dev_read]
+                sumsq += pow(weight * result[dev_read], 2.0)
             result['W_SumLosses'] = sumsq
         return result
 
