@@ -108,7 +108,7 @@ class Environment(environment.Environment):
             raise BadgerNoInterfaceError
         calc_these = []
         if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be returned
-            for input_dev in list(w_sumsq.keys()):
+            for input_dev in list(self.w_sumsq.keys()):
                 if not input_dev in observable_names: observable_names.append(input_dev)
             observable_names.remove('W_SumLosses') # only removes first occurrence. 
 
@@ -122,11 +122,10 @@ class Environment(environment.Environment):
         # Interface BasicAcsysInterface handles (read,set) pairs and optional tolerances.
         result = self.interface.get_values(get_these_observables,
                                            sample_events=self.sample_events,
-                                           setpoints   =self.setpoints,
                                            debug=self.debug)
-        if len(w_sumsq.keys())>0:
+        if len(self.w_sumsq.keys())>0:
             sumsq = 0.0
-            for dev_read, weight in w_sumsq.items():
+            for dev_read, weight in self.w_sumsq.items():
                 sumsq += pow(weight * result[dev_read], 2.0)
             result['W_SumLosses'] = sumsq
         return result
