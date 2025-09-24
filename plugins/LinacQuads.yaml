@@ -6,13 +6,13 @@ description: ''
 environment:
   name: LinacQuadTuning
   params:
-    debug: false
+    debug: true
     sample_events:
       default: '@e,0A,e,0'
     settings_role: linac_quads
     w_sumsq:
       L:D00LM: 10.0
-      L:D00VLM: 10.0
+      L:D0VLM: 10.0
       L:D11LM: 10.0
       L:D12LM: 10.0
       L:D13LM: 10.0
@@ -46,15 +46,9 @@ environment:
       L:DELM12: 10.0
       L:DELM13: 10.0
       L:DELM15: 10.0
-      L:DELM18: 10.0
-      L:DELM2: 10.0
-      L:DELM3: 10.0
-      L:DELM4: 10.0
       L:DELM5: 10.0
       L:DELM6: 10.0
       L:DELM7: 10.0
-      L:DELM8: 10.0
-      L:DELM9: 10.0
 formulas: {}
 generator:
   max_travel_distances: null
@@ -64,7 +58,15 @@ generator:
     max_time: 5.0
     n_restarts: 20
     name: LBFGS
-  turbo_controller: optimize
+  turbo_controller:
+    failure_tolerance: 9
+    length: 0.015625
+    length_max: 2.0
+    length_min: 0.0078125
+    name: OptimizeTurboController
+    restrict_model_data: true
+    scale_factor: 2.0
+    success_tolerance: 9
 initial_point_actions:
 - type: add_curr
 - config:
@@ -83,17 +85,17 @@ vocs:
   observables: []
   variables:
     L:Q01:
-    - 51.6748046875
-    - 57.1142578125
+    - 51.58203125
+    - 57.01171875
     L:Q02:
     - 77.84271240234375
     - 86.03668212890625
     L:Q03:
-    - 104.9267578125
-    - 115.9716796875
+    - 104.833984375
+    - 115.869140625
     L:Q04:
-    - 112.1630859375
-    - 123.9697265625
+    - 112.0703125
+    - 123.8671875
     L:Q11:
     - 111.24114990234375
     - 122.95074462890625
@@ -107,11 +109,11 @@ vocs:
     - 138.7890625
     - 153.3984375
     L:QPS504:
-    - 128.2520294189453
-    - 141.7522430419922
+    - 128.24296951293945
+    - 141.74222946166992
     L:QPS505:
-    - 125.39815902709961
-    - 138.59796524047852
+    - 125.38909912109375
+    - 138.58795166015625
     L:QPS506:
     - 124.44686889648438
     - 137.54653930664062
@@ -119,14 +121,14 @@ vocs:
     - 144.39678192138672
     - 159.59644317626953
     L:QPS508:
-    - 130.14554977416992
-    - 143.8450813293457
+    - 130.13648986816406
+    - 143.83506774902344
     L:QPS509:
-    - 130.14554977416992
-    - 143.8450813293457
+    - 130.13648986816406
+    - 143.83506774902344
     L:QPS510:
-    - 117.51604080200195
-    - 129.88615036010742
+    - 117.5069808959961
+    - 129.87613677978516
     L:QPS511:
     - 117.7968978881836
     - 130.19657135009766

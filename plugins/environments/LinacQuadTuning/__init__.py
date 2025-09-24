@@ -76,7 +76,7 @@ class Environment(environment.Environment):
     sample_events: dict = {'default':'@e,0A,e,0'}
     settings_role: str = 'linac_quads'
     debug:         bool= False
-    w_sumsq:       dict = {"L:DELM18": 10., "L:D00LM": 10., "L:D00VLM": 10.,
+    w_sumsq:       dict = {"L:DELM18": 10., "L:D00LM": 10., "L:D0VLM": 10.,
                            "L:D11LM": 10., "L:D12LM": 10., "L:D13LM": 10., "L:D14LM": 10.,
                            "L:D21LM": 10., "L:D22LM": 10., "L:D23LM": 10., "L:D24LM": 10.,
                            "L:D31LM": 10., "L:D32LM": 10., "L:D33LM": 10., "L:D34LM": 10.,
