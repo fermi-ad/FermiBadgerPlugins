@@ -1,17 +1,17 @@
-from badger import environmentA
+from badger import environment
 from badger.errors import BadgerNoInterfaceError
 
-LinacLMs = ["L:DELM18", "L:D00LM", "L:D00VLM",
-            "L:D11LM", "L:D12LM", "L:D13LM", "L:D14LM",
-            "L:D21LM", "L:D22LM", "L:D23LM", "L:D24LM",
-            "L:D31LM", "L:D32LM", "L:D33LM", "L:D34LM",
-            "L:D41LM", "L:D42LM", "L:D43LM", "L:D44LM",
-            "L:D51LM", "L:D52LM", "L:D53LM", "L:D54LM",
-            "L:D61LM", "L:D62LM", "L:D63LM", "L:D64LM",
-            "L:D71LM", "L:D72LM", "L:D73LM", "L:D74LM",
-            "L:DELM15", "L:DELM13", "L:DELM1", "L:DELM12", "L:DELM11", "L:DELM5", "L:DELM6", "L:DELM7",
-            "L:DELM8", "L:DELM2", "L:DELM3", "L:DELM9", "L:DELM4"]
-
+# LinacLMs = ["L:DELM18", "L:D00LM", "L:D00VLM",
+#             "L:D11LM", "L:D12LM", "L:D13LM", "L:D14LM",
+#             "L:D21LM", "L:D22LM", "L:D23LM", "L:D24LM",
+#             "L:D31LM", "L:D32LM", "L:D33LM", "L:D34LM",
+#             "L:D41LM", "L:D42LM", "L:D43LM", "L:D44LM",
+#             "L:D51LM", "L:D52LM", "L:D53LM", "L:D54LM",
+#             "L:D61LM", "L:D62LM", "L:D63LM", "L:D64LM",
+#             "L:D71LM", "L:D72LM", "L:D73LM", "L:D74LM",
+#             "L:DELM15", "L:DELM13", "L:DELM1", "L:DELM12", "L:DELM11", "L:DELM5", "L:DELM6", "L:DELM7",
+#             "L:DELM8", "L:DELM2", "L:DELM3", "L:DELM9", "L:DELM4"]
+# 
 
 class Environment(environment.Environment):
     name = "LinacQuadTuning"
@@ -85,7 +85,7 @@ class Environment(environment.Environment):
                            "L:D61LM": 10., "L:D62LM": 10., "L:D63LM": 10., "L:D64LM": 10.,
                            "L:D71LM": 10., "L:D72LM": 10., "L:D73LM": 10., "L:D74LM": 10.,
                            "L:DELM15": 10., "L:DELM13": 10., "L:DELM1": 10., "L:DELM12": 10., "L:DELM11": 10., "L:DELM5": 10., "L:DELM6": 10., "L:DELM7": 10.,
-                           "L:DELM8": 10., "L:DELM2": 10., "L:DELM3": 10., "L:DELM9": 10., "L:DELM4"}
+                           "L:DELM8": 10., "L:DELM2": 10., "L:DELM3": 10., "L:DELM9": 10., "L:DELM4": 10.}
 
     #mults:         str = 'multL:MUQ1*20,L:MUQ2*20;'
     
@@ -130,10 +130,5 @@ class Environment(environment.Environment):
                 sumsq += pow(weight * result[dev_read], 2.0)
             result['W_SumLosses'] = sumsq
         return result
-
-
-
-
-
 
 
