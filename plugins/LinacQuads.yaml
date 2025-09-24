@@ -1,0 +1,231 @@
+additional_variables: []
+badger_version: 1.4.3
+constraint_formulas: {}
+critical_constraint_names: []
+description: ''
+environment:
+  name: LinacQuadTuning
+  params:
+    debug: false
+    sample_events:
+      default: '@e,0A,e,0'
+    settings_role: linac_quads
+    w_sumsq:
+      L:D00LM: 10.0
+      L:D00VLM: 10.0
+      L:D11LM: 10.0
+      L:D12LM: 10.0
+      L:D13LM: 10.0
+      L:D14LM: 10.0
+      L:D21LM: 10.0
+      L:D22LM: 10.0
+      L:D23LM: 10.0
+      L:D24LM: 10.0
+      L:D31LM: 10.0
+      L:D32LM: 10.0
+      L:D33LM: 10.0
+      L:D34LM: 10.0
+      L:D41LM: 10.0
+      L:D42LM: 10.0
+      L:D43LM: 10.0
+      L:D44LM: 10.0
+      L:D51LM: 10.0
+      L:D52LM: 10.0
+      L:D53LM: 10.0
+      L:D54LM: 10.0
+      L:D61LM: 10.0
+      L:D62LM: 10.0
+      L:D63LM: 10.0
+      L:D64LM: 10.0
+      L:D71LM: 10.0
+      L:D72LM: 10.0
+      L:D73LM: 10.0
+      L:D74LM: 10.0
+      L:DELM1: 10.0
+      L:DELM11: 10.0
+      L:DELM12: 10.0
+      L:DELM13: 10.0
+      L:DELM15: 10.0
+      L:DELM18: 10.0
+      L:DELM2: 10.0
+      L:DELM3: 10.0
+      L:DELM4: 10.0
+      L:DELM5: 10.0
+      L:DELM6: 10.0
+      L:DELM7: 10.0
+      L:DELM8: 10.0
+      L:DELM9: 10.0
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: 5.0
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller: optimize
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: LinacQuads
+observable_formulas: {}
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints: {}
+  objectives:
+    W_SumLosses: MINIMIZE
+  observables: []
+  variables:
+    L:Q01:
+    - 51.6748046875
+    - 57.1142578125
+    L:Q02:
+    - 77.84271240234375
+    - 86.03668212890625
+    L:Q03:
+    - 104.9267578125
+    - 115.9716796875
+    L:Q04:
+    - 112.1630859375
+    - 123.9697265625
+    L:Q11:
+    - 111.24114990234375
+    - 122.95074462890625
+    L:Q12:
+    - 124.50775146484375
+    - 137.61383056640625
+    L:Q13:
+    - 137.3974609375
+    - 151.8603515625
+    L:Q14:
+    - 138.7890625
+    - 153.3984375
+    L:QPS504:
+    - 128.2520294189453
+    - 141.7522430419922
+    L:QPS505:
+    - 125.39815902709961
+    - 138.59796524047852
+    L:QPS506:
+    - 124.44686889648438
+    - 137.54653930664062
+    L:QPS507:
+    - 144.39678192138672
+    - 159.59644317626953
+    L:QPS508:
+    - 130.14554977416992
+    - 143.8450813293457
+    L:QPS509:
+    - 130.14554977416992
+    - 143.8450813293457
+    L:QPS510:
+    - 117.51604080200195
+    - 129.88615036010742
+    L:QPS511:
+    - 117.7968978881836
+    - 130.19657135009766
+    L:QPS512:
+    - 145.34807205200195
+    - 160.64786911010742
+    L:QPS513:
+    - 99.74956512451172
+    - 110.24951934814453
+vrange_hard_limit: {}
+vrange_limit_options:
+  L:Q01:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:Q02:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:Q03:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:Q04:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:Q11:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:Q12:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:Q13:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:Q14:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS504:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS505:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS506:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS507:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS508:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS509:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS510:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS511:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS512:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:QPS513:
+    delta: 0.1
+    limit_option_idx: 0
+    ratio_curr: 0.1
+    ratio_full: 0.1
+xopt_version: 2.6.6
