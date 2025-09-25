@@ -10,6 +10,7 @@ conda activate badger-env
 pip install "acsys[settings]"==0.12.8 --extra-index-url https://www-bd.fnal.gov/pip3 --no-cache-dir
 badger -g -cf config.yaml
 ```
+*Nota Bene* ```pip install``` will fail if executed from outside of the FNAL private network (VPN works).
 
 ## 2. or Build a container image for running with Docker or podman
  - To build: (may require changes to your Docker descktop for sufficient RAM or other memory resources)
