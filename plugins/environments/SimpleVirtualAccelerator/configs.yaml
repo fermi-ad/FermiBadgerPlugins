@@ -1,0 +1,7 @@
+name: "RIL_tuning"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicAcsysInterface
