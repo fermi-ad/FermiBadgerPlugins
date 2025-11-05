@@ -1,6 +1,6 @@
 from badger import interface
 import numpy as np
-import xtrack as xt  # tracking module of Xsuite
+#import xtrack as xt  # tracking module of Xsuite
 from time import sleep
 
 class Interface(interface.Interface):
@@ -35,21 +35,33 @@ class Interface(interface.Interface):
             return False
 
     # Read values from devices
-    def get_values(self, drf_list, debug=False):
-        readbacks = []
-        for i, name in enumerate(drf_list):
-            if debug: print (f'drf_list[{i}] == {name}. Storing value as readbacks[i]={readbacks[i]}')
-            valdict_to_return[name] = readbacks[i]
-        if debug: print (f'BasicAcsysInterface.get_values() will return: {valdict_to_return}')
-        return valdict_to_return
+    def get_values(self, device_list, twiss, debug=True):
+        readbacks = {}
+        for name in device_list:
+            if   name == 'qx':
+                readbacks[name] = float(twiss.qx)
+            elif name =='qy':
+                readbacks[name] = float(twiss.qy)
+            else: readbacks[name] = None
+        if debug: print (f'SimpleVirtualAcceleratorInterface.get_values() will return: {readbacks}')
+        return readbacks
 
-    def get_settings(self, drf_list, debug=True):
-        for set_name, set_val in zip(drf_list, setting_values):
-            settings_dict[set_name] = set_val
-        if debug: print (f'SimpleVirtualAcceleratorInterface.get_settings() returning settings_dict: {settings_dict}')
-        return settings_dict
+    # Or maybe you just want the settings
+    def get_settings(self, device_list, xt_env, debug=True):
+        settings = {}
+        for name in device_list:
+            if  name in ['qd', 'qf']:
+                settings[name] = xt_env[name].k1
+                print ('  Refraining from returning a whole: ', xt_env[name])
+            else: settings[name] = None
+        if debug: print (f'SimpleVirtualAcceleratorInterface.get_settings() will return: {settings}')
+        return settings
     
     # Set devices to values settable_devices: dict[str, float]
-    def set_values(self, drf_dict, dont_set=False, debug=False):
+    def set_values(self, settings_dict, xt_env, dont_set=False, debug=False):
+        # Dry run?
+        if dont_set: return
         # Implement all settings and return nothing
+        for key, val in settings_dict.items():
+            xt_env[key] = val
         return

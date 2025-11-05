@@ -1,7 +1,7 @@
-name: "RIL_tuning"
+name: "SimpleVirtualAccelerator"
 version: "0.1"
 dependencies:
   - badger-opt
   - numpy
 interface:
-  - BasicAcsysInterface
+  - SimpleVirtualAcceleratorInterface
