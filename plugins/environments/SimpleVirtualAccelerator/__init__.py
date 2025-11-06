@@ -11,18 +11,18 @@ import yaml
 class Environment(environment.Environment):
     name = "SimpleVirtualAccelerator"
     variables = { # Also may be taken as Observables
-        "qd" : [-1, 1],
-        "qf" : [-1, 1],
+        "kqd" : [-1, 1],
+        "kqf" : [-1, 1],
     }
     observables = [ # elements to be used as Constraints or Observables
-        "Q_X",
-        "Q_Y"
+        "qx",
+        "qy"
     ]
     debug:            bool = True
     quad_randomness: float = 0.01
     quad_k_list:      list = ['kqd', 'kqf']
     settings_filename:  str = 'SimpleVirtualAccelerator_settings.yaml'
-    randomize_settings: bool = False
+    randomize_settings: bool = True
 
     xt_env:     Optional[Any] = None 
     cell:       Optional[Any] = None 
@@ -62,36 +62,38 @@ class Environment(environment.Environment):
                 self.xt_env.place('end_cell',at=6),
             ]
         )
-        # ...and then the ring of cells:
-        self.xt_env['kqf']=0.8
-        self.xt_env['kqd']=-0.8
+        # Load settings from the settings file into self.xt_env
+        if Path(self.settings_filename).is_file(): 
+            self.load_settings_from_file()
+        else: # or, set them in xt_env, and save to the (new) file
+            self.xt_env['kqf']=0.8
+            self.xt_env['kqd']=-0.8
+        if self.randomize_settings:
+            self.randomize_quad_settings()
+        self.save_settings_to_file(set_random=False)
+
+        # ...and then build the ring of cells:
         self.ring=self.xt_env['n_bends']//2 * self.cell
         
         # Use 1 GeV protons, and some initial spread of phase space for them
         self.ring.particle_ref=xt.Particles(mass0=xt.PROTON_MASS_EV, p0c=1e9)  # Mass eV/c^2 Momentum in eV/c
         self.p0=self.ring.build_particles(x=np.linspace(-0.001,0.001,11),y=np.linspace(-0.001,0.001,11)) # Should take these from named class parameters at initialization.
         
-        #print (self.ring.elements)
-        # Inspect the virtual accelerator
-        #print (self.init_twiss)
-        #for name, element in self.ring.element_dict.items():
-        #    print(f'Element name: {name}, Element type: {type(element)}, Element: {element}')
-
         # # Get the initial Twiss parameters
         self.init_twiss = self.ring.twiss4d(init='periodic')
         return 
 
-    def get_quads_and_settings(self):
+    def get_quad_k1_vals_from_xt_env(self):
         quad_settings = {}
         for quadvar in self.quad_k_list:
             quad_settings[quadvar] = self.xt_env[quadvar]
         return quad_settings
 
-    def set_quads(self, quad_k_settings):
-        #assert (sorted(list(quad_settings.keys())) ==
-        for quad_k1_name, k1_val in quad_k_settings.items():
-            self.xt_env[quad_k1_name] = k1_val
-            #if self.debug: print (f'Set {quad_k1_name} to {k1_val}.')
+    #def set_quads(self, quad_k_settings):
+    #    #assert (sorted(list(quad_settings.keys())) ==
+    #    for quad_k1_name, k1_val in quad_k_settings.items():
+    #        self.xt_env[quad_k1_name] = k1_val
+    #        #if self.debug: print (f'Set {quad_k1_name} to {k1_val}.')
     
     def print_quads(self):
         for i, element in enumerate(self.ring.elements):
@@ -103,19 +105,27 @@ class Environment(environment.Environment):
     # Change settings randomly to new values within current value * (1+/-self.quad_randomness)
     def randomize_quad_settings(self):
         if self.debug: print ('Randomizing quad settings.')
-        quad_settings = self.get_quads_and_settings()
-        for quadname in ['kqf', 'kqd']: #quad_settings.keys():
+        quad_settings = self.get_quad_k1_vals_from_xt_env()
+        for quadname in self.quad_k_list: #quad_settings.keys():
             setting_val = quad_settings[quadname]
             rand_setting = np.random.uniform(setting_val*(1.0 - self.quad_randomness),
                                              setting_val*(1.0 + self.quad_randomness) )
             self.xt_env[quadname] = rand_setting
         return 
 
-    def save_settings_to_file(self):
+    def save_settings_to_file(self, set_random=False):
         yamldict = {}
+        # if the file exists, load in its contents
+        if Path(self.settings_filename).is_file():
+            with open(self.settings_filename, 'r') as fyaml:
+                yamldict = yaml.safe_load(fyaml)
+        # Set the _randomize entry
+        yamldict['_randomize'] = set_random
+        # Now move over the settings from the xt_env to this dictionary
         for quad_kname in self.quad_k_list:
             yamldict[quad_kname] = float(self.xt_env[quad_kname])
         if self.debug: print (f'-- Gonna write out yamldict: ',yamldict, f'\n ....as {self.settings_filename}.')
+        #...and write out the updated yaml file
         with open(self.settings_filename, 'w') as fyaml:
             yaml.dump(yamldict, fyaml)
         return
@@ -124,23 +134,19 @@ class Environment(environment.Environment):
         with open(self.settings_filename, 'r') as fyaml:
             settings_dict = yaml.safe_load(fyaml)
         for setting_name, setting_val in settings_dict.items():
-            print (f'++ Want to set {setting_name} to new value {setting_val}.')
-            self.xt_env['k'+setting_name] = setting_val
+            if setting_name == '_randomize': self.randomize_settings = setting_val
+            else:
+                print (f'++ Want to set {setting_name} to new value {setting_val} in xt_env.')
+                self.xt_env[setting_name] = setting_val
         return
 
     def __init__(self, **data):
         print ('Called __init__ for SimpleVirtualAccelerator environment with \ndata: ', data)
         super().__init__(**data) 
-        print ('super.init called. About to create_VA()')
+        if self.debug: print ('super.init called. About to create_VA()')
         self.create_VA()
-        quad_settings = self.get_quads_and_settings()
         self.print_quads()
 
-        if self.randomize_settings: self.randomize_quad_settings()
-        if not Path(self.settings_filename).is_file(): # Dump settings config to file?
-            self.save_settings_to_file()
-        # Load settings from the settings file
-        self.load_settings_from_file()
         
     def get_variables(self, variable_names: list[str]) -> dict:
         if not self.interface or self.interface is None:
@@ -152,7 +158,7 @@ class Environment(environment.Environment):
     def get_observables(self, observable_names: list[str]) -> dict:        
         if not self.interface:
             raise BadgerNoInterfaceError
-        if self.debug: print ('get_observables() will ask for values of ', observable_names)
+        if self.debug: print ('SimpleVirtualAccelerator.get_observables() will ask for values of ', observable_names)
         # Interface SimpxleVirtualAccelerator runs XSuite.
         tw=self.ring.twiss4d()
         result = self.interface.get_values(observable_names, tw)

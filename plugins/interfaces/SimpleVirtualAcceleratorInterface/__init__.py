@@ -15,9 +15,7 @@ class Interface(interface.Interface):
     _states: dict
     _current_sumsq: float
     _debug: bool
-    _regulate_to: float
-
-    
+    _regulate_to: float    
     
     def __init__(self, **data):
         super().__init__(**data)
@@ -39,19 +37,19 @@ class Interface(interface.Interface):
         readbacks = {}
         for name in device_list:
             if   name == 'qx':
-                readbacks[name] = float(twiss.qx)
-            elif name =='qy':
-                readbacks[name] = float(twiss.qy)
+                readbacks[name] = np.float64(twiss.qx)
+            elif name == 'qy':
+                readbacks[name] = np.float64(twiss.qy)
             else: readbacks[name] = None
         if debug: print (f'SimpleVirtualAcceleratorInterface.get_values() will return: {readbacks}')
         return readbacks
 
     # Or maybe you just want the settings
-    def get_settings(self, device_list, xt_env, debug=True):
+    def get_settings(self, settings_names, xt_env, debug=True):
         settings = {}
-        for name in device_list:
-            if  name in ['qd', 'qf']:
-                settings[name] = xt_env[name].k1
+        for name in settings_names:
+            if  name in ['kqd', 'kqf']:
+                settings[name] = xt_env[name]
                 print ('  Refraining from returning a whole: ', xt_env[name])
             else: settings[name] = None
         if debug: print (f'SimpleVirtualAcceleratorInterface.get_settings() will return: {settings}')
