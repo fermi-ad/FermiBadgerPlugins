@@ -61,5 +61,6 @@ class Interface(interface.Interface):
         if dont_set: return
         # Implement all settings and return nothing
         for key, val in settings_dict.items():
+            if key[0] == '_': continue
             xt_env[key] = val
         return
