@@ -11,8 +11,8 @@ import yaml
 class Environment(environment.Environment):
     name = "SimpleVirtualAccelerator"
     variables = { # Also may be taken as Observables
-        "kqd" : [-1.0, 1.0],
-        "kqf" : [-1.0, 1.0],
+        "kqf" : [ 0.7, 0.9],
+        "kqd" : [-0.9,-0.7],
     }
     observables = [ # elements to be used as Constraints or Observables
         "qx-SETPOINT",
@@ -24,8 +24,8 @@ class Environment(environment.Environment):
     quad_randomness: float = 0.01
     quad_k_list:      list = ['kqd', 'kqf']
     setpoints:     dict = {'defaults': None,
-                           'qx': 0.2556,
-                           'qy': 0.1515,
+                           'qx': 2.05015,
+                           'qy': 1.20948,
                            }
     settings_filename:  str = 'SimpleVirtualAccelerator_settings.yaml'
     randomize_settings: bool = True
@@ -33,7 +33,7 @@ class Environment(environment.Environment):
     _xt_env:     Optional[Any] = None 
     _cell:       Optional[Any] = None 
     _ring:       Optional[Any] = None 
-    p0:         Optional[Any] = None 
+    _p0:         Optional[Any] = None 
     _init_twiss: Optional[Any] = None 
     
 
@@ -83,7 +83,7 @@ class Environment(environment.Environment):
         
         # Use 1 GeV protons, and some initial spread of phase space for them
         self._ring.particle_ref=xt.Particles(mass0=xt.PROTON_MASS_EV, p0c=1e9)  # Mass eV/c^2 Momentum in eV/c
-        self.p0=self._ring.build_particles(x=np.linspace(-0.001,0.001,11),y=np.linspace(-0.001,0.001,11)) # Should take these from named class parameters at initialization.
+        self._p0=self._ring.build_particles(x=np.linspace(-0.001,0.001,11),y=np.linspace(-0.001,0.001,11)) # Should take these from named class parameters at initialization.
         
         # # Get the initial Twiss parameters
         self._init_twiss = self._ring.twiss4d(init='periodic')
