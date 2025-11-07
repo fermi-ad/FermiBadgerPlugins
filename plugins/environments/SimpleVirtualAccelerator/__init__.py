@@ -15,12 +15,18 @@ class Environment(environment.Environment):
         "kqf" : [-1.0, 1.0],
     }
     observables = [ # elements to be used as Constraints or Observables
+        "qx-SETPOINT",
+        "qy-SETPOINT",
         "qx",
         "qy",
     ]
-    debug:            bool = False
+    debug:            bool = True
     quad_randomness: float = 0.01
     quad_k_list:      list = ['kqd', 'kqf']
+    setpoints:     dict = {'defaults': None,
+                           'qx': 0.2556,
+                           'qy': 0.1515,
+                           }
     settings_filename:  str = 'SimpleVirtualAccelerator_settings.yaml'
     randomize_settings: bool = True
 
@@ -155,7 +161,7 @@ class Environment(environment.Environment):
         if self.debug: print ('SimpleVirtualAccelerator.get_observables() will ask for values of ', observable_names)
         # Interface SimpxleVirtualAccelerator runs XSuite.
         tw=self._ring.twiss4d()
-        result = self.interface.get_values(observable_names, tw)
+        result = self.interface.get_values(observable_names, tw, setpoints=self.setpoints, debug=self.debug)
         return result
 
     def set_variables(self, settable_devices: dict[str, float]):
