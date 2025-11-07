@@ -20,7 +20,7 @@ class Environment(environment.Environment):
         "qx",
         "qy",
     ]
-    debug:            bool = True
+    debug:            bool = False
     quad_randomness: float = 0.01
     quad_k_list:      list = ['kqd', 'kqf']
     setpoints:     dict = {'defaults': None,

@@ -1,7 +1,5 @@
 from badger import interface
 import numpy as np
-#import xtrack as xt  # tracking module of Xsuite
-from time import sleep
 import re
 
 class Interface(interface.Interface):
