@@ -69,7 +69,7 @@ class Interface(interface.Interface):
             # Value to return goes in the dictionary
             readbacks[rawdevname] = tempval
             if issetpoint_dev: #...but update accordingly if it's a squared setpoint disregulation we want
-                print (f'Interface get_values() working on setpoint device {clean_dev_name}.')
+                if debug: print (f'Interface get_values() working on setpoint device {clean_dev_name}.')
                 disreg = tempval - setpoints[clean_dev_name]
                 readbacks[rawdevname] = disreg ** 2.0
                 if debug: print(f"Interface get_values(): disreg={disreg} and squared that's {readbacks[rawdevname]}")
@@ -83,7 +83,7 @@ class Interface(interface.Interface):
         for name in settings_names:
             if  name in ['kqd', 'kqf']:
                 settings[name] = xt_env[name]
-                print ('  Refraining from returning a whole: ', xt_env[name])
+                if debug: print ('  Refraining from returning a whole: ', xt_env[name])
             else: settings[name] = None
         if debug: print (f'SimpleVirtualAcceleratorInterface.get_settings() will return: {settings}')
         return settings

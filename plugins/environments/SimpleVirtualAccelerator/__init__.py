@@ -136,16 +136,16 @@ class Environment(environment.Environment):
         for setting_name, setting_val in settings_dict.items():
             if setting_name == '_randomize': self.randomize_settings = setting_val
             else:
-                print (f'++ Want to set {setting_name} to new value {setting_val} in _xt_env.')
+                if self.debug: print (f'++ Want to set {setting_name} to new value {setting_val} in _xt_env.')
                 self._xt_env[setting_name] = setting_val
         return
 
     def __init__(self, **data):
-        print ('Called __init__ for SimpleVirtualAccelerator environment with \ndata: ', data)
+        if self.debug: print ('Called __init__ for SimpleVirtualAccelerator environment with \ndata: ', data)
         super().__init__(**data) 
         if self.debug: print ('super.init called. About to create_VA()')
         self.create_VA()
-        self.print_quads()
+        if self.debug: self.print_quads()
 
         
     def get_variables(self, variable_names: list[str]) -> dict:
