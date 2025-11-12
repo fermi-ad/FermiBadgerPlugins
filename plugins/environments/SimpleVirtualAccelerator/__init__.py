@@ -141,11 +141,11 @@ class Environment(environment.Environment):
         return
 
     def __init__(self, **data):
-        if self.debug: print ('Called __init__ for SimpleVirtualAccelerator environment with \ndata: ', data)
+        #if self.debug: print ('Called __init__ for SimpleVirtualAccelerator environment with \ndata: ', data)
         super().__init__(**data) 
-        if self.debug: print ('super.init called. About to create_VA()')
+        #if self.debug: print ('super.init called. About to create_VA()')
         self.create_VA()
-        if self.debug: self.print_quads()
+        #if self.debug: self.print_quads()
 
         
     def get_variables(self, variable_names: list[str]) -> dict:
