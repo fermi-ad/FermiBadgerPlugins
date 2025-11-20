@@ -1,0 +1,55 @@
+additional_variables: []
+badger_version: 1.4.3
+constraint_formulas: {}
+critical_constraint_names: []
+description: 'Vary kqf and kqd only.
+
+  Bring Qx and Qy from nearby values to desired setpoints
+
+  Multi-Objective approach.'
+environment:
+  name: SimpleVirtualAccelerator
+  params:
+    debug: false
+    quad_k_list:
+    - kqd
+    - kqf
+    quad_randomness: 0.01
+    randomize_settings: false
+    setpoints:
+      qx: 2.05015
+      qy: 1.20948
+    settings_filename: SimpleVirtualAccelerator_settings.yaml
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: mobo
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: 5.0
+    n_restarts: 20
+    name: LBFGS
+  reference_point:
+    qx-SETPOINT: 2.515
+    qy-SETPOINT: 1.70948
+initial_point_actions: []
+name: space-chihuahua
+observable_formulas: {}
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints: {}
+  objectives:
+    qx-SETPOINT: MINIMIZE
+    qy-SETPOINT: MINIMIZE
+  observables: []
+  variables:
+    kqd:
+    - -0.9
+    - -0.7
+    kqf:
+    - 0.7
+    - 0.9
+vrange_hard_limit: {}
+vrange_limit_options: {}
+xopt_version: 2.6.4
