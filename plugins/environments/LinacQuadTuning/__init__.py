@@ -69,7 +69,6 @@ class Environment(environment.Environment):
         "L:D73VPA", "L:D74VPA", "L:Q2VPA", # for integrated data, updated each SC.
         #"VTrajError_SumSqBPM_calc",
         "W_SumLosses", #
-
         "DummySumSq"
     ]
     # Various other parameters

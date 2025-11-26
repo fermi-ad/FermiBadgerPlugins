@@ -50,22 +50,32 @@ class Environment(environment.Environment):
         "L:D73TMV": [-4.5, 4.0],
         "L:D74TMH": [-4.5, 4.0],
         "L:D74TMV": [-4.5, 4.0],
-        
+         
     }
     observables = [ # Also used as Constraints and Observables
         "L:TUNRAD",
         "L:TK1RAD", "L:TK4RAD", "L:D7LMSM",
-        "L:DELM5",# top of the DS face of the Lambertson
-        "L:D23LM","L:D34LM","L:D72LM", # These sum in quadr.?
         "G:LINEFF",
-        "L:ATOR","L:BTOR" ,"L:TO1IN", "L:TO3IN","L:TO5OUT" ,"L:D7TOR",
+        "L:ATOR", "L:BTOR" ,"L:TO1IN", "L:TO3IN","L:TO5OUT" ,"L:D7TOR",
         "B:BLMLAM", "B:BLMQ3",
         "B:BLMS06", "B:BLMS13", "B:BLM125",
         "B:BOOEFF", "B:BLM011",
         
         "L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT", # for the live data.
         "L:D73VPA", "L:D74VPA", "L:Q2VPA", # for integrated data, updated each SC.
+
+        "L:DELM18", "L:D00LM", "L:D0VLM",
+        "L:D11LM", "L:D12LM", "L:D13LM", "L:D14LM",
+        "L:D21LM", "L:D22LM", "L:D23LM", "L:D24LM",
+        "L:D31LM", "L:D32LM", "L:D33LM", "L:D34LM",
+        "L:D41LM", "L:D42LM", "L:D43LM", "L:D44LM",
+        "L:D51LM", "L:D52LM", "L:D53LM", "L:D54LM",
+        "L:D61LM", "L:D62LM", "L:D63LM", "L:D64LM",
+        "L:D71LM", "L:D72LM", "L:D73LM", "L:D74LM",
+        "L:DELM15", "L:DELM13", "L:DELM1", "L:DELM12", "L:DELM11", "L:DELM5", "L:DELM6", "L:DELM7",
+        "L:DELM8", "L:DELM2", "L:DELM3", "L:DELM9", "L:DELM4",
         "VTrajError_SumSqBPM_calc", 
+        "W_SumLosses", 
         "DummySumSq"
     ]
     #sample_event:  str = '@e,52,e,0'
@@ -80,6 +90,16 @@ class Environment(environment.Environment):
                            'L:D74BPV': -1.7,
                            'B:HPQ2':    1.348,
                            'B:VPQ2':  16.2}
+    w_sumsq:       dict = {"L:DELM18": 1., "L:D00LM": 1., "L:D0VLM": 1.,
+                           "L:D11LM": 1., "L:D12LM": 1., "L:D13LM": 1., "L:D14LM": 1.,
+                           "L:D21LM": 1., "L:D22LM": 1., "L:D23LM": 1., "L:D24LM": 1.,
+                           "L:D31LM": 1., "L:D32LM": 1., "L:D33LM": 1., "L:D34LM": 1.,
+                           "L:D41LM": 1., "L:D42LM": 1., "L:D43LM": 1., "L:D44LM": 1.,
+                           "L:D51LM": 1., "L:D52LM": 1., "L:D53LM": 1., "L:D54LM": 1.,
+                           "L:D61LM": 1., "L:D62LM": 1., "L:D63LM": 1., "L:D64LM": 1.,
+                           "L:D71LM": 1., "L:D72LM": 1., "L:D73LM": 1., "L:D74LM": 1.,
+                           "L:DELM15": 1., "L:DELM13": 1., "L:DELM1": 1., "L:DELM12": 1., "L:DELM11": 1., "L:DELM5": 1., "L:DELM6": 1., "L:DELM7": 1.,
+                           "L:DELM8": 1., "L:DELM2": 1., "L:DELM3": 1., "L:DELM9": 1., "L:DELM4": 1.}
 
     #mults:         str = 'multL:MUQ1*20,L:MUQ2*20;'
     
@@ -105,6 +125,11 @@ class Environment(environment.Environment):
             for input_dev in ["L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT"]:
                 if not input_dev in observable_names: observable_names.append(input_dev)
 
+        if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be returned
+            for input_dev in list(self.w_sumsq.keys()):
+                if not input_dev in observable_names: observable_names.append(input_dev)
+            observable_names.remove('W_SumLosses') # only removes first occurrence. 
+
         get_these_observables = []
         for observable_name in observable_names:
             if observable_name.count("_calc") > 0: calc_these.append(observable_name)
@@ -113,9 +138,7 @@ class Environment(environment.Environment):
         if self.debug: print ('get_observables() will ask for values of ', get_these_observables)
         # Interface BasicAcsysInterface handles (read,set) pairs and optional tolerances.
         result = self.interface.get_values(get_these_observables,
-                                           #sample_event =self.sample_event ,
                                            sample_events=self.sample_events,
-                                           #setpoint_str=self.setpoint,
                                            setpoints   =self.setpoints,
                                            debug=self.debug)
         if len(calc_these)>0:
@@ -124,6 +147,13 @@ class Environment(environment.Environment):
                 for sqerror in ["L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT"]:
                     sumsqerror += result[sqerror]
                 result['VTrajError_SumSqBPM_calc'] = sumsqerror
+        if "W_SumLosses" in observable_names and len(self.w_sumsq.keys())>0:
+            sumsq = 0.0
+            for dev_read, weight in self.w_sumsq.items():
+                if dev_read not in result.keys(): print (f'Unable to find {dev_read} among the read-back results: {list(result.keys())}')
+                sumsq += pow(weight * (1.0+result[dev_read]), 2.0) # Add unity, then scale by the weight, then square and add to the sum.
+            result['W_SumLosses'] = sumsq
+
         return result
 
 
