@@ -4,15 +4,22 @@ from badger.errors import BadgerNoInterfaceError
 class Environment(environment.Environment):
     name = "RIL_tuning"
     variables = { # Also may be taken as Observables
-        "L:ATRMHU": [ 0.0, 4.0],
-        "L:ATRMVU": [-4.0, 1.0],
-        "L:ATRMHD": [ 0.0, 2.0],
-        "L:ATRMVD": [ 0.0, 1.0],
-        "L:LTRMH" : [-1.0, 1.0],
-        "L:LTRMV" : [-1.0, 1.0],
+        "L:ATRMHU": [-4.0, 4.0],
+        "L:ATRMVU": [-4.0, 4.0],
+        "L:ATRMHD": [-4.0, 4.0],
+        "L:ATRMVD": [-4.0, 4.0],
+        "L:LTRMH" : [-4.0, 4.0],
+        "L:LTRMV" : [-4.0, 4.0],
 
-        "L:ASOL" : [410.0, 430],
-        "L:LSOL" : [450.0, 480],
+        "L:ASOL" : [300.0, 500],
+        "L:LSOL" : [300.0, 500],
+
+        "L:BTRMHU": [-4.0, 4.0],
+        "L:BTRMVU": [-4.0, 4.0],
+        "L:BTRMHD": [-4.0, 4.0],
+        "L:BTRMVD": [-4.0, 4.0],
+
+        "L:BSOL" : [300.0, 500],
 
         #"multL:MUQ1*20,L:MUQ2*20",
         "L:MUQ1" : [ 250.0, 300.0],
@@ -20,17 +27,21 @@ class Environment(environment.Environment):
         "L:MDQ1" : [ 200.0, 250.0],
         "L:MDQ2" : [ 150.0, 180.0],
 
+
+        "L:MUQ1H" : [-4.0, 4.0],
+        "L:MUQ1V" : [-4.0, 4.0],
+
+        "L:MUQ2H" : [-4.0, 4.0],
+        "L:MUQ2V" : [-4.0, 4.0],
+
+        "L:MDQ1H" : [-4.0, 4.0],
+        "L:MDQ1V" : [-4.0, 4.0],
+
+        "L:MDQ2H" : [-4.0, 4.0],
+        "L:MDQ2V" : [-4.0, 4.0],
+
         "L:RFQPAH" : [ 185.0, 225.0], # Or are there reading,setting,(optional)setting? Like "L:C7PHAS,L:L7PADJ,tol3@0.45"?
         "L:RFBPAH" : [ 210.0, 230.0],
-
-        "L:MUQ1H" : [-5.0, 0.0],
-        "L:MUQ1V" : [-5.0, 0.0],
-
-        "L:MUQ2H" : [-1.5,-0.5],
-        "L:MUQ2V" : [-0.5, 0.1],
-
-        "L:MDQ2H" : [-0.5, 0.5],
-        "L:MDQ2V" : [ 0.3, 0.7],
         "L:V5QSET": [-40.0, -30.0],
 
         "L:D72TMH": [-4.5, 4.0],
@@ -47,7 +58,7 @@ class Environment(environment.Environment):
         "L:DELM5",# top of the DS face of the Lambertson
         "L:D23LM","L:D34LM","L:D72LM", # These sum in quadr.?
         "G:LINEFF",
-        "L:ATOR", "L:TO1IN", "L:TO3IN", "L:D7TOR",
+        "L:ATOR","L:BTOR" ,"L:TO1IN", "L:TO3IN","L:TO5OUT" ,"L:D7TOR",
         "B:BLMLAM", "B:BLMQ3",
         "B:BLMS06", "B:BLMS13", "B:BLM125",
         "B:BOOEFF", "B:BLM011",
