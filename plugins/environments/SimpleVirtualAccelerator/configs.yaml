@@ -1,0 +1,7 @@
+name: "SimpleVirtualAccelerator"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - SimpleVirtualAcceleratorInterface

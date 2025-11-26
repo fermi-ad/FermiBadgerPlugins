@@ -1,0 +1,5 @@
+---
+name: SimpleVirtualAcceleratorInterface
+version: "0.1"
+dependencies:
+  - badger-opt

@@ -1,0 +1,64 @@
+additional_variables: []
+badger_version: 1.4.3
+constraint_formulas: {}
+critical_constraint_names: []
+description: "Vary kqf and kqd\nRegulate Qx only. \nUse Turbo for proximal biasing."
+environment:
+  name: SimpleVirtualAccelerator
+  params:
+    debug: false
+    quad_k_list:
+    - kqd
+    - kqf
+    quad_randomness: 0.01
+    randomize_settings: false
+    setpoints:
+      qx: 2.05015
+      qy: 1.20948
+    settings_filename: SimpleVirtualAccelerator_settings.yaml
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: 5.0
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller:
+    failure_tolerance: 2
+    length: 0.0078125
+    length_max: 2.0
+    length_min: 0.0078125
+    name: OptimizeTurboController
+    restrict_model_data: true
+    scale_factor: 2.0
+    success_tolerance: 2
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: hissing-partridge
+observable_formulas: {}
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints: {}
+  objectives:
+    qx-SETPOINT: MINIMIZE
+  observables:
+  - qx
+  - qy
+  variables:
+    kqd:
+    - -0.9
+    - -0.7
+    kqf:
+    - 0.7
+    - 0.9
+vrange_hard_limit: {}
+vrange_limit_options: {}
+xopt_version: 2.6.4
