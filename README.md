@@ -8,6 +8,7 @@ cd FermiBadgerPlugins
 conda create -n badger-env python=3.12.1 badger-opt=1.4.3 -y
 conda activate badger-env 
 pip install "acsys[settings]"==0.12.8 --extra-index-url https://www-bd.fnal.gov/pip3 --no-cache-dir
+pip install xsuite
 badger -g -cf config.yaml
 ```
 *Nota Bene* ```pip install``` will fail if executed from outside of the FNAL private network (VPN works).
