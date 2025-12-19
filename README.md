@@ -15,13 +15,15 @@ badger -g -cf config.yaml
 *Nota Bene* ```pip install``` of ```acsys-python``` requires being on the FNAL private network or active VPN thereto.
 
 First-time startup notes:
-1. Edit the ```_ROOT``` directories in the config.yaml:
-* ```BADGER_ARCHIVE_ROOT``` and ```BADGER_LOGBOOK_ROOT``` should be some location capacious enough for accumulating some data and logging histories.
+1. Edit the ```*_ROOT``` directories in the config.yaml:
+* ```BADGER_ARCHIVE_ROOT``` and ```BADGER_LOGBOOK_ROOT``` should be some location capacious enough for accumulating some data and logging histories. They can be the same value.
 * ```BADGER_PLUGIN_ROOT``` and ```BADGER_TEMPLATE_ROOT``` can be set to the ```plugins``` directory of the cloned repository you are in now.
 2. UNCHECK THE Automatic VARIABLES CHECKBOX before doing anything else on the GUI. A bug needs to be addressed.
 3. Load the template "TuneQx.yaml" to see a quick-start example using the SimpleVirtualAccelerator Environment. "TuneQxQy_mobo.yaml" adjusts both quad busses to achieve setpoints in both transverse tunes.  For both of these setpoints see the Parameters of the environment. 
 
 Detailed [use guide]([url](https://github.com/xopt-org/Badger/blob/2dfcfd06dbf420c002cbe6c0a47160d35236edec/GUI_GUIDE.md)) to the Badger GUI.
+
+*On the EAF* remember to set ```export OMP_NUM_THREADS=8``` to prevent slow performance from thread flail. 
 
 ## 2. or Build a container image for running with Docker or podman
  - To build: (may require changes to your Docker descktop for sufficient RAM or other memory resources)
