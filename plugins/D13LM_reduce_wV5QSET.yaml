@@ -1,0 +1,105 @@
+additional_variables: []
+badger_version: 1.4.4
+constraint_formulas: {}
+critical_constraint_names: []
+description: ''
+environment:
+  name: RIL_tuning
+  params:
+    debug: false
+    sample_events:
+      B:BOOEFF: '@e,1f,e,0'
+      default: '@e,52,e,0'
+    setpoints:
+      B:HPQ2: 1.348
+      B:VPQ2: 16.2
+      L:D73BPH: 1.2
+      L:D73BPV: -0.53
+      L:D74BPH: 0.341
+      L:D74BPV: -1.7
+      defaults: null
+    settings_role: ril_tuning_fake
+    w_sumsq:
+      L:D00LM: 1.0
+      L:D0VLM: 1.0
+      L:D11LM: 1.0
+      L:D12LM: 1.0
+      L:D13LM: 1.0
+      L:D14LM: 1.0
+      L:D21LM: 1.0
+      L:D22LM: 1.0
+      L:D23LM: 1.0
+      L:D24LM: 1.0
+      L:D31LM: 1.0
+      L:D32LM: 1.0
+      L:D33LM: 1.0
+      L:D34LM: 1.0
+      L:D41LM: 1.0
+      L:D42LM: 1.0
+      L:D43LM: 1.0
+      L:D44LM: 1.0
+      L:D51LM: 1.0
+      L:D52LM: 1.0
+      L:D53LM: 1.0
+      L:D54LM: 1.0
+      L:D61LM: 1.0
+      L:D62LM: 1.0
+      L:D63LM: 1.0
+      L:D64LM: 1.0
+      L:D71LM: 1.0
+      L:D72LM: 1.0
+      L:D73LM: 1.0
+      L:D74LM: 1.0
+      L:DELM1: 1.0
+      L:DELM11: 1.0
+      L:DELM12: 1.0
+      L:DELM13: 1.0
+      L:DELM15: 1.0
+      L:DELM18: 1.0
+      L:DELM2: 1.0
+      L:DELM3: 1.0
+      L:DELM4: 1.0
+      L:DELM5: 1.0
+      L:DELM6: 1.0
+      L:DELM7: 1.0
+      L:DELM8: 1.0
+      L:DELM9: 1.0
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: 5.0
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller: null
+initial_point_actions: []
+name: ''
+observable_formulas: {}
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints:
+    L:D7TOR: !!python/tuple
+    - GREATER_THAN
+    - 20.0
+    L:TUNRAD: !!python/tuple
+    - LESS_THAN
+    - 80.0
+  objectives:
+    L:D13LM: MINIMIZE
+  observables: []
+  variables:
+    L:RFBPAH: !!python/tuple
+    - 210.0
+    - 230.0
+    L:RFQPAH: !!python/tuple
+    - 185.0
+    - 225.0
+    L:V5QSET: !!python/tuple
+    - -40.0
+    - -30.0
+vrange_hard_limit: {}
+vrange_limit_options: {}
+xopt_version: 2.6.11
