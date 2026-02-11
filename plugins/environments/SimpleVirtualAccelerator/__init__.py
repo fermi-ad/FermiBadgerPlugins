@@ -8,6 +8,8 @@ from pydantic import ConfigDict
 from pathlib import Path
 import yaml
 
+import torch
+
 class Environment(environment.Environment):
     name = "SimpleVirtualAccelerator"
     variables = { # Also may be taken as Observables
@@ -143,6 +145,7 @@ class Environment(environment.Environment):
     def __init__(self, **data):
         #if self.debug: print ('Called __init__ for SimpleVirtualAccelerator environment with \ndata: ', data)
         super().__init__(**data) 
+        torch.multiprocessing.set_sharing_strategy('file_system')
         #if self.debug: print ('super.init called. About to create_VA()')
         self.create_VA()
         #if self.debug: self.print_quads()

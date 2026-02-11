@@ -1,6 +1,7 @@
 from badger import interface
 import numpy as np
 import re
+import torch
 
 class Interface(interface.Interface):
     name = 'SimpleVirtualAcceleratorInterface'
@@ -18,6 +19,7 @@ class Interface(interface.Interface):
     
     def __init__(self, **data):
         super().__init__(**data)
+        torch.multiprocessing.set_sharing_strategy('file_system')
         self._states = {}
         self._current_sumsq = 0.0
         self._debug = False

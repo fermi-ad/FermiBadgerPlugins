@@ -91,7 +91,7 @@ class Environment(environment.Environment):
                 if not input_dev in observable_names: observable_names.append(input_dev)
             observable_names.remove('W_SumLosses') # only removes first occurrence. 
 
-        # Some observables are calculated from read-back values.
+        # Some observables are calculated from read-back values. Set them aside, then read the others. 
         get_these_observables = []
         calc_these = []
         for observable_name in observable_names:
