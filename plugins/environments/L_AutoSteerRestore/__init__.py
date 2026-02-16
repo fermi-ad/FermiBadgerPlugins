@@ -47,7 +47,20 @@ class Environment(environment.Environment):
     settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
     setpoints:     dict = {'defaults': None,
+                           'L:D73HPA':  1.2,
+                           'L:D73HPV': -0.53,
+                           'L:D74HPA':  0.341,
+                           'L:D74HPV': -1.7,
+                           'L:Q2HPA':    1.348,
+                           'L:Q2HPV':  16.2,
+                           
                            'L:D73BPH':  1.2,
+                           'L:D73BPV': -0.53,
+                           'L:D74BPH':  0.341,
+                           'L:D74BPV': -1.7,
+                           'B:HPQ2':    1.348,
+                           'B:VPQ2':  16.2,
+                           
                            'L:D73BPV': -0.53,
                            'L:D74BPH':  0.341,
                            'L:D74BPV': -1.7,
@@ -88,7 +101,9 @@ class Environment(environment.Environment):
         if 'VTrajError_SumSqBPM_calc' in observable_names: # Ensure the inputs to the calc will be returned
             #for input_dev in ["L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT"]:
             for obsvbl in observable_names: 
-                if obsvbl.count('-SETPOINT')>0: observable_names.append(input_dev)
+                if obsvbl.count('-SETPOINT')>0:
+                    observable_names.append(input_dev)
+                    print (f'Appending Obsv {obsvbl}')
 
         if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be returned
             for input_dev in list(self.w_sumsq.keys()):
