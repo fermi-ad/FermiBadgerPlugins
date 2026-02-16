@@ -12,18 +12,22 @@ class Environment(environment.Environment):
         "L:D74TMV": [-4.5, 4.0],         
     }
     observables = [ # Also used as Constraints and Observables
+        "L:D73HPA-SETPOINT", "L:D74HPA-SETPOINT", "L:Q2HPA-SETPOINT", # for integrated data, updated each SC.
+        "L:D73VPA-SETPOINT", "L:D74VPA-SETPOINT", "L:Q2VPA-SETPOINT", # for integrated data, updated each SC.
+
+        "L:D73BPH-SETPOINT", "L:D74BPH-SETPOINT", "B:HPQ2-SETPOINT", # for the live data.
+        "L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT", # for the live data.
+
+        "L:D73HPA", "L:D74HPA", "L:Q2HPA", # for integrated data, updated each SC.
+        "L:D73VPA", "L:D74VPA", "L:Q2VPA", # for integrated data, updated each SC.
+        
         "L:TUNRAD",
         "L:TK1RAD", "L:TK4RAD", "L:D7LMSM",
         "G:LINEFF",
         "L:ATOR", "L:BTOR" ,"L:TO1IN", "L:TO3IN","L:TO5OUT" ,"L:D7TOR",
         "B:BLMLAM", "B:BLMQ3",
         "B:BLMS06", "B:BLMS13", "B:BLM125",
-        "B:BOOEFF", "B:BLM011",
-        
-        "L:D73BPH-SETPOINT", "L:D74BPH-SETPOINT", "B:HPQ2-SETPOINT", # for the live data.
-        "L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT", # for the live data.
-        "L:D73HPA", "L:D74HPA", "L:Q2HPA", # for integrated data, updated each SC.
-        "L:D73VPA", "L:D74VPA", "L:Q2VPA", # for integrated data, updated each SC.
+        "B:BOOEFF", "B:BLM011",        
 
         "L:DELM18", "L:D00LM", "L:D0VLM",
         "L:D11LM", "L:D12LM", "L:D13LM", "L:D14LM",
@@ -39,7 +43,7 @@ class Environment(environment.Environment):
         "W_SumLosses"
     ]
     
-    sample_events: dict = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
+    sample_events: dict = {'default':'@e,00,e,0', 'B:BOOEFF': '@e,1f,e,0'}
     settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
     setpoints:     dict = {'defaults': None,
