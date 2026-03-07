@@ -43,3 +43,5 @@ Detailed [use guide]([url](https://github.com/xopt-org/Badger/blob/2dfcfd06dbf42
 ```bash
    docker run --rm -v .:/app testimage:latest 
 ```
+
+Next steps: Create a new PacsysInterface based on https://github.com/fast-iota/pacsys. 
