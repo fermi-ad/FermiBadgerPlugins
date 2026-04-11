@@ -1,0 +1,69 @@
+badger_version: 1.3.4
+critical_constraint_names: []
+description: Contrain on TK1RAD and D7TOR
+environment:
+  name: RIL_tuning
+  params:
+    debug: true
+    sample_event: '@e,52,e,0'
+    setpoint: hold
+    settings_role: ril_tuning
+generator:
+  max_travel_distances: null
+  n_interpolate_points: null
+  name: expected_improvement
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: null
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller: optimizer
+initial_point_actions: []
+name: orchid-ermine
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints:
+    L:D7TOR:
+    - GREATER_THAN
+    - 25.0
+    L:TK1RAD:
+    - LESS_THAN
+    - 18.0
+  objectives:
+    L:TUNRAD: MINIMIZE
+  observables:
+  - L:TK1RAD
+  - L:TK4RAD
+  - L:D7LMSM
+  variables:
+    L:ATRMHD:
+    - 0.0
+    - 2.0
+    L:ATRMHU:
+    - 0.0
+    - 4.0
+    L:ATRMVD:
+    - 0.0
+    - 1.0
+    L:ATRMVU:
+    - -4.0
+    - 1.0
+vrange_limit_options:
+  L:ATRMHD:
+    limit_option_idx: 1
+    ratio_curr: 0.6000000000000001
+    ratio_full: 0.25175591855076945
+  L:ATRMHU:
+    limit_option_idx: 1
+    ratio_curr: 0.6
+    ratio_full: 0.11623141393647465
+  L:ATRMVD:
+    limit_option_idx: 1
+    ratio_curr: 0.6000000000000002
+    ratio_full: 0.21808758383849525
+  L:ATRMVU:
+    limit_option_idx: 1
+    ratio_curr: 0.5169962413184777
+    ratio_full: 0.3286433140147461
+xopt_version: 2.6.1

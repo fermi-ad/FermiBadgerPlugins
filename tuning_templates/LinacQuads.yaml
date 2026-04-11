@@ -79,155 +79,159 @@ observable_formulas: {}
 relative_to_current: false
 vocs:
   constants: {}
-  constraints: {}
+  constraints:
+    L:D7TOR:
+    - GREATER_THAN
+    - 20.0
   objectives:
     W_SumLosses: MINIMIZE
-  observables: []
+  observables:
+  - L:D7LMSM
   variables:
     L:Q01:
-    - 51.58203125
-    - 57.01171875
+    - 54.43115234375
+    - 69.98291015625
     L:Q02:
-    - 77.84271240234375
-    - 86.03668212890625
+    - 80.322265625
+    - 103.271484375
     L:Q03:
-    - 104.833984375
-    - 115.869140625
+    - 107.1533203125
+    - 137.7685546875
     L:Q04:
-    - 112.0703125
-    - 123.8671875
+    - 98.35739135742188
+    - 126.45950317382812
     L:Q11:
-    - 111.24114990234375
-    - 122.95074462890625
+    - 108.09326171875
+    - 138.97705078125
     L:Q12:
-    - 124.50775146484375
-    - 137.61383056640625
+    - 104.248046875
+    - 134.033203125
     L:Q13:
-    - 137.3974609375
-    - 151.8603515625
+    - 133.984375
+    - 172.265625
     L:Q14:
-    - 138.7890625
-    - 153.3984375
+    - 116.3818359375
+    - 149.6337890625
     L:QPS504:
-    - 128.24296951293945
-    - 141.74222946166992
+    - 126.98054313659668
+    - 163.26069831848145
     L:QPS505:
-    - 125.38909912109375
-    - 138.58795166015625
+    - 106.82821273803711
+    - 137.35055923461914
     L:QPS506:
-    - 124.44686889648438
-    - 137.54653930664062
+    - 110.9170913696289
+    - 142.6076889038086
     L:QPS507:
-    - 144.39678192138672
-    - 159.59644317626953
+    - 132.6298713684082
+    - 170.52412033081055
     L:QPS508:
-    - 130.13648986816406
-    - 143.83506774902344
+    - 120.36323547363281
+    - 154.7527313232422
     L:QPS509:
-    - 130.13648986816406
-    - 143.83506774902344
+    - 102.7977466583252
+    - 132.16853141784668
     L:QPS510:
-    - 117.5069808959961
-    - 129.87613677978516
+    - 128.89981269836426
+    - 165.72833061218262
     L:QPS511:
-    - 117.7968978881836
-    - 130.19657135009766
+    - 100.35276412963867
+    - 129.02498245239258
     L:QPS512:
-    - 145.34807205200195
-    - 160.64786911010742
+    - 143.91183853149414
+    - 185.0295066833496
     L:QPS513:
-    - 99.74956512451172
-    - 110.24951934814453
+    - 84.98191833496094
+    - 109.26246643066406
 vrange_hard_limit: {}
 vrange_limit_options:
   L:Q01:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:Q02:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:Q03:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:Q04:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:Q11:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:Q12:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:Q13:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:Q14:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS504:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS505:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS506:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS507:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS508:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS509:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS510:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS511:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS512:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
   L:QPS513:
     delta: 0.1
     limit_option_idx: 0
-    ratio_curr: 0.1
+    ratio_curr: 0.25
     ratio_full: 0.1
 xopt_version: 2.6.6
