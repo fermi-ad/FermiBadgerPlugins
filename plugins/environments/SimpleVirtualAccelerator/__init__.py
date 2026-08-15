@@ -1,6 +1,6 @@
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
-from typing import Any, Optional
+from typing import List, Any, Optional
 import numpy as np
 import xobjects as xo
 import xtrack as xt  # tracking module of Xsuite
@@ -22,21 +22,21 @@ class Environment(environment.Environment):
         "qx",
         "qy",
     ]
-    debug:            bool = False
-    quad_randomness: float = 0.01
-    quad_k_list:      list = ['kqd', 'kqf']
-    setpoints:     dict = {'defaults': None,
-                           'qx': 2.05015,
-                           'qy': 1.20948,
-                           }
+    debug:            bool  = False
+    quad_randomness:  float = 0.01
+    # NOTE: the Badger 1.5.4 GUI param editor rebuilds param types from the
+    # values and crashes on dict- or list-valued params, so these two are
+    # strings parsed in __init__ (comma-separated names / inline-YAML mapping).
+    quad_k_list:      str = 'kqd, kqf'
+    setpoints:        str = '{qx: 2.05015, qy: 1.20948}'
     settings_filename:  str = 'SimpleVirtualAccelerator_settings.yaml'
     randomize_settings: bool = True
 
-    _xt_env:     Optional[Any] = None 
-    _cell:       Optional[Any] = None 
-    _ring:       Optional[Any] = None 
-    _p0:         Optional[Any] = None 
-    _init_twiss: Optional[Any] = None 
+    # _xt_env:     Optional[Any] = None 
+    # _cell:       Optional[Any] = None 
+    # _ring:       Optional[Any] = None 
+    # _p0:         Optional[Any] = None 
+    # _init_twiss: Optional[Any] = None 
     
 
     def create_VA (self):
@@ -93,7 +93,7 @@ class Environment(environment.Environment):
 
     def get_quad_k1_vals_from__xt_env(self):
         quad_settings = {}
-        for quadvar in self.quad_k_list:
+        for quadvar in self._quad_k_names:
             quad_settings[quadvar] = self._xt_env[quadvar]
         return quad_settings
 
@@ -108,7 +108,7 @@ class Environment(environment.Environment):
     def randomize_quad_settings(self):
         if self.debug: print ('Randomizing quad settings.')
         quad_settings = self.get_quad_k1_vals_from__xt_env()
-        for quadname in self.quad_k_list: #quad_settings.keys():
+        for quadname in self._quad_k_names: #quad_settings.keys():
             setting_val = quad_settings[quadname]
             rand_setting = np.random.uniform(setting_val*(1.0 - self.quad_randomness),
                                              setting_val*(1.0 + self.quad_randomness) )
@@ -124,7 +124,7 @@ class Environment(environment.Environment):
         # Set the _randomize entry
         yamldict['_randomize'] = set_random
         # Now move over the settings from the _xt_env to this dictionary
-        for quad_kname in self.quad_k_list:
+        for quad_kname in self._quad_k_names:
             yamldict[quad_kname] = float(self._xt_env[quad_kname])
         if self.debug: print (f'-- Gonna write out yamldict: ',yamldict, f'\n ....as {self.settings_filename}.')
         #...and write out the updated yaml file
@@ -144,8 +144,14 @@ class Environment(environment.Environment):
 
     def __init__(self, **data):
         #if self.debug: print ('Called __init__ for SimpleVirtualAccelerator environment with \ndata: ', data)
-        super().__init__(**data) 
+        super().__init__(**data)
         torch.multiprocessing.set_sharing_strategy('file_system')
+        # Parse the string params (see the NOTE at the field definitions)
+        self._quad_k_names = [s.strip() for s in self.quad_k_list.split(',') if s.strip()]
+        parsed_setpoints = yaml.safe_load(self.setpoints) if self.setpoints.strip() else {}
+        if not isinstance(parsed_setpoints, dict):
+            raise ValueError(f"'setpoints' must be an inline-YAML mapping, got: {self.setpoints!r}")
+        self._setpoints = {str(k): float(v) for k, v in parsed_setpoints.items()}
         #if self.debug: print ('super.init called. About to create_VA()')
         self.create_VA()
         #if self.debug: self.print_quads()
@@ -164,7 +170,7 @@ class Environment(environment.Environment):
         if self.debug: print ('SimpleVirtualAccelerator.get_observables() will ask for values of ', observable_names)
         # Interface SimpxleVirtualAccelerator runs XSuite.
         tw=self._ring.twiss4d()
-        result = self.interface.get_values(observable_names, tw, setpoints=self.setpoints, debug=self.debug)
+        result = self.interface.get_values(observable_names, tw, setpoints=self._setpoints, debug=self.debug)
         return result
 
     def set_variables(self, settable_devices: dict[str, float]):

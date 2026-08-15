@@ -1,7 +1,18 @@
-name: badger-envX
+name: Badger_154_VirtAcc
 channels:
   - conda-forge
   - nodefaults
 dependencies:
-  - badger-opt=1.4.3
-prefix: /Users/stjohn/miniconda3/envs/badger-envX
+  - python=3.12
+  - badger-opt=1.5.4
+  - numpy=2.5.0
+  - pip
+  - pip:
+      # Xsuite stack (co-evolving packages; pin the whole family)
+      - xtrack==0.107.0
+      - xobjects==0.6.4
+      - xdeps==0.10.19
+      - xpart==0.23.13
+      - xfields==0.25.18
+      # Python bridge to MAD-X
+      - cpymad==1.19.0

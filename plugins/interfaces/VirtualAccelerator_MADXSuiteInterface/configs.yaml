@@ -1,0 +1,5 @@
+name: "VirtualAccelerator_MADXSuiteInterface"
+version: "0.2"
+dependencies:
+  - badger-opt
+  - xtrack
