@@ -198,7 +198,6 @@ dependencies:
   - zlib-ng=2.3.3
   - zstd=1.5.7
   - pip:
-      - acsys==0.12.8
       - cpymad==1.19.0
       - cython==3.2.6
       - decorator==5.3.1
@@ -215,4 +214,6 @@ dependencies:
       - xpart==0.23.13
       - xsuite==0.54.0
       - xtrack==0.107.0
-prefix: /Users/stjohn/miniconda3/envs/Badger_154_VirtAcc
+      - --extra-index-url https://www-bd.fnal.gov/pip3 
+      - acsys==0.12.8
+prefix: /Users/stjohn/miniconda3/envs/FermiBadger_env
