@@ -30,7 +30,7 @@ BADGER_LOG_DIRECTORY:
   description: Directory where daily log files will be stored
   display_name: log directory
   is_path: true
-  value: /Users/stjohn/Development/BayesOptimization_Xopt/Badger_154_VirtAcc/logs
+  value: /Users/stjohn/Development/BayesOptimization_Xopt/testjunk/FermiBadgerPlugins/logs
 BADGER_LOG_LEVEL:
   description: Logging level for the Badger logger
   display_name: logging level
@@ -41,7 +41,7 @@ BADGER_PLUGIN_ROOT:
     plugins
   display_name: plugin root
   is_path: true
-  value: /Users/stjohn/Development/BayesOptimization_Xopt/Badger_154_VirtAcc/plugins
+  value: /Users/stjohn/Development/BayesOptimization_Xopt/testjunk/FermiBadgerPlugins/plugins
 BADGER_PYTORCH_TENSOR_SHARING_STRATEGY:
   description: Setting for which strategy pytorch will use when passing tensors to
     subprocesses. Valid options are 'file_system' (default) or 'file_descriptor'
@@ -53,7 +53,7 @@ BADGER_TEMPLATE_ROOT:
     routine templates
   display_name: template root
   is_path: true
-  value: /Users/stjohn/Development/BayesOptimization_Xopt/Badger_154_VirtAcc/tuning_templates
+  value: /Users/stjohn/Development/BayesOptimization_Xopt/testjunk/FermiBadgerPlugins/tuning_templates
 BADGER_THEME:
   description: Theme for the Badger GUI
   display_name: theme

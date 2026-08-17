@@ -8,7 +8,7 @@ dependencies:
 interface:
   - VirtualAccelerator_MADXSuiteInterface
 params:
-  lattice_filename: "/Users/stjohn/Development/BayesOptimization_Xopt/Badger_154_VirtAcc/DR/mu2e-dr-model-v2026.03.23.madx"
+  lattice_filename: "sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx"
   sequence_name: "full"
   # Position monitors in the Mu2e Delivery Ring lattice are named
   # P_DHPnnn (horizontal) / P_DVPnnn (vertical).
