@@ -216,4 +216,4 @@ dependencies:
       - xtrack==0.107.0
       - --extra-index-url https://www-bd.fnal.gov/pip3 
       - acsys==0.12.8
-prefix: /Users/stjohn/miniconda3/envs/FermiBadger_env
+
