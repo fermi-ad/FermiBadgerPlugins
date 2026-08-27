@@ -1,0 +1,13 @@
+--- a/pydantic_editor.py
++++ b/pydantic_editor.py
+@@ -766,7 +766,10 @@
+                     f"Generator has {field} set but no compatible {field} exists in defaults. "
+                     "Item has likely been filtered out from not being included in defaults."
+                 )
+-            special_item_dict = {}
++                special_item_dict = {}
++            else:
++                # Field is explicitly set to null - nothing to initialize, just return
++                return
+
+         special_item_dict["vocs"] = self.vocs.model_dump()

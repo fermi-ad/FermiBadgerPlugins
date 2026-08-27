@@ -2,21 +2,18 @@ additional_variables: []
 badger_version: 1.5.4
 constraint_formulas: {}
 critical_constraint_names: []
-description: Tune main DR quad busses to hold the transverse design tunes (squared-error
-  setpoint objectives)
+description: Adjust main DR quad busses to change the horizontal tune (squared-error
+  setpoint objectives). No proximal biasing (TurBO=null)
 environment:
   name: VirtualAccelerator_MADXSuite
   params:
-    beam_p0c_eV: 8890000000.0
+    beam_p0c_eV: 8889999999.0
     bpm_name_pattern: bpm
     debug: false
-    lattice_filename: 'sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx'
-    lattice_settings_filename: VirtualAccelerator_MADXSuite_lattice_settings.yaml
-    randomize_amount: 0.01
-    randomize_settings: false
+    lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
     rel_range: 0.1
     sequence_name: full
-    setpoints: '{''qx'': 0.2334}'
+    setpoints: '{''qx'': 9.049, ''qy'': 9.035}'
     zero_half_range: -1.9
 formulas: {}
 generator:
@@ -35,13 +32,21 @@ generator:
     constants: '{}'
     constraints: '{}'
     objectives: '{''qx-SETPOINT'': {''dtype'': None, ''type'': ''MinimizeObjective''}}'
-    observables: '{}'
-    variables: '{''i_dqf'': {''dtype'': None, ''default_value'': None, ''domain'':
-      [217.07999999999998, 265.32], ''type'': ''ContinuousVariable''}, ''i_dqd'':
-      {''dtype'': None, ''default_value'': None, ''domain'': [216.54, 264.66], ''type'':
+    observables: '{''qx'': {''dtype'': None, ''type'': ''Observable''}, ''qy'': {''dtype'':
+      None, ''type'': ''Observable''}, ''qx-SETPOINT'': {''dtype'': None, ''type'':
+      ''Observable''}, ''qy-SETPOINT'': {''dtype'': None, ''type'': ''Observable''}}'
+    variables: '{''i_dqd'': {''dtype'': None, ''default_value'': None, ''domain'':
+      [216.54, 264.66], ''type'': ''ContinuousVariable''}, ''i_dqf'': {''dtype'':
+      None, ''default_value'': None, ''domain'': [217.07999999999998, 265.32], ''type'':
       ''ContinuousVariable''}}'
-initial_point_actions: []
-name: VirtualAccelerator_MADXSuite_example
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: DR_BetatronTunes_sim
 observable_formulas: {}
 relative_to_current: false
 vocs:
@@ -51,7 +56,19 @@ vocs:
     qx-SETPOINT:
       dtype: null
       type: MinimizeObjective
-  observables: {}
+  observables:
+    qx:
+      dtype: null
+      type: Observable
+    qx-SETPOINT:
+      dtype: null
+      type: Observable
+    qy:
+      dtype: null
+      type: Observable
+    qy-SETPOINT:
+      dtype: null
+      type: Observable
   variables:
     i_dqd:
       default_value: null

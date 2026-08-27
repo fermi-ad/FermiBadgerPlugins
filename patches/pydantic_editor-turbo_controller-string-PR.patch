@@ -1,0 +1,40 @@
+diff --git c/src/badger/gui/components/pydantic_editor.py w/src/badger/gui/components/pydantic_editor.py
+index 286a13b..103c09d 100644
+--- c/src/badger/gui/components/pydantic_editor.py
++++ w/src/badger/gui/components/pydantic_editor.py
+@@ -754,13 +754,29 @@ class BadgerPydanticEditor(QTreeWidget):
+ 
+         self.initialize_combo_widget(widget, selections)
+ 
+-        special_item_dict: dict[str, Any] | None = defaults.get(field, {})
++        # Get value without default - if key doesn't exist, get() returns None
++        # If key exists but value is None (from null in YAML), it's also None
++        # We need to distinguish these cases for the warning
++        special_item_dict_raw = defaults.get(field)
+ 
+-        if special_item_dict is None:
+-            logger.warning(
+-                f"Generator has {field} set but no compatible {field} exists."
+-            )
+-            special_item_dict = {}
++        # Handle case where special_item_dict is a string (just the class name)
++        # e.g., turbo_controller: OptimizeTurboController
++        # Convert to dict with name key
++        if isinstance(special_item_dict_raw, str):
++            special_item_dict: dict[str, Any] = {"name": special_item_dict_raw}
++        elif special_item_dict_raw is None:
++            # Check if key exists in dict - if not, warn; if yes, it's explicitly null
++            if field not in defaults:
++                logger.warning(
++                    f"Generator has {field} set but no compatible {field} exists in defaults. "
++                    "Item has likely been filtered out from not being included in defaults."
++                )
++                special_item_dict = {}
++            else:
++                # Field is explicitly set to null - nothing to initialize, just return
++                return
++        else:
++            special_item_dict = special_item_dict_raw
+ 
+         special_item_dict["vocs"] = self.vocs.model_dump()
+ 

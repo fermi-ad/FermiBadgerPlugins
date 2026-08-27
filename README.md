@@ -5,10 +5,12 @@ Use this repo is one of two ways:
 ```bash
 git clone git@github.com:fermi-ad/FermiBadgerPlugins.git
 cd FermiBadgerPlugins
-conda create -n badger-env python=3.12.1 badger-opt=1.4.4 -y
-conda activate badger-env 
+conda create -n FermiBadger_env python=3.12.1 badger-opt=1.5.4 -y
+conda activate FermiBadger_env 
 pip install "acsys[settings]"==0.12.8 --extra-index-url https://www-bd.fnal.gov/pip3 --no-cache-dir
 pip install xsuite
+# Apply patch for turbo_controller null handling (fixes warning with null turbo_controller)
+patch -p1 < patches/pydantic_editor-null-turbo_controller.patch
 # Modify the four "..._ROOT" directories in the config.yaml file.  See notes.
 badger -g -cf config.yaml
 ```

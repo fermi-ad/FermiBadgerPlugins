@@ -4,7 +4,14 @@ The lattice file is parsed by MAD-X (via cpymad) and converted to an xtrack
 Line, which serves as the fast re-simulatable machine model.  Tunable
 variables and readable observables are deduced automatically from the loaded
 lattice; the companion interface (VirtualAccelerator_MADXSuiteInterface)
-translates channel names into reads/writes on the Line and its twiss results.
+translates channel names into reads/writes on the lattice and its twiss results.
+
+IMPORTANT: MAD-X deferred expressions (e.g., constants used in calculated values)
+are evaluated at lattice load time when converting to xtrack.  So when variables are
+changed via set_variables(), this Environment creates a new MAD-X instance with
+updated parameter values (written to a temporary lattice file) to ensure functional
+expressions are re-evaluated correctly.  The xtrack Line is then rebuilt from this
+updated MAD-X sequence.
 """
 
 import logging
@@ -52,7 +59,7 @@ class Environment(environment.Environment):
     # Populated IN PLACE by create_VA() once the lattice is loaded.  Badger
     # 1.5.4's factory.load_plugin binds aliases to these exact objects before
     # instantiating the environment, so they must be mutated (clear/update,
-    # slice assignment), never rebound.
+    # slice assignment), never re-bound.
     variables = {}
     observables = []
 
@@ -69,19 +76,22 @@ class Environment(environment.Environment):
     # Case-insensitive regex that marks beam position monitor elements.
     bpm_name_pattern: str = 'bpm'
     # '<observable>-SETPOINT' targets as an inline-YAML mapping string,
-    # e.g. '{qx: 9.65, qy: 9.74}'.  Design values recorded at load time are
+    # e.g. '{"qx": 9.65, "qy": 9.74}'.  Design values recorded at load time are
     # used for any observable not listed here.  This is a string (not a
     # dict) because the Badger 1.5.4 GUI param editor rebuilds param types
     # from the values and crashes on dict- or list-valued params.
     setpoints: str = ''
-    lattice_settings_filename: str = 'VirtualAccelerator_MADXSuite_lattice_settings.yaml'
-    randomize_settings: bool = False
-    randomize_amount: float = 0.01  # relative half-width of the randomization
 
     # Runtime state (pydantic private attributes, not settable via config)
-    _line: Optional[Any] = None
-    _twiss: Optional[Any] = None
-    _sequence_name_matched: Optional[str] = None
+    # Note: xtrack's deferred_expressions=True evaluates MAD-X expressions at
+    # conversion time and doesn't maintain dynamic dependencies.  When variables
+    # change, we re-load the lattice into MAD-X with updated parameter values
+    # (via a temporary file) to ensure deferred expressions are re-evaluated.
+    _line: Optional[Any] = None  # xtrack Line for fast twiss calculations
+    _madx: Optional[Any] = None  # cpymad Madx object (re-created on variable changes)
+    _particle_ref: Optional[Any] = None  # xtrack reference particle (stored for re-conversion)
+    _twiss: Optional[Any] = None  # cached twiss results
+    _sequence_name_matched: Optional[str] = None  # MAD-X sequence name (case-insensitive match)
     _setpoints: Optional[dict] = None  # parsed from the 'setpoints' string
 
     def __init__(self, **data):
@@ -118,7 +128,13 @@ class Environment(environment.Environment):
     # ------------------------------------------------------------------ #
 
     def create_VA(self):
-        """Load the MAD-X lattice and build the xtrack Line virtual machine."""
+        """Load the MAD-X lattice and build the xtrack Line virtual machine.
+
+        The lattice is loaded into MAD-X (via cpymad), a beam is attached,
+        and the sequence is applied.  The MAD-X sequence is converted to an
+        xtrack Line for fast twiss calculations.  The MAD-X object is stored
+        for later use in re-loading the lattice with updated parameter values.
+        """
         if not self.lattice_filename:
             raise ValueError(
                 "The 'lattice_filename' parameter is required "
@@ -149,6 +165,12 @@ class Environment(environment.Environment):
         mad.beam()
         mad.use(sequence=matched)
 
+        # Store the cpymad Madx object for proper deferred expression handling.
+        # xtrack's deferred_expressions=True evaluates expressions at conversion
+        # time and doesn't maintain dependencies, so we need MAD-X for variable
+        # changes that affect optics.
+        self._madx = mad
+
         self._line = xt.Line.from_madx_sequence(
             mad.sequence[matched], deferred_expressions=True
         )
@@ -167,6 +189,8 @@ class Environment(environment.Environment):
             self._line.particle_ref = xt.Particles(
                 mass0=xt.PROTON_MASS_EV, q0=1, p0c=self.beam_p0c_eV
             )
+        # Store particle reference for later restoration after re-conversion
+        self._particle_ref = self._line.particle_ref
 
         # In-place population of the class-level lists (see comment at the
         # class attributes above).
@@ -179,21 +203,96 @@ class Environment(environment.Environment):
         design_twiss = self._compute_twiss()
         self._record_default_setpoints(design_twiss)
 
-        # Restore machine state from a previous session, or record the
-        # current (design) state for the next one.
-        if Path(self.lattice_settings_filename).is_file():
-            self._load_settings_from_file()
-        else:
-            self._save_settings_to_file()
-
-        if self.randomize_settings:
-            self._randomize_settings()
-            self._save_settings_to_file()
-
         self._twiss = self._compute_twiss()
 
+    def _update_madx_variables(self, variable_inputs: dict[str, float]):
+        """Update MAD-X variables by creating a temporary lattice file with updated values.
+
+        xtrack's deferred_expressions=True evaluates MAD-X expressions at conversion
+        time and doesn't maintain dynamic dependencies. To ensure deferred expressions
+        are re-evaluated when variables change, we:
+
+        1. Read the original lattice file
+        2. Replace each variable's definition with the new value
+        3. Create a temporary MAD-X file with the updated values
+        4. Create a new MAD-X instance from the temp file
+        5. Rebuild the xtrack Line from the updated MAD-X sequence
+
+        Args:
+            variable_inputs: Dict mapping variable names to their new values.
+        """
+        import tempfile
+        import os
+        import re
+
+        # Read the original lattice file
+        with open(self.lattice_filename, 'r') as f:
+            lines = f.readlines()
+
+        # For each variable to change, find its definition and replace the value
+        modified_lines = []
+        changed_vars = set()
+
+        for line in lines:
+            modified_line = line
+            # Try to match variable definitions like "I_DQD = 240.6;"
+            for var_name, new_value in variable_inputs.items():
+                # Pattern: variable_name = <old_value>;
+                pattern = rf'^\s*{re.escape(var_name)}\s*=\s*[\d.\-eE+]+\s*;'
+                match = re.match(pattern, line, re.IGNORECASE)
+                if match:
+                    # Replace with the new value, preserving format
+                    # Find the old value and replace it
+                    old_value = match.group(0).split('=')[1].strip().rstrip(';')
+                    modified_line = line.replace(old_value, str(new_value))
+                    changed_vars.add(var_name)
+                    break
+            modified_lines.append(modified_line)
+
+        # Write to temp file
+        temp_lattice_path = os.path.join(
+            tempfile.gettempdir(),
+            f'madx_lattice_{os.getpid()}_{id(self)}.madx'
+        )
+
+        with open(temp_lattice_path, 'w') as f:
+            f.writelines(modified_lines)
+
+        logger.info(f'Created temporary MAD-X file with updated variables: {temp_lattice_path}')
+        if changed_vars:
+            logger.info(f'Changed variables: {changed_vars}')
+        else:
+            logger.warning(f'No variables found in lattice file: {variable_inputs.keys()}')
+
+        # Create a new MAD-X instance from the temporary file
+        mad = Madx(stdout=None if self.debug else False)
+        mad.call(temp_lattice_path)
+
+        # Re-apply the sequence
+        mad.use(sequence=self._sequence_name_matched)
+
+        # Store the new cpymad Madx object
+        self._madx = mad
+
+        # Rebuild xtrack Line from the updated MAD-X sequence
+        self._line = xt.Line.from_madx_sequence(
+            mad.sequence[self._sequence_name_matched], deferred_expressions=True
+        )
+
+        # Restore the reference particle (lost during re-conversion)
+        self._line.particle_ref = self._particle_ref
+
+        # Clean up the temporary file
+        try:
+            os.remove(temp_lattice_path)
+        except OSError:
+            logger.warning(f'Could not remove temporary file: {temp_lattice_path}')
+
     def _compute_twiss(self):
-        """Periodic 4d twiss of the ring; None if the optics are unstable."""
+        """Compute periodic 4d twiss of the ring using the xtrack Line.
+
+        Returns None if the optics are unstable or twiss fails.
+        """
         try:
             return self._line.twiss(method='4d')
         except Exception as e:
@@ -206,8 +305,9 @@ class Environment(environment.Environment):
 
         't_turn_s' is the simulation clock (time within the turn, written by
         tracking itself); names like '__0__' or '__vary_default' are internals
-        of the deferred-expression engine; the rest are MAD-X predefined
-        constants carried along by the conversion.
+        of xtrack's deferred-expression engine; names starting with '__' are
+        xtrack bookkeeping; the rest are MAD-X predefined constants carried
+        along by the conversion (pi, particle masses, etc.).
         """
         return (
             name.startswith('__')
@@ -227,14 +327,18 @@ class Environment(environment.Environment):
     def _deduce_variables(self) -> dict:
         """Infer the tunable knobs from the loaded lattice.
 
-        Knobs come from two places:
-        - line.vars entries (the lattice's deferred-expression variables),
-          excluding xtrack's internal bookkeeping names;
+        Knobs come from two sources:
+        - line.vars entries (MAD-X global variables like I_DQD, I_DQF, etc.).
+          These may be power supply currents, fudge factors, or other parameters
+          that control element strengths via deferred expressions.
         - element strength attributes (k0..k4) that are NOT driven by a
           deferred expression.  Expression-driven attributes are excluded
-          because the controlling variable is already exposed as a knob and a
-          direct write would be silently overwritten the next time the
-          expression is re-evaluated.
+          because the controlling variable is already exposed as a knob.
+
+        Note: Variables that control element strengths through MAD-X deferred
+        expressions (e.g., G_DQ206 = ... * I_DQD * ...) are included here.
+        When such a variable is changed, the environment re-loads the lattice
+        with the updated value to ensure MAD-X re-evaluates all dependent expressions.
         """
         variables = {}
 
@@ -285,6 +389,8 @@ class Environment(environment.Environment):
         """Record design optics as fallback '<name>-SETPOINT' targets.
 
         Setpoints supplied via the 'setpoints' parameter take precedence.
+        The design values from the pristine lattice (after load, before any
+        changes) are used as default targets for '<name>-SETPOINT' observables.
         """
         if not self.interface or design_twiss is None:
             return
@@ -309,7 +415,19 @@ class Environment(environment.Environment):
     def set_variables(self, variable_inputs: dict[str, float]):
         if not self.interface:
             raise BadgerNoInterfaceError
+
+        # When we have a MAD-X object, update it directly for proper deferred
+        # expression handling. xtrack's deferred_expressions=True evaluates
+        # expressions at conversion time and doesn't maintain dynamic dependencies.
+        # We create a new MAD-X instance with updated parameters via a temporary
+        # lattice file to ensure all deferred expressions are re-evaluated.
+        if self._madx is not None:
+            self._update_madx_variables(variable_inputs)
+
+        # Update the xtrack Line via the interface (for element attributes that
+        # are not driven by deferred expressions, and to keep line.vars in sync)
         self.interface.set_values(variable_inputs, self._line, debug=self.debug)
+
         # The optics change whenever a knob moves; refresh the cached twiss.
         self._twiss = self._compute_twiss()
 
@@ -362,65 +480,5 @@ class Environment(environment.Environment):
         return None
 
     # ------------------------------------------------------------------ #
-    # Lattice settings persistence
+    # End of Environment class
     # ------------------------------------------------------------------ #
-
-    def _save_settings_to_file(self):
-        """Save the current value of every deduced knob to the settings file."""
-        settings = {}
-        for name in type(self).variables:
-            value = self._read_channel_value(name)
-            if value is not None:
-                settings[name] = value
-
-        logger.info(
-            f'Saving {len(settings)} lattice settings to '
-            f'{self.lattice_settings_filename}'
-        )
-        with open(self.lattice_settings_filename, 'w') as f:
-            yaml.safe_dump(settings, f)
-
-    def _load_settings_from_file(self):
-        """Restore knob values from the settings file."""
-        with open(self.lattice_settings_filename, 'r') as f:
-            settings = yaml.safe_load(f) or {}
-
-        # Ignore bookkeeping keys from older settings files.
-        settings = {k: v for k, v in settings.items() if not k.startswith('_')}
-
-        logger.info(
-            f'Loading {len(settings)} lattice settings from '
-            f'{self.lattice_settings_filename}'
-        )
-        self._apply_settings(settings)
-
-    def _apply_settings(self, settings: dict[str, float]):
-        """Write knob values through the interface's set pathway."""
-        if not settings:
-            return
-        if not self.interface:
-            logger.warning(
-                'No interface attached; skipping application of '
-                f'{len(settings)} lattice settings'
-            )
-            return
-        self.interface.set_values(settings, self._line, debug=self.debug)
-
-    def _randomize_settings(self):
-        """Perturb every knob uniformly within value * (1 +/- randomize_amount)."""
-        rng = np.random.default_rng()
-        settings = {}
-        for name in type(self).variables:
-            value = self._read_channel_value(name)
-            if value is None:
-                continue
-            lo, hi = sorted(
-                (
-                    value * (1 - self.randomize_amount),
-                    value * (1 + self.randomize_amount),
-                )
-            )
-            settings[name] = float(rng.uniform(lo, hi))
-
-        logger.info(f'Randomizing {len(settings)} lattice settings')
-        self._apply_settings(settings)
