@@ -136,8 +136,8 @@ See: `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py:149-150`
 
 ```bash
 # Run all tests
-cd /Users/stjohn/Development/BayesOptimization_Xopt/Badger_154_VirtAcc
-conda activate Badger_154_VirtAcc
+cd /Users/stjohn/Development/BayesOptimization_Xopt/BayesOptimization_Xopt/FermiBadgerPlugins
+conda activate FermiBadger_env
 python tests/VA_plugin_smoke_test.py
 python tests/VA_template_integration_test.py
 python tests/VA_gui_param_editor_test.py
