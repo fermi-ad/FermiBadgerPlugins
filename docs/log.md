@@ -440,3 +440,55 @@ The qx value changes monotonically as i_dqd is varied, proving deferred expressi
 - The approach adds I/O overhead but provides correctness
 - Works with any MAD-X lattice file without modification
 - User can test with the GUI - the optimization should now show progress when variables are changed
+
+---
+
+# Session Log - 2026-08-28
+
+## README Streamlined
+
+### 09:30 - Initial request
+User requested to streamline repo cloning and environment setup instructions in the README, with a detailed plan before doing anything.
+
+### 09:35 - Analysis complete
+Analyzed current README structure and identified issues:
+1. Installation steps mixed together
+2. requirements.txt empty and redundant with environment.yml
+3. FNAL network requirement for acsys buried in notes
+4. Patches not prominent
+5. Container section had duplicate docker run commands
+
+User provided clarification:
+- Conda environment should be FermiBadger_env (other name is cruft)
+- Conda install only (source install won't eliminate need for patches)
+- environment.yml should be used for quick start
+- Remove requirements.txt and all references to it
+- Patches are required for everyone (not just developers)
+- Highlight FNAL network access requirement prominently
+- No minimal example needed for VirtualAccelerator_MADXSuite
+
+### 09:40 - Plan designed and implemented
+Designed and implemented new README structure:
+
+Quick Start (5 steps):
+1. Clone repo
+2. Create conda env from environment.yml (with FNAL network note)
+3. Apply patches to Badger 1.5.4
+4. Configure config.yaml
+5. Launch Badger GUI
+
+Also:
+- Created Environment Setup Details section
+- Created First-Time GUI Setup section
+- Removed requirements.txt
+- Removed duplicate Docker commands
+- Reorganized Troubleshooting
+
+### 09:45 - User manual adjustments
+User made manual adjustments to README and synced to origin.
+
+### 09:50 - Documentation updated
+- Created memory/README-streamlined-setup.md
+- Updated MEMORY.md index
+- Updated docs/progress.md
+- Updated docs/log.md

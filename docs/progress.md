@@ -318,3 +318,48 @@ After implementing the temporary file approach, the `lattice_settings_filename` 
 - `lattice_settings_filename` from all tuning template YAML files
 
 **Note:** If cross-session persistence becomes important, it could be re-added later using the same temporary file approach (read original → apply settings via MAD-X → save as default for next session).
+
+---
+
+## 2026-08-28: README streamlined
+
+### Problem
+The README had several issues:
+- Installation steps were mixed together (git clone, conda env, pip installs, patches)
+- `requirements.txt` was empty and redundant with `environment.yml`
+- FNAL network requirement for `acsys` was buried in a note
+- Patches were not prominent (only mentioned in old quick start)
+- Container section had duplicate `docker run` commands
+
+### Solution Applied
+
+**Rewrote README.md with streamlined structure:**
+
+1. **Quick Start** - Five clear steps:
+   - Clone repo
+   - Create conda env from `environment.yml` (with FNAL network prerequisite)
+   - Apply patches to Badger 1.5.4
+   - Configure `config.yaml`
+   - Launch Badger GUI
+
+2. **Environment Setup Details** - New section explaining what's in `environment.yml`
+
+3. **First-Time GUI Setup** - Dedicated section for critical early steps
+
+4. **Removed**:
+   - `requirements.txt` (empty file deleted)
+   - Duplicate Docker commands
+   - Confusing mixed instruction blocks
+
+### Files Modified
+
+- `README.md` - Completely rewritten
+- `requirements.txt` - Deleted
+
+### Status
+
+- [x] Analyzed current README issues
+- [x] Designed improved structure
+- [x] Rewrote README with new organization
+- [x] Removed requirements.txt
+- [x] Updated MEMORY.md with new entry
