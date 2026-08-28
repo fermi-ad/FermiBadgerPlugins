@@ -477,3 +477,49 @@ Updated `DR_BetatronTunes_sim.yaml`:
 - [x] Fixed template VOCs structure
 - [x] Tested template loading (no warnings)
 - [x] Updated documentation
+
+### 15:00 - Additional fix for turbo_controller validation error
+
+**Problem:** When starting Badger or switching generators, validation errors appeared:
+```
+turbo_controller.vocs: Value error, optimize turbo controller must have an objective specified
+turbo_controller.failure_tolerance: Value error, vocs must be set before inferring tolerances
+turbo_controller.success_tolerance: Value error, vocs must be set before inferring tolerances
+```
+
+**Root Cause:**
+1. When `turbo_controller: null` is in defaults, `initialize_special_field()` returned early without setting combo box to "null"
+2. The combo box showed "OptimizeTurboController" instead of "null"
+3. `_qt_widget_to_yaml_value()` returned `"null"` (string) instead of `None`
+4. YAML output was `"turbo_controller": "null"` (string) instead of `"turbo_controller": null` (null)
+5. Pydantic tried to validate "OptimizeTurboController" string, failing with vocs validation errors
+
+**Fixes Applied:**
+
+**Fix 4: QComboBox "null" handling in `_qt_widget_to_yaml_value()`**
+- Changed `return "null"` to `return None` when `currentText() == "null"`
+- This ensures YAML null is output instead of string "null"
+
+**Fix 5: TurboController combo box initialization in `initialize_special_field()`**
+- Added: `if (index := widget.findText("null")) >= 0: widget.setCurrentIndex(index)`
+- This ensures combo box shows "null" when `turbo_controller: null` is in defaults
+
+### 15:05 - Testing completed
+- Applied fixes to pydantic_editor.py in conda environment
+- Verified `turbo_controller` value is `null` in YAML output
+- Verified combo box shows "null" when generator is selected
+
+### 15:10 - Documentation updated
+- Updated docs/progress.md: Added Badger 1.6.0 startup validation error section
+- Updated patches/pydantic_editor-badger-1.6.0-fixes.patch: Combined all fixes
+- Updated patches/README.md: Documented all fixes
+
+### 15:15 - Final Status
+- [x] Updated environment.yml with Badger 1.6.0
+- [x] Upgraded Xopt to 3.2.1
+- [x] Applied all pydantic_editor.py fixes
+- [x] Created patch file for repository
+- [x] Fixed template VOCs structure
+- [x] Fixed startup validation errors
+- [x] Tested template loading (no warnings)
+- [x] Updated documentation

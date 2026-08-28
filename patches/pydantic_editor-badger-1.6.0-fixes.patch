@@ -1,5 +1,16 @@
 --- a/src/badger/gui/components/pydantic_editor.py
 +++ b/src/badger/gui/components/pydantic_editor.py
+@@ -373,7 +373,7 @@ def _qt_widget_to_yaml_value(widget: Any) -> str | None:
+         ):
+             return "null"
+         return "true" if widget.isChecked() else "false"
+     elif isinstance(widget, QComboBox):
+         if widget.currentText() == "null":
+-            return "null"
++            return None
+         return f'"{widget.currentText()}"'
+     elif isinstance(widget, (QLabel, QLineEdit)):
+         text = widget.text()
 @@ -814,13 +814,18 @@
 
          self.initialize_combo_widget(widget, selections)
@@ -19,7 +30,9 @@
 +                )
 +                special_item_dict = {}
 +            else:
-+                # Field is explicitly set to null - nothing to initialize, just return
++                # Field is explicitly set to null - set combo box to null and return
++                if (index := widget.findText("null")) >= 0:
++                    widget.setCurrentIndex(index)
 +                return
 
          special_item_dict["vocs"] = self.vocs.model_dump()

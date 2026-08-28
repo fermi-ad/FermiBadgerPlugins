@@ -70,14 +70,17 @@ The `environment.yml` file defines the complete `FermiBadger_env` environment wi
 The patches fix issues in Badger that affect the VirtualAccelerator plugins:
 
 **For Badger 1.6.0:**
-1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set
+1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set and ensures correct serialization to YAML null
 2. **vocs field not found** - Fixes error when VOCs data is stored separately from generator parameters
+3. **Startup validation errors** - Fixes validation errors on Badger startup when generator combo box is changed
 
 **For Badger 1.5.4 (deprecated):**
 1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set
 2. **turbo_controller string values** - Fixes TypeError when turbo_controller is specified as a string
 
-These are applied to `badger/gui/components/pydantic_editor.py` in the `initialize_special_field` and `validate` methods.
+These are applied to `badger/gui/components/pydantic_editor.py` in the `initialize_special_field`, `_qt_widget_to_yaml_value`, and `validate` methods.
+
+See `patches/README.md` for detailed documentation of each fix.
 
 ---
 

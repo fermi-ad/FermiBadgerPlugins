@@ -400,11 +400,37 @@ Badger 1.5.4 had known issues that needed fixing, and Badger 1.6.0 was released 
 - Environment (VirtualAccelerator_MADXSuite) works correctly
 - Xopt upgraded to 3.2.1 for compatibility
 
+### Additional Fix: Badger 1.6.0 Startup Validation Error
+
+**Problem:** When starting Badger or switching generators, validation errors appeared:
+```
+turbo_controller.vocs: Value error, optimize turbo controller must have an objective specified
+turbo_controller.failure_tolerance: Value error, vocs must be set before inferring tolerances
+turbo_controller.success_tolerance: Value error, vocs must be set before inferring tolerances
+```
+
+**Root Cause:** 
+1. When `turbo_controller: null` is in the defaults, `initialize_special_field()` returned early without setting the combo box to "null"
+2. The combo box was still showing "OptimizeTurboController" as the selected value
+3. When `get_parameters_yaml()` was called, the combo box returned "OptimizeTurboController" (string) instead of "null"
+4. The string "null" in YAML is parsed as the string "null", not the null value `None`
+5. Pydantic tried to validate "OptimizeTurboController" as a TurboController, which failed because it has an empty vocs
+
+**Fixes Applied:**
+
+**Fix 4: pydantic_editor.py - QComboBox "null" handling**
+- Modified `_qt_widget_to_yaml_value()` to return `None` when `currentText() == "null"`
+- This ensures YAML null is output instead of the string "null"
+
+**Fix 5: pydantic_editor.py - TurboController combo box initialization**
+- Modified `initialize_special_field()` to set combo box to "null" before returning early
+- This ensures the combo box shows "null" when `turbo_controller: null` is in defaults
+
 ### Files Modified
 
 - `environment.yml` - Updated badger-opt to 1.6.0, xopt to >=3.2.0
 - `README.md` - Updated version references and patch instructions
-- `patches/pydantic_editor-badger-1.6.0-fixes.patch` - New patch file
+- `patches/pydantic_editor-badger-1.6.0-fixes.patch` - Updated with new fixes
 - `patches/README.md` - Updated documentation
 - `tuning_templates/DR_BetatronTunes_sim.yaml` - Fixed vocs structure
 - `docs/badger-upgrade-1.6.0.md` - New testing documentation
@@ -416,4 +442,5 @@ Badger 1.5.4 had known issues that needed fixing, and Badger 1.6.0 was released 
 - [x] Updated environment.yml with new versions
 - [x] Fixed template VOCs structure
 - [x] Tested template loading (no warnings)
+- [x] Fixed startup validation errors
 - [x] Updated documentation

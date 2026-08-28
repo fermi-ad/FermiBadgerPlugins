@@ -1,0 +1,11 @@
+--- a/src/badger/gui/components/pydantic_editor.py
++++ b/src/badger/gui/components/pydantic_editor.py
+@@ -373,7 +373,7 @@ def _qt_widget_to_yaml_value(widget: Any) -> str | None:
+         return "true" if widget.isChecked() else "false"
+     elif isinstance(widget, QComboBox):
+         if widget.currentText() == "null":
+-            return "null"
++            return None
+         return f'"{widget.currentText()}"'
+     elif isinstance(widget, (QLabel, QLineEdit)):
+         text = widget.text()

@@ -6,18 +6,25 @@ This directory contains patches for the Badger GUI to fix issues specific to our
 
 ### 1. `pydantic_editor-badger-1.6.0-fixes.patch`
 
-**Purpose:** Fix two issues in Badger 1.6.0:
+**Purpose:** Fix multiple issues in Badger 1.6.0:
 
-1. **turbo_controller null handling**: Prevents warnings when `turbo_controller: null` is set in templates. In Badger 1.6.0, the code changed to use `defaults.get(field, {})` which returns `None` when the key exists with value `null`, but the code then logged a warning. The fix checks if the key exists before warning.
+1. **turbo_controller null handling**: Prevents warnings when `turbo_controller: null` is set in templates.
 
-2. **vocs field in parameters**: The GUI was raising `KeyError: 'vocs field is required in parameters'` because the vocs data is stored separately in `self.vocs` and not serialized to the YAML tree. The fix adds `self.vocs.model_dump()` to the parameters dict when vocs is missing.
+2. **vocs field in parameters**: Avoids `KeyError: 'vocs field is required in parameters'` when vocs is stored separately in `self.vocs`.
+
+3. **QComboBox "null" handling**: Ensures YAML null is output instead of string "null".
+
+4. **Startup validation error**: Fixes validation errors on Badger startup when generator combo box is changed.
 
 **Problem:** In Badger 1.6.0:
 - `turbo_controller: null` caused repeated warnings
 - `vocs` was not found in parameters, causing errors
+- QComboBox returned string "null" instead of actual null value
+- TurboController validation errors on startup due to incorrect YAML serialization
 
 **Fix:** 
-- In `initialize_special_field()`: Check if field exists in defaults before warning; if it exists with value null, return early
+- In `_qt_widget_to_yaml_value()`: Return `None` when combo box shows "null"
+- In `initialize_special_field()`: Check if field exists in defaults before warning; if it exists with value null, set combo box to "null" and return early
 - In `validate()`: If `vocs` is not in parameters_dict, use `self.vocs.model_dump()` as the source
 
 **Usage:**
@@ -26,11 +33,14 @@ cd /path/to/badger/source
 patch -p1 < pydantic_editor-badger-1.6.0-fixes.patch
 ```
 
-For conda-installed Badger:
+For conda-installed Badger (FermiBadger_env):
 ```bash
-BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
-# The patch applies to the source structure, so we need to manually apply
-# the changes to pydantic_editor.py
+# The pydantic_editor.py file is located at:
+# /Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger/gui/components/pydantic_editor.py
+
+# Apply the fixes directly:
+sed -i.bak 's/return "null"/return None/' pydantic_editor.py
+# Then manually update initialize_special_field() to set combo box to "null" before returning
 ```
 
 ### 2. Template VOCs Structure Fix
