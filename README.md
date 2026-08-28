@@ -25,17 +25,16 @@ conda env create -n FermiBadger_env -f environment.yml
 conda activate FermiBadger_env
 ```
 
-### 3. Apply required patches to Badger 1.5.4
+### 3. Apply patches for Badger 1.6.0 (if needed)
 
-These patches fix known issues in Badger 1.5.4 that affect the VirtualAccelerator plugins:
+The following patch fixes issues in Badger 1.6.0 that affect the VirtualAccelerator plugins:
 
 ```bash
 # Find your Badger installation directory
 BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
 
-# Apply the turbo_controller patches
-patch -d "$BADGER_DIR" -p3 < patches/pydantic_editor-turbo_controller-string-fix.patch
-patch -d "$BADGER_DIR" -p3 < patches/pydantic_editor-null-turbo_controller.patch
+# Apply the Badger 1.6.0 fixes patch
+patch -d "$BADGER_DIR" -p3 < patches/pydantic_editor-badger-1.6.0-fixes.patch
 ```
 
 ### 4. Configure Badger
@@ -61,19 +60,24 @@ badger -g -cf config.yaml
 The `environment.yml` file defines the complete `FermiBadger_env` environment with:
 
 - **Python**: 3.12.1
-- **Badger**: 1.5.4 (with required patches)
-- **Xopt**: 3.1.1
+- **Badger**: 1.6.0
+- **Xopt**: 3.2.1 (required for Badger 1.6.0 compatibility)
 - **XSuite packages**: xtrack, xobjects, xfields, xcoll, xsuite
 - **FNAL packages**: acsys, cpymad (requires FNAL network)
 
 ### Why Patches Are Required
 
-The patches fix two issues in Badger 1.5.4:
+The patches fix issues in Badger that affect the VirtualAccelerator plugins:
 
+**For Badger 1.6.0:**
+1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set
+2. **vocs field not found** - Fixes error when VOCs data is stored separately from generator parameters
+
+**For Badger 1.5.4 (deprecated):**
 1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set
 2. **turbo_controller string values** - Fixes TypeError when turbo_controller is specified as a string
 
-These are applied to `badger/gui/components/pydantic_editor.py` in the `initialize_special_field` method.
+These are applied to `badger/gui/components/pydantic_editor.py` in the `initialize_special_field` and `validate` methods.
 
 ---
 
@@ -163,7 +167,8 @@ conda create -n FermiBadger_env -f environment.yml  # Recreate if missing
 
 ```
 FermiBadgerPlugins/
-├── patches/                    # Badger 1.5.4 bug fixes
+├── patches/                    # Badger bug fixes (1.6.0 and 1.5.4)
+│   ├── pydantic_editor-badger-1.6.0-fixes.patch
 │   ├── pydantic_editor-turbo_controller-string-fix.patch
 │   ├── pydantic_editor-null-turbo_controller.patch
 │   └── README.md

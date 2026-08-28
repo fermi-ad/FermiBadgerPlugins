@@ -1,0 +1,25 @@
+--- a/src/badger/gui/components/pydantic_editor.py
++++ b/src/badger/gui/components/pydantic_editor.py
+@@ -814,13 +814,18 @@
+
+         self.initialize_combo_widget(widget, selections)
+
+-        special_item_dict: dict[str, Any] | None = defaults.get(field, {})
++        special_item_dict: dict[str, Any] | None = defaults.get(field)
+
+         if special_item_dict is None:
+-            logger.warning(
+-                f"Generator has {field} set but no compatible {field} exists."
+-            )
+-            special_item_dict = {}
++            # Check if key exists in defaults - if not, warn; if yes, it's explicitly null
++            if field not in defaults:
++                logger.warning(
++                    f"Generator has {field} set but no compatible {field} exists."
++                )
++                special_item_dict = {}
++            else:
++                # Field is explicitly set to null - nothing to initialize, just return
++                return
+
+         special_item_dict["vocs"] = self.vocs.model_dump()

@@ -55,11 +55,6 @@ This handles the case when `turbo_controller: null` is in YAML - the method now 
 - [x] Created patch file for repository
 - [x] Updated README.md with patch instructions
 
-### Deliverables
-1. **Patch file:** `patches/pydantic_editor-null-turbo_controller-git-apply.patch`
-2. **README update:** Added patch command to step-by-step installation
-3. **Documentation:** Updated docs/progress.md and docs/log.md
-
 ---
 
 ## 2026-08-25: Setpoints not updating investigation
@@ -70,7 +65,7 @@ User changed setpoints in the GUI from `{qx: 9.649, qy: 9.735}` to `{qx: 9.049, 
 ### Investigation
 Added debug logging to the environment and interface to trace:
 1. `set_variables` calls
-2. `get_variables` calls  
+2. `get_variables` calls
 3. `get_observables` calls with setpoints
 
 The logs will show whether:
@@ -311,7 +306,7 @@ After implementing the temporary file approach, the `lattice_settings_filename` 
 **Removed:**
 - `lattice_settings_filename` parameter from `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py`
 - `_save_settings_to_file()` method
-- `_load_settings_from_file()` method  
+- `_load_settings_from_file()` method
 - `_apply_settings()` method
 - `_randomize_settings()` method
 - `randomize_settings` and `randomize_amount` parameters
@@ -363,3 +358,62 @@ The README had several issues:
 - [x] Rewrote README with new organization
 - [x] Removed requirements.txt
 - [x] Updated MEMORY.md with new entry
+
+---
+
+## 2026-08-28: Badger 1.6.0 upgrade
+
+### Problem
+Badger 1.5.4 had known issues that needed fixing, and Badger 1.6.0 was released with improvements.
+
+### Investigation
+
+**Badger 1.6.0 changes:**
+- `initialize_special_field` changed: `defaults.get(field, {})` → `defaults.get(field)`
+- VOCs validation requires vocs field in parameters
+- `get_local_region` function added to xopt.vocs (requires xopt>=3.2.0)
+
+### Issues Found
+
+1. **turbo_controller null warning**: When `turbo_controller: null` was set, Badger 1.6.0 logged warnings because it couldn't distinguish between "key missing" and "key explicitly null"
+
+2. **vocs field required error**: Badger 1.6.0 raised `KeyError: 'vocs field is required in parameters'` because vocs data is stored in `self.vocs` separately from the YAML tree
+
+3. **Template structure issue**: Some templates had vocs keys directly under `generator:` without a `vocs:` key
+
+### Fixes Applied
+
+**Fix 1: pydantic_editor.py - turbo_controller null handling**
+- Modified `initialize_special_field()` to check if field exists in defaults before warning
+- If field exists with null value, return early without warning
+
+**Fix 2: pydantic_editor.py - vocs field not found**
+- Modified `validate()` to use `self.vocs.model_dump()` when vocs is not in parameters_dict
+
+**Fix 3: Template VOCs structure**
+- Updated `DR_BetatronTunes_sim.yaml` to have vocs properly nested under `generator:`
+
+### Testing
+
+- Badger GUI launched successfully with version 1.6.0
+- Template loaded without `turbo_controller` warnings
+- Environment (VirtualAccelerator_MADXSuite) works correctly
+- Xopt upgraded to 3.2.1 for compatibility
+
+### Files Modified
+
+- `environment.yml` - Updated badger-opt to 1.6.0, xopt to >=3.2.0
+- `README.md` - Updated version references and patch instructions
+- `patches/pydantic_editor-badger-1.6.0-fixes.patch` - New patch file
+- `patches/README.md` - Updated documentation
+- `tuning_templates/DR_BetatronTunes_sim.yaml` - Fixed vocs structure
+- `docs/badger-upgrade-1.6.0.md` - New testing documentation
+
+### Status
+
+- [x] Identified Badger 1.6.0 issues
+- [x] Applied pydantic_editor.py fixes
+- [x] Updated environment.yml with new versions
+- [x] Fixed template VOCs structure
+- [x] Tested template loading (no warnings)
+- [x] Updated documentation

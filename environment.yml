@@ -6,7 +6,7 @@ dependencies:
   - _python_abi3_support=1.0
   - annotated-types=0.7.0
   - backports.zstd=1.6.0
-  - badger-opt=1.5.4
+  - badger-opt=1.6.0
   - botorch=0.17.2
   - brotli=1.2.0
   - brotli-bin=1.2.0
@@ -37,7 +37,7 @@ dependencies:
   - freetype=2.14.3
   - fribidi=1.0.16
   - fsspec=2026.6.0
-  - gest-api=0.1
+  - gest-api>=0.2
   - glib=2.88.1
   - glib-tools=2.88.1
   - gmp=6.3.0
@@ -188,7 +188,7 @@ dependencies:
   - urllib3=2.7.0
   - wadler-lindig=0.1.7
   - wheel=0.47.0
-  - xopt=3.1.1
+  - xopt>=3.2.0
   - xorg-libxau=1.0.12
   - xorg-libxdmcp=1.1.5
   - xz=5.8.3

@@ -362,87 +362,6 @@ Test confirmed the environment still works correctly with variable changes affec
 
 ---
 
-# Session Log - 2026-08-25 (final fix)
-
-## MAD-X deferred expressions not updating - solution implemented
-
-### 17:00 - User feedback on approach
-User: "This is getting too complex, and it will not generalize well to other MADX files. Instead, we need the environment or the interface to keep its own version of the MADX file with the parameter values to be tested in the current iteration of the optimization. Rip out all those changes and try this different approach instead. The simplicity and generality far outweigh the I/O overhead."
-
-### 17:05 - New approach design
-Instead of trying to manually re-compute expressions based on element suffix patterns, the simpler approach is:
-
-1. **Read the original lattice file** (e.g., `mu2e-dr-model-v2026.03.23.madx`)
-2. **For each variable to change**, find its definition line and replace the value
-3. **Write a temporary MAD-X file** with updated values
-4. **Create a new MAD-X instance** from this temp file
-5. **Rebuild xtrack Line** from the updated MAD-X sequence
-
-This approach:
-- Works with ANY MAD-X lattice file
-- Uses MAD-X's built-in expression evaluation
-- No complex parsing or pattern matching needed
-
-### 17:10 - Implementation
-Modified `_update_madx_variables` in `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py`:
-
-```python
-def _update_madx_variables(self, variable_inputs: dict[str, float]):
-    # Read original lattice file
-    with open(self.lattice_filename, 'r') as f:
-        lines = f.readlines()
-    
-    # Replace variable values in their definitions
-    modified_lines = []
-    for line in lines:
-        for var_name, new_value in variable_inputs.items():
-            pattern = rf'^\s*{re.escape(var_name)}\s*=\s*[\d.\-eE+]+\s*;'
-            match = re.match(pattern, line, re.IGNORECASE)
-            if match:
-                old_value = match.group(0).split('=')[1].strip().rstrip(';')
-                modified_line = line.replace(old_value, str(new_value))
-                break
-        modified_lines.append(modified_line)
-    
-    # Write temp file and create new MAD-X instance
-    temp_lattice_path = os.path.join(tempfile.gettempdir(), f'madx_lattice_{os.getpid()}_{id(self)}.madx')
-    with open(temp_lattice_path, 'w') as f:
-        f.writelines(modified_lines)
-    
-    mad = Madx(stdout=None if self.debug else False)
-    mad.call(temp_lattice_path)
-    mad.use(sequence=self._sequence_name_matched)
-    
-    # Rebuild xtrack Line
-    self._madx = mad
-    self._line = xt.Line.from_madx_sequence(mad.sequence[self._sequence_name_matched], deferred_expressions=True)
-    self._line.particle_ref = self._particle_ref
-    
-    # Clean up temp file
-    os.remove(temp_lattice_path)
-```
-
-### 17:15 - Verification
-Test results confirmed the fix works:
-
-```
-Setting i_dqd = 220: qx = 10.024228
-Setting i_dqd = 230: qx = 9.843706
-Setting i_dqd = 240: qx = 9.659982
-Setting i_dqd = 250: qx = 9.474853
-Setting i_dqd = 260: qx = 9.285527
-```
-
-The qx value changes monotonically as i_dqd is varied, proving deferred expressions are now being re-evaluated correctly.
-
-### 17:20 - Notes
-- The temp file is cleaned up after use
-- The approach adds I/O overhead but provides correctness
-- Works with any MAD-X lattice file without modification
-- User can test with the GUI - the optimization should now show progress when variables are changed
-
----
-
 # Session Log - 2026-08-28
 
 ## README Streamlined
@@ -492,3 +411,69 @@ User made manual adjustments to README and synced to origin.
 - Updated MEMORY.md index
 - Updated docs/progress.md
 - Updated docs/log.md
+
+---
+
+# Session Log - 2026-08-28 (continued)
+
+## Badger 1.6.0 Upgrade
+
+### 14:00 - Initial request
+User requested to update Badger to the latest release (1.6.0), create a testing plan, and then update documentation.
+
+### 14:05 - Analysis complete
+Analyzed current state:
+- Badger 1.5.4 is installed
+- Badger 1.6.0 is available
+- Xopt 3.1.1 needs to be upgraded to 3.2.1 for compatibility
+
+### 14:10 - Testing plan created
+Created `docs/badger-upgrade-1.6.0.md` with testing steps.
+
+### 14:15 - Upgrade process
+1. Updated environment.yml: `badger-opt=1.6.0`, `xopt>=3.2.0`
+2. Upgraded Xopt: `pip install --upgrade xopt`
+3. Verified installation: `badger.__version__` = 1.6.0
+
+### 14:20 - Issues identified
+Running Badger 1.6.0 revealed:
+1. `turbo_controller: null` produced warnings
+2. `vocs field is required in parameters` error when loading templates
+
+### 14:25 - Fixes applied to pydantic_editor.py
+
+**Fix 1: turbo_controller null handling**
+- In `initialize_special_field()`: Added check for field existence before warning
+- If field exists with null value, return early without warning
+
+**Fix 2: vocs field not found**
+- In `validate()`: If vocs is not in parameters_dict, use `self.vocs.model_dump()`
+
+### 14:30 - Patch created
+Created `patches/pydantic_editor-badger-1.6.0-fixes.patch` with both fixes.
+
+### 14:35 - Template VOCs structure fix
+Updated `DR_BetatronTunes_sim.yaml`:
+- Moved vocs fields to be properly nested under `generator:` section
+- Added `vocs:` key before constants, constraints, objectives, etc.
+
+### 14:40 - Testing completed
+- Badger GUI launched successfully
+- Template loaded without warnings
+- Environment works correctly
+
+### 14:45 - Documentation updated
+- Updated CLAUDE.md: Badger version 1.6.0
+- Updated README.md: Version references and patch instructions
+- Updated docs/progress.md: Added Badger 1.6.0 section
+- Updated docs/log.md: Added Badger 1.6.0 section
+- Updated patches/README.md: Documented new patch
+
+### 14:50 - Status
+- [x] Updated environment.yml with Badger 1.6.0
+- [x] Upgraded Xopt to 3.2.1
+- [x] Applied pydantic_editor.py fixes
+- [x] Created patch file for repository
+- [x] Fixed template VOCs structure
+- [x] Tested template loading (no warnings)
+- [x] Updated documentation

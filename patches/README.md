@@ -2,34 +2,57 @@
 
 This directory contains patches for the Badger GUI to fix issues specific to our VirtualAccelerator_MADXSuite environment.
 
-## Patches
+## Patches for Badger 1.6.0
 
-### 1. `pydantic_editor-turbo_controller-string-fix.patch`
-**Purpose:** Fix TypeError when `turbo_controller` or `numerical_optimizer` is specified as a string in templates.
+### 1. `pydantic_editor-badger-1.6.0-fixes.patch`
 
-**Problem:** In Badger 1.5.4, the `initialize_special_field` method in `pydantic_editor.py` assumes special fields are always dicts. When a template specifies `turbo_controller: OptimizeTurboController` as a string, the code fails with `TypeError: 'str' object does not support item assignment`.
+**Purpose:** Fix two issues in Badger 1.6.0:
 
-**Fix:** Modify `initialize_special_field` to detect string values and convert them to dicts with a `name` key before proceeding.
+1. **turbo_controller null handling**: Prevents warnings when `turbo_controller: null` is set in templates. In Badger 1.6.0, the code changed to use `defaults.get(field, {})` which returns `None` when the key exists with value `null`, but the code then logged a warning. The fix checks if the key exists before warning.
+
+2. **vocs field in parameters**: The GUI was raising `KeyError: 'vocs field is required in parameters'` because the vocs data is stored separately in `self.vocs` and not serialized to the YAML tree. The fix adds `self.vocs.model_dump()` to the parameters dict when vocs is missing.
+
+**Problem:** In Badger 1.6.0:
+- `turbo_controller: null` caused repeated warnings
+- `vocs` was not found in parameters, causing errors
+
+**Fix:** 
+- In `initialize_special_field()`: Check if field exists in defaults before warning; if it exists with value null, return early
+- In `validate()`: If `vocs` is not in parameters_dict, use `self.vocs.model_dump()` as the source
 
 **Usage:**
 ```bash
 cd /path/to/badger/source
-patch -p1 < pydantic_editor-turbo_controller-string-fix.patch
+patch -p1 < pydantic_editor-badger-1.6.0-fixes.patch
 ```
 
-### 2. `pydantic_editor-turbo_controller-string-PR.patch`
-**Purpose:** Same fix as above, but formatted as a GitHub PR-ready diff.
+For conda-installed Badger:
+```bash
+BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+# The patch applies to the source structure, so we need to manually apply
+# the changes to pydantic_editor.py
+```
 
-**Usage:** For submitting to xopt-org/Badger repository.
+### 2. Template VOCs Structure Fix
 
-### 3. `pydantic_editor-null-turbo_controller.patch` (existing)
-**Purpose:** Fix warning when `turbo_controller` is explicitly set to `null` in templates.
+**Issue:** The `DR_BetatronTunes_sim.yaml` template had vocs fields incorrectly nested under `generator:` without a `vocs:` key. Badger 1.6.0 validation requires vocs to be properly structured.
 
-### 4. `pydantic_editor-null-turbo_controller-git-apply.patch` (existing)
-**Purpose:** Same as above, but in git-apply compatible format.
+**Fix:** Updated template to have:
+```yaml
+generator:
+  ...
+  turbo_controller: null
+  vocs:
+    constants: '{}'
+    constraints: '{}'
+    objectives: '{...}'
+    observables: '{...}'
+    variables: '{...}'
+```
 
-## Applying Patches
+## Patches for Badger 1.5.4 (deprecated)
 
-For Badger 1.5.4 installed via conda:
-1. Find the installed badger source: `find ~ -name "pydantic_editor.py" -path "*/badger/gui/components/*" 2>/dev/null`
-2. Apply the patch relative to the `src/badger` directory
+The following patches were created for Badger 1.5.4 and are no longer needed for 1.6.0:
+
+- `pydantic_editor-turbo_controller-string-fix.patch` - Handles string values for turbo_controller
+- `pydantic_editor-null-turbo_controller.patch` - Handles null values for turbo_controller
