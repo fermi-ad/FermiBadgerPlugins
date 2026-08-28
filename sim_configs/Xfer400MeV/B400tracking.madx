@@ -1,0 +1,932 @@
+!-------------------------------------------------------------------------------
+!       Booster 400 MeV Transfer Line Lattice File
+!
+! Author: David McGinnis
+! Maintained by: Fernanda G. Garcia
+! Updated by: Matilda W. Mwaniki
+! Date  : 01/20/2023 
+! Current Version: 9_2
+! 
+!
+!-------------------------------------------------------------------------------
+!       Modifications
+!
+! Nov 17 2005:  Using EE drawing values. Close to converge to final.
+! Jan 31 2006:  Trying to get survey numbers to match drawings.
+! Mar 13 2006:  Move Q74 10" upstream (Shutdown'06 work)  
+! Jan 20 2023:  Q2 not a bend, Chopper is kick & length measurements are compared to drawing and alignment data 
+!
+!-------------------------------------------------------------------------------
+!
+!       Setting variables
+!
+!-------------------------------------------------------------------------------
+
+title, 'What he heck is going on....';
+DEG_TO_RAD      := 3.141592654 / 180.0;
+ekin            := 0.4000000;
+erest           := 0.9382800;
+c               := 0.2997925;
+etotal          := ekin+erest;                      ! 1.338
+pc              := sqrt(etotal*etotal-erest*erest); ! 0.9542
+gamma           := etotal/erest;                    ! 1.426
+beta            := sqrt(1-(1/(gamma*gamma)));       ! 0.713
+brho            := pc/c;                            ! 3.184
+
+l_trim          := 0.2508;    ! quad trim correctors lenght: 9 7/8 in
+l_bpm_reg       := 0.188;     ! bpms length:             7 3/8 in
+l_bpm_lam	:= 0.155;     ! bpm length for lam
+l_rw            := 0.0508;    ! running wires lenght:        2     in
+l_mw            := 0.3302;    ! MW can diameter:             13    in <- D. Choo
+l_tor           := 0.0699;    ! Tor length:                  2 3/4 in
+l_bv            := 0.062;     ! Beam valve:                  2 5/8 in
+!
+! Quadrupoles - Physical Length
+!
+!l_quad_LL       := 0.254;    
+!l_quad_TA       := 0.254;    
+!l_quad_TB       := 0.254;    
+!l_quad_Q74      := 0.07;
+!
+! Quadrupoles - Effective Length and Quad Strength
+!
+l_quad_LL       := 0.2906;   ! Harding's meas. in spare LQL  (red)   (01/29/2004)
+l_quad_TA       := 0.2854;   ! Harding's meas. in spare TQTA (square)(02/09/2004)
+l_quad_TB       := 0.2956;   ! Harding's meas. in spare TQTB (oval)  (02/08/2004)
+l_quad_Q74      := 0.0853;   ! Ref. T. Kroc
+c_quad_Q74      := 0.1343;   ! [T/m-A] Ref. T. Kroc
+!c_quad_Q74      := 0.157;   ! [T/m-A] Ref. M. Popovic (03/14/05)
+!c_quad_Q74      := 0.0672;  ! [T/m-A] Ref. T. Kroc
+c_quad_LL       := 0.053097; ! [T/m-A] Harding's meas. in spare LQL  (01/29/2004)
+c_quad_TB       := 0.178518; ! [T/m-A] Harding's meas. in spare TQTB (02/08/2004)
+
+delta74 := 0.0853*0.4;
+
+!
+! Dipoles - Physical Length
+!
+l_chop          := 1.3825;    ! Add 0.0235m each side for round plates
+!l_lam           := 0.849325;  ! Lamination. With the plates, add 0.174 each side
+!l_mv0           := 0.4681;
+!l_mh1           := 1.2192;    ! Gap=8.255 cm (3.25")
+!l_mv1           := 1.0668;    ! Gap=9.525 cm (3.75")
+!l_mv2           := 1.0668;    ! Gap=9.525 cm (3.75")
+!l_mh2           := 1.2192;    ! Gap=8.255 cm (3.25")
+!l_dcsep         := 1.2827;    ! Gap=3.78 cm  (1.4882")
+!l_orbmp         := 0.483;     ! This value came from Booster lattice
+!
+! Dipoles - Effective Length
+!
+!l_chop          := 1.430;      ! Added 0.0235m each side for round plates
+l_lam           := 1.1973;     ! Added 0.174 each side for plates
+!l_lam           := 1.1969;
+l_mv0           := 0.6507;   
+l_mh1           := 1.30175;	!1.30175   
+l_mv1           := 1.16205;
+l_mv2           := 1.16205;  
+l_mh2           := 1.30175;  
+l_dcsep         := 1.3205;  
+l_orbmp         := 0.51017;
+!-------------------------------------------------------------------------------
+!
+!       Loading auxiliary files
+!
+!-------------------------------------------------------------------------------
+
+!CALL, FILENAME="../B400_QUAD_EXCITATION.DAT"
+
+! Linac 09/25/06 Hminus
+BETAX  := 1.143852;
+ALPHAX  := -0.813588;
+DISPX  := 0.000000;
+DISPPX  := 0.000000;
+BETAY  := 5.518511;
+ALPHAY  := 0.515923;
+DISPY  := 0.000000;
+DISPPY  := 0.000000;
+EMITH  := 3.974084;
+EMITV  := 3.000000;
+DP_P  := 0.416984;
+!
+
+! Linac 09/07/06 Hminus
+!BETAX  := 1.113092;
+!ALPHAX := -0.896490;
+!DISPX  := 0.000000;
+!DISPPX := 0.000000;
+!BETAY  := 5.678703;
+!ALPHAY := 0.490474;
+!DISPY  := 0.000000;
+!DISPPY := 0.000000;
+!EMITH  := 3.650952;
+!EMITV  := 3.000000;
+!DP_P   := 0.467272;
+
+! Linac late 08/23/06 Iminus
+!BETAX  := 1.522374;
+!ALPHAX := -0.916975;
+!DISPX  := 0.000000;
+!DISPPX := 0.000000;
+!BETAY  := 5.793920;
+!ALPHAY := -0.502175;
+!DISPY  := 0.000000;
+!DISPPY := 0.000000;
+!EMITH  := 5.362382;
+!EMITV  := 3.5;
+!DP_P   := 0.0;
+
+! Linac Aug06
+!BETAX  := 1.379189;
+!ALPHAX  := -1.221879;
+!DISPX  := 0.000000;
+!DISPPX  := 0.000000;
+!BETAY  := 4.887716;
+!ALPHAY  := 0.238257;
+!DISPY  := 0.000000;
+!DISPPY  := 0.000000;
+!EMITH  := 3.000000;
+!EMITV  := 3.366907;
+!DP_P  := 0.471598;
+
+! Linac Early Aug06 - GOOD MATCH!
+!BETAX  := 0.952026;
+!ALPHAX  := -0.279162;
+!DISPX  := 0.000000;
+!DISPPX  := 0.000000;
+!BETAY  := 20.079567;
+!ALPHAY  := -0.904243;
+!DISPY  := 0.000000;
+!DISPPY  := 0.000000;
+!EMITH  := 8.560552;
+!EMITV  := 3.924677;
+!DP_P  := 0.000000;
+
+!
+!BETAX  := 1.117887;
+!ALPHAX  := -0.958565;
+!DISPX  := 0.000000;
+!DISPPX  := 0.000000;
+!BETAY  := 19.395844;
+!ALPHAY  := -0.783132;
+!DISPY  := 0.000000;
+!DISPPY  := 0.000000;
+!EMITH  := 8.071894;
+!EMITV  := 6.940053;
+!DP_P  := 0.090571;
+
+!IQ74     =     116.7; 
+!IQ2      =     82.75;
+!ILAM     =     422.9;
+!IQ3      =     19.05;
+!IMV0     =     13.85;
+!IMH1     =     346.7;
+!IQ4      =     17.74;
+!IMV1     =     388.73;
+!IQ5      =     22.52;
+!IQ6      =     92.25;
+!IQ7      =     86.29;
+!IQ8      =     118.9;
+!IMV2     =     364.5;
+!IQ9      =     35.38;
+!IQ10     =     41.5;
+!IQ11     =     5.53;  
+!IQ12     =     7.84;
+!IQ13     =     45.38;
+!IMH2     =     692.9;
+!IQ14     =     1.67;
+!IQ15     =     15.17;
+!IQ16     =     21.39;
+!IQ17     =     7.25;
+!IORBMP   =     28.4;
+
+! Before Linac 08/23/06 - maybe the good match - pretty sure it is!!
+!IQ74     :=     117;
+!IQ2      :=     83.6;
+!ILAM     :=     447.7;
+!IQ3      :=     21.3;
+!IMV0     :=     13.85;
+!IMH1     :=     358.7;
+!IQ4      :=     18.64;
+!IMV1     :=     388.73;
+!IQ5      :=     15.0;
+!IQ6      :=     92.9;
+!IQ7      :=     86.82;
+!IQ8      :=     114;
+!IMV2     :=     377.2;
+!IQ9      :=     35.0;
+!IQ10     :=     40.70;
+!IQ11     :=     0;  
+!IQ12     :=     10;! 8.75  
+!IQ13     :=     10;!32.20
+!IMH2     :=     444.6;
+!IQ14     :=     9.94;
+!IQ15     :=     16.80;
+!IQ16     :=     22.63;
+!IQ17     :=     11.58;
+!IORBMP   :=     28.4;
+
+! Linac - 09/07/06
+
+!IQ74     :=     116.5;
+!IQ2      :=     82.81;
+!ILAM     :=     422.9;
+!IQ3      :=     19.08;
+!IMV0     :=     13.85;
+!IMH1     :=     347.1;
+!IQ4      :=     17.76; 
+!IMV1     :=     372.9;
+!IQ5      :=     22.54;
+!IQ6      :=     92.81;
+!IQ7      :=     86.22;
+!IQ8      :=     118.9; 
+!IMV2     :=     365.2;
+!IQ9      :=     35.32;
+!IQ10     :=     41.36;
+!IQ11     :=     5.40; 
+!IQ12     :=     7.47; 
+!IQ13     :=     45.29;  
+!IMH2     :=     693.9;
+!IQ14     :=     1.29;
+!IQ15     :=     15.16;
+!IQ16     :=     22.35;
+!IQ17     :=     7.78;
+!IORBMP   :=     28.4;
+
+! Linac - 08/08/22
+
+IQ74     :=     112.70;
+IQ2      :=     73.72;
+ILAM     :=     420.3;
+IQ3      :=     20.64;
+IMV0     :=     12.01;
+IMH1     :=     348.0;
+IQ4      :=     17.40; 
+IMV1     :=     373.7;
+IQ5      :=     22.04;
+IQ6      :=     93.41;
+IQ7      :=     92.6;
+IQ8      :=     114.1; 
+IMV2     :=     362.8;
+IQ9      :=     31.26;
+IQ10     :=     43.4;
+IQ11     :=     6.41; 
+IQ12     :=     8.445; 
+IQ13     :=     11.81;  
+IMH2     :=     693.7;
+IQ14     :=     .23;
+IQ15     :=     12.43;
+IQ16     :=     18.67;
+IQ17     :=     7.7075;
+IORBMP   :=     13.306;
+
+
+
+!-------------------------------------------------------------------------------
+!
+! Change to Physical Length
+!
+!-------------------------------------------------------------------------------
+
+dgreen = 0.0208;
+dll    = 0.0183;
+dq74   = 0.0077;
+dmv0   = 0.0913;
+dmh1   = 0.0414;
+dmv1   = 0.0476;
+dmv2   = 0.0476;
+dmh2   = 0.0414;
+dorb   = 0.0136;
+
+!-------------------------------------------------------------------------------
+!
+! Transfer line started at the end of the Linac Station 74
+!
+!-------------------------------------------------------------------------------
+
+L400Start :    MARKER;
+dttq1us   :    DRIFT,         l=0.62161; !0.3634+delta74 checking with drawing !0.36062  Survey #=0.62227!0.61462
+qLMQ1     :    DRIFT,         l=0.0;             ! LM top of the Q1
+Q1        :    QUADRUPOLE,    l=l_quad_Q74-delta74, k1=-c_quad_Q74*IQ74/brho;
+HHTQ01    :    MARKER;	      
+VVTQ01    :    MARKER;
+dttq1ds   :    DRIFT,         l=0.0;
+dtrw1us   :    DRIFT,         l=0.136+delta74; !0.143 This value uses physicalQ74
+dtrw1ds   :    DRIFT,         l=0.0;             ! this RW is 1.5in
+dtchop    :    DRIFT,         l=0.28436;  !0.50023 checking with drawing	!0.28335+0.254         !0.3070 with 1.3827
+CHOPPER   :    SBEND,         l=l_chop,  angle=0.005,  tilt=-pi/2; 
+dtrw2us   :    DRIFT,         l=0.33835;         !0.362 with 1.3827
+dtrw2ds   :    DRIFT,         l=0.0;
+dttor1us  :    DRIFT,         l=0.13;
+dttor1ds  :    DRIFT,         l=0.0;
+dtrwmus   :    DRIFT,         l=0.367;
+dtrwmds   :    DRIFT,         l=0.0;
+dttq2us   :    DRIFT,         l=0.77;
+dttq2ds   :    DRIFT,         l=0.0;
+dtrw3us   :    DRIFT,         l=0.312;
+dtrw3ds   :    DRIFT,         l=0.0;
+dtQ2us    :    DRIFT,         l=0.21994;	!0.2047 checking with drawing
+
+Q2        :    QUADRUPOLE,  l=l_quad_LL, k1=c_quad_LL*IQ2/brho;
+BLMQ2     :    DRIFT,         l=0.0;         ! LM top of beam pipe (Q2 DS)
+dtbpq2us  :    DRIFT,         l=0.08179;      !0.1297  checking with drawing !0.148
+BPHQ2     :    HMONITOR,      l=l_bpm_reg*0.5;
+BPVQ2     :    VMONITOR,      l=l_bpm_reg*0.5;
+dtbpq2ds  :    DRIFT,         l=0;
+dtcor1us  :    DRIFT,         l=0.593;
+dtcor1ds  :    DRIFT,         l=0;
+dtcor2us  :    DRIFT,         l=0.30;
+dtcor2ds  :    DRIFT,         l=0;
+DELM1     :    DRIFT,         l=0.0;         ! LM top of 2nd corrector (DS)        
+dtstus    :    DRIFT,         l=0.586;
+dtstds    :    DRIFT,         l=0.0;
+dtrw4us   :    DRIFT,         l=0.2845;
+dtrw4ds   :    DRIFT,         l=0.0;         ! this RW is 3 1/8 in
+dtbplamus :    DRIFT,         l=0.04148;	!0.268 checking with drawing
+BPHLAM    :    HMONITOR,      l=l_bpm_lam*0.5;
+BPVLAM    :    VMONITOR,      l=l_bpm_lam*0.5;
+dtbplamds :    DRIFT,         l=0.0;
+DELM5     :    DRIFT,         l=0.0;         ! LM top of LAM's BPM (LAMUS)
+dtLAMus   :    DRIFT,         l=0.05157; !0.122 checking with drawing !0.296 with 0.8493
+LAMus     :    SBEND,  		l=l_lam*0.5, angle=-429.50E-06*ILAM*0.5;
+HLAM      :    MARKER;
+LAMds     :    SBEND,  		l=l_lam*0.5, angle=-429.50E-06*ILAM*0.5;
+BLMLAM    :    DRIFT,         l=0.0;         ! LM top of beam pipe (LAMDS)
+dtmw01us  :    DRIFT,         l=0.307; !0.481 with 0.8493
+SM_MW01   :    MARKER;
+dtmw01ds  :    DRIFT,         l=0;
+dtbv01us  :    DRIFT,         l=0.1815;
+dtbv01ds  :    DRIFT,         l=0;
+dttq3us   :    DRIFT,         l=0.1865;
+HHTQ03    :    MARKER;
+VVTQ03    :    MARKER;
+dttq3ds   :    DRIFT,         l=0;
+dtQ3us    :    DRIFT,         l=0.19264;	!0.1802 checking with drawing
+
+Q3        :    QUADRUPOLE,    l=l_quad_TB,  k1=-c_quad_TB*IQ3/brho;
+dtbpq3us  :    DRIFT,         l=0.05816; !0.1662 checking with drawing ! 0.1632          !0.0682
+BPHQ3     :    HMONITOR,      l=l_bpm_reg*0.5;
+BPVQ3     :    VMONITOR,      l=l_bpm_reg*0.5;
+dtbpq3ds  :    DRIFT,         l=0;
+BLMQ3     :    DRIFT,         l=0.0;         ! LM top of beam pipe DS BPM3
+dtMV0us   :    DRIFT,         l=0.15205;	!0.2417 checking with drawing
+MV0us     :    SBEND,   l=l_mv0*0.5, angle=475.55E-06*IMV0*0.5,  tilt= pi/2;
+VMV0      :    MARKER;
+MV0ds     :    SBEND,   l=l_mv0*0.5, angle=475.55E-06*IMV0*0.5,  tilt= pi/2;
+dtMH1us   :    DRIFT,         l=0.09776;   !0.12478 checking with drawing !0.11165
+MH1us     :    SBEND,   l=l_mh1*0.5, angle=-250.649E-06*IMH1*0.5;
+HMH1      :    MARKER;
+MH1ds     :    SBEND,   l=l_mh1*0.5, angle=-250.649E-06*IMH1*0.5;
+dttor2us  :    DRIFT,         l=0.18160;
+dttor2ds  :    DRIFT,         l=0;
+dtmw02us  :    DRIFT,         l=0.695;	
+SM_MW02   :    MARKER;
+dtmw02ds  :    DRIFT,         l=0;
+dttq4us   :    DRIFT,         l=0.3367; !0.3319
+HHTQ04    :    MARKER;
+VVTQ04    :    MARKER;
+dttQ4ds   :    DRIFT,         l=0;
+dtQ4us    :    DRIFT,         l=0.18261;  !0.223 checking with drawing 0.2182
+
+Q4        :    QUADRUPOLE,    l=l_quad_TB,  k1=c_quad_TB*IQ4/brho;
+BLMQ4     :    DRIFT,         l=0.0;            ! LM top of beam pipe
+dtbpq4us  :    DRIFT,         l=0.0597; !0.09865 checking with drawing
+BPHQ4     :    HMONITOR,      l=l_bpm_reg*0.5;
+BPVQ4     :    VMONITOR,      l=l_bpm_reg*0.5;
+dtbpq4ds  :    DRIFT,         l=0;
+dtMV1us   :    DRIFT,         l=0.88989; !1.065525 checking with drawing !1.064825
+BLMV1U    :    DRIFT,         l=0.0;            ! LM top of beam pipe (US MV1)
+MV1us     :    SBEND,   l=l_mv1*0.5, angle=578.53E-06*IMV1*0.5, tilt= pi/2;
+VMV1      :    MARKER;
+MV1ds     :    SBEND,   l=l_mv1*0.5, angle=578.53E-06*IMV1*0.5, tilt= pi/2;
+BLMMV1    :    DRIFT,         l=0.0;            ! LM bottom of beam pipe (US MW)
+dtmw03us  :    DRIFT,         l=0.337375;
+SM_MW03   :    MARKER;
+dtmw03ds  :    DRIFT,         l=0;
+dtbv02us  :    DRIFT,         l=1.10124; !1.099
+dtbv02ds  :    DRIFT,         l=0;
+dttq5us   :    DRIFT,         l=0.214;
+HHTQ05    :    MARKER;
+VVTQ05    :    MARKER;
+dttq5ds   :    DRIFT,         l=0;
+dtQ5us    :    DRIFT,         l=0.14423;	!0.2207 checking with drawing
+
+Q5        :    QUADRUPOLE,    l=l_quad_LL,  k1=-c_quad_LL*IQ5/brho;
+dtbpq5us  :    DRIFT,         l=0.01904;	!0.1197 checking with drawing
+BPHQ5     :    HMONITOR,      l=l_bpm_reg*0.5;
+BPVQ5     :    VMONITOR,      l=l_bpm_reg*0.5;
+dtbpq5ds  :    DRIFT,         l=0;
+dtshieldus:    DRIFT,         l=1.594;
+BLMQ5     :    DRIFT,         l=0.0;      ! LM top of beam pipe (shielding wall)
+!
+! This next section is in the chute. Measurements taken during March04 shutdown (03/18)
+!
+dtbpq6us  :    DRIFT,         l=3.12866;
+BPHQ6     :    HMONITOR;
+BPVQ6     :    VMONITOR;
+dtbpq6ds  :    DRIFT,         l=0.0;
+dtQ6us    :    DRIFT,         l=0.28770;
+
+Q6        :    QUADRUPOLE,    l=l_quad_LL,  k1=-c_quad_LL*IQ6/brho;
+dttq6us   :    DRIFT,         l=0.1953;
+HHTQ06    :    MARKER;
+VVTQ06    :    MARKER;
+dttq6ds   :    DRIFT,         l=0;
+dtmw04us  :    DRIFT,         l=0.3191;
+SM_MW04   :    MARKER;
+dtmw04ds  :    DRIFT,         l=0;
+dttq7us   :    DRIFT,         l=1.06;
+HHTQ07    :    MARKER;
+VVTQ07    :    MARKER;
+dttq7ds   :    DRIFT,         l=0;
+dtQ7us    :    DRIFT,         l=0.1952;  !0.2064
+
+Q7        :    QUADRUPOLE,    l=l_quad_LL,  k1=c_quad_LL*IQ7/brho;
+dtbpq7us  :    DRIFT,         l=0.1014;
+BPHQ7     :    HMONITOR;
+BPVQ7     :    VMONITOR;
+dtbpq7ds  :    DRIFT,         l=0;
+BLMQ7     :    DRIFT,         l=0.0;             ! LM top of beam pipe in chute!
+!
+! Out of the chute. Booster tunnel.
+!
+!
+dtmw05us  :    DRIFT,         l=3.769;
+SM_MW05   :    MARKER;
+dtmw05ds  :    DRIFT,         l=0;
+dtbpq8us  :    DRIFT,         l=0.376;
+BPHQ8     :    HMONITOR;
+BPVQ8     :    VMONITOR;
+dtbpq8ds  :    DRIFT,         l=0;
+dtQ8us    :    DRIFT,         l=0.1717;
+
+Q8        :    QUADRUPOLE,    l=l_quad_LL,  k1=-c_quad_LL*IQ8/brho;
+dttq8us   :    DRIFT,         l=0.1727;
+HHTQ08    :    MARKER;
+VVTQ08    :    MARKER;
+dttq8ds   :    DRIFT,         l=0.0;
+dtmw06us  :    DRIFT,         l=2.9915;
+BLMMV2    :    DRIFT,         l=0.0;    ! LM top of beam pipe at 0.622 DS corrector    
+SM_MW06   :    MARKER;
+dtmw06ds  :    DRIFT,         l=0.0;
+dttmv2us  :    DRIFT,         l=0.36325;
+HHTMV2    :    MARKER;
+VVTMV2    :    MARKER;
+dttmv2ds  :    DRIFT,         l=0.0;
+dtMV2us   :    DRIFT,         l=0.2936+dmv2;
+
+!MV2us     :    RBEND,   l=l_mv2*0.5, angle=-578.53E-06*IMV2*0.5, tilt= pi/2;
+!VMV2      :    MARKER;
+!MV2ds     :    RBEND,   l=l_mv2*0.5, angle=-578.53E-06*IMV2*0.5, tilt= pi/2;
+
+MV2us     :RBEND,       l=(l_mv2)*0.5, angle=-0.21952*0.5, tilt= pi/2;
+VMV2      :    MARKER;
+MV2ds     :    RBEND,   l=(l_mv2)*0.5, angle=-0.21952*0.5, tilt= pi/2;
+
+dtbpq9us  :    DRIFT,         l=0.398374+dmv2;
+BPHQ9     :    HMONITOR;
+BPVQ9     :    VMONITOR;
+dtbpq9ds  :    DRIFT,         l=0;
+dtQ9us    :    DRIFT,         l=0.1362+dgreen;
+
+! Bebore MW07 move in Oct'06
+!Q9        :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=c_quad_TB*IQ9/brho;
+!dtQ10us   :    DRIFT,         l=0.7344+2*dgreen;
+!BLMQ10    :    DRIFT,         l=0.0;             ! LM sitting on top of beam pipe (US Q10)
+
+Q9        :    QUADRUPOLE,    l=l_quad_TB-dgreen,  k1=c_quad_TB*IQ9/brho;
+dtmw07us  :    DRIFT,         l=0.46145+dgreen;
+SM_MW07   :    MARKER;
+dtmw07ds  :    DRIFT,         l=0;
+dtQ10us   :    DRIFT,         l=0.2730+dgreen;
+
+Q10       :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=-c_quad_TB*IQ10/brho;
+dtbpq10us :    DRIFT,         l=0.1462+dgreen;
+BPHQ10    :    HMONITOR;
+BPVQ10    :    VMONITOR;
+dtbpq10ds :    DRIFT,         l=0;
+dtQ11us   :    DRIFT,         l=1.1232+dgreen;
+
+Q11       :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=c_quad_TB*IQ11/brho;
+dtbpq11us :    DRIFT,         l=0.1552+dgreen;
+BPHQ11    :    HMONITOR;
+BPVQ11    :    VMONITOR;
+dtbpq11ds :    DRIFT,         l=0;
+! MW07 was here before Oct'06
+!dtmw07us  :    DRIFT,         l=0.369;
+!SM_MW07   :    MARKER;
+!dtmw07ds  :    DRIFT,         l=0;
+!dtbpq12us :    DRIFT,         l=2.019;
+dtbpq12us :    DRIFT,         l=2.388;
+BPHQ12    :    HMONITOR;
+BPVQ12    :    VMONITOR;
+dtbpq12ds :    DRIFT,         l=0;
+dtQ12us   :    DRIFT,         l=0.1652+dgreen;
+
+Q12       :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=c_quad_TB*IQ12/brho;
+dttq12us  :    DRIFT,         l=0.1932+dgreen;
+HHTQ12    :    MARKER;
+VVTQ12    :    MARKER;
+dttq12ds  :    DRIFT,         l=0;
+dtSORBPus:    DRIFT,         l=1.098;     ! Length: 0.482
+dtSORBPds:    DRIFT,         l=0.0;
+dttdebus  :    DRIFT,         l=2.177;
+HHTDEB    :    MARKER;
+VVTDEB    :    MARKER;
+dttdebds  :    DRIFT,         l=0.0;
+dtmw08us  :    DRIFT,         l=0.431;
+SM_MW08   :    MARKER;
+dtmw08ds  :    DRIFT,         l=0.0;
+dtbpdebus :    DRIFT,         l=0.41875;
+BPHDEB    :    HMONITOR;
+BPVDEB    :    VMONITOR;
+dtbpdebds :    DRIFT,         l=0.0;
+dtDEBbv   :    DRIFT,         l=0.258;
+dtDEBus   :    DRIFT,         l=0.369;
+
+!DEBUNCHER :    MARKER;
+DEBUNCHER: RFCAVITY, L=1.0, VOLT=1.5, LAG=TMPLAG, FREQ=805; 
+
+dtmw09us  :    DRIFT,         l=0.619;
+SM_MW09   :    MARKER;
+dtmw09ds  :    DRIFT,         l=0;
+dttq13us  :    DRIFT,         l=0.554;
+HHTQ13    :    MARKER;
+VVTQ13    :    MARKER;
+dttq13ds  :    DRIFT,         l=0.0;
+dtQ13us   :    DRIFT,         l=0.21095+dll;
+
+!-------------------------------------------------------------------------------
+!
+! 400 MeV - New Configuration
+!
+!-------------------------------------------------------------------------------
+
+Q13       :    QUADRUPOLE,    l=l_quad_LL-2*dll,  k1=c_quad_LL*IQ13/brho;
+dtbpq13us :    DRIFT,         l=0.1237+dll;
+BPHQ13    :    HMONITOR;
+BPVQ13    :    VMONITOR;
+dtbpq13ds :    DRIFT,         l=0;
+dtmh21us  :    DRIFT,         l=0.4156+dmh2;
+BLMH21    :    DRIFT,         l=0; ! LM top of beam pipe (7in UP MH21)
+
+MH21us    :    RBEND,   l=1.2192*0.5, angle=0.1726*0.5;
+HMH21     :    MARKER;
+MH21ds    :    RBEND,   l=1.2192*0.5, angle=0.1726*0.5;
+
+dtmh22us  :    DRIFT,         l=0.2792+2*dmh2;
+
+MH22us    :    RBEND,   l=(1.2192)*0.5, angle=0.1726*0.5;
+HMH22     :    MARKER;
+MH22ds    :    RBEND,   l=(1.2192)*0.5, angle=0.1726*0.5;
+BLMH22    :    DRIFT,         l=0.0;    ! LM bottom of beam pipe (10.5in UP Q14))
+
+dttq14us  :    DRIFT,         l=0+dmh2;
+HHTQ14    :    MARKER;
+VVTQ14    :    MARKER;
+dttq14ds  :    DRIFT,         l=0;
+dtbpq14us :    DRIFT,         l=0.6656;
+BPHQ14    :    HMONITOR;
+BPVQ14    :    VMONITOR;
+dtbpq14ds :    DRIFT,         l=0;
+dtQ14us   :    DRIFT,         l=0.098 + dgreen;
+
+Q14       :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=c_quad_TB*IQ14/brho;
+
+dtbpq15us :    DRIFT,         l=1.03657+dgreen;
+BPHQ15    :    HMONITOR;
+BPVQ15    :    VMONITOR;
+dtbpq15ds :    DRIFT,         l=0;
+dtQ15us   :    DRIFT,         l=0.11883+dgreen;!0.1438+dgreen
+
+Q15       :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=-c_quad_TB*IQ15/brho;
+dtmw10us  :    DRIFT,         l=0.2639+dgreen;
+SM_MW10   :    MARKER;
+dtmw10ds  :    DRIFT,         l=0;
+
+dturbop   :    DRIFT,         l=0;
+dtbpq16us :    DRIFT,         l=2.6093;
+BPHQ16    :    HMONITOR;
+BPVQ16    :    VMONITOR;
+dtbpq16ds :    DRIFT,         l=0;
+BLMQ16    :    DRIFT,         l=0; ! BLM UP Q16 35"
+dtQ16us   :    drift,         l=0.0992+dgreen;
+
+Q16       :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=c_quad_TB*IQ16/brho;
+dtmw11us  :    DRIFT,         l=0.1824+dgreen;
+SM_MW11   :    MARKER;
+dtmw11ds  :    DRIFT,         l=0;
+dtordcs   :    DRIFT,         l=0;
+dtbpq17us :    DRIFT,         l=1.0563;
+BPHQ17    :    HMONITOR;
+BPVQ17    :    VMONITOR;
+dtbpq17ds :    DRIFT,         l=0;
+
+dtQ17us   :    DRIFT,         l=0.0987+dgreen;
+
+Q17       :    QUADRUPOLE,    l=l_quad_TB-2*dgreen,  k1=-c_quad_TB*IQ17/brho;
+dtmw12us  :    DRIFT,         l=0.182407+dgreen;
+SM_MW12   :    MARKER;
+dtmw12ds  :    DRIFT,         l=0;
+
+dtbvinj    :    DRIFT,         l=0.22+0.1184;
+
+dttinj1us  :    DRIFT,         l=0.22+0.1184;
+HHTINJ1    :    MARKER;
+VVTINJ1    :    MARKER;
+dttinj1ds  :    DRIFT,         l=0;
+
+dttinj2us  :    DRIFT,         l=1.7935+0.1184;
+HHTINJ2    :    MARKER;
+VVTINJ2    :    MARKER;  
+dttinj2ds  :    DRIFT,         l=0;
+
+dtbpinjus  :   DRIFT,          l=0.7088+0.1184;
+BPHINJ     :   MARKER;
+BPVINJ     :   MARKER;
+dtbpinjds  :   DRIFT,          l=0;
+
+BLMINJ     :   DRIFT,          l=0; ! BLM DW BPMINJ(18in)
+
+dtorb2    :    DRIFT,         l=1.777+dorb; !4.9512+dorb+0.0545 
+ORB2us    :    RBEND,   l=0.483*0.5, angle=-1.499E-06*IORBMP*1000.0*0.5; ! full bending angle
+HORB2     :    MARKER;
+ORB2ds    :    RBEND,   l=0.483*0.5, angle=-1.499E-06*IORBMP*1000.0*0.5; ! full bending angle
+dtfoil    :    DRIFT,         l=0.2390+dorb;
+
+!-------------------------------------------------------------------------------
+!
+!  Line definitions
+!
+!-------------------------------------------------------------------------------
+
+lbpq2     : line=(dtbpq2us,BPHQ2,BPVQ2,dtbpq2ds);
+lbplam    : line=(dtbplamus,BPHLAM,BPVLAM,dtbplamds);
+lbpq3     : line=(dtbpq3us,BPHQ3,BPVQ3,dtbpq3ds);
+lbpq4     : line=(dtbpq4us,BPHQ4,BPVQ4,dtbpq4ds);
+lbpq5     : line=(dtbpq5us,BPHQ5,BPVQ5,dtbpq5ds);
+lbpq6     : line=(dtbpq6us,BPHQ6,BPVQ6,dtbpq6ds);
+lbpq7     : line=(dtbpq7us,BPHQ7,BPVQ7,dtbpq7ds);
+lbpq8     : line=(dtbpq8us,BPHQ8,BPVQ8,dtbpq8ds);
+lbpq9     : line=(dtbpq9us,BPHQ9,BPVQ9,dtbpq9ds);
+lbpq10    : line=(dtbpq10us,BPHQ10,BPVQ10,dtbpq10ds);
+lbpq11    : line=(dtbpq11us,BPHQ11,BPVQ11,dtbpq11ds);
+lbpq12    : line=(dtbpq12us,BPHQ12,BPVQ12,dtbpq12ds);
+lbpdeb    : line=(dtbpdebus,BPHDEB,BPVDEB,dtbpdebds);
+lbpq13    : line=(dtbpq13us,BPHQ13,BPVQ13,dtbpq13ds);
+lbpq14    : line=(dtbpq14us,BPHQ14,BPVQ14,dtbpq14ds);
+lbpq15    : line=(dtbpq15us,BPHQ15,BPVQ15,dtbpq15ds);
+lbpq16    : line=(dtbpq16us,BPHQ16,BPVQ16,dtbpq16ds);
+lbph23    : line=(dtbph23us,BPHH23,BPVH23,dtbph23ds);
+lbpq17    : line=(dtbpq17us,BPHQ17,BPVQ17,dtbpq17ds);
+lbpinj    : line=(dtbpinjus,BPHINJ,BPVINJ,dtbpinjds);
+
+ltq1      : line=(dttq1us,Q1,HHTQ01,VVTQ01,dttq1ds);
+!ltq1      : line=(dttq1us,Q1,HHTQ01,VVTQ01,Q1ds,dttq1ds);
+ltq2      : line=(dttq2us,dttq2ds);
+ltq3      : line=(dttq3us,HHTQ03,VVTQ03,dttq3ds);
+ltq4      : line=(dttq4us,HHTQ04,VVTQ04,dttq4ds);
+ltq5      : line=(dttq5us,HHTQ05,VVTQ05,dttq5ds);
+ltq6      : line=(dttq6us,HHTQ06,VVTQ06,dttq6ds);
+ltq7      : line=(dttq7us,HHTQ07,VVTQ07,dttq7ds);
+ltq8      : line=(dttq8us,HHTQ08,VVTQ08,dttq8ds);
+ltmv2     : line=(dttmv2us,HHTMV2,VVTMV2,dttmv2ds);
+ltq12     : line=(dttq12us,HHTQ12,VVTQ12,dttq12ds);
+ltdeb     : line=(dttdebus,HHTDEB,VVTDEB,dttdebds);
+ltq13     : line=(dttq13us,HHTQ13,VVTQ13,dttq13ds);
+ltq14     : line=(dttq14us,HHTQ14,VVTQ14,dttq14ds);
+ltinj1    : line=(dttinj1us,HHTINJ1,VVTINJ1,dttinj1ds);
+ltinj2    : line=(dttinj2us,HHTINJ2,VVTINJ2,dttinj2ds);
+
+llam      : line=(LAMus,HLAM,LAMds);
+lmv0      : line=(MV0us,VMV0,MV0ds);
+lmh1      : line=(MH1us,HMH1,MH1ds);
+lmv1      : line=(MV1us,VMV1,MV1ds);
+lmv2      : line=(MV2us,VMV2,MV2ds);
+lmh21     : line=(MH21us,HMH21,MH21ds);
+lmh22     : line=(MH22us,HMH22,MH22ds);
+lorb2     : line=(ORB2us,HORB2,ORB2ds);
+
+!-------------------------------------------------------------------------------
+lmisc0    : line=(dtrw1us,dtrw1ds,dtchop,CHOPPER,dtrw2us,dtrw2ds,dttor1us,
+                  dttor1ds,dtrwmus,dtrwmds);
+
+lmisc0_1  : line=(dtcor1us,dtcor1ds,dtcor2us,dtcor2ds,dtstus,dtstds,dtrw4us,
+                  dtrw4ds);
+
+mw0_1     : line=(L400Start,ltq1,lmisc0,ltq2,dtrw3us,dtrw3ds,dtQ2us,Q2,lbpq2,
+                  lmisc0_1,lbplam,dtLAMus,llam,dtmw01us);
+
+mw1_2     : line=(SM_MW01,dtmw01ds,dtbv01us,dtbv01ds,ltq3,dtQ3us,Q3,lbpq3,
+                  dtMV0us,lmv0,dtMH1us,lmh1,dttor2us,dttor2ds,dtmw02us);
+
+mw2_3     : line=(SM_MW02,dtmw02ds,ltq4,dtQ4us,Q4,lbpq4,dtMV1us,lmv1,dtmw03us);
+
+mw3_4     : line=(SM_MW03,dtmw03ds,dtbv02us,dtbv02ds,ltq5,dtQ5us,Q5,lbpq5,
+                  dtshieldus);
+
+mw4_5     : line=(lbpq6,dtQ6us,Q6,ltq6,dtmw04us,SM_MW04,dtmw04ds,ltq7,dtQ7us,Q7,lbpq7,dtmw05us);
+
+mw5_6     : line=(SM_MW05,dtmw05ds,lbpq8,dtQ8us,Q8,ltq8,dtmw06us);
+
+!mw6_7     : line=(SM_MW06,dtmw06ds,ltmv2,dtMV2us,lmv2,lbpq9,dtQ9us,Q9,dtQ10us,
+!                  Q10,lbpq10,dtQ11us,Q11,lbpq11,dtmw07us);
+
+!mw7_8     : line=(SM_MW07,dtmw07ds,lbpq12,dtQ12us,Q12,ltq12,dtpickupus,
+!                  dtpickupds,ltdeb,dtmw08us);
+
+mw6_7     : line=(SM_MW06,dtmw06ds,ltmv2,dtMV2us,lmv2,lbpq9,dtQ9us,Q9,dtmw07us);
+
+mw7_8     : line=(SM_MW07,dtmw07ds,dtQ10us,Q10,lbpq10,dtQ11us,Q11,lbpq11,
+                  lbpq12,dtQ12us,Q12,ltq12,dtSORBPus,dtSORBPds,ltdeb,dtmw08us);
+
+mw8_9     : line=(SM_MW08,dtmw08ds,lbpdeb,dtDEBbv,dtDEBus,DEBUNCHER,dtmw09us);
+
+mw9_10    : line=(SM_MW09,dtmw09ds,ltq13,dtQ13us,Q13,lbpq13,dtmh21us,
+                  lmh21);
+
+mw10_11   : line=(dtmh22us,lmh22,ltq14,lbpq14,dtQ14us,Q14,lbpq15,dtQ15us,
+                  Q15,dtmw10us,SM_MW10,dtmw10ds,dturbop,&
+                  lbpq16,dtQ16us,Q16,dtmw11us);
+
+mw11_12   : line=(SM_MW11,dtmw11ds,dtordcs,lbpq17,dtQ17us,Q17,dtmw12us);
+
+girder    : line=(SM_MW12,dtmw12ds,dtbvinj,ltinj1,ltinj2,lbpinj,dtorb2,
+                  lorb2,dtfoil);
+
+l400mev   : line=(mw0_1,mw1_2,mw2_3,mw3_4,mw4_5,mw5_6,mw6_7,mw7_8,
+                  mw8_9,mw9_10,mw10_11,mw11_12,girder);
+
+energy    : line=(mw0_1,mw1_2,mw2_3,mw3_4);
+
+!-------------------------------------------------------------------------------
+!
+! PRINTING OPTICS FILE
+!
+!-------------------------------------------------------------------------------
+!emittance for madx is pi 10e-3 mrad, so pimmmrad is 10^3 normally
+!HOWEVER units for beam is in m 4e-6 may well be correct
+!i think they use 1 sigma now as the emittance definition, rather than the epsilon=4epsilon_{rms}
+!check to make sure it give a reasonable beam size
+!I think 4e-6 is correct however
+emitVal=4.0E-6;
+
+BEAM,     particle=proton, energy=etotal, EX=emitVal, EY=emitVal, sigt=1;
+USE, sequence=l400mev;
+
+SELECT, flag=twiss, column=name,s,k1,BETX,ALFX,DX,dpx,MUX,BETY,ALFY,MUY,DY,dpy,X,Y;
+TWISS, BETX = 1.113092, ALFX = -0.89649, BETY = 5.6787, ALFY = 0.49047, file=optics_400mev.dat, sectormap;
+
+TWISS,    betx= BETAX, alfx= ALPHAX, dx= DISPX, dpx= DISPPX, 
+          bety= BETAY, alfy= ALPHAY, dy= DISPY, dpy= DISPPY, 
+          SAVE= "NewInjection", TAPE= "400.TWS";
+
+
+!PLOT,     HAXIS= s, VAXIS1= betx,bety VAXIS2= dx,dy, 
+!          HMIN= 0, HMAX= 70, VMIN= 0,-5 VMAX= 100,+5, 
+!          TITLE= "Booster 400MeV Beamline Beta Function", 
+!          COLOUR= 100;
+PLOT,     HAXIS= s, VAXIS1= X, VAXIS2= Y, 
+          HMIN= 0, HMAX= 70, VMIN= -0.01,-0.01 VMAX= +0.01,0.01, 
+          TITLE= "Booster 400MeV Beamline Transverse", 
+          COLOUR= 100;
+
+!--------
+!TRACK
+!--------
+
+!Particle Tracking using TRACK module
+
+!Note: I believe the x and and y in the twiss is the distance from reference orbit to closed orbit orbit. Since this is a linac without
+!closed orbit I believe these values default to zero.
+
+!this probably isn't needed but I feel better reitializing the beam just in case the sequence was modified prior.
+BEAM,     particle=proton, energy=etotal, EX=emitVal, EY=emitVal, sigt=1;
+USE, sequence=l400mev;
+
+!beam sigma truncation
+gaussSigma = 4;
+number_particles=1;
+
+!This is a single turn so we don't need to find a closed orbit or go crazy with tracking (feel free to change around if it needs to be more exact)
+!I am currently assuming that since this is a single turn and such we don't need to go too crazy with tracking modules and such
+
+!To use the TRACK module, thick lenses such as bends need to be simplified into thin lenses
+!You can specify the number of thin individually per element, see the track module in the user guide for more information
+
+makethin, sequence=1400mev,style=teapot;makedipedge=false;
+!initialization of track module
+!no aperture in the default version
+!IMPORTANT: If an RF cavity has a non-zero voltage, synchrotron oscillations are automatically included.
+!If tracking with constant momentum is desired, then the voltage of the RF
+!cavities has to be set to zero. If an RF cavity has a no zero voltage and DELTAP is non zero,
+!tracking is done with synchrotron oscillations around an off-momentum closed orbit.
+
+!DUMP logical will add extra outputs, but is easier to parse, so it may be useful to you.
+TRACK, DELTAP=0.0, ONEPASS=true, DUMP=false, ONETABLE=true, file=l400mevtrackone;
+
+
+while(n<number_particles){
+!we need to populate the distribution based on the given optics functions
+!since we have our emittance and other optics, it'll be easiest to create this in terms of rms of beam size.
+!fx is rms beam size so we know that the beam is guassian ie e^-x^2+px^2/ e^Fx
+
+!Uses the same random seed every run, if necessary manually change seed for different runs
+!TGAUSS(x) random number, gaussian distribution with unit standard deviation, truncated at x standard deviations
+!tguass gives the standard deviation of the guassian action (x^2+px^2)
+!sqrt turns it the the proper amplitude
+!action is in terms of amplitude, not traditional action it looks like from the documentation
+!amp = sqrt(abs(TGAUSS(gaussSigma)));
+inampx = TGAUSS(gaussSigma);
+inphix = pi*ranf();
+inampy = TGAUSS(gaussSigma);
+inphiy = pi*ranf();
+!START, FX=inampx, PHIX=inphix, FY=inampy, PHIY=inphiy,FT=0, PHIT=0;
+!START, X=0.0, PX=0.0, Y=0.0, PY=0.01,T=0.0, PT=0.0;
+START, X=TMPX, PX=TMPPX, Y=TMPY, PY=TMPPY,T=0.0, PT=0.0;
+n=n+1;
+}
+!--------------
+!name of the observation point, if memory serves if nothing is here you just get the end of the bunch
+!add a list of many observation points currently only using monitor elements
+!OBSERVE, PLACE=string;
+!OBSERVE, PLACE=L400Start;
+!OBSERVE, PLACE=HHTQ01;	      
+!OBSERVE, PLACE=VVTQ01;
+OBSERVE, PLACE=BPHQ2;
+!OBSERVE, PLACE=HLAM;
+OBSERVE, PLACE=BPHLAM;
+!OBSERVE, PLACE=SM_MW01;
+!OBSERVE, PLACE=HHTQ03;
+!OBSERVE, PLACE=VVTQ03;
+OBSERVE, PLACE=BPHQ3;
+!OBSERVE, PLACE=VMV0;
+!OBSERVE, PLACE=HMH1;
+!OBSERVE, PLACE=SM_MW02;
+!OBSERVE, PLACE=HHTQ04;
+!OBSERVE, PLACE=VVTQ04;
+OBSERVE, PLACE=BPHQ4;
+!OBSERVE, PLACE=VMV1;
+!OBSERVE, PLACE=SM_MW03;
+!OBSERVE, PLACE=HHTQ05;
+!OBSERVE, PLACE=VVTQ05;
+OBSERVE, PLACE=BPHQ5;
+!OBSERVE, PLACE=HHTQ06;
+!OBSERVE, PLACE=VVTQ06;
+OBSERVE, PLACE=BPHQ6;
+!OBSERVE, PLACE=SM_MW04;
+!OBSERVE, PLACE=HHTQ07;
+!OBSERVE, PLACE=VVTQ07;
+OBSERVE, PLACE=BPHQ7;
+!OBSERVE, PLACE=SM_MW05;
+!OBSERVE, PLACE=HHTQ08;
+!OBSERVE, PLACE=VVTQ08;
+OBSERVE, PLACE=BPHQ8;
+OBSERVE, PLACE=BPHQ9;
+OBSERVE, PLACE=BPHQ10;
+OBSERVE, PLACE=BPHQ11;
+!OBSERVE, PLACE=SM_MW06;
+!OBSERVE, PLACE=HHTMV2;
+!OBSERVE, PLACE=VVTMV2;
+!OBSERVE, PLACE=VMV2;
+!OBSERVE, PLACE=SM_MW07;
+!OBSERVE, PLACE=HHTQ12;
+!OBSERVE, PLACE=VVTQ12;
+OBSERVE, PLACE=BPHQ12;
+!OBSERVE, PLACE=HHTDEB;
+!OBSERVE, PLACE=VVTDEB;
+OBSERVE, PLACE=BPHDEB;
+!OBSERVE, PLACE=SM_MW08;
+!OBSERVE, PLACE=DEBUNCHER;
+!OBSERVE, PLACE=SM_MW09;
+!OBSERVE, PLACE=HHTQ13;
+!OBSERVE, PLACE=VVTQ13;
+OBSERVE, PLACE=BPHQ13;
+!OBSERVE, PLACE=HMH21;
+!OBSERVE, PLACE=HMH22;
+!OBSERVE, PLACE=HHTQ14;
+!OBSERVE, PLACE=VVTQ14;
+OBSERVE, PLACE=BPHQ14;
+OBSERVE, PLACE=BPHQ15;
+!OBSERVE, PLACE=BPVQ15;
+OBSERVE, PLACE=BPHQ16;
+!OBSERVE, PLACE=BPVQ16;
+OBSERVE, PLACE=BPHQ17;
+!OBSERVE, PLACE=BPVQ17;
+!OBSERVE, PLACE=SM_MW10;
+!OBSERVE, PLACE=SM_MW11;
+!OBSERVE, PLACE=SM_MW12;
+!OBSERVE, PLACE=HHTINJ1;
+!OBSERVE, PLACE=VVTINJ1;
+OBSERVE, PLACE=BPHINJ;
+!OBSERVE, PLACE=BPVINJ;
+OBSERVE, PLACE=HORB2;
+!-----------------------------------------------------------------
+
+
+!you can make maxaper as large as needed to ensure you don't have losses if the beam is too large.
+RUN, TURNS=1;!, MAXAPER=real array, FFILE=integer, KEEPTRACK=logical;
+
+endtrack;
+
+
+stop;
