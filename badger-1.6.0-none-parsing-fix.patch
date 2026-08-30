@@ -1,0 +1,156 @@
+diff --git a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pydantic_editor.py
+index original..fixed 100644
+--- a/badger/gui/components/pydantic_editor.py
++++ b/badger/gui/components/pydantic_editor.py
+@@ -158,11 +158,11 @@ class BadgerResolvedType:
+         if len(args) == 0:
+             return BadgerResolvedType(main=annotation)
+
+         if origin == Annotated:
+             return BadgerResolvedType.resolve(args[0])
+
+         if origin == Union:
+             if NoneType in args:
+                 origin = Optional
+                 args = tuple(arg for arg in args if arg != NoneType)
+             else:
+                 if len(args) == 1:
+                     origin = args[0]
+                     args = ()
+                     nullable = True
+
+                     if origin is not None:
+                         resolved = BadgerResolvedType.resolve(origin)
+                         resolved.nullable = True
+                         return resolved
+                 elif len(args) > 1:
+                     primary = BadgerResolvedType.find_primary(args)
+                     return BadgerResolvedType(
+-                        main=origin,
++                        main=primary.main,
+                         nullable=nullable,
+-                        subtype=primary,
++                        subtype=primary.subtype,
+                     )
+
+         if origin == Optional:
+@@ -243,11 +243,25 @@ class BadgerResolvedType:
+             widget = QLabel()
+             widget.setText("null")
+         elif resolved_type.main == NoneType:
+             widget = QLabel()
+             widget.setText("null")
+         elif resolved_type.main is dict:
+             subtypes = resolved_type.subtype
+             if subtypes is None:
+                 raise ValueError("Dict type must have subtypes")
+             if not isinstance(subtypes, list) or len(subtypes) != 2:
+                 raise ValueError("Dict type must have two subtypes")
+
+             primary_type = subtypes[0]
+             secondary_type = subtypes[1]
+
+             if primary_type.main is None or secondary_type.main is None:
+                 raise ValueError("Dict subtypes must be basic types")
+
+             widget = BadgerListEditor(primary_type.main, secondary_type.main)
+@@ -752,12 +766,22 @@ class BadgerPydanticEditor(QTreeWidget):
+         # For dict types without subtypes, store as YAML strings.
+         # This avoids the "Dict type must have subtypes" error while still
+         # allowing dict values from templates to be displayed and edited.
+         field_definitions: dict[str, tuple[type, FieldInfo]] = {}
+         for k, v in params.items():
+             if isinstance(v, dict):
+                 # Store dict as YAML string; pydantic_editor will parse it back
+-                yaml_str = yaml.dump(v).strip()
++                # Use flow style (inline {}) to match template format and ensure
++                # the default check in _set_params_recurse works correctly
++                yaml_str = yaml.dump(v, default_flow_style=True).strip()
+                 field_definitions[k] = (str, Field(default=yaml_str))
++            elif isinstance(v, list):
++                # For lists, use list[str] if all items are strings, otherwise list[float]
++                # This ensures the list has proper subtypes for pydantic_editor
++                if all(isinstance(item, str) for item in v):
++                    field_definitions[k] = (list[str], Field())
++                elif all(isinstance(item, (int, float)) for item in v):
++                    field_definitions[k] = (list[float], Field())
++                else:
++                    field_definitions[k] = (list, Field())
+             else:
+                 field_definitions[k] = (type(v), Field())
+
+@@ -953,7 +977,14 @@ class BadgerPydanticEditor(QTreeWidget):
+             return
+
+         # get values from current parameters
+         parameters = self.get_parameters_yaml()
+-        defaults = yaml.load(parameters, Loader=CustomSafeLoader)
++        # Fix: In YAML flow maps, unquoted 'None' is parsed as string 'None'.
++        # Replace 'None' with 'null' before parsing to get proper Python None.
++        fixed_parameters = (
++            parameters.replace(": None", ": null")
++            .replace(", None", ", null")
++            .replace("[None", "[null")
++            .replace("(None", "(null")
++        )
++        defaults = yaml.load(fixed_parameters, Loader=CustomSafeLoader)
+         self.update_params_from_generator_class(
+             tree_widget_item,
+             name,
+@@ -1102,9 +1133,16 @@ class BadgerPydanticEditor(QTreeWidget):
+         self.vocs = vocs
+
+         parameters = self.get_parameters_yaml()
+         logger.debug(f"Extracted parameters from tree: {parameters}")
+
+-        defaults = yaml.load(parameters, Loader=CustomSafeLoader)
++        # Fix: In YAML flow maps, unquoted 'None' is parsed as string 'None'.
++        # Replace 'None' with 'null' before parsing to get proper Python None.
++        fixed_parameters = (
++            parameters.replace(": None", ": null")
++            .replace(", None", ", null")
++            .replace("[None", "[null")
++            .replace("(None", "(null")
++        )
++        defaults = yaml.load(fixed_parameters, Loader=CustomSafeLoader)
+
+         self.set_params_from_generator(self.generator_name, defaults, self.vocs)
+         self.validate()
+@@ -1189,7 +1227,14 @@ class BadgerPydanticEditor(QTreeWidget):
+         for i in range(self.topLevelItemCount()):
+             self.remove_style(self.topLevelItem(i))
+
+         try:
+             parameters = self.get_parameters_yaml()
+-            parameters_dict = yaml.load(parameters, Loader=CustomSafeLoader)
++            # Fix: In YAML flow maps, unquoted 'None' is parsed as string 'None'.
++            # Replace 'None' with 'null' before parsing to get proper Python None.
++            fixed_parameters = (
++                parameters.replace(": None", ": null")
++                .replace(", None", ", null")
++                .replace("[None", "[null")
++                .replace("(None", "(null")
++            )
++            parameters_dict = yaml.load(fixed_parameters, Loader=CustomSafeLoader)
+
+             def convert_dict(val: Any) -> Any:
+
+diff --git a/badger/gui/utils.py b/badger/gui/utils.py
+index original..fixed 100644
+--- a/badger/gui/utils.py
++++ b/badger/gui/utils.py
+@@ -75,8 +75,13 @@ def _parse_yaml_strings(obj: Any) -> Any:
+         if obj.startswith("{") or obj.startswith("["):
+             try:
+                 # In flow maps, unquoted 'None' becomes string 'None', not None.
+                 # Replace 'None' with 'null' to get proper Python None.
+-                fixed_obj = obj.replace(": None", ": null").replace(", None", ", null")
++                fixed_obj = (
++                    obj.replace(": None", ": null")
++                    .replace(", None", ", null")
++                    .replace("[None", "[null")
++                    .replace("(None", "(null")
++                )
+                 return yaml.safe_load(fixed_obj)
+             except yaml.YAMLError:
+                 pass
