@@ -279,7 +279,27 @@ The following patches have been applied to `pydantic_editor.py` in the FermiBadg
 
 ---
 
-## Related Documentation
+## Environment Plugin Gotchas
+
+### Badger Factory Bug - Params Overwriting
+
+**Problem:** Badger's factory overwrites the `configs["params"]` from `configs.yaml` with the model schema defaults when loading an environment. This means that if a field has a `None` default in the model, it will overwrite the value from `configs.yaml`.
+
+**Fix:** Use Pydantic's `Field(default='...')` to set proper defaults in the Environment class:
+
+```python
+from pydantic import Field
+
+# WRONG - defaults to None, which overwrites configs.yaml
+lattice_filename: str | None = None
+
+# CORRECT - uses Field with proper default
+lattice_filename: str = Field(default='sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx')
+```
+
+**See also:** `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` for the fix.
+
+---
 
 ## Related Documentation
 

@@ -1,6 +1,6 @@
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
-from typing import List, Any, Optional
+from typing import List, Any, Optional, Dict, Union
 import numpy as np
 import xobjects as xo
 import xtrack as xt  # tracking module of Xsuite
@@ -27,8 +27,11 @@ class Environment(environment.Environment):
     # NOTE: the Badger 1.5.4 GUI param editor rebuilds param types from the
     # values and crashes on dict- or list-valued params, so these two are
     # strings parsed in __init__ (comma-separated names / inline-YAML mapping).
-    quad_k_list:      str = 'kqd, kqf'
-    setpoints:        str = '{qx: 2.05015, qy: 1.20948}'
+    # In Badger 1.6.0, dict types need subtypes (Dict[K, V]) to work correctly
+    # with the pydantic editor.
+    # For Badger 1.6.0, we also support list types for quad_k_list
+    quad_k_list:      Union[List[str], str] = 'kqd, kqf'
+    setpoints:        Union[Dict[str, float], str, None] = '{qx: 2.05015, qy: 1.20948}'
     settings_filename:  str = 'SimpleVirtualAccelerator_settings.yaml'
     randomize_settings: bool = True
 
@@ -147,10 +150,22 @@ class Environment(environment.Environment):
         super().__init__(**data)
         torch.multiprocessing.set_sharing_strategy('file_system')
         # Parse the string params (see the NOTE at the field definitions)
-        self._quad_k_names = [s.strip() for s in self.quad_k_list.split(',') if s.strip()]
-        parsed_setpoints = yaml.safe_load(self.setpoints) if self.setpoints.strip() else {}
+        # Handle quad_k_list which can be a string (comma-separated) or list (from template)
+        if isinstance(self.quad_k_list, str):
+            self._quad_k_names = [s.strip() for s in self.quad_k_list.split(',') if s.strip()]
+        elif isinstance(self.quad_k_list, list):
+            self._quad_k_names = [str(s).strip() for s in self.quad_k_list]
+        else:
+            self._quad_k_names = []
+        # Handle setpoints which can be a string (YAML) or a dict (from template)
+        if isinstance(self.setpoints, dict):
+            parsed_setpoints = self.setpoints
+        elif isinstance(self.setpoints, str):
+            parsed_setpoints = yaml.safe_load(self.setpoints) if self.setpoints.strip() else {}
+        else:
+            parsed_setpoints = {}
         if not isinstance(parsed_setpoints, dict):
-            raise ValueError(f"'setpoints' must be an inline-YAML mapping, got: {self.setpoints!r}")
+            raise ValueError(f"'setpoints' must be a dict or inline-YAML mapping, got: {self.setpoints!r}")
         self._setpoints = {str(k): float(v) for k, v in parsed_setpoints.items()}
         #if self.debug: print ('super.init called. About to create_VA()')
         self.create_VA()

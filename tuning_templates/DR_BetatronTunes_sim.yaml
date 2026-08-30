@@ -1,5 +1,5 @@
 additional_variables: []
-badger_version: 1.5.4
+badger_version: 1.6.0
 constraint_formulas: {}
 critical_constraint_names: []
 description: Adjust main DR quad busses to change the horizontal tune (squared-error
@@ -13,7 +13,9 @@ environment:
     lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
     rel_range: 0.1
     sequence_name: full
-    setpoints: '{''qx'': 9.049, ''qy'': 9.035}'
+    setpoints:
+      qx: 9.049
+      qy: 9.035
     zero_half_range: -1.9
 formulas: {}
 generator:
@@ -29,16 +31,40 @@ generator:
     name: LBFGS
   turbo_controller: null
   vocs:
-    constants: '{}'
-    constraints: '{}'
-    objectives: '{''qx-SETPOINT'': {''dtype'': None, ''type'': ''MinimizeObjective''}}'
-    observables: '{''qx'': {''dtype'': None, ''type'': ''Observable''}, ''qy'': {''dtype'':
-      None, ''type'': ''Observable''}, ''qx-SETPOINT'': {''dtype'': None, ''type'':
-      ''Observable''}, ''qy-SETPOINT'': {''dtype'': None, ''type'': ''Observable''}}'
-    variables: '{''i_dqd'': {''dtype'': None, ''default_value'': None, ''domain'':
-      [216.54, 264.66], ''type'': ''ContinuousVariable''}, ''i_dqf'': {''dtype'':
-      None, ''default_value'': None, ''domain'': [217.07999999999998, 265.32], ''type'':
-      ''ContinuousVariable''}}'
+    constants: {}
+    constraints: {}
+    objectives:
+      qx-SETPOINT:
+        dtype: None
+        type: MinimizeObjective
+    observables:
+      qx:
+        dtype: None
+        type: Observable
+      qx-SETPOINT:
+        dtype: None
+        type: Observable
+      qy:
+        dtype: None
+        type: Observable
+      qy-SETPOINT:
+        dtype: None
+        type: Observable
+    variables:
+      i_dqd:
+        default_value: None
+        domain:
+        - 228.57
+        - 252.63
+        dtype: None
+        type: ContinuousVariable
+      i_dqf:
+        default_value: None
+        domain:
+        - 229.14
+        - 253.26
+        dtype: None
+        type: ContinuousVariable
 initial_point_actions:
 - type: add_curr
 - config:
@@ -73,17 +99,17 @@ vocs:
     i_dqd:
       default_value: null
       domain:
-      - 216.54
-      - 264.66
+      - 228.57
+      - 252.63
       dtype: null
       type: ContinuousVariable
     i_dqf:
       default_value: null
       domain:
-      - 217.07999999999998
-      - 265.32
+      - 229.14
+      - 253.26
       dtype: null
       type: ContinuousVariable
 vrange_hard_limit: {}
 vrange_limit_options: {}
-xopt_version: 3.1.1
+xopt_version: 3.2.1

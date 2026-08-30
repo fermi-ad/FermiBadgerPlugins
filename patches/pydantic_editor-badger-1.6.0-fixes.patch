@@ -1,52 +1,44 @@
---- a/src/badger/gui/components/pydantic_editor.py
-+++ b/src/badger/gui/components/pydantic_editor.py
-@@ -373,7 +373,7 @@ def _qt_widget_to_yaml_value(widget: Any) -> str | None:
-         ):
-             return "null"
-         return "true" if widget.isChecked() else "false"
-     elif isinstance(widget, QComboBox):
-         if widget.currentText() == "null":
--            return "null"
-+            return None
-         return f'"{widget.currentText()}"'
-     elif isinstance(widget, (QLabel, QLineEdit)):
-         text = widget.text()
-@@ -814,13 +814,18 @@
-
-         self.initialize_combo_widget(widget, selections)
-
--        special_item_dict: dict[str, Any] | None = defaults.get(field, {})
-+        special_item_dict: dict[str, Any] | None = defaults.get(field)
-
-         if special_item_dict is None:
--            logger.warning(
--                f"Generator has {field} set but no compatible {field} exists."
--            )
--            special_item_dict = {}
-+            # Check if key exists in defaults - if not, warn; if yes, it's explicitly null
-+            if field not in defaults:
-+                logger.warning(
-+                    f"Generator has {field} set but no compatible {field} exists."
-+                )
-+                special_item_dict = {}
-+            else:
-+                # Field is explicitly set to null - set combo box to null and return
-+                if (index := widget.findText("null")) >= 0:
-+                    widget.setCurrentIndex(index)
-+                return
-
-         special_item_dict["vocs"] = self.vocs.model_dump()
-
-@@ -1170,7 +1175,11 @@
-                             parameters_dict["vocs"][key]
-                         )
-             else:
--                raise KeyError("vocs field is required in parameters")
-+                # VOCs is not in the parameters dict (from the widget tree), but it's
-+                # stored in self.vocs. Use it as the source for vocs data.
-+                # This is expected behavior when the VOCs are set via update_vocs()
-+                # and are not part of the serialized generator parameters.
-+                parameters_dict["vocs"] = self.vocs.model_dump()
-
-             self._inject_computed_fields(parameters_dict, self.model_class)
-             model = self.model_class.model_validate(parameters_dict)
+--- a/plugins/environments/VirtualAccelerator_MADXSuite/__init__.py
++++ b/plugins/environments/VirtualAccelerator_MADXSuite/__init__.py
+@@ -17,6 +17,7 @@ from pathlib import Path
+ from typing import Any, Optional
+ 
+ import numpy as np
++from pydantic import Field
+ import xtrack as xt
+ import yaml
+ from cpymad.madx import Madx
+@@ -63,10 +64,10 @@ class Environment(environment.Environment):
+     variables = {}
+     observables = []
+ 
+     debug: bool = False
+-    lattice_filename: str = ''
++    lattice_filename: str = Field(default='sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx')
+     sequence_name: str = 'full'
+     # Reference momentum fallback, used only if the lattice's BEAM statement
+     # does not define one.  Default: Mu2e Delivery Ring protons.
+@@ -80,7 +81,7 @@ class Environment(environment.Environment):
+     # used for any observable not listed here.  This is a string (not a
+     # dict) because the Badger 1.5.4 GUI param editor rebuilds param types
+     # from the values and crashes on dict- or list-valued params.
+-    setpoints: str = ''
++    setpoints: str = Field(default='')
+ 
+     # Runtime state (pydantic private attributes, not settable via config)
+     # Note: xtrack's deferred_expressions=True evaluates MAD-X expressions at
+@@ -108,9 +109,6 @@ class Environment(environment.Environment):
+ 
+         super().__init__(**data)
+         self._setpoints = self._parse_setpoints(self.setpoints)
+         self.create_VA()
+ 
+     @staticmethod
+     def _parse_setpoints(setpoints_str: str) -> dict[str, float]:
+--- a/plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml
++++ b/plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml
+@@ -17,3 +17,4 @@ params:
+   rel_range: 0.1
+   zero_half_range: 0.1
+   setpoints: ""
++

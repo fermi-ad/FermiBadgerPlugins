@@ -1,5 +1,6 @@
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
+from typing import Dict
 
 class Environment(environment.Environment):
     name = "RIL_tuning"
@@ -79,18 +80,18 @@ class Environment(environment.Environment):
         "DummySumSq"
     ]
     #sample_event:  str = '@e,52,e,0'
-    sample_events: dict = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
+    sample_events: Dict[str, str] = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
     settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
-    #setpoints:     dict = {'defaults': None}
-    setpoints:     dict = {'defaults': None,
+    #setpoints:     Dict[str, float] = {'defaults': None}
+    setpoints:     Dict[str, float | None] = {'defaults': None,
                            'L:D73BPH':  1.2,
                            'L:D73BPV': -0.53,
                            'L:D74BPH':  0.341,
                            'L:D74BPV': -1.7,
                            'B:HPQ2':    1.348,
                            'B:VPQ2':  16.2}
-    w_sumsq:       dict = {"L:DELM18": 1., "L:D00LM": 1., "L:D0VLM": 1.,
+    w_sumsq:       Dict[str, float] = {"L:DELM18": 1., "L:D00LM": 1., "L:D0VLM": 1.,
                            "L:D11LM": 1., "L:D12LM": 1., "L:D13LM": 1., "L:D14LM": 1.,
                            "L:D21LM": 1., "L:D22LM": 1., "L:D23LM": 1., "L:D24LM": 1.,
                            "L:D31LM": 1., "L:D32LM": 1., "L:D33LM": 1., "L:D34LM": 1.,

@@ -14,3 +14,7 @@ params:
   # P_DHPnnn (horizontal) / P_DVPnnn (vertical).
   bpm_name_pattern: "^p_d[hv]p"
   debug: false
+  beam_p0c_eV: 8890000000.0
+  rel_range: 0.1
+  zero_half_range: 0.1
+  setpoints: ""

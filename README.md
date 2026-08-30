@@ -73,12 +73,15 @@ The patches fix issues in Badger that affect the VirtualAccelerator plugins:
 1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set and ensures correct serialization to YAML null
 2. **vocs field not found** - Fixes error when VOCs data is stored separately from generator parameters
 3. **Startup validation errors** - Fixes validation errors on Badger startup when generator combo box is changed
+4. **Environment config params** - Fixes issue where Badger factory overwrites `configs.yaml` params with model schema defaults
 
 **For Badger 1.5.4 (deprecated):**
 1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set
 2. **turbo_controller string values** - Fixes TypeError when turbo_controller is specified as a string
 
-These are applied to `badger/gui/components/pydantic_editor.py` in the `initialize_special_field`, `_qt_widget_to_yaml_value`, and `validate` methods.
+**Applies to:**
+- `badger/gui/components/pydantic_editor.py` - Fixes 1-3
+- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` - Fix 4 (Environment field defaults)
 
 See `patches/README.md` for detailed documentation of each fix.
 

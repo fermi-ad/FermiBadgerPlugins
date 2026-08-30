@@ -17,7 +17,9 @@ updated MAD-X sequence.
 import logging
 import re
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Dict, Optional, Union
+
+from pydantic import Field
 
 import numpy as np
 import xtrack as xt
@@ -64,7 +66,7 @@ class Environment(environment.Environment):
     observables = []
 
     debug: bool = False
-    lattice_filename: str = ''
+    lattice_filename: str = Field(default='sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx')
     sequence_name: str = 'full'
     # Reference momentum fallback, used only if the lattice's BEAM statement
     # does not define one.  Default: Mu2e Delivery Ring protons.
@@ -75,12 +77,13 @@ class Environment(environment.Environment):
     zero_half_range: float = 0.1
     # Case-insensitive regex that marks beam position monitor elements.
     bpm_name_pattern: str = 'bpm'
-    # '<observable>-SETPOINT' targets as an inline-YAML mapping string,
-    # e.g. '{"qx": 9.65, "qy": 9.74}'.  Design values recorded at load time are
-    # used for any observable not listed here.  This is a string (not a
-    # dict) because the Badger 1.5.4 GUI param editor rebuilds param types
-    # from the values and crashes on dict- or list-valued params.
-    setpoints: str = ''
+    # '<observable>-SETPOINT' targets as an inline-YAML mapping string or
+    # dict, e.g. '{"qx": 9.65, "qy": 9.74}'.  Design values recorded at load
+    # time are used for any observable not listed here.  Accepts both str and
+    # dict to handle templates that pass dict values (the GUI's DynamicModel
+    # creation uses type() which loses subtype info for dicts).
+    # Note: The pydantic_editor requires Dict[K, V] with subtypes, not plain dict.
+    setpoints: Union[Dict[str, float], str, None] = Field(default=None)
 
     # Runtime state (pydantic private attributes, not settable via config)
     # Note: xtrack's deferred_expressions=True evaluates MAD-X expressions at
@@ -92,7 +95,7 @@ class Environment(environment.Environment):
     _particle_ref: Optional[Any] = None  # xtrack reference particle (stored for re-conversion)
     _twiss: Optional[Any] = None  # cached twiss results
     _sequence_name_matched: Optional[str] = None  # MAD-X sequence name (case-insensitive match)
-    _setpoints: Optional[dict] = None  # parsed from the 'setpoints' string
+    _setpoints: Optional[Dict[str, float]] = None  # parsed from the 'setpoints' string
 
     def __init__(self, **data):
         # Badger's factory (badger.factory.load_plugin) instantiates
@@ -111,15 +114,21 @@ class Environment(environment.Environment):
         self.create_VA()
 
     @staticmethod
-    def _parse_setpoints(setpoints_str: str) -> dict[str, float]:
-        """Parse the 'setpoints' param (inline-YAML mapping string)."""
-        if not setpoints_str.strip():
+    def _parse_setpoints(setpoints_param: Union[Dict[str, float], str, None]) -> dict[str, float]:
+        """Parse the 'setpoints' param (inline-YAML mapping string, dict, or None)."""
+        if setpoints_param is None:
             return {}
-        parsed = yaml.safe_load(setpoints_str)
+        if isinstance(setpoints_param, dict):
+            # Already a dict - convert values to float
+            return {str(name): float(value) for name, value in setpoints_param.items()}
+        # String case - parse from YAML
+        if not setpoints_param.strip():
+            return {}
+        parsed = yaml.safe_load(setpoints_param)
         if not isinstance(parsed, dict):
             raise ValueError(
                 "The 'setpoints' parameter must be an inline-YAML mapping, "
-                f"e.g. '{{qx: 9.65, qy: 9.74}}'; got: {setpoints_str!r}"
+                f"e.g. '{{qx: 9.65, qy: 9.74}}'; got: {setpoints_param!r}"
             )
         return {str(name): float(value) for name, value in parsed.items()}
 

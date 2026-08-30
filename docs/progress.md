@@ -444,3 +444,187 @@ turbo_controller.success_tolerance: Value error, vocs must be set before inferri
 - [x] Tested template loading (no warnings)
 - [x] Fixed startup validation errors
 - [x] Updated documentation
+
+---
+
+## 2026-08-28: YAML flow map 'None' parsing fix
+
+### Problem
+When templates with `None` values were loaded, validation errors appeared:
+```
+Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='None', input_type=str]
+```
+
+### Root Cause
+When YAML flow maps (inline `{}`) contain unquoted `None`, `yaml.safe_load()` parses them as the string `'None'` instead of Python `None`. This happened in:
+
+1. **pydantic_editor.py** - `get_parameters_yaml()` outputs YAML with single-quoted flow maps like `{'dtype': None, 'default_value': None}`. When parsed, `None` becomes `'None'`.
+
+2. **Generator vocs in templates** - Some templates store vocs fields as YAML strings (e.g., `vocs.variables: "{'i_dqd': {'dtype': None, ...}}"`). When `yaml.safe_load()` parses this string, `None` becomes `'None'`.
+
+### Fix Applied
+
+**In `badger/gui/components/pydantic_editor.py` (3 locations):**
+- Added string replacement before `yaml.load()`:
+  ```python
+  fixed_parameters = (
+      parameters.replace(": None", ": null")
+      .replace(", None", ", null")
+      .replace("[None", "[null")
+      .replace("(None", "(null")
+  )
+  defaults = yaml.load(fixed_parameters, Loader=CustomSafeLoader)
+  ```
+
+**In `badger/gui/utils.py` - `_parse_yaml_strings` function:**
+- Same string replacement before `yaml.safe_load()`:
+  ```python
+  fixed_obj = (
+      obj.replace(": None", ": null")
+      .replace(", None", ", null")
+      .replace("[None", "[null")
+      .replace("(None", "(null")
+  )
+  return yaml.safe_load(fixed_obj)
+  ```
+
+### Testing
+
+Template `DR_BetatronTunes_sim.yaml` loaded successfully with:
+- `dtype=None` (NoneType, not string)
+- `default_value=None` (NoneType, not string)
+- `max_travel_distances=None` (NoneType, not string)
+- `turbo_controller=None` (NoneType, not string)
+
+Generator validation passed without errors.
+
+### Files Modified
+
+- `/Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger/gui/components/pydantic_editor.py` - Added string replacement before yaml.load() calls
+- `/Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger/gui/utils.py` - Updated _parse_yaml_strings function
+- `/Users/stjohn/Development/BayesOptimization_Xopt/FermiBadgerPlugins/badger-1.6.0-none-parsing-fix.patch` - Patch file created for distribution
+
+### Status
+
+- [x] Identified root cause (YAML flow map 'None' parsed as string)
+- [x] Implemented fix in pydantic_editor.py (3 locations)
+- [x] Implemented fix in utils.py
+- [x] Tested template loading (no validation errors)
+- [x] Created patch file for distribution
+- [x] Updated MEMORY.md
+
+---
+
+## 2026-08-28: PR preparation for Badger fork
+
+### Context
+For future fresh conda environments with Badger 1.6.0, a patch file is needed to apply all the fixes.
+
+### Created Files
+
+1. **`badger-1.6.0-none-parsing-fix.patch`** - Single patch file with all None parsing fixes
+
+2. **`docs/pr-badger-fork.md`** - PR description and instructions for forking Badger 1.6.0
+
+### Instructions for New PR
+
+**To apply to a fresh environment:**
+```bash
+cd /path/to/badger
+patch -p1 < /path/to/badger-1.6.0-none-parsing-fix.patch
+```
+
+**To create a fork of Badger 1.6.0 with fixes:**
+1. Fork https://github.com/xopt-org/Badger
+2. Apply the patch to the fork
+3. Update fork's version to `1.6.0-p1`
+4. Publish fork and update environment.yml
+
+### Files Created
+
+- `badger-1.6.0-none-parsing-fix.patch` - Patch file
+- `docs/pr-badger-fork.md` - PR description and instructions
+
+---
+
+## 2026-08-29: List type subtype fix
+
+### Problem
+When loading the `TuneQx.yaml` template with `SimpleVirtualAccelerator` environment, we got:
+```
+ValueError: List type must have a subtype
+```
+
+The error occurred in `pydantic_editor.py` when the pydantic editor tried to create a widget for the `quad_k_list` field.
+
+### Root Cause
+
+1. **Union type resolution**: When `Union[List[str], str]` was resolved, the `main` was set to `Union` instead of the primary type (`list`). This caused `resolve_qt` to not match any of the type checks.
+
+2. **List type inference**: In `set_params_from_dict`, when creating field definitions from template values, plain `list` was used instead of `list[str]`, which doesn't have subtypes required by pydantic_editor.
+
+### Fixes Applied
+
+**Fix 1: BadgerResolvedType.resolve (line ~180-186)**
+```python
+# Before:
+return BadgerResolvedType(main=origin, subtype=primary)
+
+# After:
+return BadgerResolvedType(main=primary.main, subtype=primary.subtype)
+```
+
+**Fix 2: set_params_from_dict (line ~755-777)**
+```python
+elif isinstance(v, list):
+    if all(isinstance(item, str) for item in v):
+        field_definitions[k] = (list[str], Field())
+    elif all(isinstance(item, (int, float)) for item in v):
+        field_definitions[k] = (list[float], Field())
+    else:
+        field_definitions[k] = (list, Field())
+```
+
+### Testing
+
+- `SimpleVirtualAccelerator` template `TuneQx.yaml` loads successfully
+- Environment instantiated with dict/list values from template
+- pydantic_editor validates without errors
+
+### 2026-08-29: Double pydantic warning fix
+
+**Problem:** Running `TuneQx.yaml` template produced double warning every iteration:
+```
+PydanticSerializationUnexpectedValue(Unexpected Value)
+PydanticSerializationUnexpectedValue(Unexpected Value)
+```
+
+**Root Cause:** In `set_params_from_dict`, dict values were stored as YAML strings using `yaml.dump()` which produces block format (e.g., `qx: 2.05015\nqy: 1.20948`). When the model was serialized, pydantic expected a dict but found a string.
+
+**Fix:** Changed `yaml.dump(v).strip()` to `yaml.dump(v, default_flow_style=True).strip()` to produce flow maps (e.g., `{qx: 2.05015, qy: 1.20948}`) that match template format.
+
+**Files Modified**
+
+- `badger/gui/components/pydantic_editor.py` - Updated `set_params_from_dict` to use `default_flow_style=True`
+
+### Additional Changes
+
+- `plugins/environments/SimpleVirtualAccelerator/__init__.py` - Updated type annotations:
+  - `quad_k_list: Union[List[str], str]`
+  - `setpoints: Union[Dict[str, float], str, None]`
+  - Updated `__init__` to handle both list/string and dict/string types
+
+### Patch Files Created
+
+- `badger-1.6.0-none-parsing-fix.patch` - Updated with all fixes
+- `simple-virtual-accelerator-plugin-fix.patch` - Plugin patch
+
+### Status
+
+- [x] Identified root causes
+- [x] Fixed Union type resolution
+- [x] Fixed list subtype inference
+- [x] Fixed dict YAML format (flow maps)
+- [x] Updated SimpleVirtualAccelerator plugin
+- [x] Tested template loading (no pydantic warnings)
+- [x] Updated MEMORY.md
