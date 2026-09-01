@@ -27,20 +27,7 @@ conda activate FermiBadger_env
 
 ### 3. Apply patches for Badger 1.6.0 (if needed)
 
-**Patches are applied to different locations depending on what they fix:**
-
-#### Patches for the FermiBadgerPlugins repo (run from this repo directory)
-
-```bash
-# Apply the patch for VirtualAccelerator_MADXSuite environment
-patch -p1 < patches/pydantic_editor-badger-1.6.0-fixes.patch
-```
-
-This fixes:
-- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` - Environment field defaults
-- `plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml` - Config defaults
-
-#### Patches for Badger itself (run from your Badger installation)
+**Note:** The patch for the VirtualAccelerator_MADXSuite plugin is no longer needed - the fixes have been applied directly to the repo. However, if you need to apply patches to Badger itself:
 
 ```bash
 # Find your Badger installation directory
@@ -48,14 +35,9 @@ BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger._
 
 # Apply the pydantic_editor patch with -p2 (strips 'a/src/' from patch path)
 patch -d "$BADGER_DIR" -p2 < patches/pydantic_editor-turbo_controller-null-1.6.0.patch
-
-# If other pydantic_editor patches are needed, use -p1:
-# patch -d "$BADGER_DIR" -p1 < patches/pydantic_editor-combo-box-null-fix.patch
 ```
 
-**Note:** The `-p` flag strips path components from the patch file. The patch uses paths like `a/src/badger/gui/components/pydantic_editor.py`, so:
-- `-p1` strips `a/` → `src/badger/gui/...` (wrong - file is at `badger/gui/...`)
-- `-p2` strips `a/src/` → `badger/gui/...` (correct!)
+**Note:** The `-p` flag strips path components from the patch file. The patch uses paths like `a/src/badger/gui/components/pydantic_editor.py`, so `-p2` is required to get to `badger/gui/components/pydantic_editor.py`.
 
 ### 4. Configure Badger
 

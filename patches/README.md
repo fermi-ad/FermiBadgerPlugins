@@ -1,28 +1,10 @@
 # Badger Patches
 
-This directory contains patches for the Badger GUI and VirtualAccelerator plugins.
+This directory contains patches for the Badger GUI.
 
 ## Patches for Badger 1.6.0
 
-### 1. `pydantic_editor-badger-1.6.0-fixes.patch`
-
-**Purpose:** Fix issues in the VirtualAccelerator_MADXSuite environment plugin (NOT Badger itself):
-
-1. **Environment field defaults** - Uses Pydantic `Field(default=...)` instead of bare assignment for better validation.
-
-**Applies to (run from FermiBadgerPlugins repo directory):**
-- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py`
-- `plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml`
-
-**Usage:**
-```bash
-# From the FermiBadgerPlugins repo directory
-patch -p1 < patches/pydantic_editor-badger-1.6.0-fixes.patch
-```
-
----
-
-### 2. `pydantic_editor-turbo_controller-null-1.6.0.patch`
+### 1. `pydantic_editor-turbo_controller-null-1.6.0.patch`
 
 **Purpose:** Fix turbo_controller null handling in Badger 1.6.0:
 
@@ -30,7 +12,7 @@ patch -p1 < patches/pydantic_editor-badger-1.6.0-fixes.patch
 
 2. **Startup validation error**: Fixes validation errors on Badger startup when generator combo box is changed.
 
-**Applies to (run from Badger installation directory):**
+**Applies to:**
 - `badger/gui/components/pydantic_editor.py`
 
 **Usage:**
@@ -50,9 +32,9 @@ patch -p2 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-turbo_controller
 
 ---
 
-### 3. `pydantic_editor-combo-box-null-fix.patch`
+### 2. `pydantic_editor-combo-box-null-fix.patch`
 
-**Purpose:** Fix QComboBox "null" handling in Badger 1.6.0:
+**Purpose:** Fix QComboBox "null" handling in Badger 1.6.0.
 
 **Applies to:**
 - `badger/gui/components/pydantic_editor.py`
@@ -66,25 +48,17 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-combo-box-null-f
 
 ---
 
-## Template VOCs Structure Fix
-
-The `DR_BetatronTunes_sim.yaml` template has been updated to have proper vocs structure:
-
-```yaml
-generator:
-  ...
-  turbo_controller: null
-  vocs:
-    constants: '{}'
-    constraints: '{}'
-    objectives: '{...}'
-    observables: '{...}'
-    variables: '{...}'
-```
-
 ## Patches for Badger 1.5.4 (deprecated)
 
 The following patches were created for Badger 1.5.4 and are no longer needed for 1.6.0:
 
 - `pydantic_editor-turbo_controller-string-fix.patch` - Handles string values for turbo_controller
 - `pydantic_editor-null-turbo_controller.patch` - Handles null values for turbo_controller
+
+---
+
+## Removed Patches
+
+The following patches are no longer needed because the fixes have been applied directly to the FermiBadgerPlugins repo:
+
+- `pydantic_editor-badger-1.6.0-fixes.patch` - VirtualAccelerator_MADXSuite environment field defaults (now in `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py`)
