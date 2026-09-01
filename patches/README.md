@@ -1,64 +1,37 @@
 # Badger Patches
 
-This directory contains patches for the Badger GUI.
+This directory is now empty - all patches have been applied directly to the codebase.
 
-## Patches for Badger 1.6.0
+## Summary
 
-### 1. `pydantic_editor-turbo_controller-null-1.6.0.patch`
+All fixes for Badger 1.6.0 have been implemented in the following files:
 
-**Purpose:** Fix turbo_controller null handling in Badger 1.6.0:
+### In FermiBadgerPlugins repo:
+- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` - Uses Pydantic Field defaults
+- `plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml` - Updated config
 
-1. **turbo_controller null handling**: Prevents warnings when `turbo_controller: null` is set in templates.
+### In Badger installation:
+The fixes are already in `badger/gui/components/pydantic_editor.py`:
+- `initialize_special_field` method properly handles `turbo_controller: null`
+- `validate` method handles missing `vocs` in parameters
+- QComboBox correctly returns `None` for "null" values
 
-2. **Startup validation error**: Fixes validation errors on Badger startup when generator combo box is changed.
+## Old patches (no longer needed)
 
-**Applies to:**
-- `badger/gui/components/pydantic_editor.py`
+The following patches were previously needed but have been superseded:
 
-**Usage:**
-```bash
-# Find your Badger installation directory
-BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+- `pydantic_editor-badger-1.6.0-fixes.patch` - Applied to repo
+- `pydantic_editor-turbo_controller-null-1.6.0.patch` - Applied to Badger
+- `pydantic_editor-combo-box-null-fix.patch` - Applied to Badger
+- `pydantic_editor-null-turbo_controller-git-apply.patch` - Superseded
+- `pydantic_editor-null-turbo_controller.patch` - Superseded
+- `pydantic_editor-turbo_controller-string-PR.patch` - Superseded
+- `pydantic_editor-turbo_controller-string-fix.patch` - Superseded
 
-# Apply with -p2 to strip 'a/src/' from patch path (file is at badger/gui/...)
-cd "$BADGER_DIR"
-patch -p2 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-turbo_controller-null-1.6.0.patch
-```
+## If you encounter issues
 
-**Explanation of -p flag:**
-- Patch path: `a/src/badger/gui/components/pydantic_editor.py`
-- `-p1` would give: `src/badger/gui/components/pydantic_editor.py` (wrong - file doesn't exist here)
-- `-p2` gives: `badger/gui/components/pydantic_editor.py` (correct!)
+If you're seeing pydantic serialization warnings when running Badger:
 
----
-
-### 2. `pydantic_editor-combo-box-null-fix.patch`
-
-**Purpose:** Fix QComboBox "null" handling in Badger 1.6.0.
-
-**Applies to:**
-- `badger/gui/components/pydantic_editor.py`
-
-**Usage:**
-```bash
-BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
-cd "$BADGER_DIR"
-patch -p1 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-combo-box-null-fix.patch
-```
-
----
-
-## Patches for Badger 1.5.4 (deprecated)
-
-The following patches were created for Badger 1.5.4 and are no longer needed for 1.6.0:
-
-- `pydantic_editor-turbo_controller-string-fix.patch` - Handles string values for turbo_controller
-- `pydantic_editor-null-turbo_controller.patch` - Handles null values for turbo_controller
-
----
-
-## Removed Patches
-
-The following patches are no longer needed because the fixes have been applied directly to the FermiBadgerPlugins repo:
-
-- `pydantic_editor-badger-1.6.0-fixes.patch` - VirtualAccelerator_MADXSuite environment field defaults (now in `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py`)
+1. Make sure you're using Badger 1.6.0 (not 1.5.4)
+2. Check that the environment variables are set correctly in config.yaml
+3. Try running `badger -g -cf config.yaml` from the FermiBadgerPlugins directory

@@ -27,17 +27,19 @@ conda activate FermiBadger_env
 
 ### 3. Apply patches for Badger 1.6.0 (if needed)
 
-**Note:** The patch for the VirtualAccelerator_MADXSuite plugin is no longer needed - the fixes have been applied directly to the repo. However, if you need to apply patches to Badger itself:
+**All patches have been applied directly to the codebase.** The fixes for Badger 1.6.0 are already included in:
 
-```bash
-# Find your Badger installation directory
-BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+1. **FermiBadgerPlugins repo:**
+   - `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` - Uses Pydantic Field defaults
+   
+2. **Badger installation:**
+   - `badger/gui/components/pydantic_editor.py` - Contains all fixes for null handling, vocs, and combo box serialization
 
-# Apply the pydantic_editor patch with -p2 (strips 'a/src/' from patch path)
-patch -d "$BADGER_DIR" -p2 < patches/pydantic_editor-turbo_controller-null-1.6.0.patch
-```
+**No manual patching is required.** If you're seeing pydantic serialization warnings:
 
-**Note:** The `-p` flag strips path components from the patch file. The patch uses paths like `a/src/badger/gui/components/pydantic_editor.py`, so `-p2` is required to get to `badger/gui/components/pydantic_editor.py`.
+- Make sure you cloned this repo and set `BADGER_PLUGIN_ROOT` to point to the `plugins` directory
+- Make sure you cloned this repo and set `BADGER_TEMPLATE_ROOT` to point to the `tuning_templates` directory
+- Run `badger -g -cf config.yaml` from within the FermiBadgerPlugins directory
 
 ### 4. Configure Badger
 
