@@ -1,53 +1,75 @@
 # Badger Patches
 
-This directory contains patches for the Badger GUI to fix issues specific to our VirtualAccelerator_MADXSuite environment.
+This directory contains patches for the Badger GUI and VirtualAccelerator plugins.
 
 ## Patches for Badger 1.6.0
 
 ### 1. `pydantic_editor-badger-1.6.0-fixes.patch`
 
-**Purpose:** Fix multiple issues in Badger 1.6.0:
+**Purpose:** Fix issues in the VirtualAccelerator_MADXSuite environment plugin (NOT Badger itself):
 
-1. **turbo_controller null handling**: Prevents warnings when `turbo_controller: null` is set in templates.
+1. **Environment field defaults** - Uses Pydantic `Field(default=...)` instead of bare assignment for better validation.
 
-2. **vocs field in parameters**: Avoids `KeyError: 'vocs field is required in parameters'` when vocs is stored separately in `self.vocs`.
-
-3. **QComboBox "null" handling**: Ensures YAML null is output instead of string "null".
-
-4. **Startup validation error**: Fixes validation errors on Badger startup when generator combo box is changed.
-
-**Problem:** In Badger 1.6.0:
-- `turbo_controller: null` caused repeated warnings
-- `vocs` was not found in parameters, causing errors
-- QComboBox returned string "null" instead of actual null value
-- TurboController validation errors on startup due to incorrect YAML serialization
-
-**Fix:** 
-- In `_qt_widget_to_yaml_value()`: Return `None` when combo box shows "null"
-- In `initialize_special_field()`: Check if field exists in defaults before warning; if it exists with value null, set combo box to "null" and return early
-- In `validate()`: If `vocs` is not in parameters_dict, use `self.vocs.model_dump()` as the source
+**Applies to (run from FermiBadgerPlugins repo directory):**
+- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py`
+- `plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml`
 
 **Usage:**
 ```bash
-cd /path/to/badger/source
-patch -p1 < pydantic_editor-badger-1.6.0-fixes.patch
+# From the FermiBadgerPlugins repo directory
+patch -p1 < patches/pydantic_editor-badger-1.6.0-fixes.patch
 ```
 
-For conda-installed Badger (FermiBadger_env):
+---
+
+### 2. `pydantic_editor-turbo_controller-null-1.6.0.patch`
+
+**Purpose:** Fix turbo_controller null handling in Badger 1.6.0:
+
+1. **turbo_controller null handling**: Prevents warnings when `turbo_controller: null` is set in templates.
+
+2. **Startup validation error**: Fixes validation errors on Badger startup when generator combo box is changed.
+
+**Applies to (run from Badger installation directory):**
+- `badger/gui/components/pydantic_editor.py`
+
+**Usage:**
 ```bash
-# The pydantic_editor.py file is located at:
-# /Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger/gui/components/pydantic_editor.py
+# Find your Badger installation directory
+BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
 
-# Apply the fixes directly:
-sed -i.bak 's/return "null"/return None/' pydantic_editor.py
-# Then manually update initialize_special_field() to set combo box to "null" before returning
+# Apply with -p2 to strip 'a/src/' from patch path (file is at badger/gui/...)
+cd "$BADGER_DIR"
+patch -p2 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-turbo_controller-null-1.6.0.patch
 ```
 
-### 2. Template VOCs Structure Fix
+**Explanation of -p flag:**
+- Patch path: `a/src/badger/gui/components/pydantic_editor.py`
+- `-p1` would give: `src/badger/gui/components/pydantic_editor.py` (wrong - file doesn't exist here)
+- `-p2` gives: `badger/gui/components/pydantic_editor.py` (correct!)
 
-**Issue:** The `DR_BetatronTunes_sim.yaml` template had vocs fields incorrectly nested under `generator:` without a `vocs:` key. Badger 1.6.0 validation requires vocs to be properly structured.
+---
 
-**Fix:** Updated template to have:
+### 3. `pydantic_editor-combo-box-null-fix.patch`
+
+**Purpose:** Fix QComboBox "null" handling in Badger 1.6.0:
+
+**Applies to:**
+- `badger/gui/components/pydantic_editor.py`
+
+**Usage:**
+```bash
+BADGER_DIR=$(python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+cd "$BADGER_DIR"
+patch -p1 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-combo-box-null-fix.patch
+```
+
+---
+
+## Template VOCs Structure Fix
+
+The `DR_BetatronTunes_sim.yaml` template has been updated to have proper vocs structure:
+
 ```yaml
 generator:
   ...
