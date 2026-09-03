@@ -715,3 +715,71 @@ Changed `yaml.dump(v).strip()` to `yaml.dump(v, default_flow_style=True).strip()
 - [x] Applied fix to use default_flow_style=True
 - [x] Verified no pydantic warnings
 - [x] Updated documentation
+
+---
+
+# Session Log - 2026-09-02
+
+## Dict type must have subtypes error
+
+### 12:30 - User report
+User ran the Quick Start script to set up `FermiBadger_envTEST` and then ran `badger -mini -cf config.yaml` from `/tmp/FermiBadger_envTEST`. Loading the `DR_BetatronTunes_sim` template produced an error:
+```
+ValueError: Dict type must have subtypes
+```
+
+### 12:45 - Initial investigation
+- Checked `pydantic_editor.py` in FermiBadger_envTEST - it had the bug
+- Compared with FermiBadger_env (main environment) which works correctly
+- Both environments have pydantic_editor.py but FermiBadger_envTEST was missing the fix
+
+### 12:50 - Root cause identified
+The fix for the "Dict type must have subtypes" error requires changes in multiple places:
+
+1. **Union type resolution (line ~183):** Changed `main=origin` to `main=primary.main` and `subtype=primary` to `subtype=primary.subtype`
+   - Ensures Dict types get proper subtypes when resolved from Union
+
+2. **DynamicModel creation (line ~752):** Added YAML string storage for dict types
+   - Converts dict values to YAML strings to avoid subtype issues
+
+3. **YAML None parsing:** Added string replacement for flow map 'None' values
+
+### 13:00 - Package cache corruption detected
+When trying to reinstall badger-opt, conda reported:
+```
+SafetyError: The package for badger-opt located at /Users/stjohn/miniconda3/pkgs/badger-opt-1.6.0-pyhd8ed1ab_0
+appears to be corrupted. The path 'site-packages/badger/gui/components/pydantic_editor.py'
+has an incorrect size.
+  reported size: 43867 bytes
+  actual size: 48848 bytes
+```
+
+The pydantic_editor.py file had been modified in the conda environment, changing its size from 43867 to 48848 bytes, which broke conda's package integrity check.
+
+### 13:15 - Fix applied
+1. Removed corrupted package cache: `rm -rf /Users/stjohn/miniconda3/pkgs/badger-opt-1.6.0-pyhd8ed1ab_0`
+2. Reinstalled badger-opt: `conda install -n FermiBadger_envTEST badger-opt=1.6.0 --force-reinstall`
+3. Applied patch from `/Users/stjohn/Development/BayesOptimization_Xopt/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-fixes.patch`
+4. Verified the fix by running badger -mini with the DR_BetatronTunes_sim template
+
+### 13:25 - Verification
+- Badger GUI launched successfully in FermiBadger_envTEST
+- Template `DR_BetatronTunes_sim.yaml` loaded without errors
+- Optimization ran successfully with correct setpoints
+
+### 13:30 - Status
+- [x] Identified "Dict type must have subtypes" error root cause
+- [x] Created patch file with all pydantic_editor.py fixes
+- [x] Fixed conda package cache corruption
+- [x] Verified fix works in FermiBadger_envTEST
+
+### Files Created/Modified
+- `patches/pydantic_editor-badger-1.6.0-fixes.patch` - Created patch with all pydantic_editor.py fixes
+
+### Notes
+The patch converts FermiBadger_envTEST to match FermiBadger_env's pydantic_editor.py:
+- Line 183: `main=primary.main` (was `main=origin`)
+- Line 185: `subtype=primary.subtype` (was `subtype=primary`)
+- Line 752: Added YAML string storage code for dict types
+
+The patch must be applied after installing badger-opt from conda to avoid package corruption issues.

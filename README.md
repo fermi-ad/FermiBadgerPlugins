@@ -4,7 +4,7 @@ This repository contains plugins and configuration for using [Badger](https://gi
 
 - **VirtualAccelerator_MADXSuite** - A virtual accelerator environment that uses MAD-X lattice files with XSuite for rapid simulation
 - **Tuning templates** - Pre-configured optimization setups for various accelerator configurations
-- **Patches** - Bug fixes for Badger 1.5.4
+- **Test script** - `test-quick-start.sh` to verify your installation
 
 ## Quick Start
 
@@ -54,6 +54,30 @@ Edit the `config.yaml` file to set the `*_ROOT` directories:
 ```bash
 badger -g -cf config.yaml
 ```
+
+### 6. Verify your installation (optional)
+
+Run the test script to verify everything is set up correctly:
+
+```bash
+./test-quick-start.sh
+```
+
+This script:
+- Clones a fresh copy of the repository to `/tmp/FermiBadger_envTEST`
+- Creates a new conda environment named `FermiBadger_envTEST`
+- Installs the plugin and verifies it's discoverable by Badger
+
+**Note:** The test uses a separate environment (`FermiBadger_envTEST`) to avoid conflicts with your main `FermiBadger_env`.
+
+**Important:** The test environment uses a clean conda installation of Badger 1.6.0. If you encounter a "Dict type must have subtypes" error when loading templates in the test environment, apply the patch:
+
+```bash
+cd /Users/stjohn/miniconda3/envs/FermiBadger_envTEST/lib/python3.12/site-packages
+patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-fixes.patch
+```
+
+See `patches/pydantic_editor-badger-1.6.0-fixes.patch` for the full fix documentation.
 
 ---
 
@@ -177,11 +201,9 @@ conda create -n FermiBadger_env -f environment.yml  # Recreate if missing
 
 ```
 FermiBadgerPlugins/
-├── patches/                    # Badger bug fixes (1.6.0 and 1.5.4)
-│   ├── pydantic_editor-badger-1.6.0-fixes.patch
-│   ├── pydantic_editor-turbo_controller-string-fix.patch
-│   ├── pydantic_editor-null-turbo_controller.patch
+├── patches/                    # Badger bug fixes (1.6.0 and 1.5.4) - now all applied
 │   └── README.md
+├── test-quick-start.sh         # Quick Start verification script
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins
 │   │   └── VirtualAccelerator_MADXSuite/
