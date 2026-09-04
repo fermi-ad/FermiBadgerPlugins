@@ -1,32 +1,57 @@
 # Badger Patches
 
-This directory is now empty - all patches have been applied directly to the codebase.
-
 ## Summary
 
-All fixes for Badger 1.6.0 have been implemented in the following files:
+### Patches for Badger 1.6.0 installation
 
-### In FermiBadgerPlugins repo:
-- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` - Uses Pydantic Field defaults
-- `plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml` - Updated config
+The following patch is required to fix known issues in Badger 1.6.0:
 
-### In Badger installation:
-The fixes are already in `badger/gui/components/pydantic_editor.py`:
-- `initialize_special_field` method properly handles `turbo_controller: null`
-- `validate` method handles missing `vocs` in parameters
-- QComboBox correctly returns `None` for "null" values
+| Patch | Description | Applied |
+|-------|-------------|---------|
+| `pydantic_editor-badger-1.6.0-dict-subtypes.patch` | Fixes "Dict type must have subtypes" error, handles `turbo_controller: null`, and fixes YAML parsing for 'None' strings | **Currently applied** |
 
-## Old patches (no longer needed)
+### Patch history
 
-The following patches were previously needed but have been superseded:
+The following patches have been superseded by `pydantic_editor-badger-1.6.0-dict-subtypes.patch`:
 
-- `pydantic_editor-badger-1.6.0-fixes.patch` - Applied to repo
-- `pydantic_editor-turbo_controller-null-1.6.0.patch` - Applied to Badger
-- `pydantic_editor-combo-box-null-fix.patch` - Applied to Badger
+- `pydantic_editor-badger-1.6.0-fixes.patch` - Superseded (contains same fixes in separate patches)
+- `pydantic_editor-turbo_controller-null-1.6.0.patch` - Superseded
+- `pydantic_editor-combo-box-null-fix.patch` - Superseded
 - `pydantic_editor-null-turbo_controller-git-apply.patch` - Superseded
 - `pydantic_editor-null-turbo_controller.patch` - Superseded
 - `pydantic_editor-turbo_controller-string-PR.patch` - Superseded
 - `pydantic_editor-turbo_controller-string-fix.patch` - Superseded
+
+## Applying patches to Badger 1.6.0
+
+The patches modify `badger/gui/components/pydantic_editor.py` in your Badger installation.
+
+```bash
+# Navigate to your Badger installation directory
+cd /path/to/badger/installation/lib/python3.x/site-packages/badger/gui/components/
+
+# Apply the patches
+patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-dict-subtypes-fix.patch
+patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-turbo_controller-null-fix.patch
+
+# Or apply both at once using the combined patch
+patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-all-fixes.patch
+```
+
+## If you encounter issues
+
+If you're seeing pydantic serialization warnings or "Dict type must have subtypes" errors:
+
+1. Make sure you're using Badger 1.6.0 (not 1.5.4)
+2. Check that the patches are applied correctly
+3. Verify your conda environment has all dependencies installed
+
+## Environment
+
+Patches tested with:
+- Badger 1.6.0
+- Python 3.12
+- Pydantic 2.x
 
 ## If you encounter issues
 

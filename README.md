@@ -25,21 +25,42 @@ conda env create -n FermiBadger_env -f environment.yml
 conda activate FermiBadger_env
 ```
 
-### 3. Apply patches for Badger 1.6.0 (if needed)
+### 3. Apply patches for Badger 1.6.0
 
-**All patches have been applied directly to the codebase.** The fixes for Badger 1.6.0 are already included in:
+**A patch is required** to fix known issues in Badger 1.6.0 that affect template loading and the `turbo_controller: null` configuration.
 
-1. **FermiBadgerPlugins repo:**
-   - `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` - Uses Pydantic Field defaults
-   
-2. **Badger installation:**
-   - `badger/gui/components/pydantic_editor.py` - Contains all fixes for null handling, vocs, and combo box serialization
+**Patched file:** `badger/gui/components/pydantic_editor.py`
 
-**No manual patching is required.** If you're seeing pydantic serialization warnings:
+**Issues fixed:**
+1. "Dict type must have subtypes" error when loading templates with dict/list environment params (e.g., `setpoints: {qx: 9.049, qy: 9.035}`)
+2. `turbo_controller: null` handling - prevents warnings and ensures correct null serialization
+3. YAML parsing of 'None' strings in flow maps (inline `{}` or `[]` syntax)
+4. VOCs field not found when it's stored separately from generator parameters
 
-- Make sure you cloned this repo and set `BADGER_PLUGIN_ROOT` to point to the `plugins` directory
-- Make sure you cloned this repo and set `BADGER_TEMPLATE_ROOT` to point to the `tuning_templates` directory
-- Run `badger -g -cf config.yaml` from within the FermiBadgerPlugins directory
+#### Applying the patch
+
+**Check if the patch is needed:**
+1. Create a clean conda environment
+2. Launch Badger with `badger -g -cf config.yaml`
+3. Load the `DR_BetatronTunes_sim.yaml` template
+
+**If you see "Dict type must have subtypes" error, apply the patch:**
+
+```bash
+# Navigate to your Badger installation
+cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
+
+# Apply the patch
+patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
+```
+
+**Or apply the patch manually** by editing `pydantic_editor.py`:
+1. Replace the `set_params_from_dict` method (around line 718)
+2. Replace the `initialize_special_field` method (around line 815)
+3. Update `_qt_widget_to_yaml_value` and `_qt_widget_to_value` functions
+4. Add 'None' to 'null' replacement in YAML parsing (see patch file for details)
+
+See [`patches/README.md`](patches/README.md) for detailed documentation of each fix.
 
 ### 4. Configure Badger
 
@@ -195,13 +216,29 @@ conda env list  # Verify the environment exists
 conda create -n FermiBadger_env -f environment.yml  # Recreate if missing
 ```
 
+### Dict type must have subtypes Error
+
+When loading a template (e.g., `DR_BetatronTunes_sim.yaml`), you may see:
+```
+ValueError: Dict type must have subtypes
+```
+
+**Cause:** Badger 1.6.0 has a bug where dict/list environment parameters without type subtypes cause this error.
+
+**Fix:** Apply the patch from `patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch`:
+```bash
+cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
+patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
+```
+
 ---
 
 ## Repository Structure
 
 ```
 FermiBadgerPlugins/
-├── patches/                    # Badger bug fixes (1.6.0 and 1.5.4) - now all applied
+├── patches/                    # Badger bug fixes
+│   ├── pydantic_editor-badger-1.6.0-dict-subtypes.patch
 │   └── README.md
 ├── test-quick-start.sh         # Quick Start verification script
 ├── plugins/
