@@ -5,6 +5,7 @@ dependencies:
   - badger-opt=1.6.0
   - python=3.12.1
   - pip:
+      - cpymad==1.19.0
       - xcoll==0.11.1
       - xdeps==0.10.19
       - xfields==0.25.18
