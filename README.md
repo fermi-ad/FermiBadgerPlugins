@@ -74,7 +74,7 @@ patch -p0 < "$FERMIBADGERPLUGINS_PATH/patches/pydantic_editor-badger-1.6.0-dict-
 ```bash
 BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
 cd "$BADGER_PATH/gui/components"
-git apply /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
+git apply "$FERMIBADGERPLUGINS_PATH/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
 ```
 
 **Note:** Replace `FermiBadger_env` with your actual conda environment name. Replace `/path/to/FermiBadgerPlugins` with the actual path where you cloned the repository.
