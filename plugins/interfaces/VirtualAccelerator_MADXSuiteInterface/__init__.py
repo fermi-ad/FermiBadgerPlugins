@@ -90,7 +90,7 @@ class Interface(interface.Interface):
                         'values are recorded automatically for global optics).'
                     )
                 value = (value - setpoints[base_name]) ** 2
-                logger.warning(f"  {raw_name}: base={base_name}, measured={value**0.5}, setpoint={setpoints[base_name]}, error={value}")
+                logger.debug(f"  {raw_name}: base={base_name}, measured={value**0.5}, setpoint={setpoints[base_name]}, error={value}")
 
             readbacks[raw_name] = value
 
