@@ -37,68 +37,48 @@ conda activate FermiBadger_env
 3. YAML parsing of 'None' strings in flow maps (inline `{}` or `[]` syntax)
 4. VOCs field not found when it's stored separately from generator parameters
 
+#### Finding your Badger installation
+
+First, locate your Badger installation in your conda environment. Run this command (substitute your environment name):
+
+```bash
+# Replace FermiBadger_env with your environment name
+conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))"
+```
+
+The output will be a path like:
+```
+/Users/yourname/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger
+```
+
+Navigate to the `gui/components` directory within that path to apply the patch.
+
 #### Applying the patch
 
 **Check if the patch is needed:**
-1. Create a clean conda environment
-2. Launch Badger with `badger -g -cf config.yaml`
-3. Load the `DR_BetatronTunes_sim.yaml` template
-
-**If you see "Dict type must have subtypes" error, apply the patch using one of the methods below:**
+1. Launch Badger with `badger -g -cf config.yaml`
+2. Load the `DR_BetatronTunes_sim.yaml` template
+3. If you see "Dict type must have subtypes" error, apply the patch
 
 **Method 1: Using `patch` command (standard):**
 
 ```bash
-# Navigate to your Badger installation
-cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
-
-# Apply the patch
+BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+cd "$BADGER_PATH/gui/components"
 patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
 ```
 
 **Method 2: Using `git apply` (if `patch` is not available):**
 
 ```bash
-# Navigate to your Badger installation
-cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
-
-# Apply the patch using git
+BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+cd "$BADGER_PATH/gui/components"
 git apply --directory=badger/gui/components /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
 ```
 
-**Method 3: Manual application (if neither tool is available):**
+**Note:** Replace `FermiBadger_env` with your actual conda environment name. Replace `/path/to/FermiBadgerPlugins` with the actual path where you cloned the repository.
 
-Edit `pydantic_editor.py` and apply these key changes:
-
-1. **`set_params_from_dict` method** (around line 718) - Replace with:
-   ```python
-   def set_params_from_dict(self, params: dict[str, Any]) -> None:
-       self.clear()
-       # For dict and list types without subtypes, store as YAML strings.
-       field_definitions: dict[str, tuple[type, FieldInfo]] = {}
-       for k, v in params.items():
-           if isinstance(v, dict):
-               yaml_str = yaml.dump(v, default_flow_style=True).strip()
-               field_definitions[k] = (str, Field(default=yaml_str))
-           elif isinstance(v, list):
-               if all(isinstance(item, str) for item in v):
-                   field_definitions[k] = (list[str], Field())
-               elif all(isinstance(item, (int, float)) for item in v):
-                   field_definitions[k] = (list[float], Field())
-               else:
-                   field_definitions[k] = (list, Field())
-           else:
-               field_definitions[k] = (type(v), Field())
-       # ... rest of method
-   ```
-
-2. **`initialize_special_field` method** (around line 815) - Fix `turbo_controller: null` handling
-3. **YAML parsing fixes** - Add 'None' to 'null' replacement in `on_radio_changed`, `update_vocs`, and `validate` methods
-4. **`_qt_widget_to_yaml_value` and `_qt_widget_to_value` functions** - Handle YAML dict strings
-
-See [`patches/README.md`](patches/README.md) for the complete patch content.
-
-See [`patches/README.md`](patches/README.md) for detailed documentation of each fix.
+For detailed documentation of each fix, see [`patches/README.md`](patches/README.md).
 
 ### 4. Configure Badger
 
@@ -129,15 +109,6 @@ This script:
 
 **Note:** The test uses a separate environment (`FermiBadger_envTEST`) to avoid conflicts with your main `FermiBadger_env`.
 
-**Important:** The test environment uses a clean conda installation of Badger 1.6.0. If you encounter a "Dict type must have subtypes" error when loading templates in the test environment, apply the patch:
-
-```bash
-cd /Users/stjohn/miniconda3/envs/FermiBadger_envTEST/lib/python3.12/site-packages
-patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-fixes.patch
-```
-
-See `patches/pydantic_editor-badger-1.6.0-fixes.patch` for the full fix documentation.
-
 ---
 
 ## Environment Setup Details
@@ -162,15 +133,7 @@ The patches fix issues in Badger that affect the VirtualAccelerator plugins:
 3. **Startup validation errors** - Fixes validation errors on Badger startup when generator combo box is changed
 4. **Environment config params** - Fixes issue where Badger factory overwrites `configs.yaml` params with model schema defaults
 
-**For Badger 1.5.4 (deprecated):**
-1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set
-2. **turbo_controller string values** - Fixes TypeError when turbo_controller is specified as a string
-
-**Applies to:**
-- `badger/gui/components/pydantic_editor.py` - Fixes 1-3
-- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` - Fix 4 (Environment field defaults)
-
-See `patches/README.md` for detailed documentation of each fix.
+See [`patches/README.md`](patches/README.md) for detailed documentation of each fix.
 
 ---
 
@@ -215,7 +178,7 @@ This simulation-tuning environment accepts these parameters in its tuning templa
 
 ## Troubleshooting
 
-###FNAL Network Required
+### FNAL Network Required
 
 The `acsys` package is hosted on FNAL's internal pip repository (`https://www-bd.fnal.gov/pip3`). You must be on the FNAL network (on-site or VPN) to install it.
 
@@ -263,21 +226,9 @@ ValueError: Dict type must have subtypes
 
 **Cause:** Badger 1.6.0 has a bug where dict/list environment parameters without type subtypes cause this error.
 
-**Fix:** Apply the patch from `patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch`:
+**Fix:** Apply the patch from `patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch`.
 
-**Using `patch` command:**
-```bash
-cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
-patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
-```
-
-**Using `git apply` (if `patch` is not available):**
-```bash
-cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
-git apply --directory=badger/gui/components /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
-```
-
-See the [Quick Start guide](#3-apply-patches-for-badger-160) for more details.
+See [`patches/README.md`](patches/README.md) for patch instructions.
 
 ---
 
