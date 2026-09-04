@@ -44,7 +44,9 @@ conda activate FermiBadger_env
 2. Launch Badger with `badger -g -cf config.yaml`
 3. Load the `DR_BetatronTunes_sim.yaml` template
 
-**If you see "Dict type must have subtypes" error, apply the patch:**
+**If you see "Dict type must have subtypes" error, apply the patch using one of the methods below:**
+
+**Method 1: Using `patch` command (standard):**
 
 ```bash
 # Navigate to your Badger installation
@@ -54,11 +56,47 @@ cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
 patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
 ```
 
-**Or apply the patch manually** by editing `pydantic_editor.py`:
-1. Replace the `set_params_from_dict` method (around line 718)
-2. Replace the `initialize_special_field` method (around line 815)
-3. Update `_qt_widget_to_yaml_value` and `_qt_widget_to_value` functions
-4. Add 'None' to 'null' replacement in YAML parsing (see patch file for details)
+**Method 2: Using `git apply` (if `patch` is not available):**
+
+```bash
+# Navigate to your Badger installation
+cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
+
+# Apply the patch using git
+git apply --directory=badger/gui/components /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
+```
+
+**Method 3: Manual application (if neither tool is available):**
+
+Edit `pydantic_editor.py` and apply these key changes:
+
+1. **`set_params_from_dict` method** (around line 718) - Replace with:
+   ```python
+   def set_params_from_dict(self, params: dict[str, Any]) -> None:
+       self.clear()
+       # For dict and list types without subtypes, store as YAML strings.
+       field_definitions: dict[str, tuple[type, FieldInfo]] = {}
+       for k, v in params.items():
+           if isinstance(v, dict):
+               yaml_str = yaml.dump(v, default_flow_style=True).strip()
+               field_definitions[k] = (str, Field(default=yaml_str))
+           elif isinstance(v, list):
+               if all(isinstance(item, str) for item in v):
+                   field_definitions[k] = (list[str], Field())
+               elif all(isinstance(item, (int, float)) for item in v):
+                   field_definitions[k] = (list[float], Field())
+               else:
+                   field_definitions[k] = (list, Field())
+           else:
+               field_definitions[k] = (type(v), Field())
+       # ... rest of method
+   ```
+
+2. **`initialize_special_field` method** (around line 815) - Fix `turbo_controller: null` handling
+3. **YAML parsing fixes** - Add 'None' to 'null' replacement in `on_radio_changed`, `update_vocs`, and `validate` methods
+4. **`_qt_widget_to_yaml_value` and `_qt_widget_to_value` functions** - Handle YAML dict strings
+
+See [`patches/README.md`](patches/README.md) for the complete patch content.
 
 See [`patches/README.md`](patches/README.md) for detailed documentation of each fix.
 
@@ -226,10 +264,20 @@ ValueError: Dict type must have subtypes
 **Cause:** Badger 1.6.0 has a bug where dict/list environment parameters without type subtypes cause this error.
 
 **Fix:** Apply the patch from `patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch`:
+
+**Using `patch` command:**
 ```bash
 cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
 patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
 ```
+
+**Using `git apply` (if `patch` is not available):**
+```bash
+cd /path/to/conda/env/lib/python3.x/site-packages/badger/gui/components/
+git apply --directory=badger/gui/components /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
+```
+
+See the [Quick Start guide](#3-apply-patches-for-badger-160) for more details.
 
 ---
 
