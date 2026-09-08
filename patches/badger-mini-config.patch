@@ -1,0 +1,25 @@
+--- a/badger/gui/mini/__init__.py
++++ b/badger/gui/mini/__init__.py
+@@ -94,15 +94,17 @@
+     # Set up stylesheet
+     app.setStyleSheet(load_stylesheet(palette=DarkPalette))
+
++    # Initialize settings singleton with custom config if provided
++    # This must be done before template loading and subprocess creation
++    if config_path is not None:
++        config_singleton = init_settings(config_path)
++    else:
++        config_singleton = init_settings()
++
+     # Show the main window
+     window = BadgerMiniWindow()
+
+     if template_filename:
+-        if config_path is not None:
+-            config_singleton = init_settings(config_path)
+-        else:
+-            config_singleton = init_settings()
+-
+         # Template path
+         try:
+             template_dir = config_singleton.read_value("BADGER_TEMPLATE_ROOT")
