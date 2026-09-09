@@ -192,7 +192,7 @@ See `patches/README.md` for detailed documentation of each fix.
 
 ---
 
-## Current State (as of 2026-08-28)
+## Current State (as of 2026-09-08)
 
 - **Phase 4.3 Complete**: GUI successfully loads template and optimization runs
 - **Badger Version**: 1.6.0 with patches applied
@@ -201,6 +201,13 @@ See `patches/README.md` for detailed documentation of each fix.
 - **Lattice**: Delivery Ring (mu2e-dr-model-v2026.03.23.madx)
 - **Variables**: 2907 (quad knobs, element attrs)
 - **Observables**: 262 (global optics, BPM reads, SETPOINT channels)
+
+### Recent Fixes (2026-09-08)
+
+**PydanticSerializationUnexpectedValue warning for _initial_state**
+- Fixed by declaring `_initial_state_value` as a `PrivateAttr` in TurboController
+- This prevents pydantic v2 from emitting warnings when serializing the controller
+- See `memory/pydantic-turbo-controller-initial-state.md` for full details
 
 ---
 
@@ -237,6 +244,39 @@ The following patches have been applied to `pydantic_editor.py` in the FermiBadg
 3. **Generator compatibility**:
    - Only Bayesian generators (`expected_improvement`, `upper_confidence_bound`) support turbo_controller
    - Other generators (e.g., `random`, `neldermead`) do not have this field
+
+### TurboController Pydantic Serialization Gotcha
+
+**Problem**: When using the TurboController, pydantic emitted `PydanticSerializationUnexpectedValue` warnings:
+```
+PydanticSerializationUnexpectedValue(Unexpected field `_initial_state_value`: Expected `OptimizeTurboController`)
+```
+
+**Root Cause**: The `_initial_state` attribute was set in `__init__` as a plain attribute (not declared as a pydantic field). Pydantic v2's internal serializer found this extra attribute and emitted warnings.
+
+**Fix**: Declare `_initial_state_value` as a `PrivateAttr`:
+```python
+class TurboController(XoptBaseModel, ABC):
+    _failure_counter: int = PrivateAttr(0)
+    _success_counter: int = PrivateAttr(0)
+    _initial_state_value: dict[str, Any] = PrivateAttr()  # <-- Declare as PrivateAttr
+```
+
+Use a property for the public API:
+```python
+@property
+def _initial_state(self) -> dict[str, Any]:
+    """Property to access the initial state."""
+    return self._initial_state_value
+
+@_initial_state.setter
+def _initial_state(self, value: dict[str, Any]) -> None:
+    self._initial_state_value = value
+```
+
+**Why this works**: In pydantic v2, `PrivateAttr()` tells pydantic that an attribute is internal and should not be serialized. This prevents the `PydanticSerializationUnexpectedValue` warnings.
+
+**See also**: `memory/pydantic-turbo-controller-initial-state.md` for full details.
 
 ### VOCs Gotchas
 

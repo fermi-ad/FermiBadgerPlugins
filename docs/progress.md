@@ -515,6 +515,73 @@ Generator validation passed without errors.
 
 ---
 
+## 2026-09-08: PydanticSerializationUnexpectedValue warning for _initial_state
+
+### Problem
+When running the Badger mini GUI with TurboController, pydantic emitted warnings:
+```
+PydanticSerializationUnexpectedValue(Unexpected field `_initial_state_value`: Expected `OptimizeTurboController`)
+```
+
+The warning appeared when the optimization run started (clicking "Play" in the mini GUI).
+
+### Root Cause
+The `TurboController` class in Xopt stored `_initial_state` in `__init__` as a plain attribute (not declared as a pydantic field). When pydantic v2 tried to serialize the object, it found this extra attribute in `__dict__` and emitted `PydanticSerializationUnexpectedValue` warnings.
+
+### Investigation
+Multiple approaches were attempted:
+1. **model_dump override** - The parent `XoptBaseModel.model_dump()` excluded private attrs starting with `_`, but pydantic's internal serializer still saw the attribute
+2. **model_serializer with wrap** - Caused RecursionError when calling `serializer(self)` which triggered the serializer again
+3. **__getstate__/__setstate__ for pickle** - Only affected pickle, not pydantic's internal serializer
+4. **Using a property** - The property returned a computed dict, but the underlying `_initial_state_value` was still in `__dict__`
+
+### Solution Applied
+
+**File:** `/Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/xopt/generators/bayesian/turbo.py`
+
+**Fix:** Declare `_initial_state_value` as a `PrivateAttr`:
+
+```python
+class TurboController(XoptBaseModel, ABC):
+    _failure_counter: int = PrivateAttr(0)
+    _success_counter: int = PrivateAttr(0)
+    _initial_state_value: dict[str, Any] = PrivateAttr()  # <-- Added
+```
+
+And use a property for the public API:
+
+```python
+@property
+def _initial_state(self) -> dict[str, Any]:
+    """Property to access the initial state."""
+    return self._initial_state_value
+
+@_initial_state.setter
+def _initial_state(self, value: dict[str, Any]) -> None:
+    """Setter to allow setting the initial state during initialization."""
+    self._initial_state_value = value
+```
+
+**Why this works:** In pydantic v2, `PrivateAttr()` is the proper way to declare attributes that should not be serialized as part of the model. Pydantic knows these attributes are internal and won't emit warnings about them.
+
+### Testing
+- TurboController instantiation works correctly
+- `model_dump()` excludes `_initial_state_value`
+- `pickle` serialization/deserialization works
+- `reset()` method works correctly
+- No pydantic serialization warnings appear in Badger mini GUI
+
+### Files Modified
+- `/Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/xopt/generators/bayesian/turbo.py` - Added `PrivateAttr` declaration and simplified property-based access
+
+### Status
+- [x] Identified root cause (_initial_state not declared as pydantic field)
+- [x] Applied PrivateAttr fix in TurboController
+- [x] Verified no pydantic warnings in Badger GUI
+- [x] Updated MEMORY.md
+
+---
+
 ## 2026-08-28: PR preparation for Badger fork
 
 ### Context
