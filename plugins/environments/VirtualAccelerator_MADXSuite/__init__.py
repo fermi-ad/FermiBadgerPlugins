@@ -6,16 +6,46 @@ variables and readable observables are deduced automatically from the loaded
 lattice; the companion interface (VirtualAccelerator_MADXSuiteInterface)
 translates channel names into reads/writes on the lattice and its twiss results.
 
-IMPORTANT: MAD-X deferred expressions (e.g., constants used in calculated values)
-are evaluated at lattice load time when converting to xtrack.  So when variables are
-changed via set_variables(), this Environment creates a new MAD-X instance with
-updated parameter values (written to a temporary lattice file) to ensure functional
-expressions are re-evaluated correctly.  The xtrack Line is then rebuilt from this
-updated MAD-X sequence.
+Live expressions.  Most MAD-X lattices assign with '=', which MAD-X evaluates
+at parse time and then forgets, so every quantity reaches the Line as a frozen
+number and moving a knob changes nothing.  At load time this environment
+rewrites the source to use deferred ':=' assignment (see madx_deferred.py),
+which carries the formulas into xtrack's xdeps graph.  set_variables() is then
+just a write to line.vars: xdeps recomputes the affected subtree, and the only
+remaining per-iteration cost is the twiss itself.  The rewrite is verified
+against the original file at load; if it does not reproduce it exactly, the
+environment falls back to reloading MAD-X on every iteration (~40x slower).
+
+Rings and transfer lines.  With no 'twiss_init' parameter the twiss is periodic,
+as a ring requires.  Setting 'twiss_init' (betx, alfx, bety, alfy, and
+optionally x, px, y, py for the incoming centroid) switches to an open-line
+twiss from start to end, as a transfer line requires.
+
+Unstable optics.  When the twiss does not solve, every twiss-derived observable
+reads NaN.  The 'optics_stable' observable reads 0.0 there and 1.0 otherwise,
+so a template can fence the optimizer out of that region with a constraint
+'optics_stable > 0.5'.
+
+Loading lazily.  Badger instantiates the environment with the plugin's *default*
+params, once per process, purely to build the browsable variable list
+(badger.factory.load_plugin).  Parsing a lattice for that is wasted work when
+the routine then loads a different one, so the deduced variable bounds and
+observable names are written to a '.varcache.json' sidecar beside the lattice
+and the parse itself is deferred to the first call that actually needs the Line.
+Delete the sidecar to force a re-deduction; it is also ignored when the lattice
+file changes.
+
+Known xtrack behaviour: changing a main bend *angle* moves neither the orbit nor
+the tune, because xtrack's Bend carries the reference trajectory along with the
+geometry.  Steer with corrector currents instead.
 """
 
+import hashlib
+import json
 import logging
+import os
 import re
+import tempfile
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -28,6 +58,8 @@ from cpymad.madx import Madx
 
 from badger import environment
 from badger.errors import BadgerEnvVarError, BadgerNoInterfaceError
+
+from .madx_deferred import to_deferred
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +86,56 @@ GLOBAL_OPTICS_OBSERVABLES = [
     'dpx', 'dpy',          # dispersion derivative at s=0
 ]
 
+# Global optics that only exist for a periodic (ring) solution.
+RING_ONLY_OBSERVABLES = frozenset(['qx', 'qy', 'dqx', 'dqy'])
+
+# Channels that need twiss's chromatic pass, which costs ~4x the twiss itself.
+# Requested lazily in get_observables() so tune-only objectives do not pay it.
+CHROMATIC_OBSERVABLES = frozenset(['dqx', 'dqy'])
+
+# MAD-X base types that report a beam centroid, and the planes each measures.
+MONITOR_PLANES = {
+    'hmonitor': ('x',),
+    'vmonitor': ('y',),
+    'monitor': ('x', 'y'),
+}
+
+# Element attributes compared between the original and rewritten lattice when
+# verifying the ':=' rewrite.
+VERIFIED_ELEMENT_ATTRS = ('l', 'k1', 'k2', 'k3', 'angle', 'tilt',
+                          'hkick', 'vkick', 'e1', 'e2', 'volt', 'freq', 'lag')
+
+# Suffix of the squared-error channels the interface derives from a setpoint.
+SETPOINT_SUFFIX = '-SETPOINT'
+
+# Reads 1.0 while the twiss solves and 0.0 when it does not.  Advertised on
+# every lattice, with no '-SETPOINT' twin: it is a flag to constrain
+# ('optics_stable > 0.5'), not a quantity to steer towards.
+OPTICS_STABLE = 'optics_stable'
+
+
+# (resolved lattice path, sequence name) -> (Madx, design Line, matched name).
+# Badger rebuilds the environment on every GUI table refresh and once more per
+# optimization run; parsing the Delivery Ring takes ~10 s and copying the
+# resulting Line takes 0.5 s.  Only lattices whose ':=' rewrite verified are
+# cached, so the entries are never touched by the per-iteration reload path.
+_LATTICE_CACHE: dict[tuple[str, str], tuple] = {}
+
+# Sidecar holding the variable bounds and observable names deduced from a
+# lattice, so a fresh process can advertise them without parsing it.  Written
+# beside the lattice file, named '<lattice>.<sequence>.varcache.json'.
+VARCACHE_SUFFIX = '.varcache.json'
+
+
+def _matches(before, after) -> bool:
+    """True if two MAD-X attribute values agree (numerically, to rtol=1e-12)."""
+    if isinstance(before, (list, tuple)) or isinstance(after, (list, tuple)):
+        return (len(before) == len(after)
+                and all(_matches(a, b) for a, b in zip(before, after)))
+    if isinstance(before, (int, float)) and isinstance(after, (int, float)):
+        return bool(np.isclose(before, after, rtol=1e-12, atol=1e-15))
+    return before == after
+
 
 class Environment(environment.Environment):
     name = 'VirtualAccelerator_MADXSuite'
@@ -75,8 +157,15 @@ class Environment(environment.Environment):
     # or +/- zero_half_range for knobs currently at zero.
     rel_range: float = 0.1
     zero_half_range: float = 0.1
-    # Case-insensitive regex that marks beam position monitor elements.
-    bpm_name_pattern: str = 'bpm'
+    # Beam position monitors are found by MAD-X base type (monitor / hmonitor /
+    # vmonitor), which needs no per-lattice configuration.  Set this to a
+    # case-insensitive regex to narrow that set down by name as well.
+    bpm_name_pattern: Optional[str] = Field(default=None)
+    # Initial optics for an open line, as an inline-YAML mapping string or dict:
+    # betx, alfx, bety, alfy, and optionally dx, dpx, dy, dpy and the incoming
+    # centroid x, px, y, py.  Leave unset for a ring, which is solved
+    # periodically.  A transfer line has no periodic solution and needs this.
+    twiss_init: Union[Dict[str, float], str, None] = Field(default=None)
     # '<observable>-SETPOINT' targets as an inline-YAML mapping string or
     # dict, e.g. '{"qx": 9.65, "qy": 9.74}'.  Design values recorded at load
     # time are used for any observable not listed here.  Accepts both str and
@@ -86,16 +175,18 @@ class Environment(environment.Environment):
     setpoints: Union[Dict[str, float], str, None] = Field(default=None)
 
     # Runtime state (pydantic private attributes, not settable via config)
-    # Note: xtrack's deferred_expressions=True evaluates MAD-X expressions at
-    # conversion time and doesn't maintain dynamic dependencies.  When variables
-    # change, we re-load the lattice into MAD-X with updated parameter values
-    # (via a temporary file) to ensure deferred expressions are re-evaluated.
     _line: Optional[Any] = None  # xtrack Line for fast twiss calculations
-    _madx: Optional[Any] = None  # cpymad Madx object (re-created on variable changes)
+    _madx: Optional[Any] = None  # cpymad Madx object the Line was built from
     _particle_ref: Optional[Any] = None  # xtrack reference particle (stored for re-conversion)
     _twiss: Optional[Any] = None  # cached twiss results
+    _twiss_chromatic: bool = False  # whether the cached twiss has chromatic properties
     _sequence_name_matched: Optional[str] = None  # MAD-X sequence name (case-insensitive match)
-    _setpoints: Optional[Dict[str, float]] = None  # parsed from the 'setpoints' string
+    _setpoints: Optional[Dict[str, float]] = None  # parsed from the 'setpoints' param
+    _twiss_init_values: Optional[Dict[str, float]] = None  # parsed from 'twiss_init'
+    _use_deferred: bool = True  # False if the ':=' rewrite failed verification
+    _monitor_planes: Optional[Dict[str, tuple]] = None  # monitor name -> planes it reads
+    _lattice_path: Optional[Any] = None  # Path to the lattice file
+    _cache_key: Optional[tuple] = None  # (resolved lattice path, sequence name)
 
     def __init__(self, **data):
         # Badger's factory (badger.factory.load_plugin) instantiates
@@ -110,25 +201,32 @@ class Environment(environment.Environment):
                     data.setdefault(key, value)
 
         super().__init__(**data)
-        self._setpoints = self._parse_setpoints(self.setpoints)
+        self._setpoints = self._parse_mapping(self.setpoints, 'setpoints')
+        self._twiss_init_values = self._parse_mapping(self.twiss_init, 'twiss_init')
         self.create_VA()
 
     @staticmethod
-    def _parse_setpoints(setpoints_param: Union[Dict[str, float], str, None]) -> dict[str, float]:
-        """Parse the 'setpoints' param (inline-YAML mapping string, dict, or None)."""
-        if setpoints_param is None:
+    def _parse_mapping(
+        param: Union[Dict[str, float], str, None], field: str
+    ) -> dict[str, float]:
+        """Parse a name -> float mapping param (inline-YAML string, dict, or None).
+
+        Badger's pydantic editor hands these over as any of the three, so all
+        three are accepted.  Used for both 'setpoints' and 'twiss_init'.
+        """
+        if param is None:
             return {}
-        if isinstance(setpoints_param, dict):
+        if isinstance(param, dict):
             # Already a dict - convert values to float
-            return {str(name): float(value) for name, value in setpoints_param.items()}
+            return {str(name): float(value) for name, value in param.items()}
         # String case - parse from YAML
-        if not setpoints_param.strip():
+        if not param.strip():
             return {}
-        parsed = yaml.safe_load(setpoints_param)
+        parsed = yaml.safe_load(param)
         if not isinstance(parsed, dict):
             raise ValueError(
-                "The 'setpoints' parameter must be an inline-YAML mapping, "
-                f"e.g. '{{qx: 9.65, qy: 9.74}}'; got: {setpoints_param!r}"
+                f"The '{field}' parameter must be an inline-YAML mapping, "
+                f"e.g. '{{qx: 9.65, qy: 9.74}}'; got: {param!r}"
             )
         return {str(name): float(value) for name, value in parsed.items()}
 
@@ -137,25 +235,166 @@ class Environment(environment.Environment):
     # ------------------------------------------------------------------ #
 
     def create_VA(self):
-        """Load the MAD-X lattice and build the xtrack Line virtual machine.
+        """Advertise this lattice's variables and observables.
 
-        The lattice is loaded into MAD-X (via cpymad), a beam is attached,
-        and the sequence is applied.  The MAD-X sequence is converted to an
-        xtrack Line for fast twiss calculations.  The MAD-X object is stored
-        for later use in re-loading the lattice with updated parameter values.
+        Loading is deferred when the sidecar cache can supply both lists (see
+        the module docstring): Badger builds one environment per process from
+        the plugin defaults just to read them, and parsing a lattice nothing
+        will use costs ~10 s.  _ensure_lattice() does the parse on first use.
         """
         if not self.lattice_filename:
             raise ValueError(
                 "The 'lattice_filename' parameter is required "
                 "(path to a MAD-X lattice file)."
             )
-        lattice_path = Path(self.lattice_filename)
-        if not lattice_path.is_file():
-            raise FileNotFoundError(f'MAD-X lattice file not found: {lattice_path}')
+        self._lattice_path = Path(self.lattice_filename)
+        if not self._lattice_path.is_file():
+            raise FileNotFoundError(
+                f'MAD-X lattice file not found: {self._lattice_path}'
+            )
+        self._cache_key = (str(self._lattice_path.resolve()),
+                           self.sequence_name.lower())
 
+        if self._cache_key in _LATTICE_CACHE:
+            self._ensure_lattice()  # already parsed in this process: cheap
+            return
+
+        cached = self._read_varcache()
+        if cached is None:
+            self._ensure_lattice()
+            return
+
+        type(self).variables.clear()
+        type(self).variables.update(cached['variables'])
+        type(self).observables[:] = cached['observables']
+        logger.info(
+            f'Advertising {len(cached["variables"])} variables and '
+            f'{len(cached["observables"])} observables from the sidecar cache; '
+            f'{self._lattice_path.name} will be parsed on first use'
+        )
+
+    def _ensure_lattice(self):
+        """Parse the lattice if it has not been parsed yet, and deduce from it.
+
+        The lattice source is rewritten to use deferred ':=' assignment so its
+        formulas survive into xtrack's expression graph, loaded into MAD-X (via
+        cpymad), given a beam, and converted to an xtrack Line.  The rewrite is
+        then verified against the original file; if it does not reproduce it
+        exactly, the environment falls back to reloading MAD-X per iteration.
+        """
+        if self._line is not None:
+            return
+
+        key = self._cache_key
+        if key not in _LATTICE_CACHE:
+            self._load_lattice(self._lattice_path)
+            if self._use_deferred:
+                _LATTICE_CACHE[key] = (self._madx, self._line,
+                                       self._sequence_name_matched)
+        if self._use_deferred:
+            # Including right after a fresh load: the cached Line must stay at
+            # the design values, so no instance ever works on it directly.
+            self._reuse_cached_lattice(key)
+
+        # In-place population of the class-level lists (see comment at the
+        # class attributes above).
+        type(self).variables.clear()
+        type(self).variables.update(self._deduce_variables())
+        type(self).observables[:] = self._deduce_observables()
+        self._write_varcache()
+
+        # Twiss of the pristine lattice: its optics are the design values,
+        # recorded as default setpoints for '<name>-SETPOINT' observables.
+        self._twiss = self._compute_twiss()
+        self._twiss_chromatic = True
+        self._record_default_setpoints(self._twiss)
+
+    # ------------------------------------------------------------------ #
+    # Sidecar cache of the deduced lists
+    # ------------------------------------------------------------------ #
+
+    def _varcache_params(self) -> dict:
+        """The params, besides the lattice itself, that shape the two lists."""
+        return {
+            'sequence': self._cache_key[1],
+            'rel_range': self.rel_range,
+            'zero_half_range': self.zero_half_range,
+            'bpm_name_pattern': self.bpm_name_pattern,  # which monitors
+            'twiss_init': sorted(self._twiss_init_values),  # ring-only optics
+        }
+
+    def _varcache_path(self) -> Path:
+        # One file per param set -- they hash into the name -- so two sets do
+        # not take turns invalidating each other's cache.
+        digest = hashlib.sha1(
+            json.dumps(self._varcache_params(), sort_keys=True).encode()
+        ).hexdigest()[:8]
+        return self._lattice_path.with_name(
+            f'{self._lattice_path.name}.{digest}{VARCACHE_SUFFIX}'
+        )
+
+    def _varcache_stamp(self) -> dict:
+        """What a cached list must be re-deduced after: an edited lattice."""
+        stat = self._lattice_path.stat()
+        return {'mtime': stat.st_mtime, 'size': stat.st_size,
+                **self._varcache_params()}
+
+    def _read_varcache(self) -> Optional[dict]:
+        """The sidecar's lists, or None if it is missing, stale or unreadable."""
+        path = self._varcache_path()
+        try:
+            cached = json.loads(path.read_text())
+            if cached['stamp'] != self._varcache_stamp():
+                logger.info(f'Ignoring the stale sidecar cache {path.name}')
+                return None
+            return cached
+        except FileNotFoundError:
+            return None
+        except Exception as error:  # a cache file must never break the load
+            logger.warning(f'Ignoring unreadable sidecar cache {path.name}: {error}')
+            return None
+
+    def _write_varcache(self):
+        path = self._varcache_path()
+        payload = {
+            'stamp': self._varcache_stamp(),
+            'variables': dict(type(self).variables),
+            'observables': list(type(self).observables),
+        }
+        try:
+            # Same directory, then replace: a half-written file is never read.
+            with tempfile.NamedTemporaryFile(
+                mode='w', dir=path.parent, suffix=VARCACHE_SUFFIX, delete=False
+            ) as handle:
+                json.dump(payload, handle)
+            os.replace(handle.name, path)
+        except Exception as error:
+            logger.warning(f'Could not write the sidecar cache {path.name}: {error}')
+
+    def _reuse_cached_lattice(self, key):
+        """Take a private copy of an already-parsed lattice.
+
+        line.copy() carries the whole xdeps expression graph across and costs a
+        twentieth of a fresh MAD-X parse plus conversion, so the GUI's habit of
+        rebuilding the environment on every table refresh stops hurting.  Every
+        instance goes through here, the one that did the loading included, so
+        the cached Line is never written to and every copy starts from the
+        design values.  The MAD-X object is shared, but
+        only ever read (monitor base types); the per-iteration reload path,
+        which would replace it, is not cached -- see create_VA.
+        """
+        mad, design_line, matched = _LATTICE_CACHE[key]
+        logger.info(f'Reusing the cached load of {key[0]}')
+        self._madx = mad
+        self._sequence_name_matched = matched
+        self._line = design_line.copy()
+        self._line.particle_ref = design_line.particle_ref
+        self._particle_ref = self._line.particle_ref
+
+    def _load_lattice(self, lattice_path: Path):
+        """Parse the lattice with MAD-X and convert it to an xtrack Line."""
         logger.info(f'Loading MAD-X lattice {lattice_path}')
-        mad = Madx(stdout=None if self.debug else False)
-        mad.call(str(lattice_path))
+        mad = self._load_deferred(lattice_path)
 
         # Look up the requested sequence, case-insensitively.
         available = list(mad.sequence.keys())
@@ -174,10 +413,6 @@ class Environment(environment.Environment):
         mad.beam()
         mad.use(sequence=matched)
 
-        # Store the cpymad Madx object for proper deferred expression handling.
-        # xtrack's deferred_expressions=True evaluates expressions at conversion
-        # time and doesn't maintain dependencies, so we need MAD-X for variable
-        # changes that affect optics.
         self._madx = mad
 
         self._line = xt.Line.from_madx_sequence(
@@ -201,25 +436,98 @@ class Environment(environment.Environment):
         # Store particle reference for later restoration after re-conversion
         self._particle_ref = self._line.particle_ref
 
-        # In-place population of the class-level lists (see comment at the
-        # class attributes above).
-        type(self).variables.clear()
-        type(self).variables.update(self._deduce_variables())
-        type(self).observables[:] = self._deduce_observables()
+    def _load_deferred(self, lattice_path: Path) -> Madx:
+        """Load the lattice with '=' rewritten to ':=', verified against the original.
 
-        # Twiss of the pristine lattice: its optics are the design values,
-        # recorded as default setpoints for '<name>-SETPOINT' observables.
-        design_twiss = self._compute_twiss()
-        self._record_default_setpoints(design_twiss)
+        On any discrepancy this sets self._use_deferred False and returns a
+        MAD-X built from the original source instead, so the environment still
+        works (via the per-iteration reload) on a lattice the rewriter cannot
+        handle.
+        """
+        rewritten, stats = to_deferred(lattice_path.read_text())
+        logger.info(
+            f"Deferred {stats['vars']} variable assignments and "
+            f"{stats['attrs']} element attributes; "
+            f"{len(stats['skipped'])} assignments left immediate"
+        )
+        for called in stats['calls']:
+            logger.warning(
+                'CALLed files are not rewritten, so any lattice quantity they '
+                f'define stays frozen: {called}'
+            )
 
-        self._twiss = self._compute_twiss()
+        # Same directory as the lattice, so relative CALL/SAVE paths inside it
+        # still resolve.
+        with tempfile.NamedTemporaryFile(
+            mode='w', dir=lattice_path.parent, suffix='.madx', delete=False
+        ) as handle:
+            handle.write(rewritten)
+            rewritten_path = handle.name
+        try:
+            mad = Madx(stdout=None if self.debug else False)
+            mad.call(rewritten_path)
+        finally:
+            Path(rewritten_path).unlink(missing_ok=True)
+
+        mismatch = self._verify_rewrite(mad, lattice_path)
+        if mismatch is None:
+            return mad
+
+        logger.warning(
+            f'The deferred-expression rewrite of {lattice_path.name} does not '
+            f'reproduce the original lattice: {mismatch}.  Falling back to '
+            'reloading MAD-X on every iteration, which is far slower.'
+        )
+        self._use_deferred = False
+        mad = Madx(stdout=None if self.debug else False)
+        mad.call(str(lattice_path))
+        return mad
+
+    @staticmethod
+    def _verify_rewrite(mad: Madx, lattice_path: Path) -> Optional[str]:
+        """Describe how the rewritten lattice differs from the original, or None.
+
+        Loads the original source into a throwaway MAD-X (a fraction of a
+        second) and compares every global and every element attribute in
+        VERIFIED_ELEMENT_ATTRS.  A rewrite that left nothing expression-driven
+        is reported too: it parsed cleanly but did nothing.
+        """
+        original = Madx(stdout=False)
+        try:
+            original.call(str(lattice_path))
+
+            for name, value in original.globals.items():
+                if not _matches(value, mad.globals[name]):
+                    return (f'global {name} is {value} in the original and '
+                            f'{mad.globals[name]} after the rewrite')
+
+            expression_driven = 0
+            for name, element in original.elements.items():
+                for attr in VERIFIED_ELEMENT_ATTRS:
+                    if attr not in element.cmdpar:
+                        continue
+                    before = element.cmdpar[attr].value
+                    after = mad.elements[name].cmdpar[attr]
+                    if not _matches(before, after.value):
+                        return (f'{name}.{attr} is {before} in the original '
+                                f'and {after.value} after the rewrite')
+                    expression_driven += after.expr is not None
+
+            if not expression_driven:
+                return 'it left no element attribute driven by an expression'
+            return None
+        finally:
+            original.quit()
 
     def _update_madx_variables(self, variable_inputs: dict[str, float]):
-        """Update MAD-X variables by creating a temporary lattice file with updated values.
+        """Rebuild the Line from a temp lattice file carrying the new values.
 
-        xtrack's deferred_expressions=True evaluates MAD-X expressions at conversion
-        time and doesn't maintain dynamic dependencies. To ensure deferred expressions
-        are re-evaluated when variables change, we:
+        ponytail: fallback path only, used when the ':=' rewrite failed
+        verification.  It costs seconds per iteration against milliseconds for
+        the deferred path.  Delete it once the deferred path has been exercised
+        on every lattice in sim_configs/.
+
+        To have MAD-X re-evaluate every dependent expression, we:
 
         1. Read the original lattice file
         2. Replace each variable's definition with the new value
@@ -297,15 +605,30 @@ class Environment(environment.Environment):
         except OSError:
             logger.warning(f'Could not remove temporary file: {temp_lattice_path}')
 
-    def _compute_twiss(self):
-        """Compute periodic 4d twiss of the ring using the xtrack Line.
+    def _compute_twiss(self, chromatic: bool = True):
+        """4d twiss: periodic for a ring, open start-to-end when 'twiss_init' is set.
 
+        The chromatic pass costs roughly four times the twiss itself, so
+        callers that were not asked for dqx/dqy pass chromatic=False.
         Returns None if the optics are unstable or twiss fails.
         """
         try:
-            return self._line.twiss(method='4d')
+            if self._twiss_init_values:
+                return self._line.twiss(
+                    method='4d',
+                    start=xt.START,
+                    end=xt.END,
+                    init=xt.TwissInit(**self._twiss_init_values),
+                    chrom=chromatic,
+                )
+            return self._line.twiss(method='4d', chrom=chromatic)
         except Exception as e:
-            logger.warning(f'Twiss failed (unstable optics?): {e}')
+            hint = '' if self._twiss_init_values else (
+                "  If this lattice is a transfer line rather than a ring, set "
+                "the 'twiss_init' parameter (betx, alfx, bety, alfy, and "
+                'optionally the incoming centroid x, px, y, py).'
+            )
+            logger.warning(f'Twiss failed (unstable optics?): {e}{hint}')
             return None
 
     @staticmethod
@@ -327,7 +650,9 @@ class Environment(environment.Environment):
     def _bounds_around(self, value: float) -> list[float]:
         """Bounds centered on the current value, ordered low-to-high."""
         if value == 0.0:
-            return [-self.zero_half_range, self.zero_half_range]
+            # abs(): a template carrying a negative half-range would otherwise
+            # hand Badger [+h, -h] and have every bounds check reject the knob.
+            return [-abs(self.zero_half_range), abs(self.zero_half_range)]
         lo = value * (1 - self.rel_range)
         hi = value * (1 + self.rel_range)
         # For negative values the products come out swapped.
@@ -337,22 +662,24 @@ class Environment(environment.Environment):
         """Infer the tunable knobs from the loaded lattice.
 
         Knobs come from two sources:
-        - line.vars entries (MAD-X global variables like I_DQD, I_DQF, etc.).
-          These may be power supply currents, fudge factors, or other parameters
-          that control element strengths via deferred expressions.
+        - line.vars entries that are free, i.e. hold a number rather than an
+          expression: power supply currents, calibration factors, tilts,
+          lengths and offsets.
         - element strength attributes (k0..k4) that are NOT driven by a
           deferred expression.  Expression-driven attributes are excluded
           because the controlling variable is already exposed as a knob.
 
-        Note: Variables that control element strengths through MAD-X deferred
-        expressions (e.g., G_DQ206 = ... * I_DQD * ...) are included here.
-        When such a variable is changed, the environment re-loads the lattice
-        with the updated value to ensure MAD-X re-evaluates all dependent expressions.
+        Expression-driven quantities are deliberately left out of both.  After
+        the ':=' rewrite they are derived outputs -- a gradient computed from a
+        current, say -- and assigning one would overwrite its formula and sever
+        that dependence for the rest of the session.
         """
         variables = {}
 
         for var_name in self._line.vars.keys():
             if self._is_internal_var(var_name):
+                continue
+            if self._line.vars[var_name]._expr is not None:
                 continue
             value = self._line.vars.val[var_name]
             if not isinstance(value, (int, float, np.integer, np.floating)):
@@ -374,40 +701,79 @@ class Environment(environment.Environment):
         logger.info(f'Deduced {len(variables)} variables from the lattice')
         return variables
 
-    def _deduce_observables(self) -> list:
-        """Infer the readable observables from the loaded lattice."""
-        observables = list(GLOBAL_OPTICS_OBSERVABLES)
-        observables += [f'{name}-SETPOINT' for name in GLOBAL_OPTICS_OBSERVABLES]
+    def _deduce_monitors(self) -> dict[str, tuple]:
+        """Monitor element name -> the planes it measures, by MAD-X base type.
 
-        pattern = re.compile(self.bpm_name_pattern, re.IGNORECASE)
-        monitor_names = [
-            name for name in self._line.element_names if pattern.search(name)
+        The element type is the portable signal; names are not ('p_dhp301' in
+        one lattice, 'BPHQ2' in another).  'bpm_name_pattern', when set,
+        narrows this set further by name.
+        """
+        pattern = (
+            re.compile(self.bpm_name_pattern, re.IGNORECASE)
+            if self.bpm_name_pattern
+            else None
+        )
+        in_line = set(self._line.element_names)
+        monitors = {}
+        for element in self._madx.sequence[self._sequence_name_matched].elements:
+            planes = MONITOR_PLANES.get(
+                getattr(getattr(element, 'base_type', None), 'name', None)
+            )
+            if planes is None or element.name not in in_line:
+                continue
+            if pattern is not None and not pattern.search(element.name):
+                continue
+            monitors[element.name] = planes
+        return monitors
+
+    def _deduce_observables(self) -> list:
+        """Infer the readable observables from the loaded lattice.
+
+        Global optics -- tunes and chromaticities only for a ring, since an
+        open line has none -- plus the beam centroid at every monitor, in the
+        plane that monitor actually measures.  Any other twiss column is still
+        readable by typing '<element>.<column>' into the GUI table; the
+        advertised list is kept short on purpose.
+        """
+        is_ring = not self._twiss_init_values
+        names = [
+            name for name in GLOBAL_OPTICS_OBSERVABLES
+            if is_ring or name not in RING_ONLY_OBSERVABLES
         ]
-        for name in monitor_names:
-            observables.append(f'{name}.x')
-            observables.append(f'{name}.y')
+
+        self._monitor_planes = self._deduce_monitors()
+        names += [
+            f'{name}.{plane}'
+            for name, planes in self._monitor_planes.items()
+            for plane in planes
+        ]
 
         logger.info(
-            f'Deduced {len(observables)} observables from the lattice '
-            f'({len(monitor_names)} monitors matched pattern '
-            f'{self.bpm_name_pattern!r})'
+            f'Deduced {len(names)} observables from the lattice '
+            f'({len(self._monitor_planes)} monitors)'
         )
-        return observables
+        return (names + [f'{name}{SETPOINT_SUFFIX}' for name in names]
+                + [OPTICS_STABLE])
 
     def _record_default_setpoints(self, design_twiss):
-        """Record design optics as fallback '<name>-SETPOINT' targets.
+        """Record the design optics as fallback '<name>-SETPOINT' targets.
 
-        Setpoints supplied via the 'setpoints' parameter take precedence.
-        The design values from the pristine lattice (after load, before any
-        changes) are used as default targets for '<name>-SETPOINT' observables.
+        Setpoints supplied via the 'setpoints' parameter take precedence.  The
+        values come from the pristine lattice, after load and before any change.
+        Channels that do not read back a finite number on this lattice are
+        skipped rather than poisoning an objective with NaN.
         """
         if not self.interface or design_twiss is None:
             return
+        base_names = [
+            name for name in type(self).observables
+            if not name.endswith(SETPOINT_SUFFIX) and name != OPTICS_STABLE
+        ]
         design_values = self.interface.get_values(
-            GLOBAL_OPTICS_OBSERVABLES, self._line, design_twiss, debug=self.debug
+            base_names, self._line, design_twiss, debug=self.debug
         )
         for name, value in design_values.items():
-            if value is not None:
+            if value is not None and np.isfinite(value):
                 self._setpoints.setdefault(name, float(value))
 
     # ------------------------------------------------------------------ #
@@ -417,6 +783,7 @@ class Environment(environment.Environment):
     def get_variables(self, variable_names: list[str]) -> dict[str, float]:
         if not self.interface:
             raise BadgerNoInterfaceError
+        self._ensure_lattice()
         return self.interface.get_settings(
             variable_names, self._line, debug=self.debug
         )
@@ -424,27 +791,33 @@ class Environment(environment.Environment):
     def set_variables(self, variable_inputs: dict[str, float]):
         if not self.interface:
             raise BadgerNoInterfaceError
+        self._ensure_lattice()
 
-        # When we have a MAD-X object, update it directly for proper deferred
-        # expression handling. xtrack's deferred_expressions=True evaluates
-        # expressions at conversion time and doesn't maintain dynamic dependencies.
-        # We create a new MAD-X instance with updated parameters via a temporary
-        # lattice file to ensure all deferred expressions are re-evaluated.
-        if self._madx is not None:
+        # Only when the ':=' rewrite failed verification: rebuild the whole
+        # Line from a modified source so MAD-X re-evaluates the expressions.
+        if not self._use_deferred:
             self._update_madx_variables(variable_inputs)
 
-        # Update the xtrack Line via the interface (for element attributes that
-        # are not driven by deferred expressions, and to keep line.vars in sync)
+        # line.vars.update() inside the interface writes through xdeps, which
+        # recomputes every dependent lattice quantity in place.
         self.interface.set_values(variable_inputs, self._line, debug=self.debug)
 
-        # The optics change whenever a knob moves; refresh the cached twiss.
-        self._twiss = self._compute_twiss()
+        # The optics have changed; twiss lazily in get_observables(), which
+        # knows whether the chromatic pass is worth paying for.
+        self._twiss = None
 
     def get_observables(self, observable_names: list[str]) -> dict:
         if not self.interface:
             raise BadgerNoInterfaceError
-        if self._twiss is None:
-            self._twiss = self._compute_twiss()
+        self._ensure_lattice()
+
+        chromatic = bool(CHROMATIC_OBSERVABLES.intersection(
+            name.removesuffix(SETPOINT_SUFFIX) for name in observable_names
+        ))
+        if self._twiss is None or (chromatic and not self._twiss_chromatic):
+            self._twiss = self._compute_twiss(chromatic)
+            self._twiss_chromatic = chromatic
+
         return self.interface.get_values(
             observable_names,
             self._line,
@@ -471,6 +844,7 @@ class Environment(environment.Environment):
     def _read_channel_value(self, name: str) -> Optional[float]:
         """Current value of a line variable or element attribute channel;
         None if the name does not refer to one."""
+        self._ensure_lattice()  # only reached for a name not in the cached list
         if name in self._line.vars.keys():
             if self._is_internal_var(name):
                 return None

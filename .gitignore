@@ -6,3 +6,11 @@ __pycache__/
 *Icon*
 *\#*
 logs/
+# Deduced variable/observable lists cached beside a lattice, and the output
+# files MAD-X writes into the working directory when a lattice TWISSes/TRACKs.
+*.varcache.json
+madx.ps
+sectormap
+optics_*.dat
+checkpoint_restart.dat
+l400mevtrack*

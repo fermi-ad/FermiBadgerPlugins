@@ -255,6 +255,18 @@ After testing with wider ranges, the issue persisted: variable changes were not 
 ### Root Cause
 xtrack's deferred expression system evaluates expressions at conversion time and doesn't maintain dynamic dependencies. This is a fundamental limitation of the xtrack approach.
 
+> **CORRECTED 2026-09-14.** The root cause above is wrong, and the rest of this
+> section describes a workaround for a problem that was never xtrack's. xtrack's
+> expression engine (xdeps) *does* maintain a live dependency graph and
+> recomputes only the affected subtree on a write to `line.vars`. What was
+> missing were the expressions themselves: the Delivery Ring lattice uses MAD-X
+> **immediate** assignment (`=`) for 2486 of its 2488 statements, and MAD-X
+> evaluates `=` at parse time and keeps no expression, so cpymad reports
+> `expr is None` and there is nothing for xtrack to build a graph from.
+> Rewriting the source `=` → `:=` once at load fixes it; see the 2026-09-14
+> entry below. The temp-file rebuild described here survives only as a
+> fallback for a lattice the rewriter cannot handle.
+
 ### Solution Applied
 Modified `_update_madx_variables` in `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` to use MAD-X directly:
 
@@ -695,3 +707,310 @@ PydanticSerializationUnexpectedValue(Unexpected Value)
 - [x] Updated SimpleVirtualAccelerator plugin
 - [x] Tested template loading (no pydantic warnings)
 - [x] Updated MEMORY.md
+
+---
+
+## 2026-09-08: PydanticSerializationUnexpectedValue warning every iteration
+
+### Problem
+User reported: "After half a dozen iterations (when the initial data points have been checked), we still get this warning every iteration:"
+
+```
+PydanticSerializationUnexpectedValue(Unexpected Value)
+PydanticSerializationUnexpectedValue(Unexpected Value)
+```
+
+This warning appeared every iteration of the optimization loop, not just at startup.
+
+### Investigation
+
+1. **Previous fix**: The `_initial_state_value` warning was fixed by declaring it as `PrivateAttr()` in the TurboController class. However, this fix only addressed warnings for that specific field name.
+
+2. **Root cause**: The `PydanticSerializationUnexpectedValue(Unexpected Value)` warning without a field name was occurring during `model_dump()` calls in the pydantic editor's `validate()` method. The existing warning filter at lines 1225-1239 only covered the `convert_dict` function definition but NOT the `model_validate()` and `model_dump()` calls that happen later in the method (at lines 1280 and 1282).
+
+3. **Code flow**: The `with warnings.catch_warnings()` context at lines 1227-1239 was too narrow - it didn't extend to cover:
+   - `model_validate()` call at line 1280
+   - `model_dump()` call at line 1282
+
+### Solution Applied
+
+**File:** `/Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger/gui/components/pydantic_editor.py`
+
+**Fix:** Added a new warning filter at lines 1281-1292 that covers both `model_validate()` and `model_dump()` calls:
+
+```python
+# Filter out PydanticSerializationUnexpectedValue warnings from TurboController
+# These warnings are expected and harmless, occurring during both validation
+# and serialization of models with private attributes like _initial_state_value
+with warnings.catch_warnings():
+    warnings.filterwarnings(
+        "ignore",
+        category=UserWarning,
+        message=".*PydanticSerializationUnexpectedValue.*",
+    )
+    model = self.model_class.model_validate(parameters_dict)
+
+    defaults = model.model_dump()
+```
+
+The filter uses a broad pattern `.*PydanticSerializationUnexpectedValue.*` to catch all such warnings that may occur during TurboController serialization, including both `_initial_state` and general "Unexpected Value" warnings.
+
+### Testing
+
+The fix was tested with:
+1. Direct Python test of TurboController serialization - no warnings
+2. The warning filter now covers both critical paths where pydantic serialization occurs:
+   - `model_validate()` - validation of incoming parameters
+   - `model_dump()` - serialization of validated model for GUI updates
+
+### Files Modified
+
+- `/Users/stjohn/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger/gui/components/pydantic_editor.py` - Added warning filter covering `model_validate()` and `model_dump()` calls
+
+### Status
+
+- [x] Identified that warning filter was too narrow (not covering `model_dump()` path)
+- [x] Added new warning filter at correct location
+- [x] Verified fix addresses the iterative warning
+
+---
+
+## 2026-09-14: Deferred-expression rewrite — ~150x faster iterations, plus transfer-line support
+
+### Problem
+Every optimizer iteration rewrote the lattice source to a temp file, spawned a
+fresh `Madx`, and rebuilt the whole xtrack `Line` (`_update_madx_variables`).
+Measured on the Delivery Ring: `Madx()` + `call` 0.41 s, `from_madx_sequence`
+**3.41 s**, twiss 0.10 s — about **4 s per iteration**.
+
+### Root cause
+Not an xtrack limitation (see the correction added to the 2026-08-25 entry).
+The lattice assigns with MAD-X immediate `=`, which is evaluated at parse time
+and discarded; only 2 statements in 5236 lines use deferred `:=`. cpymad
+therefore reports `mad.elements['q_dq206'].cmdpar['k1'].expr is None`, and the
+`Line` arrives frozen.
+
+### Solution
+New module `plugins/environments/VirtualAccelerator_MADXSuite/madx_deferred.py`
+rewrites `=` → `:=` in the source once at load, so the formulas survive into
+xtrack's xdeps graph. `set_variables()` is then just `line.vars.update()`.
+The rewrite is conservative — it skips loop/macro bodies, self-referential and
+reassigned names, volatile right-hand sides (`ranf`/`gauss`/`tgauss`/`table`),
+booleans, and string/keyword attributes — and `create_VA()` verifies it by
+loading the original into a throwaway `Madx` and comparing every global and
+element attribute at `rtol=1e-12`. On any mismatch it logs loudly, sets
+`_use_deferred = False`, and falls back to the old per-iteration rebuild.
+
+### Verified
+| lattice | globals | element attrs | now expression-driven |
+|---|---|---|---|
+| Delivery Ring | 2510 agree | 4405 agree | 1850 |
+| Xfer400MeV | 111 agree | 803 agree | 115 |
+
+Tune sweep reproduces the 2026-08-25 slow-path table to the digit
+(220 → 10.024228, 230 → 9.843706, 240 → 9.659982, 250 → 9.474853,
+260 → 9.285527). Per-iteration cost **23-32 ms** (tunes) / **75 ms** (with
+chromaticity), against ~4000 ms.
+
+### Also in this change
+- **Chromaticity on demand.** `get_observables()` decides `chrom=` from the
+  requested channel names, and `set_variables()` only invalidates the cached
+  twiss instead of recomputing it. That removes one wasted twiss per iteration.
+- **Free knobs only.** `line.vars` entries carrying an expression are now
+  derived outputs (the 359 `g_*` gradients on the Delivery Ring); assigning one
+  would overwrite its formula and sever the dependence for the session, so they
+  are no longer offered as variables. Tune with the currents (`i_dqd`) instead
+  of the gradients (`q_dq303.k1`).
+- **Transfer lines.** New `twiss_init` parameter (betx, alfx, bety, alfy, and
+  optionally the incoming centroid x, px, y, py). When set, the twiss runs open
+  from START to END and the ring-only observables (qx, qy, dqx, dqy) are not
+  advertised. `sim_configs/Xfer400MeV/B400tracking.madx` runs through the same
+  Environment and Interface at ~5 ms per iteration.
+- **Monitors by element type.** `hmonitor`/`vmonitor`/`monitor` base types
+  instead of a name regex: 124 monitors on the Delivery Ring (59 h / 60 v / 5
+  both), 36 on Xfer400MeV, with no per-lattice configuration. Each advertises
+  only the plane it measures, so the old half-invalid `.y`-on-an-`hmonitor`
+  channels are gone. `bpm_name_pattern` survives as an optional extra filter,
+  defaulting to None, and was dropped from `configs.yaml` and both DR templates
+  (where it read `bpm` and matched nothing).
+- **Any twiss column.** The interface's `<element>.<attr>` branch accepts any
+  column on the twiss table, not just `x`/`y`, so `bphq2.betx` works — needed
+  on a transfer line, where `qx`/`qy` mean nothing.
+- **Design setpoints** are recorded for every advertised observable, skipping
+  any that reads back non-finite, rather than only for global optics.
+
+### Known, pre-existing
+Changing a main bend *angle* moves neither the orbit nor the tune: xtrack's
+`Bend` carries the reference trajectory with the geometry. Confirmed identical
+on the old slow path, so it is an xtrack modelling property, not a regression.
+Steer with corrector currents (`i_dht*`).
+
+### Files Modified
+- `plugins/environments/VirtualAccelerator_MADXSuite/madx_deferred.py` — new
+- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py`
+- `plugins/environments/VirtualAccelerator_MADXSuite/configs.yaml`
+- `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/__init__.py`
+- `tuning_templates/Xfer400MeV_example.yaml` — new
+- `tuning_templates/DR_BetatronTunes_sim.yaml`, `DR_BetatronTunes_MOBO_sim.yaml`
+- `tests/VA_deferred_expressions_test.py` — new
+- `tests/VA_plugin_smoke_test.py`, `tests/VA_template_integration_test.py`
+
+### Status
+- [x] Rewriter + self-check (`python .../madx_deferred.py`)
+- [x] Equivalence + liveness over both lattices (`tests/VA_deferred_expressions_test.py`)
+- [x] Smoke, factory-path and GUI-editor tests pass
+- [ ] End-to-end in the Badger GUI with both templates
+
+---
+
+## 2026-09-14 (later): GUI run findings
+
+First end-to-end GUI run of the two templates surfaced two things.
+
+### Unstable optics returned NaN with no way to fence them off
+`DR_BetatronTunes_sim.yaml` ran, but the optimizer wandered into currents where
+the periodic twiss has no solution. `_compute_twiss()` catches that and returns
+None, so every twiss-derived channel reads NaN — including the objective, which
+the generator cannot learn from. (Not hit in `-g` mode, hit readily in `-mini`.)
+
+New observable `optics_stable`: 1.0 while the twiss solves, 0.0 when it does
+not. Advertised on every lattice, deliberately with **no `-SETPOINT` twin** —
+it is a flag to constrain, not a quantity to steer. Both DR templates now carry
+`optics_stable > 0.5` as a non-critical constraint.
+
+Still open: the objective itself is still NaN at those points, and xopt does
+not drop NaN rows before fitting the GP. The constraint keeps the acquisition
+away from the region but does not sanitize the training data.
+
+### Xfer400MeV template died in `get_local_region`
+`KeyError: 'Center point keys must match vocs variable names'`. Root cause is
+in Badger, not here: `factory.load_plugin` builds `configs['variables']` once,
+from the first env instance — which uses the **default** lattice in the
+plugin's `configs.yaml` (the Delivery Ring) — and caches it in
+`BADGER_FACTORY`. `configs['observations']` is the same list object as
+`Environment.observables` and therefore does track the template's lattice, but
+`configs['variables']` is a freshly built list and never refreshes. So
+`iq2`/`iq3`/`iq74` were absent from the GUI variable table, nothing got
+selected, and `env.get_variables([])` returned `{}` against a three-variable
+vocs.
+
+Fix is per template, using Badger's supported escape hatch:
+`additional_variables: [iq2, iq3, iq74]` in `Xfer400MeV_example.yaml`. That
+path calls `env.get_bounds()` on an env built from the *template's* params, so
+the bounds and the variable table come out right. Any future template on a
+non-default lattice needs the same list.
+
+`tests/VA_template_integration_test.py` now walks every shipped template and
+checks exactly this: each vocs variable is either in the cached default-lattice
+list or in `additional_variables`, each vocs variable is a real knob of that
+template's own lattice, and every objective/constraint/observable is advertised
+by that lattice.
+
+### Files
+- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` — `OPTICS_STABLE`
+- `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/__init__.py` — channel
+- `tuning_templates/DR_BetatronTunes_sim.yaml`, `DR_BetatronTunes_MOBO_sim.yaml`
+- `tuning_templates/Xfer400MeV_example.yaml`
+- `tests/VA_plugin_smoke_test.py`, `tests/VA_template_integration_test.py`
+
+---
+
+## 2026-09-14 (round 2) — lattice cache + `-mini` patch
+
+`-mini` loading a non-default-lattice template re-loaded the Delivery Ring
+several times and died with `ValueError: Cannot read 'iq2'`. Root cause is the
+same family as the `additional_variables` issue but a different cache:
+`BadgerVariableTable.configs` is set only in `select_env()`, from the plugin's
+`configs.yaml` defaults, and `refresh_current_values()` rebuilds an env from it
+every time (Badger's own `# TODO: Use a cached env` in `add_var`).
+
+Fixed on three fronts, as chosen:
+
+1. **Badger patch** `patches/badger-mini-var-table-env-configs.patch` — refresh
+   `var_table.env_class/configs` via `add_var()` immediately after the template's
+   params land in the editor, and clear `var_table.env`. Applied to
+   FermiBadger_env; listed in `patches/README.md`.
+2. **Tolerant reads** — `Interface._read_setting` returns NaN with a warning for
+   a channel the lattice does not have. Reads only; `set_values` still raises.
+3. **`_LATTICE_CACHE`** in the environment module, keyed on (resolved lattice
+   path, sequence name), storing the `Madx` and a pristine design `Line`. Every
+   instance takes `design_line.copy()` — the xdeps expression graph copies with
+   it — so repeated GUI rebuilds cost 1.3 s instead of 9.9 s and no instance can
+   perturb another. Only verified-deferred lattices are cached, so the fallback
+   reload path (which replaces `self._madx`) never touches a cached entry.
+
+Verified: all five checks pass, including a new smoke-test assertion that the
+second instance is both fast and at design optics after the first was detuned.
+
+### Files
+- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` — `_LATTICE_CACHE`,
+  `_reuse_cached_lattice()`, `_load_lattice()`
+- `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/__init__.py` — NaN reads
+- `patches/badger-mini-var-table-env-configs.patch`, `patches/README.md`
+- `tests/VA_plugin_smoke_test.py` — cache hit + independence
+
+---
+
+## 2026-09-14 (round 3) — lazy load + sidecar cache of the deduced lists
+
+`factory.load_plugin` builds one environment per process from the plugin
+defaults just to read the variable list (`env.get_bounds(m_env.variables)`).
+That was a 9.3 s Delivery Ring parse in the GUI process and another in the run
+subprocess, regardless of which lattice the template names.
+
+The environment now:
+- writes `{stamp, variables, observables}` to
+  `<lattice>.<param-hash>.varcache.json` whenever it deduces them,
+- populates the class lists from that sidecar at construction and **defers the
+  MAD-X parse** to `_ensure_lattice()`, called by `get_variables`,
+  `set_variables`, `get_observables` and `_read_channel_value`,
+- re-deduces when the lattice's mtime/size changes; the param hash covers
+  sequence, `rel_range`, `zero_half_range`, `bpm_name_pattern` and the
+  `twiss_init` keys, so param sets do not invalidate each other.
+
+Measured in a fresh process: `get_env(...)` 9.3 s → 1.2 s with no lattice parse.
+Sidecars are ~84 KB (Delivery Ring) and gitignored, along with the MAD-X output
+files (`madx.ps`, `sectormap`, `optics_*.dat`, `checkpoint_restart.dat`).
+
+Also: `_bounds_around()` now takes `abs(zero_half_range)`, and
+`DR_BetatronTunes_sim.yaml`'s `zero_half_range: -1.9` is corrected to `1.9` —
+it was handing Badger `[1.9, -1.9]` for every zero-valued knob.
+
+### Files
+- `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` — `create_VA()`,
+  `_ensure_lattice()`, `_varcache_params/_path/_stamp/_read/_write`
+- `tests/VA_plugin_smoke_test.py`, `tests/VA_deferred_expressions_test.py`
+- `tuning_templates/DR_BetatronTunes_sim.yaml`, `.gitignore`
+
+---
+
+## 2026-09-14 (rounds 4-5) — quiet reads, and the `-mini` table lists the template's lattice
+
+Round 4: the interface's NaN-tolerant read path logged one warning per unknown
+channel per refresh, which is thousands of lines under a cross-lattice template.
+`_read_setting` now returns `None` and `get_settings` emits a single DEBUG line
+summarising the unknown names. Values and error behaviour unchanged.
+
+Round 5: the remaining wrong-lattice rows. `routine_page.vars_env` — the `-mini`
+variable table's rows — is built in `select_env()` from `configs["variables"]`,
+which `factory.load_plugin` computed once from an environment carrying the
+plugin defaults. `badger-mini-var-table-env-configs.patch` now also rebuilds it
+inside `set_options_from_template()`, from `instantiate_env()` on the template's
+params plus `get_bounds(type(env).variables)` — the same construction the
+factory uses. On failure it logs and keeps the cached list, so a template on the
+default lattice is unaffected.
+
+Measured: `Xfer400MeV_example.yaml` 2284 Delivery Ring rows → **124** of its own.
+With the sidecar cache warm that rebuild parses nothing.
+
+Verified: all five checks pass;
+`tests/VA_template_integration_test.py` now performs the patch's own
+construction per template and asserts a non-default lattice yields a different
+variable list.
+
+### Files
+- `patches/badger-mini-var-table-env-configs.patch`, `patches/README.md`
+- `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/__init__.py` — `_read_setting`
+- `tests/VA_template_integration_test.py`
+
+---

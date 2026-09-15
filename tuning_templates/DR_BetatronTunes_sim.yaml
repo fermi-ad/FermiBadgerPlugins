@@ -8,7 +8,6 @@ environment:
   name: VirtualAccelerator_MADXSuite
   params:
     beam_p0c_eV: 8889999999.0
-    bpm_name_pattern: bpm
     debug: false
     lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
     rel_range: 0.1
@@ -16,7 +15,7 @@ environment:
     setpoints:
       qx: 9.049
       qy: 9.035
-    zero_half_range: -1.9
+    zero_half_range: 1.9
 formulas: {}
 generator:
   max_travel_distances: null
@@ -32,12 +31,19 @@ generator:
   turbo_controller: null
   vocs:
     constants: {}
-    constraints: {}
+    constraints:
+      optics_stable:
+        dtype: None
+        type: GreaterThanConstraint
+        value: 0.5
     objectives:
       qx-SETPOINT:
         dtype: None
         type: MinimizeObjective
     observables:
+      optics_stable:
+        dtype: None
+        type: Observable
       qx:
         dtype: None
         type: Observable
@@ -77,12 +83,21 @@ observable_formulas: {}
 relative_to_current: false
 vocs:
   constants: {}
-  constraints: {}
+  # Unstable optics make every twiss observable NaN; this fences the optimizer
+  # out of that region.  Not critical: a NaN point should not abort the run.
+  constraints:
+    optics_stable:
+      dtype: null
+      type: GreaterThanConstraint
+      value: 0.5
   objectives:
     qx-SETPOINT:
       dtype: null
       type: MinimizeObjective
   observables:
+    optics_stable:
+      dtype: null
+      type: Observable
     qx:
       dtype: null
       type: Observable
