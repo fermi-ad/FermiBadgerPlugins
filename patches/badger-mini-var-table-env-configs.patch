@@ -1,0 +1,56 @@
+Rebuild the -mini variable table from the template's environment, not the defaults.
+
+Two caches in the mini GUI hold the plugin's configs.yaml defaults and are never
+refreshed when a template points the environment somewhere else:
+
+1. BadgerVariableTable keeps its own copy of the environment configs and
+   re-instantiates the environment from them in refresh_current_values().  That
+   copy is only ever set in select_env(), from whatever is in the parameter
+   editor at the time -- i.e. the defaults.  The table therefore queries the
+   wrong machine: every refresh re-loads the default one, and variables only the
+   template's machine has come back as errors.
+
+2. routine_page.vars_env -- the table's rows -- is built in select_env() from
+   configs["variables"], which factory.load_plugin computed once from an
+   environment instantiated with those same defaults.  So even with (1) fixed,
+   the table lists the default machine's variables and none of the template's.
+
+Fix: re-run add_var() right after the template's params reach the editor, drop
+the stale env instance, and rebuild vars_env from an environment carrying the
+template's params -- the way factory.load_plugin builds the cached list.  If
+that environment cannot be built, the cached list is kept and the failure is
+logged, so a template on the default machine behaves exactly as before.
+
+--- a/badger/gui/mini/pages/routine_page.py
++++ b/badger/gui/mini/pages/routine_page.py
+@@ -406,6 +406,30 @@
+             # to load the new environment
+             self.env_box.set_selected_env_name(env_name)
+             self.env_box.edit_env_params.set_params_from_dict(env_params)
++            # Both the variable table's env configs and the variable list
++            # itself were captured from the plugin defaults (in select_env and
++            # in factory.load_plugin respectively).  Now that the template's
++            # params are in the editor, rebuild both from them.
++            env_class, env_configs = self.add_var()
++            self.env_box.var_table.env_class = env_class
++            self.env_box.var_table.configs = env_configs
++            self.env_box.var_table.env = None
++            try:
++                env = instantiate_env(env_class, env_configs)
++                # Read the class attribute after instantiation: an environment
++                # that deduces its variables repopulates it on construction.
++                var_names = env_class.variables
++                var_bounds = env.get_bounds(var_names)
++                self.vars_env = [
++                    {name: _round_bounds_inward(var_bounds[name])}
++                    for name in var_names
++                ]
++            except Exception:
++                logger.warning(
++                    "Could not read the variable list from the template's "
++                    "environment params; keeping the ones cached for the "
++                    f"plugin defaults:\n{traceback.format_exc()}"
++                )
+ 
+         else:
+             raise BadgerEnvNotFoundError(

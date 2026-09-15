@@ -1,0 +1,104 @@
+additional_variables:
+- iq2
+- iq3
+- iq74
+badger_version: 1.6.0
+constraint_formulas: {}
+critical_constraint_names: []
+description: 400 MeV transfer line - steer the vertical beam centroid at BPVQ17 to
+  zero using three quad currents. Demonstrates the same Environment and Interface
+  on an open line rather than a ring - 'twiss_init' supplies the incoming optics and
+  centroid, so no tune or chromaticity observables exist.
+environment:
+  name: VirtualAccelerator_MADXSuite
+  params:
+    debug: false
+    lattice_filename: sim_configs/Xfer400MeV/B400tracking.madx
+    rel_range: 0.1
+    sequence_name: l400mev
+    setpoints: '{bpvq17.y: 0.0}'
+    twiss_init: '{alfx: -0.89649, alfy: 0.49047, betx: 1.113092, bety: 5.6787, px:
+      0.0002, py: 0.0, x: 0.001, y: -0.0005}'
+    zero_half_range: 0.1
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 1000
+    max_time: 5.0
+    mixed_max_discrete_configurations: 512
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller: null
+  vocs:
+    constants: '{}'
+    constraints: '{''optics_stable'': {''dtype'': None, ''value'': 0.5, ''type'':
+      ''LessThanConstraint''}}'
+    objectives: '{''bpvq17.y-SETPOINT'': {''dtype'': None, ''type'': ''MinimizeObjective''}}'
+    observables: '{''bphq2.x'': {''dtype'': None, ''type'': ''Observable''}, ''bpvq17.y'':
+      {''dtype'': None, ''type'': ''Observable''}, ''bpvq17.y-SETPOINT'': {''dtype'':
+      None, ''type'': ''Observable''}}'
+    variables: '{''iq2'': {''dtype'': None, ''default_value'': None, ''domain'': [66.348,
+      81.092], ''type'': ''ContinuousVariable''}, ''iq3'': {''dtype'': None, ''default_value'':
+      None, ''domain'': [18.576, 22.704], ''type'': ''ContinuousVariable''}, ''iq74'':
+      {''dtype'': None, ''default_value'': None, ''domain'': [101.43, 123.97], ''type'':
+      ''ContinuousVariable''}}'
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: Xfer400MeV_example
+observable_formulas: {}
+relative_to_current: false
+vocs:
+  constants: {}
+  constraints:
+    optics_stable:
+      dtype: null
+      type: LessThanConstraint
+      value: 0.5
+  objectives:
+    bpvq17.y-SETPOINT:
+      dtype: null
+      type: MinimizeObjective
+  observables:
+    bphq2.x:
+      dtype: null
+      type: Observable
+    bpvq17.y:
+      dtype: null
+      type: Observable
+    bpvq17.y-SETPOINT:
+      dtype: null
+      type: Observable
+  variables:
+    iq2:
+      default_value: null
+      domain:
+      - 66.348
+      - 81.092
+      dtype: null
+      type: ContinuousVariable
+    iq3:
+      default_value: null
+      domain:
+      - 18.576
+      - 22.704
+      dtype: null
+      type: ContinuousVariable
+    iq74:
+      default_value: null
+      domain:
+      - 101.43
+      - 123.97
+      dtype: null
+      type: ContinuousVariable
+vrange_hard_limit: {}
+vrange_limit_options: {}
+xopt_version: 3.2.1

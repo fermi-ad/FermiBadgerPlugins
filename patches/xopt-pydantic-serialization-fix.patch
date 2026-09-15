@@ -1,0 +1,147 @@
+--- a/xopt/pydantic.py
++++ b/xopt/pydantic.py
+@@ -271,15 +271,10 @@ class XoptBaseModel(BaseModel):
+     @model_serializer(mode="plain", when_used="json")
+     def serialize_json(self, sinfo: SerializationInfo) -> dict:
+-        import warnings
+-
+-        # Suppress pydantic serialization warnings for private attributes
+-        # These warnings are expected and harmless for XoptBaseModel subclasses
+-        with warnings.catch_warnings():
+-            warnings.filterwarnings(
+-                "ignore",
+-                category=UserWarning,
+-                message=".*PydanticSerializationUnexpectedValue.*",
+-            )
+-            return orjson_dumps_except_root(self)
++        # pydantic's warnings parameter (set to False in model_dump) suppresses these
++        # serialization warnings, so no additional filtering is needed here
++        return orjson_dumps_except_root(self)
+
+     def to_json(self, **kwargs: Any) -> str:
+-        import warnings
+-
+-        # Suppress pydantic serialization warnings for private attributes
+-        # These warnings are expected and harmless for XoptBaseModel subclasses
+-        with warnings.catch_warnings():
+-            warnings.filterwarnings(
+-                "ignore",
+-                category=UserWarning,
+-                message=".*PydanticSerializationUnexpectedValue.*",
+-            )
+-            return orjson_dumps(self, **kwargs)
++        # pydantic's warnings parameter (set to False in model_dump) suppresses these
++        # serialization warnings, so no additional filtering is needed here
++        return orjson_dumps(self, **kwargs)
+
+     def json(self, **kwargs: Any) -> str:
+         return self.to_json(**kwargs)
+
+     def model_dump(self, **kwargs) -> dict[str, Any]:
+         """
+         Override model_dump to exclude private attributes (starting with `_`).
+
+         This prevents warnings like PydanticSerializationUnexpectedValue for
+         attributes like `_initial_state` in TurboController.
+         """
+-        import warnings
+-
+-        # Pass warnings=False to pydantic's model_dump to suppress serialization warnings
+-        # These warnings are expected and harmless for XoptBaseModel subclasses
+-        # Note: pydantic v2's Rust code emits warnings that bypass Python's warnings module,
+-        # so we must use warnings=False parameter
+-        if "warnings" not in kwargs:
+-            kwargs["warnings"] = False
+-
+-        with warnings.catch_warnings():
+-            warnings.filterwarnings(
+-                "ignore",
+-                category=UserWarning,
+-                message=".*PydanticSerializationUnexpectedValue.*",
+-            )
+-            result = super().model_dump(**kwargs)
++        # Pass warnings=False to pydantic's model_dump to suppress serialization warnings
++        # These warnings are expected and harmless for XoptBaseModel subclasses
++        # Note: pydantic v2's Rust code emits warnings that bypass Python's warnings module,
++        # so we must use warnings=False parameter
++        if "warnings" not in kwargs:
++            kwargs["warnings"] = False
++
++        result = super().model_dump(**kwargs)
+
+         # Remove private attributes (keys starting with `_`)
+         return {k: v for k, v in result.items() if not k.startswith("_")}
+--- a/xopt/__init__.py
++++ b/xopt/__init__.py
+@@ -1,19 +1,14 @@
+-import warnings
+ from xopt.asynchronous import AsynchronousXopt
+ from xopt.base import Xopt
+ from xopt.evaluator import Evaluator
+ from xopt.generator import Generator
+ from xopt.vocs import VOCS
+
+
+ __all__ = [
+     "Xopt",
+     "VOCS",
+     "Generator",
+     "Evaluator",
+     "AsynchronousXopt",
+ ]
+
+-# Suppress PydanticSerializationUnexpectedValue warnings for private attributes
+-# These warnings are expected and harmless for XoptBaseModel subclasses
+-warnings.filterwarnings(
+-    "ignore",
+-    category=UserWarning,
+-    message=".*PydanticSerializationUnexpectedValue.*",
+-)
+-
+ try:
+     from ._version import __version__
+ except ImportError:
+--- a/xopt/generators/bayesian/turbo.py
++++ b/xopt/generators/bayesian/turbo.py
+@@ -163,8 +163,10 @@ class TurboController(XoptBaseModel, ABC):
+         logger.debug(f"TurboController.model_dump: called, kwargs={kwargs}")
+         logger.debug(f"TurboController.model_dump: _initial_state_value keys={list(self._initial_state_value.keys()) if isinstance(self._initial_state_value, dict) else self._initial_state_value}")
+         # Get raw dict from pydantic (includes private attrs)
+-        dump = super(XoptBaseModel, self).model_dump(**kwargs)
++        # Note: we must call super() not super(XoptBaseModel, self) to ensure
++        # XoptBaseModel.model_dump() warning filter is applied
++        dump = super().model_dump(**kwargs)
+         logger.debug(f"TurboController.model_dump: raw dump keys={list(dump.keys())}")
+         # Remove _initial_state and _initial_state_value
+         dump.pop("_initial_state", None)
+--- a/badger/core_subprocess.py
++++ b/badger/core_subprocess.py
+@@ -10,10 +10,10 @@ See core.py for the simpler in-process version of the same loop.
+ """
+
+ from copy import deepcopy
+ import logging
+ import time
+ import traceback
+-import warnings
+ from typing import Any
+ from queue import Empty
+ from pandas import DataFrame
+ import multiprocessing as mp
+ import os
+
+@@ -173,14 +173,6 @@ def run_routine_subprocess(
+             process_name=f"{os.path.basename(__name__)}-{mp.current_process().pid}",
+         )
+
+-    # Suppress PydanticSerializationUnexpectedValue warnings for private attributes
+-    # These warnings are expected and harmless for XoptBaseModel subclasses
+-    # This filter is needed in the subprocess because it's a separate process
+-    warnings.filterwarnings(
+-        "ignore",
+-        category=UserWarning,
+-        message=".*PydanticSerializationUnexpectedValue.*",
+-    )
+-
+     # Now all subsequent logger calls will go to the central queue
+     logger.info(f"Subprocess started with PID {mp.current_process().pid}")
