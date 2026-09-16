@@ -1014,3 +1014,24 @@ variable list.
 - `tests/VA_template_integration_test.py`
 
 ---
+
+## 2026-09-15: `setup.sh` — one-command setup for a fresh clone
+
+Plan written first: [docs/2026-09-15-setup-script-plan.md](2026-09-15-setup-script-plan.md).
+
+Added `setup.sh` at the repo root: creates/reuses the `FermiBadger_env` conda
+env, applies the three Badger patches (idempotent, per-patch directory and
+strip level — they don't share one recipe), writes `config.local.yaml` with
+the clone's own paths (gitignored, so `config.yaml` stays a clean tracked
+template), and verifies Badger discovers `VirtualAccelerator_MADXSuite`.
+`xopt-pydantic-serialization-fix.patch` is deliberately skipped — it amends
+hand-written code that exists only in this machine's env, not in a pristine
+xopt 3.2.1 install, so it can't apply to a fresh clone (see the plan for the
+full diagnosis). Corrected the `-p0`→`-p1` patch instructions in `README.md`
+and `patches/README.md` along the way. `VirtualAccelerator_MADXSuite` now
+falls back to a repo-root-relative lattice path when the CWD-relative one
+isn't found, so Badger no longer has to be launched from the repo root.
+
+Verified: fresh-clone setup (copied to `/tmp`, both `--yes` and idempotent
+re-run), the existing-env "keep as-is" path against the real `FermiBadger_env`,
+lattice resolution from another directory, and all four VA tests still pass.

@@ -15,17 +15,42 @@ git clone git@github.com:fermi-ad/FermiBadgerPlugins.git
 cd FermiBadgerPlugins
 ```
 
-### 2. Set up the conda environment
+### 2. Run the setup script
 
 **Prerequisite**: You must be on the FNAL private network (on-site or via VPN). The `acsys` package requires access to FNAL's internal pip repository.
 
 ```bash
-# Create and activate the environment
-conda env create -n FermiBadger_env -f environment.yml
-conda activate FermiBadger_env
+./setup.sh
 ```
 
-### 3. Apply patches for Badger 1.6.0
+This does everything in steps 3 and 4 below:
+
+1. Creates the `FermiBadger_env` conda environment from `environment.yml`. If an environment of that name already exists, it asks whether to remove and recreate it, use a different name, or keep it as-is.
+2. Applies the Badger patches to that environment.
+3. Writes `config.local.yaml` with this clone's paths — it works no matter where you cloned the repo, `/tmp` included. Your archive and logbook directories default to `~/BadgerArchive` and `~/BadgerLogs`; press Enter to accept or type your own.
+4. Verifies that Badger can discover the plugins.
+
+It is safe to re-run: patches already applied are detected and skipped.
+
+```bash
+./setup.sh --help          # options
+./setup.sh --yes           # take every default, no prompts
+./setup.sh --env-name foo  # different environment name
+./setup.sh --skip-env      # patches and config only
+```
+
+Then launch:
+
+```bash
+conda activate FermiBadger_env
+badger -g -cf config.local.yaml
+```
+
+`config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
+
+Steps 3 and 4 below document what the script does, for anyone who needs to do it by hand.
+
+### 3. Apply patches for Badger 1.6.0 (done by `setup.sh`)
 
 **A patch is required** to fix known issues in Badger 1.6.0 that affect template loading and the `turbo_controller: null` configuration.
 
@@ -66,7 +91,17 @@ Navigate to the `gui/components` directory within that path to apply the patch.
 BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
 FERMIBADGERPLUGINS_PATH=`pwd`
 cd "$BADGER_PATH/gui/components"
-patch -p0 < "$FERMIBADGERPLUGINS_PATH/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
+patch -p1 < "$FERMIBADGERPLUGINS_PATH/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
+```
+
+The `-mini` patches carry `a/badger/...` paths instead, so they apply from
+`site-packages` with `-p1`:
+
+```bash
+SITE_PACKAGES=$(conda run -n FermiBadger_env python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
+cd "$SITE_PACKAGES"
+patch -p1 < "$FERMIBADGERPLUGINS_PATH/patches/badger-mini-config.patch"
+patch -p1 < "$FERMIBADGERPLUGINS_PATH/patches/badger-mini-var-table-env-configs.patch"
 ```
 
 **Method 2: Using `git apply` (if `patch` is not available):**
@@ -81,18 +116,21 @@ git apply "$FERMIBADGERPLUGINS_PATH/patches/pydantic_editor-badger-1.6.0-dict-su
 
 For detailed documentation of each fix, see [`patches/README.md`](patches/README.md).
 
-### 4. Configure Badger
+### 4. Configure Badger (done by `setup.sh`)
 
-Edit the `config.yaml` file to set the `*_ROOT` directories:
+Copy `config.yaml` to `config.local.yaml` (which is gitignored) and set the `*_ROOT` directories to absolute paths:
 
-- `BADGER_ARCHIVE_ROOT` and `BADGER_LOGBOOK_ROOT` - Location for data and logs (can be the same)
-- `BADGER_PLUGIN_ROOT` - Set to the `plugins` directory of this repo
-- `BADGER_TEMPLATE_ROOT` - Set to the `tuning_templates` directory of this repo
+- `BADGER_PLUGIN_ROOT` - the `plugins` directory of this repo
+- `BADGER_TEMPLATE_ROOT` - the `tuning_templates` directory of this repo
+- `BADGER_LOG_DIRECTORY` - the `logs` directory of this repo
+- `BADGER_ARCHIVE_ROOT` and `BADGER_LOGBOOK_ROOT` - where run data and logs go (can be the same, and need not be inside the repo)
+
+Create each of those directories if it does not exist.
 
 ### 5. Launch the Badger GUI
 
 ```bash
-badger -g -cf config.yaml
+badger -g -cf config.local.yaml
 ```
 
 ### 6. Verify your installation (optional)

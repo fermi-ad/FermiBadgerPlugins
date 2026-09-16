@@ -6,6 +6,9 @@ __pycache__/
 *Icon*
 *\#*
 logs/
+# Written by setup.sh with this clone's own paths; config.yaml stays the
+# tracked template.
+config.local.yaml
 # Deduced variable/observable lists cached beside a lattice, and the output
 # files MAD-X writes into the working directory when a lattice TWISSes/TRACKs.
 *.varcache.json
@@ -14,3 +17,5 @@ sectormap
 optics_*.dat
 checkpoint_restart.dat
 l400mevtrack*
+# Personal Claude Code tool-permission config, not shared project config.
+.claude/

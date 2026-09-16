@@ -113,6 +113,12 @@ SETPOINT_SUFFIX = '-SETPOINT'
 # ('optics_stable > 0.5'), not a quantity to steer towards.
 OPTICS_STABLE = 'optics_stable'
 
+# Templates carry repo-relative lattice paths ('sim_configs/.../x.madx'), which
+# only resolve when Badger is launched from the repo root.  Falling back to this
+# lets it be launched from anywhere.
+# plugins/environments/<name>/__init__.py -> repo root
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
 
 # (resolved lattice path, sequence name) -> (Madx, design Line, matched name).
 # Badger rebuilds the environment on every GUI table refresh and once more per
@@ -248,6 +254,10 @@ class Environment(environment.Environment):
                 "(path to a MAD-X lattice file)."
             )
         self._lattice_path = Path(self.lattice_filename)
+        if not self._lattice_path.is_absolute() and not self._lattice_path.is_file():
+            # The working directory wins when it has the file; this only covers
+            # a launch from somewhere else.
+            self._lattice_path = REPO_ROOT / self.lattice_filename
         if not self._lattice_path.is_file():
             raise FileNotFoundError(
                 f'MAD-X lattice file not found: {self._lattice_path}'
@@ -542,8 +552,9 @@ class Environment(environment.Environment):
         import os
         import re
 
-        # Read the original lattice file
-        with open(self.lattice_filename, 'r') as f:
+        # Read the original lattice file -- _lattice_path, not the raw param,
+        # so this agrees with create_VA() about which file that names.
+        with open(self._lattice_path, 'r') as f:
             lines = f.readlines()
 
         # For each variable to change, find its definition and replace the value

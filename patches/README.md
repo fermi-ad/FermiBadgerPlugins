@@ -32,12 +32,18 @@ First, locate your Badger installation in your conda environment:
 conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))"
 ```
 
+**`./setup.sh` applies all of these for you** — the manual steps below are the
+fallback.
+
 ### Using `patch` Command
+
+This patch carries `a/pydantic_editor.py` paths, so apply it from the
+`gui/components` directory with `-p1`:
 
 ```bash
 BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
 cd "$BADGER_PATH/gui/components"
-patch -p0 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
 ```
 
 ### Using `git apply`
@@ -61,6 +67,19 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-var-table-env-config
 ```
 
 ## Applying the Xopt Patch
+
+> **This patch does not apply to a pristine Xopt 3.2.1, and `setup.sh` skips it.**
+> It was generated against an installation that already carried hand-written
+> edits to `xopt/pydantic.py` and `xopt/generators/bayesian/turbo.py` (a
+> `model_dump` override, an `_initial_state_value` private attribute, a
+> `model_dump_json` override) which no file in this directory contains — the
+> patch *amends* that code rather than adding it, so its context lines are
+> absent from a fresh install. `apply_xopt_fix.py` has the same problem: its
+> search strings match nothing in a pristine tree. The patch header is also
+> malformed (`patch` rejects it at line 22).
+>
+> To restore this fix for new clones, the hand-edits need to be captured as a
+> real diff against pristine 3.2.1 first.
 
 The Xopt patch fixes the TurboController serialization warnings. Apply it to your conda environment's xopt package:
 
