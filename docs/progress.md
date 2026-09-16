@@ -1193,9 +1193,9 @@ load test to fully confirm.
 - `tuning_templates/LinacQuads.yaml`
 - `tuning_templates/D13LM_reduce_wV5QSET.yaml`
 
-### Still open
-- Live-load test of all 9 templates in `-mini`/`-g` with "Automatic" checked,
-  by the user (this sandbox can't run the real environment).
+### Confirmed and still open
+- Live-load tested by the user: after the follow-up `scanner.py` fix below,
+  all 9 templates load and run "Automatic" cleanly in the full GUI.
 - `L_AutoSteerRestore`, `LinacEnergyStabilization`, `MinD7LMSM_using_Tank5Phase`,
   `Muon_DR_PID_tune` environments have no `tuning_templates/*.yaml` files yet,
   so nothing to auto-range there — worth a note for whoever adds templates for
@@ -1243,9 +1243,9 @@ true` set.
 - `plugins/scanner.py` — `read_once()` and `set_once()` both now guard on an
   empty `drf_list` and return immediately instead of opening a DPM session.
 
-### Still open
-- Re-test needed: `LinacQuads.yaml` (the template that surfaced this), and
-  ideally the other 8 auto-ranged templates too, since this failure mode was
-  latent in all of them (triggered by environment (re)selection while
-  Automatic is checked, not anything LinacQuads-specific) — just not yet
-  observed for the others.
+### Confirmed (2026-09-16, later same day)
+User re-tested `LinacQuads.yaml` after the `scanner.py` fix: "worked
+beautifully... every template loads and does AutoMode just fine." Also
+folded in the user's own widened RIL_tuning hard limit for `L:RFBPAH`
+(`[210, 230]` → `[100, 300]`, needed for auto-ranging to work out of the
+box there) and committed everything together as `7e80442`.

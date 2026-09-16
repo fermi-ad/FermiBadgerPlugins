@@ -341,8 +341,85 @@ lattice_filename: str = Field(default='sim_configs/DeliveryRing/mu2e-dr-model-v2
 
 ---
 
+## BasicAcsysInterface / Physical-Hardware Templates (RIL_tuning, LinacQuadTuning, etc.)
+
+Environments backed by real Fermilab ACNET/DPM hardware (`RIL_tuning`,
+`LinacQuadTuning`, and any future environment listing `BasicAcsysInterface`
+in its `configs.yaml`) have their own gotchas, distinct from the
+`VirtualAccelerator_MADXSuite` simulation plugin most of this doc covers.
+
+### CLI gotcha: template path is relative to `BADGER_TEMPLATE_ROOT`
+
+```bash
+badger -mini -cf config.yaml -t RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml
+```
+
+`-t` takes a **bare filename**, resolved against `BADGER_TEMPLATE_ROOT`
+(the `tuning_templates/` dir per `config.yaml`) — **not** a path into the
+repo. Passing a full/relative repo path here fails to find the template.
+
+### Auto-ranging: `relative_to_current` / `vrange_limit_options`
+
+Setting a template's top-level `relative_to_current: true` pre-checks
+"Automatic" in the full GUI (and is what `-mini`'s equivalent switch keys
+off of): variable ranges get recomputed from live current values every
+load/refresh instead of going stale in the YAML. Per-variable behavior is
+controlled by `vrange_limit_options: {<var>: {limit_option_idx, ratio_curr,
+ratio_full, delta}}`:
+
+- `limit_option_idx: 0` ("ratio with current value", multiplicative) —
+  **has a real bug**: collapses to `[0.0, 0.0]` whenever the live value is
+  exactly `0.0` (`np.sign(0.0) == 0.0` zeroes the whole delta). Avoid.
+- `limit_option_idx: 1` ("ratio with full range") — additive, safe at any
+  current value. `ratio_full` is a fraction of the *hard* bound width.
+- `limit_option_idx: 2` ("delta around current value") — additive, safe;
+  `delta` is an **absolute half-width in the variable's own units**. This
+  is the mechanism to reach for when a per-variable absolute half-width is
+  wanted, rather than any ratio — it already exists, no code changes needed.
+- **Trap**: any variable *missing* from `vrange_limit_options` silently
+  falls back to the GUI's hardcoded default, which is `limit_option_idx: 0`
+  — the unsafe one. Always give every declared variable an explicit entry.
+
+All 9 physical templates in `tuning_templates/` currently use
+`relative_to_current: true` with idx 1 (or idx 2 where a per-variable
+absolute half-width made more sense), and none are on idx 0. See
+`memory/auto-ranging-physical-templates.md` for the full audit and per-file
+rationale.
+
+### DPM hang on an empty device list
+
+`plugins/scanner.py`'s `read_once()`/`set_once()` open an ACNET DPM session
+and wait for replies. If called with an **empty** device list — which
+happens routinely, e.g. Badger's full GUI calling
+`select_env() → set_vrange() → update_init_table() → fill_curr_in_init_table()`
+right after an environment is (re)selected but before any variables are
+checked into the routine yet — a DPM session with zero registered entries
+never gets a reply, so the code would hang forever waiting for one. Both
+functions now guard on `if not drf_list: return` (`[]`/`None`) before ever
+opening a session. This is generic to any `BasicAcsysInterface` environment,
+not specific to one plugin — don't remove the guard when touching this file.
+See `memory/RIL_tuning-live-bounds-and-dpm-hang.md` for the related fix
+(moving `dpm.start()` outside the per-device loop — a *different*, earlier
+DPM hang in the same file) and `memory/auto-ranging-physical-templates.md`
+for this one.
+
+### Template-authoring gotcha: declared `vocs.variables` bounds must bracket the live value
+
+Badger validates that a variable's current live value falls inside its
+declared `vocs.variables` bounds at load time (`VariableRangeError`/
+pydantic `value[1] > value[0]`). A one-sided declared range (e.g.
+`[0.0, 2.0]` for a trim that can read negative) will fail to load the
+moment the live value goes negative, or block `add_rand_in_init_table()`'s
+clipped sampling from ever producing a valid initial point. When adding a
+new physical template, check whether a sibling template already has a
+correctly two-sided range for the same device (e.g. `L:ATRMVU`'s `[-4, 1]`
+in the RIL_tuning templates) and mirror it, rather than leaving a stale
+one-sided range from an earlier, differently-signed operating point.
+
 ## Related Documentation
 
 - [progress.md](docs/progress.md) - Current phase status
 - [log.md](docs/log.md) - Chronological session log
 - [CLAUDE.md](CLAUDE.md) - Project overview
+- [memory/RIL_tuning-live-bounds-and-dpm-hang.md](memory/RIL_tuning-live-bounds-and-dpm-hang.md) - turbo_controller/bounds/DPM-hang fixes for RIL_tuning physical templates
+- [memory/auto-ranging-physical-templates.md](memory/auto-ranging-physical-templates.md) - relative_to_current rollout, vrange_limit_options modes, zero-current edge case, empty-device-list DPM hang

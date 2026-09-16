@@ -425,3 +425,16 @@ come. Fixed in `plugins/scanner.py`: both `read_once()` and `set_once()` now
 return immediately on an empty `drf_list`, no DPM session opened. Generic fix
 — applies to any `BasicAcsysInterface` environment, not just LinacQuadTuning.
 Needs re-test.
+
+## 2026-09-16 (cont'd) — confirmed working, committed
+
+User re-tested `LinacQuads.yaml` after the `scanner.py` empty-list fix:
+"worked beautifully... every template loads and does AutoMode just fine."
+Folded in the user's own widened RIL_tuning hard limit for `L:RFBPAH`
+(`[210, 230]` → `[100, 300]`, needed for auto-ranging out of the box) and
+committed the whole rollout (9 templates + `scanner.py` guard + this doc/memory
+history) as `7e80442`. Also added a new "BasicAcsysInterface / Physical-Hardware
+Templates" section to `HANDOFF.md` covering the `-mini -t` bare-filename CLI
+gotcha, the `vrange_limit_options` modes and zero-current trap, the
+empty-device-list DPM hang, and the declared-bounds-must-bracket-live-value
+template-authoring gotcha.

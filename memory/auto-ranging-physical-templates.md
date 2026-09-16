@@ -82,12 +82,16 @@ both now return immediately (`[]`/`None`) on an empty `drf_list`, no DPM
 session opened. This is generic to any `BasicAcsysInterface` environment
 (not LinacQuadTuning-specific) — just happened to surface here first.
 
+## Status: confirmed working, committed
+
+User live-tested after the empty-device-list fix above: all 9 templates
+load and run "Automatic" cleanly in the full GUI ("every template loads and
+does AutoMode just fine"). Committed as `7e80442`, together with the user's
+own widened RIL_tuning hard limit for `L:RFBPAH` (`[210, 230]` → `[100,
+300]` — needed for auto-ranging to work out of the box there).
+
 ## Open
 
-- Not yet live-load-tested (sandbox can't run the real `FermiBadger_env` —
-  see environment note below). Verified only via YAML-level structural checks:
-  `hi > lo` for every variable, full `vrange_limit_options` coverage, no
-  idx-0 entries, valid `turbo_controller`.
 - `L_AutoSteerRestore`, `LinacEnergyStabilization`, `MinD7LMSM_using_Tank5Phase`,
   `Muon_DR_PID_tune` environments have no template files yet — nothing to
   auto-range there yet, but the same missing-entry-defaults-to-idx-0 trap
