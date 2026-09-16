@@ -342,3 +342,41 @@ sidecar cache warm the rebuild parses no MAD-X at all.
 for every shipped template, asserts the vocs variables come back with finite
 ordered bounds, and asserts a template on a non-default lattice produces a
 different variable list than the factory's. All five checks pass.
+
+## 2026-09-16 — RIL_tuning physical templates: three layered load failures
+
+`badger -mini -t RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml` failed, fixed,
+failed differently, fixed, then a separate `-g`-only hang surfaced and was
+fixed. Full diagnosis and fixes in `docs/progress.md` under this date. Short
+version:
+
+1. `turbo_controller: safety` (bare string, pre-1.4 template format) crashed
+   `pydantic_editor.initialize_special_field()` with
+   `TypeError: 'str' object does not support item assignment`. Fixed with
+   `turbo_controller: null`, matching the already-established convention from
+   the Badger 1.6.0 upgrade work.
+2. Static `vocs.variables` bounds for `L:ATRMHD`/`L:ATRMHU`/`L:ATRMVD` were
+   one-sided (`[0, upper]`) while live hardware read negative — `-mini`'s
+   forced init-table auto-fill clips a live-value-centered sample region to
+   those declared bounds and collapsed to zero width, tripping
+   `xopt.vocs.validate_variable_bounds`'s `value[1] > value[0]` check. Wrote
+   `check_RIL_tuning_live_bounds.py` to read all template variables' live
+   values against declared bounds at once (read-only). Widened the three to
+   two-sided ranges mirroring sibling `L:ATRMVU`'s existing `[-4, 1]`.
+3. Separately reported: `-g` GUI hangs forever (force-quit required) when
+   "Automatic" (`relative_to_current`) is checked for a RIL_tuning template.
+   Traced to `plugins/scanner.py`'s `read_once()` calling `await dpm.start()`
+   once per device inside its loop instead of once after, unlike the correct
+   `set_once()` pattern in the same file — tolerated for a single read but
+   not for the two back-to-back DPM sessions "Automatic" mode triggers
+   (`calc_auto_bounds()` then `add_rand_in_init_table()`, each via a fresh
+   `create_env()`). Fixed the loop placement and added a 15s
+   `asyncio.wait_for` safety net around the reply wait, since this path had
+   no timeout anywhere before. User-confirmed fixed; the timeout never fired.
+
+Diagnostic notes: this session had no way to run the real `FermiBadger_env`
+(macOS conda binaries aren't executable from the sandboxed Linux shell used
+for file access) and computer-use access to Terminal is click-only by
+platform policy (can't type/send keys) — so all fixes here were derived from
+static reading of `badger`/`xopt`/`acsys` site-packages source plus the
+user's own pasted tracebacks, and verified by the user running them.

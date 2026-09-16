@@ -35,25 +35,54 @@ async def set_once(con,drf_list,value_list,settings_role, debug=False):
 
     return None
 
-async def read_once(con,drf_list, sample_events={'default':'@i'}, debug=False):
+async def read_once(con,drf_list, sample_events={'default':'@i'}, debug=False, timeout=15.0):
     if debug: print (f'read_once() was passed list:{drf_list} and sample_events:{sample_events}.')
     readings = [None]*len(drf_list)
     # Optional DPMContext kwarg: dpm_node='DPM09'
-    async with acsys.dpm.DPMContext(con) as dpm:
-        for i in range(len(drf_list)):
-            devname = drf_list[i]
-            if devname in list(sample_events.keys()):
-                sample_event = sample_events[devname]
-            else: sample_event = sample_events['default']
-            if debug: print(f'Will add dpm entry {drf_list[i]+sample_event}.')
-            await dpm.add_entry(i, drf_list[i]+sample_event)
+
+    async def _do_read():
+        async with acsys.dpm.DPMContext(con) as dpm:
+            for i in range(len(drf_list)):
+                devname = drf_list[i]
+                if devname in list(sample_events.keys()):
+                    sample_event = sample_events[devname]
+                else: sample_event = sample_events['default']
+                if debug: print(f'Will add dpm entry {drf_list[i]+sample_event}.')
+                await dpm.add_entry(i, drf_list[i]+sample_event)
             await dpm.start()
 
-        async for reply in dpm:
-            if reply.isStatus: print(f'Status: {reply}')
-            else:  readings[reply.tag]=reply.data
-            if readings.count(None) ==0:
-                if debug: print (f'readings.count(None) ==0. Breaking out of read_once() and returning {readings}')
-                break
+            async for reply in dpm:
+                if reply.isStatus: print(f'Status: {reply}')
+                else:  readings[reply.tag]=reply.data
+                if readings.count(None) ==0:
+                    if debug: print (f'readings.count(None) ==0. Breaking out of read_once() and returning {readings}')
+                    break
+
+    # DIAGNOSTIC/SAFETY NET (added while chasing the "Automatic mode hangs
+    # forever" bug): without a timeout, a DPM session that never gets a
+    # reply blocks this coroutine -- and therefore the whole Qt GUI thread,
+    # since acsys.run_client() runs this via loop.run_until_complete() on
+    # the calling thread -- with no way to recover short of force-quitting.
+    # Bounding it turns a silent, unkillable freeze into a clear, timed-out
+    # exception naming exactly which device(s) never answered, which is
+    # our next real diagnostic signal if the hang recurs.
+    try:
+        await asyncio.wait_for(_do_read(), timeout=timeout)
+    except asyncio.TimeoutError:
+        missing = [drf_list[i] for i in range(len(drf_list)) if readings[i] is None]
+        got = {
+            drf_list[i]: readings[i]
+            for i in range(len(drf_list))
+            if readings[i] is not None
+        }
+        print(
+            f"read_once() TIMED OUT after {timeout}s waiting on DPM replies. "
+            f"No reply received for: {missing}. Replies received before timeout: {got}"
+        )
+        raise TimeoutError(
+            f"BasicAcsysInterface.read_once() timed out after {timeout}s waiting "
+            f"for DPM replies for: {missing}"
+        )
+
     return readings
 

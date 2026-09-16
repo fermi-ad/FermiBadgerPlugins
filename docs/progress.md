@@ -1035,3 +1035,85 @@ isn't found, so Badger no longer has to be launched from the repo root.
 Verified: fresh-clone setup (copied to `/tmp`, both `--yes` and idempotent
 re-run), the existing-env "keep as-is" path against the real `FermiBadger_env`,
 lattice resolution from another directory, and all four VA tests still pass.
+
+## 2026-09-16: RIL_tuning physical templates — pydantic load errors, stale bounds, and the `-g` "Automatic" hang
+
+Working through `badger -mini -cf config.yaml -t RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml`
+(BasicAcsysInterface, real hardware, not a sim) failing outright, in three
+successive layers.
+
+**1. `generator.turbo_controller: safety`** — a bare string, left over from a
+pre-1.4 Badger/Xopt template. Current `pydantic_editor.initialize_special_field()`
+does `special_item_dict: dict | None = defaults.get(field)` then
+`special_item_dict["vocs"] = ...`; a bare string there crashes with
+`TypeError: 'str' object does not support item assignment`. The documented,
+tested convention for this exact scenario is already `turbo_controller: null`
+(see "Fix 1" above, and `DR_BetatronTunes_sim.yaml`) — not a hand-authored
+`SafetyTurboController` object, which the code only exercises with live,
+mid-run state, not a clean starting config. Applied `null` to the template;
+loads past this point.
+
+**2. Static `vocs.variables` bounds stale vs. live hardware.** Next error was
+`VariableRangeError: Current value is not within variable range!` from
+`routine_page.add_rand_in_init_table()` → `xopt.vocs.clip_variable_bounds()` →
+`ValueError: Bounds specified for 'L:ATRMHD' do not satisfy value[1] > value[0]`.
+Root cause: `-mini` always auto-fills the init table on load
+(`update_init_table(force=True)`), sampling a region around each variable's
+*live* current value (`env.get_variables()` via `BasicAcsysInterface`) and
+clipping it to the template's declared hard bounds with `np.clip`. If the live
+value sits far enough outside those declared bounds, both ends of the clip
+land on the same boundary → a zero-width range → the `value[1] > value[0]`
+check fails. Wrote `check_RIL_tuning_live_bounds.py` (repo root, read-only —
+only calls `get_variables`/`get_settings`, never `set_variables`/`set_values`)
+to dump every template variable's live value next to its declared bounds in
+one shot instead of crashing on them one at a time. Found `L:ATRMHD`,
+`L:ATRMHU`, `L:ATRMVD` declared one-sided `[0, upper]` but reading modestly-
+to-significantly negative, while sibling `L:ATRMVU` already had a correct
+two-sided `[-4, 1]` bound. Mirrored that style per user direction:
+`L:ATRMHD [0,2]→[-2,2]`, `L:ATRMHU [0,4]→[-4,4]`, `L:ATRMVD [0,1]→[-1,1]`.
+Confirmed against the environment's own class-level hard bounds
+(`plugins/environments/RIL_tuning/__init__.py`, `[-4.0, 4.0]` for all four
+ATRM trims) — the new sub-ranges are safely inside those.
+
+Longer-term: Badger's `relative_to_current` ("Automatic" checkbox / config's
+`AUTO_REFRESH`) exists to recompute `vocs.variables` from live values against
+the *environment's* hard bounds every load, instead of hand-typed numbers
+going stale — see item 3, this is now viable.
+
+**3. `-g` full GUI hang: checking "Automatic" for a RIL_tuning template stalled
+forever, no error, had to be force-quit.** Traced `toggle_relative_to_curr(True)`
+→ `calc_auto_bounds()` (one live read) → `try_populate_init_table()` →
+`update_init_table()` → `add_rand_in_init_table()` (a second, independent live
+read, via a fresh `create_env()`/`Interface()`/ACNET `Connection` each time).
+Found a real bug in `plugins/scanner.py`'s `read_once()`: `await dpm.start()`
+was called *inside* the per-device loop (once per device) instead of once
+after all entries are registered — unlike the write path `set_once()` in the
+same file, which does it correctly. A single one-shot read tolerates this
+fine (that's why `-mini` and the diagnostic script worked), but back-to-back
+DPM sessions — exactly what "Automatic" mode triggers — did not. Fixed by
+moving `dpm.start()` out of the loop. Also added a 15s `asyncio.wait_for(...)`
+around the reply-wait in `read_once()` as a safety net, since nothing in this
+path had a timeout before — a stuck DPM session would otherwise hang the Qt
+GUI thread forever with zero diagnostic trace. **User-confirmed: "Automatic"
+now completes without hanging** (the timeout never triggered — the
+`dpm.start()` fix was the actual root cause).
+
+### Files
+- `tuning_templates/RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml` — `turbo_controller: null`;
+  `L:ATRMHD`/`L:ATRMHU`/`L:ATRMVD` bounds widened to two-sided, mirroring `L:ATRMVU`
+- `plugins/scanner.py` — `read_once()`: `dpm.start()` moved outside the per-device
+  loop; wrapped in `asyncio.wait_for(timeout=15.0)` with a diagnostic `TimeoutError`
+  naming any device(s) that never replied
+- `check_RIL_tuning_live_bounds.py` (new, repo root) — read-only live-vs-declared-bounds
+  diagnostic for any RIL_tuning template
+
+### Still open
+- `RIL_tuning_trims_and_sol.yaml` and `templates.yaml` carry the same stale
+  `turbo_controller: safety`/`optimize` bare strings and old singular
+  `sample_event`/`setpoint` environment params (harmless — pydantic's default
+  `extra='ignore'` on `Environment` silently drops them — but worth cleaning
+  up for clarity). Not yet swept.
+- Whether to turn on `relative_to_current: true` in these templates now that
+  the underlying hang is fixed, so bounds self-heal from live values against
+  the environment's hard limits instead of going stale again — not yet
+  decided/applied.
