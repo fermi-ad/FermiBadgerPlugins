@@ -380,3 +380,48 @@ for file access) and computer-use access to Terminal is click-only by
 platform policy (can't type/send keys) — so all fixes here were derived from
 static reading of `badger`/`xopt`/`acsys` site-packages source plus the
 user's own pasted tracebacks, and verified by the user running them.
+
+## 2026-09-16 — Auto-ranging rollout: `relative_to_current: true` on all 9 physical-machine templates
+
+Confirmed the user's hypothesized edge case is real: Badger's
+`limit_option_idx: 0` ("ratio with current value") auto-bounds mode collapses
+to `[0.0, 0.0]` whenever a variable's live value is exactly 0
+(`np.sign(0.0)==0` zeroes the delta). Options 1 and 2 are additive and
+immune; the missing-entry default is dangerously option 0.
+
+Audited all 9 `BasicAcsysInterface`-backed templates (found 3 more than the
+prior pass had covered: `BooEFF_D7LMSM_mobo.yaml`, `D13LM_reduce_wV5QSET.yaml`,
+`LinacOutputTrajectory.yaml`). Fixed and flipped `relative_to_current: true`
+on all of them:
+- `RIL_tuning_trims_and_sol.yaml` / `templates.yaml`: bare-string
+  `turbo_controller` → `null`; same stale one-sided ATRM bounds bug as before,
+  fixed the same way (mirror `L:ATRMVU`).
+- `..._D34andTUNRAD_mobo.yaml` / `..._D34opt.yaml`: same ATRM bounds fix only.
+- `LinacQuads.yaml`: all 18 variables were on the unsafe `limit_option_idx: 0`
+  — switched to `limit_option_idx: 1`, carrying over each variable's existing
+  `ratio_curr: 0.25` as the new `ratio_full`.
+- `D13LM_reduce_wV5QSET.yaml`: separately found this template couldn't load
+  at all — legacy `!!python/tuple` tags in its bounds, which Badger's
+  `yaml.safe_load` can't construct. Converted to plain lists; also populated
+  its previously-empty `vrange_limit_options` for all 3 variables.
+
+Verified via YAML/structural checks only (bounds `hi>lo`, full
+`vrange_limit_options` coverage, no `limit_option_idx: 0` anywhere,
+`turbo_controller` valid) — same sandbox limitation as before, can't run the
+real `FermiBadger_env`. Needs a live load test.
+
+## 2026-09-16 (cont'd) — second DPM hang: empty variable list on environment (re)select
+
+User's `LinacQuads.yaml` re-test hit a new 15s timeout
+(`...for: []` — empty missing-list, i.e. `drf_list` itself was empty).
+Traced to `select_env()` → `set_vrange()` → `update_init_table()` →
+`fill_curr_in_init_table()` → `env.get_variables([])`: `set_vrange()`'s
+trailing `update_init_table()` call has no "any variables selected?" guard
+(unlike `toggle_relative_to_curr()`, which does), so it fires with zero
+selected variables whenever the environment is (re)selected while
+`relative_to_current`/"Automatic" is already checked. `read_once()` opened a
+DPM session for zero devices and hung waiting for replies that would never
+come. Fixed in `plugins/scanner.py`: both `read_once()` and `set_once()` now
+return immediately on an empty `drf_list`, no DPM session opened. Generic fix
+— applies to any `BasicAcsysInterface` environment, not just LinacQuadTuning.
+Needs re-test.

@@ -1117,3 +1117,135 @@ now completes without hanging** (the timeout never triggered — the
   the underlying hang is fixed, so bounds self-heal from live values against
   the environment's hard limits instead of going stale again — not yet
   decided/applied.
+
+## 2026-09-16: Auto-ranging rollout — `relative_to_current: true` across all physical-machine templates
+
+Follow-up to the RIL_tuning fixes above. User asked about the edge case where
+`relative_to_current`'s "ratio with current value" bounds mode
+(`limit_option_idx: 0`) collapses to `[0.0, 0.0]` when a variable's live
+current value is exactly 0 (`np.sign(0.0) == 0.0` zeroes the whole
+multiplicative delta in `calc_auto_bounds()`/`set_ind_vrange()`). Confirmed
+this is a real, reproducible bug in Badger's own site-packages, confined to
+`limit_option_idx == 0` — options 1 ("ratio with full range") and 2 ("delta
+around current value") both use additive deltas independent of sign/current
+value and are immune. The dangerous part: any variable *missing* from a
+template's `vrange_limit_options` silently falls back to the global default,
+which is `limit_option_idx: 0`.
+
+Audited every template in `tuning_templates/` whose `environment.name` maps to
+a `BasicAcsysInterface`-backed plugin (`RIL_tuning`, `LinacQuadTuning` — the
+only ones actually present as templates; `L_AutoSteerRestore`,
+`LinacEnergyStabilization`, `MinD7LMSM_using_Tank5Phase`, `Muon_DR_PID_tune`
+have no template files yet). That's 9 files, not the 8 found in the previous
+pass (missed `BooEFF_D7LMSM_mobo.yaml`, `D13LM_reduce_wV5QSET.yaml`,
+`LinacOutputTrajectory.yaml` last time). All 9 now have `relative_to_current:
+true` and a clean `vrange_limit_options` (every declared variable present,
+none on `limit_option_idx: 0`). Per-file fixes needed to get there:
+
+- **`RIL_tuning_trims_and_sol.yaml`**: `turbo_controller: optimize` → `null`
+  (same bare-string bug as before); `L:ATRMHD`/`L:ATRMHU`/`L:ATRMVD` bounds
+  widened to two-sided (mirroring `L:ATRMVU`), same stale-bounds bug as the
+  `_LEBT_MEBTquads` template, just not yet triggered because this file
+  couldn't load past `turbo_controller` before.
+- **`templates.yaml`**: same two fixes (`turbo_controller: optimizer` → `null`;
+  same three ATRM bounds widened).
+- **`RIL_tuning_trims_and_sol_LEBT_MEBTquads_D34andTUNRAD_mobo.yaml`** and
+  **`..._D34opt.yaml`**: same three ATRM bounds widened; `turbo_controller`
+  left untouched (mobo generator has none; D34opt's is a live
+  `SafetyTurboController` state object, not touched).
+- **`RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml`**, **`BooEFF_D7LMSM_mobo.yaml`**,
+  **`LinacOutputTrajectory.yaml`**: already clean, just flipped the switch.
+- **`LinacQuads.yaml`**: all 18 variables (`L:Q01`-`L:Q04`, `L:Q11`-`L:Q14`,
+  `L:QPS504`-`L:QPS513`) were on `limit_option_idx: 0` with `ratio_curr: 0.25`
+  — every one exposed to the zero-current collapse. Switched to
+  `limit_option_idx: 1`, reusing each variable's existing `ratio_curr: 0.25`
+  value as the new `ratio_full` (preserves the previously-dialed-in "25% of
+  range" window size while making it sign/zero-safe; `vrange_hard_limit` is
+  empty here so the full-range delta is computed against the declared vocs
+  bounds themselves).
+- **`D13LM_reduce_wV5QSET.yaml`**: separately broken — its `vocs.constraints`/
+  `vocs.variables` bounds were serialized with legacy `!!python/tuple` YAML
+  tags (`badger_version: 1.4.4`, an old dump). Badger's own template loader
+  (`routine_page.py`) calls plain `yaml.safe_load`, which cannot construct
+  that tag — **this template could not be loaded by Badger at all**,
+  independent of anything else. Converted all tuples to plain lists
+  (semantically identical bounds). Its `vrange_limit_options` was also
+  entirely empty (`{}`) despite having 3 variables — populated all three with
+  `limit_option_idx: 1, ratio_full: 0.1` (no prior configured ratio existed to
+  preserve, so used Badger's own default magnitude).
+
+All 9 files re-verified: `vocs.variables` bounds `hi > lo` for every variable,
+every variable present in `vrange_limit_options`, none on `limit_option_idx:
+0`, `turbo_controller` is `null` or a valid nested object everywhere. Could
+not run the real `FermiBadger_env`/pydantic/xopt validation from this sandbox
+(same platform limitation as before — macOS conda binaries, Linux shell) so
+this is YAML/structural verification only; needs a live `badger -mini`/`-g`
+load test to fully confirm.
+
+### Files
+- `tuning_templates/RIL_tuning_trims_and_sol.yaml`
+- `tuning_templates/templates.yaml`
+- `tuning_templates/RIL_tuning_trims_and_sol_LEBT_MEBTquads_D34andTUNRAD_mobo.yaml`
+- `tuning_templates/RIL_tuning_trims_and_sol_LEBT_MEBTquads_D34opt.yaml`
+- `tuning_templates/RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml`
+- `tuning_templates/BooEFF_D7LMSM_mobo.yaml`
+- `tuning_templates/LinacOutputTrajectory.yaml`
+- `tuning_templates/LinacQuads.yaml`
+- `tuning_templates/D13LM_reduce_wV5QSET.yaml`
+
+### Still open
+- Live-load test of all 9 templates in `-mini`/`-g` with "Automatic" checked,
+  by the user (this sandbox can't run the real environment).
+- `L_AutoSteerRestore`, `LinacEnergyStabilization`, `MinD7LMSM_using_Tank5Phase`,
+  `Muon_DR_PID_tune` environments have no `tuning_templates/*.yaml` files yet,
+  so nothing to auto-range there — worth a note for whoever adds templates for
+  them later (same `vrange_limit_options` default trap applies).
+
+## 2026-09-16 (cont'd): second `read_once()`/`set_once()` hang — empty device list
+
+User tested `LinacQuads.yaml` after the auto-ranging rollout above: template
+loaded fine, but the environment-selection path crashed with a 15s timeout
+(`BasicAcsysInterface.read_once() timed out after 15.0s waiting for DPM
+replies for: []`) — an *empty* missing-device list, which only happens when
+`len(drf_list) == 0` (the list comprehension over an empty range is trivially
+empty). Traced the call stack in the traceback: `select_env()` →
+(`self.env_box.relative_to_curr.isChecked()`, true because of our own
+`relative_to_current: true`) → `set_vrange()` → ... → `update_init_table()`
+→ `_fill_init_table()` → `fill_curr_in_init_table()` → `env.get_variables([])`.
+
+Root cause: `set_vrange()`'s own inline live read (using
+`var_table.all_variables`) succeeds fine, but its *trailing*
+`self.update_init_table()` call is unconditional — unlike
+`toggle_relative_to_curr()`, which guards the equivalent call behind `if
+refresh and self.env_box.var_table.selected:`. When the environment gets
+(re)selected while "Automatic" is already checked (which
+`relative_to_current: true` causes on template load), no variables have been
+checked into the routine yet, so this second, independent read fires with
+zero selected variables. `read_once()`/`_do_read()` didn't handle that: it
+still opened a DPM session with zero registered entries and then blocked
+forever on `async for reply in dpm:` waiting for replies to a request that
+asked for nothing — surfaced as our 15s timeout instead of an infinite hang,
+but still a failure for what is actually a normal, expected transient state.
+
+Fixed at the same layer as before (our own `plugins/scanner.py`, not
+Badger's site-packages): both `read_once()` and `set_once()` now short-circuit
+and return immediately (`[]` / `None`) when `drf_list` is empty, before ever
+opening a DPM session. Verified `BasicAcsysInterface.get_settings()` handles
+an empty result cleanly (`assert len(setting_values)==len(setting_names)`
+holds trivially, `zip([], [])` → `{}`), so callers up the stack see a
+harmless empty dict rather than a crash. This fix is environment-agnostic —
+applies to every `BasicAcsysInterface`-backed template, not just LinacQuads —
+since the underlying GUI code path (`select_env` → `set_vrange` →
+`update_init_table`) is generic to any environment with `relative_to_current:
+true` set.
+
+### Files
+- `plugins/scanner.py` — `read_once()` and `set_once()` both now guard on an
+  empty `drf_list` and return immediately instead of opening a DPM session.
+
+### Still open
+- Re-test needed: `LinacQuads.yaml` (the template that surfaced this), and
+  ideally the other 8 auto-ranged templates too, since this failure mode was
+  latent in all of them (triggered by environment (re)selection while
+  Automatic is checked, not anything LinacQuads-specific) — just not yet
+  observed for the others.

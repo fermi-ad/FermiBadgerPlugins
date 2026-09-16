@@ -36,7 +36,7 @@ generator:
   turbo_controller: null
 initial_point_actions: []
 name: ''
-relative_to_current: false
+relative_to_current: true
 vocs:
   constants: {}
   constraints:

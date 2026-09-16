@@ -62,7 +62,7 @@ generator:
     success_tolerance: 6
 initial_point_actions: []
 name: ''
-relative_to_current: false
+relative_to_current: true
 vocs:
   constants: {}
   constraints:
@@ -87,13 +87,13 @@ vocs:
     - 410.0
     - 430
     L:ATRMHD:
-    - 0.0
+    - -2.0
     - 2.0
     L:ATRMHU:
-    - 0.0
+    - -4.0
     - 4.0
     L:ATRMVD:
-    - 0.0
+    - -1.0
     - 1.0
     L:ATRMVU:
     - -4.0

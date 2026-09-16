@@ -12,6 +12,12 @@ async def set_once(con,drf_list,value_list,settings_role, debug=False):
     #settings = [None]*len(drf_list)
     if debug: print (f'set_once() was passed drf_list: {drf_list}\n, value_list:{value_list}')
 
+    # Same empty-list guard as read_once() -- see comment there. A settings
+    # session with zero entries would otherwise hang the same way.
+    if not drf_list:
+        if debug: print('set_once() called with an empty drf_list; doing nothing.')
+        return None
+
     async with acsys.dpm.DPMContext(con) as dpm:
         await dpm.enable_settings(role=settings_role)
         for i, dev in enumerate(drf_list):
@@ -37,6 +43,20 @@ async def set_once(con,drf_list,value_list,settings_role, debug=False):
 
 async def read_once(con,drf_list, sample_events={'default':'@i'}, debug=False, timeout=15.0):
     if debug: print (f'read_once() was passed list:{drf_list} and sample_events:{sample_events}.')
+
+    # GUARD: an empty drf_list means "nothing was actually selected/checked
+    # yet" -- this happens routinely, e.g. when Badger's full GUI calls
+    # set_vrange() -> update_init_table() -> fill_curr_in_init_table() right
+    # after an environment is (re)selected but before any variables have
+    # been chosen into the routine. A DPM session opened with zero entries
+    # never gets a reply (nothing was requested), so without this guard the
+    # code below would open the session anyway and hang until our timeout,
+    # surfacing a confusing "timed out waiting for DPM replies for: []"
+    # error for what is actually a normal, expected empty-selection state.
+    if not drf_list:
+        if debug: print('read_once() called with an empty drf_list; returning [] with no DPM session.')
+        return []
+
     readings = [None]*len(drf_list)
     # Optional DPMContext kwarg: dpm_node='DPM09'
 

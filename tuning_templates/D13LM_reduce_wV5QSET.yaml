@@ -77,29 +77,44 @@ generator:
 initial_point_actions: []
 name: ''
 observable_formulas: {}
-relative_to_current: false
+relative_to_current: true
 vocs:
   constants: {}
   constraints:
-    L:D7TOR: !!python/tuple
+    L:D7TOR:
     - GREATER_THAN
     - 20.0
-    L:TUNRAD: !!python/tuple
+    L:TUNRAD:
     - LESS_THAN
     - 80.0
   objectives:
     L:D13LM: MINIMIZE
   observables: []
   variables:
-    L:RFBPAH: !!python/tuple
+    L:RFBPAH:
     - 210.0
     - 230.0
-    L:RFQPAH: !!python/tuple
+    L:RFQPAH:
     - 185.0
     - 225.0
-    L:V5QSET: !!python/tuple
+    L:V5QSET:
     - -40.0
     - -30.0
 vrange_hard_limit: {}
-vrange_limit_options: {}
+vrange_limit_options:
+  L:RFBPAH:
+    delta: 0.1
+    limit_option_idx: 1
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:RFQPAH:
+    delta: 0.1
+    limit_option_idx: 1
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:V5QSET:
+    delta: 0.1
+    limit_option_idx: 1
+    ratio_curr: 0.1
+    ratio_full: 0.1
 xopt_version: 2.6.11

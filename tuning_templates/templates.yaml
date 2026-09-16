@@ -17,10 +17,10 @@ generator:
     max_time: null
     n_restarts: 20
     name: LBFGS
-  turbo_controller: optimizer
+  turbo_controller: null
 initial_point_actions: []
 name: orchid-ermine
-relative_to_current: false
+relative_to_current: true
 vocs:
   constants: {}
   constraints:
@@ -38,13 +38,13 @@ vocs:
   - L:D7LMSM
   variables:
     L:ATRMHD:
-    - 0.0
+    - -2.0
     - 2.0
     L:ATRMHU:
-    - 0.0
+    - -4.0
     - 4.0
     L:ATRMVD:
-    - 0.0
+    - -1.0
     - 1.0
     L:ATRMVU:
     - -4.0

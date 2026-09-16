@@ -42,7 +42,7 @@ class Environment(environment.Environment):
         "L:MDQ2V" : [-4.0, 4.0],
 
         "L:RFQPAH" : [ 185.0, 225.0], # Or are there reading,setting,(optional)setting? Like "L:C7PHAS,L:L7PADJ,tol3@0.45"?
-        "L:RFBPAH" : [ 210.0, 230.0],
+        "L:RFBPAH" : [ 100.0, 300.0],
         "L:V5QSET": [-40.0, -30.0],
 
         "L:D72TMH": [-4.5, 4.0],

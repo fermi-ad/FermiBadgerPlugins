@@ -36,7 +36,7 @@ initial_point_actions:
     n_points: 3
   type: add_rand
 name: ''
-relative_to_current: false
+relative_to_current: true
 vocs:
   constants: {}
   constraints: {}

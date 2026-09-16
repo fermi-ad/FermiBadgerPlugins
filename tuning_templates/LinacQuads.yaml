@@ -76,7 +76,7 @@ initial_point_actions:
   type: add_rand
 name: LinacQuads
 observable_formulas: {}
-relative_to_current: false
+relative_to_current: true
 vocs:
   constants: {}
   constraints:
@@ -146,92 +146,92 @@ vrange_hard_limit: {}
 vrange_limit_options:
   L:Q01:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:Q02:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:Q03:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:Q04:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:Q11:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:Q12:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:Q13:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:Q14:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS504:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS505:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS506:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS507:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS508:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS509:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS510:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS511:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS512:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
   L:QPS513:
     delta: 0.1
-    limit_option_idx: 0
+    limit_option_idx: 1
     ratio_curr: 0.25
-    ratio_full: 0.1
+    ratio_full: 0.25
 xopt_version: 2.6.6
