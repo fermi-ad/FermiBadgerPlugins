@@ -13,6 +13,7 @@ dependencies:
       - xpart==0.23.13
       - xsuite==0.54.0
       - xtrack==0.107.0
-      - --extra-index-url https://www-bd.fnal.gov/pip3 
+      - pacsys==0.2.2
+      - --extra-index-url https://www-bd.fnal.gov/pip3
       - acsys==0.12.8
 
