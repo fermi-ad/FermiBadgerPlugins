@@ -1249,3 +1249,88 @@ beautifully... every template loads and does AutoMode just fine." Also
 folded in the user's own widened RIL_tuning hard limit for `L:RFBPAH`
 (`[210, 230]` → `[100, 300]`, needed for auto-ranging to work out of the
 box there) and committed everything together as `7e80442`.
+
+## 2026-09-16 (cont'd): `BasicPacsysInterface` — port of `BasicAcsysInterface` from acsys-py to pacsys
+
+New interface plugin at `plugins/interfaces/BasicPacsysInterface/`, built to
+the same feature set as `BasicAcsysInterface` but on `pacsys`
+(https://github.com/fermi-ad/pacsys) instead of `acsys`/our own
+`plugins/scanner.py`. `BasicAcsysInterface` is untouched — both interfaces
+coexist so existing environments keep working unchanged.
+
+Planned by cloning `fermi-ad/pacsys` (private repo, needed SSH access — not
+on PyPI's public index page but `pip install pacsys` does work, published as
+`pacsys` 0.2.2) and reading its source directly, since it postdates this
+model's training data. Key findings that shaped the port:
+- pacsys is natively synchronous/thread-safe (`pacsys.get_many`/`write_many`)
+  — no asyncio, no `DPMContext`, no hand-rolled timeout/empty-list guards
+  needed. **`plugins/scanner.py` has no equivalent in the new interface —
+  it's simply not needed.**
+- `write()`/`write_many()` append `.SETTING`/`@I` automatically, so the old
+  `extract_setting_devices()` no longer needs to build the suffixed DRF
+  itself, only extract which side of a read/set pair is settable.
+- Per-call `settings_role` (each environment supplies its own, e.g.
+  `ril_tuning_fake`, `linac_quads`) maps to `pacsys.dpm(auth=KerberosAuth(),
+  role=settings_role)` opened per `set_values()` call — same per-call-session
+  cost as the old `acsys.run_client(set_once, ..., settings_role=...)`, not a
+  regression.
+- `pacsys.get_many()` returns `Reading` objects with a real `.ok`/error
+  status, so `get_values()`/`get_settings()` now raise `pacsys.errors.
+  DeviceError` on a bad reading instead of silently propagating whatever
+  acsys handed back (old code had no such check).
+
+While writing the new code (not "porting a bug" — these needed to be
+correct the first time) found and fixed two problems that exist in
+`BasicAcsysInterface` today, left there unless asked to fix directly:
+1. `get_values(names)` called with no `sample_events` (exactly the shape
+   `Environment.get_variables()` uses for a plain current-value read) passes
+   an explicit `sample_events={}` through to `read_once()`, shadowing that
+   function's own `{'default':'@i'}` default and hitting
+   `sample_events['default']` → `KeyError` whenever `names` is non-empty.
+   New interface uses `.get('default', '@i')` instead.
+2. In `set_values()`'s settle-to-tolerance loop, the "buffer just became
+   full" branch calls bare `meets_tolerance(...)` (missing `self.`, would
+   `NameError`) and computes `buffer_full` via `np.all(np.where(~np.isnan(
+   ...)))`, which is `False` whenever index 0 is among the filled positions
+   — i.e. almost always, since buffers fill front-to-back. The two bugs
+   canceled each other out (the broken fast-path branch is never actually
+   reached), so `BasicAcsysInterface` has never crashed on this in practice
+   — it just always falls through to the slower roll-buffer branch instead.
+   Fixed both together in the new interface.
+
+Tested offline with `pacsys.testing.FakeBackend` (no control-network access
+from here) via a private `_backend_override` seam on the interface —
+`plugins/interfaces/BasicPacsysInterface/test_basic_pacsys_interface.py`,
+8 assert-based checks covering the DRF-parsing helpers, a plain no
+-sample_events read (the bug-fix case above), a bad-reading `DeviceError`,
+`get_settings`, the `nosettings` no-op guard, and the settle loop reaching
+tolerance and issuing the write. All pass. Also installed `pacsys==0.2.2`
+for real in `FermiBadger_env` (not just added to `environment.yml`) to
+confirm the API surface matches what was read from GitHub `main` (which is
+ahead of the PyPI release, `0.3.0` vs `0.2.2`, but the parts used here —
+`get_many`, `write_many`, `dpm()`, `KerberosAuth`, `Reading.ok`,
+`WriteResult.success`, `testing.FakeBackend` — are identical in both).
+
+Added `pacsys==0.2.2` to `environment.yml` alongside the existing
+`acsys==0.12.8` (kept, since `BasicAcsysInterface` still depends on it).
+
+### Confirmed
+- FakeBackend-based unit tests pass (8/8).
+- pacsys 0.2.2 installs cleanly in `FermiBadger_env` and its API matches
+  what the port relies on.
+
+### Not yet confirmed — needs the real controls network
+- A live, Kerberos-authenticated write through `pacsys.dpm(auth=
+  KerberosAuth(), role=...)` against a real DPM role (e.g. `ril_tuning_fake`,
+  `linac_quads`), to confirm it behaves the same as acsys-py's
+  `dpm.enable_settings(role=...)` for our existing roles. No environment
+  yet points its `configs.yaml` `interface:` at `BasicPacsysInterface` — do
+  that for one low-risk template and live-test before relying on it.
+
+### Files
+- `plugins/interfaces/BasicPacsysInterface/__init__.py` (new)
+- `plugins/interfaces/BasicPacsysInterface/configs.yaml` (new)
+- `plugins/interfaces/BasicPacsysInterface/test_basic_pacsys_interface.py` (new)
+- `environment.yml` — added `pacsys==0.2.2`
+
+Committed as `2ea9ab5`, pushed to `origin/main`.

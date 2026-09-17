@@ -6,3 +6,4 @@
 - [deferred-expression-rewrite](deferred-expression-rewrite.md) — how the MADXSuite env gets live knobs; what that makes read-only
 - [RIL_tuning-live-bounds-and-dpm-hang](RIL_tuning-live-bounds-and-dpm-hang.md) — turbo_controller/bounds/DPM-hang fixes for the physical RIL_tuning templates (BasicAcsysInterface)
 - [auto-ranging-physical-templates](auto-ranging-physical-templates.md) — relative_to_current rollout across all 9 BasicAcsysInterface templates; zero-current auto-bounds edge case
+- [basic-pacsys-interface-port](basic-pacsys-interface-port.md) — BasicAcsysInterface ported to pacsys as BasicPacsysInterface; API mapping, two bugs found and fixed in the port (not in the original), live-network verification still needed

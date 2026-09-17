@@ -416,6 +416,32 @@ correctly two-sided range for the same device (e.g. `L:ATRMVU`'s `[-4, 1]`
 in the RIL_tuning templates) and mirror it, rather than leaving a stale
 one-sided range from an earlier, differently-signed operating point.
 
+## `BasicPacsysInterface` (pacsys port of `BasicAcsysInterface`)
+
+`plugins/interfaces/BasicPacsysInterface/` is a new interface plugin with
+the same feature set as `BasicAcsysInterface` above, but built on
+[pacsys](https://github.com/fermi-ad/pacsys) instead of
+`acsys`/`plugins/scanner.py`. `BasicAcsysInterface` is untouched; no
+environment currently points its `configs.yaml` `interface:` at the new one
+— it exists alongside the old one, not yet load-bearing.
+
+**Key difference from `BasicAcsysInterface`**: pacsys is natively
+synchronous, so there's no `scanner.py` equivalent — `pacsys.get_many()` /
+`write_many()` / `dpm(auth=, role=)` replace the whole
+asyncio/`DPMContext`/timeout-guard layer directly.
+
+**Not yet done**: a live, Kerberos-authenticated write against a real DPM
+role (e.g. `ril_tuning_fake`, `linac_quads`) — only verified offline against
+`pacsys.testing.FakeBackend` so far (no controls-network access from the
+environment that wrote this). Do that live test before switching any
+environment's `interface:` over to it.
+
+See `memory/basic-pacsys-interface-port.md` for the full API mapping and two
+latent bugs in `BasicAcsysInterface` that were found (and fixed, in the new
+interface only) while porting: a `sample_events={}` default that `KeyError`s
+on the common no-sample-events read path, and a missing `self.` in the
+settle-to-tolerance loop that's currently masked by a second, canceling bug.
+
 ## Related Documentation
 
 - [progress.md](docs/progress.md) - Current phase status
@@ -423,3 +449,4 @@ one-sided range from an earlier, differently-signed operating point.
 - [CLAUDE.md](CLAUDE.md) - Project overview
 - [memory/RIL_tuning-live-bounds-and-dpm-hang.md](memory/RIL_tuning-live-bounds-and-dpm-hang.md) - turbo_controller/bounds/DPM-hang fixes for RIL_tuning physical templates
 - [memory/auto-ranging-physical-templates.md](memory/auto-ranging-physical-templates.md) - relative_to_current rollout, vrange_limit_options modes, zero-current edge case, empty-device-list DPM hang
+- [memory/basic-pacsys-interface-port.md](memory/basic-pacsys-interface-port.md) - BasicAcsysInterface ported to pacsys as BasicPacsysInterface; API mapping, bugs found, verification status

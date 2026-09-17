@@ -438,3 +438,35 @@ Templates" section to `HANDOFF.md` covering the `-mini -t` bare-filename CLI
 gotcha, the `vrange_limit_options` modes and zero-current trap, the
 empty-device-list DPM hang, and the declared-bounds-must-bracket-live-value
 template-authoring gotcha.
+
+## 2026-09-16 (cont'd) — new `BasicPacsysInterface`, ported from `BasicAcsysInterface`
+
+User asked to port `BasicAcsysInterface` from acsys-py to `pacsys`
+(https://github.com/fermi-ad/pacsys) as a new interface, `BasicPacsysInterface`,
+with the same feature set. Since pacsys postdates training data, cloned the
+repo directly (private, needed SSH) and read its source/README to plan the
+mapping before writing anything. Key discovery: pacsys is synchronous, so
+`plugins/scanner.py`'s whole asyncio/DPMContext layer isn't needed at all —
+`pacsys.get_many()`/`write_many()`/`dpm(auth=, role=)` cover it directly.
+
+Implemented `plugins/interfaces/BasicPacsysInterface/` with all the same
+DRF-parsing/tolerance-settling logic as `BasicAcsysInterface`, but rewired
+onto pacsys. Along the way, fixed two bugs found while writing (not present
+by intent — `BasicAcsysInterface` still has them, untouched): a `sample_events
+={}` default that shadowed `read_once()`'s own default and would `KeyError`
+on the common no-sample-events read path, and a missing `self.` plus an
+inverted `np.where`/`np.all` check in the settle loop's fast-path branch
+(the two canceled out into "just always use the slow path," which is why it
+never crashed in production).
+
+Verified offline against `pacsys.testing.FakeBackend` (8 assert-based
+checks, all pass) since there's no controls-network access from here; also
+installed `pacsys` for real in `FermiBadger_env` to confirm the API matches
+what was read from GitHub. Added `pacsys==0.2.2` to `environment.yml`
+alongside the existing `acsys` line. Committed (`2ea9ab5`) and pushed to
+`origin/main` on request. Full details: `docs/progress.md` and
+`memory/basic-pacsys-interface-port.md`.
+
+Still needs a live Kerberos-role write test against real DPM before any
+environment's `configs.yaml` actually points at `BasicPacsysInterface` — not
+done yet, no environment has been switched over.
