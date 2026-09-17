@@ -1,0 +1,67 @@
+badger_version: 1.6.0
+critical_constraint_names: []
+description: Harmless live exercise of BasicPacsysInterface against ACNET test/scratch devices
+environment:
+  name: ZZ_PacsysTesting
+  params:
+    debug: false
+    settings_role: testing
+generator:
+  max_travel_distances: null
+  n_interpolate_points: null
+  name: expected_improvement
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: null
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller: null
+initial_point_actions: []
+name: zz-pacsys-testing
+relative_to_current: true
+vocs:
+  constants: {}
+  constraints: {}
+  objectives:
+    AbsProduct: MINIMIZE
+  observables:
+  - CombineObjective
+  - AMANDA_sq
+  - CUBE_X_sq
+  - CUBE_Y_sq
+  - CUBE_Z_sq
+  variables:
+    G:AMANDA:
+    - -100.0
+    - 100.0
+    Z:CUBE_X:
+    - -100.0
+    - 100.0
+    Z:CUBE_Y:
+    - -100.0
+    - 100.0
+    Z:CUBE_Z:
+    - -100.0
+    - 100.0
+vrange_limit_options:
+  G:AMANDA:
+    delta: 10.0
+    limit_option_idx: 2
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  Z:CUBE_X:
+    delta: 10.0
+    limit_option_idx: 2
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  Z:CUBE_Y:
+    delta: 10.0
+    limit_option_idx: 2
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  Z:CUBE_Z:
+    delta: 10.0
+    limit_option_idx: 2
+    ratio_curr: 0.1
+    ratio_full: 0.1
+xopt_version: 2.6.2
