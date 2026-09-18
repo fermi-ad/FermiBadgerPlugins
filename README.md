@@ -26,14 +26,12 @@ This repository contains plugins and configurations for using [Badger](https://g
 
 <code>badger -g</code><br>
 <img src="docs/images/gui-full.png" width="200" alt="badger -g: full GUI">
-<!-- TODO: add docs/images/gui-full.png -->
 
 </td>
 <td align="center" width="220">
 
 <code>badger -mini</code><br>
 <img src="docs/images/gui-mini.png" width="200" alt="badger -mini: compact GUI">
-<!-- TODO: add docs/images/gui-mini.png -->
 
 </td>
 </tr>
