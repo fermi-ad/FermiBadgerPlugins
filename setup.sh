@@ -11,6 +11,7 @@
 #   ./setup.sh --yes                    take every default, never prompt
 #   ./setup.sh --env-name my_env        use a different environment name
 #   ./setup.sh --skip-env               patches + config only
+#   ./setup.sh --config                 rewrite config.local.yaml only (no env, no patches)
 set -euo pipefail
 
 # Where the repo is, regardless of where this was invoked from -- the whole
@@ -19,6 +20,7 @@ REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 ASSUME_YES=0
 SKIP_ENV=0
+SKIP_PATCHES=0
 ENV_NAME=""
 FAILED=0
 
@@ -31,6 +33,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --yes|-y)   ASSUME_YES=1; shift ;;
         --skip-env) SKIP_ENV=1; shift ;;
+        --config)   SKIP_ENV=1; SKIP_PATCHES=1; shift ;;
         --env-name) ENV_NAME="${2:-}"; shift 2 ;;
         --help|-h)  usage ;;
         *) echo "Unknown option: $1 (try --help)" >&2; exit 2 ;;
@@ -80,7 +83,7 @@ env_exists() { conda env list | awk '{print $1}' | grep -qx "$1"; }
 
 if [[ $SKIP_ENV -eq 1 ]]; then
     echo
-    echo "1. Conda environment: skipped (--skip-env), using '$ENV_NAME'"
+    echo "1. Conda environment: skipped, using existing '$ENV_NAME'"
     env_exists "$ENV_NAME" || { echo "ERROR: '$ENV_NAME' does not exist." >&2; exit 1; }
 else
     echo
@@ -133,44 +136,48 @@ echo "   python: $PY"
 echo
 echo "2. Badger patches"
 
-SP="$("$PY" -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")"
-echo "   site-packages: $SP"
+if [[ $SKIP_PATCHES -eq 1 ]]; then
+    echo "   skipped (--config)"
+else
+    SP="$("$PY" -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")"
+    echo "   site-packages: $SP"
 
-# apply_patch <dir-to-apply-from> <strip-level> <patch-file>
-# The patches were generated against different roots, so each carries its own
-# directory and strip level rather than sharing one recipe.
-# --force keeps patch from prompting ("Assume -R? [y]") and hanging a --yes run.
-apply_patch() {
-    local dir="$1" strip="$2" file="$3" name
-    name="$(basename "$file")"
+    # apply_patch <dir-to-apply-from> <strip-level> <patch-file>
+    # The patches were generated against different roots, so each carries its own
+    # directory and strip level rather than sharing one recipe.
+    # --force keeps patch from prompting ("Assume -R? [y]") and hanging a --yes run.
+    apply_patch() {
+        local dir="$1" strip="$2" file="$3" name
+        name="$(basename "$file")"
 
-    if [[ ! -d "$dir" ]]; then
-        echo "   FAILED  $name (no such directory: $dir)"
-        FAILED=1
-        return
-    fi
+        if [[ ! -d "$dir" ]]; then
+            echo "   FAILED  $name (no such directory: $dir)"
+            FAILED=1
+            return
+        fi
 
-    if patch -d "$dir" -p"$strip" -R --dry-run --force < "$file" >/dev/null 2>&1; then
-        echo "   skipped $name (already applied)"
-    elif patch -d "$dir" -p"$strip" --dry-run --force < "$file" >/dev/null 2>&1; then
-        patch -d "$dir" -p"$strip" --force < "$file" >/dev/null
-        echo "   applied $name"
-    else
-        echo "   FAILED  $name"
-        FAILED=1
-    fi
-}
+        if patch -d "$dir" -p"$strip" -R --dry-run --force < "$file" >/dev/null 2>&1; then
+            echo "   skipped $name (already applied)"
+        elif patch -d "$dir" -p"$strip" --dry-run --force < "$file" >/dev/null 2>&1; then
+            patch -d "$dir" -p"$strip" --force < "$file" >/dev/null
+            echo "   applied $name"
+        else
+            echo "   FAILED  $name"
+            FAILED=1
+        fi
+    }
 
-apply_patch "$SP/badger/gui/components" 1 \
-    "$REPO/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
-apply_patch "$SP" 1 "$REPO/patches/badger-mini-config.patch"
-apply_patch "$SP" 1 "$REPO/patches/badger-mini-var-table-env-configs.patch"
+    apply_patch "$SP/badger/gui/components" 1 \
+        "$REPO/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
+    apply_patch "$SP" 1 "$REPO/patches/badger-mini-config.patch"
+    apply_patch "$SP" 1 "$REPO/patches/badger-mini-var-table-env-configs.patch"
 
-# ponytail: xopt-pydantic-serialization-fix.patch is deliberately not applied.
-# Its context lines assume hand-edits that are not in a pristine xopt 3.2.1, so
-# it cannot apply to a fresh install.  See patches/README.md.
-echo "   skipped xopt-pydantic-serialization-fix.patch (does not apply to a"
-echo "           pristine xopt 3.2.1 -- see patches/README.md)"
+    # ponytail: xopt-pydantic-serialization-fix.patch is deliberately not applied.
+    # Its context lines assume hand-edits that are not in a pristine xopt 3.2.1, so
+    # it cannot apply to a fresh install.  See patches/README.md.
+    echo "   skipped xopt-pydantic-serialization-fix.patch (does not apply to a"
+    echo "           pristine xopt 3.2.1 -- see patches/README.md)"
+fi
 
 # --------------------------------------------------------------------------
 # 3. config.local.yaml
