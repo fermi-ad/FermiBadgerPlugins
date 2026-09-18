@@ -6,6 +6,17 @@ This repository contains plugins and configuration for using [Badger](https://gi
 - **Tuning templates** - Pre-configured optimization setups for various accelerator configurations
 - **Test script** - `test-quick-start.sh` to verify your installation
 
+## Contents
+
+- [Quick Start](#quick-start)
+- [Environment Setup Details](#environment-setup-details)
+- [First-Time GUI Setup](#first-time-gui-setup)
+- [Using the 99_Sim_VirtualAccelerator_MADXSuite Environment Plugin](#using-the-99_sim_virtualaccelerator_madxsuite-environment-plugin)
+- [Troubleshooting](#troubleshooting)
+- [Repository Structure](#repository-structure)
+- [For Developers](#for-developers)
+- [Related Documentation](#related-documentation)
+
 ## Quick Start
 
 ### 1. Clone this repository
@@ -23,7 +34,7 @@ cd FermiBadgerPlugins
 ./setup.sh
 ```
 
-This does everything in steps 3 and 4 below:
+This does everything documented by hand in step 3 below:
 
 1. Creates the `FermiBadger_env` conda environment from `environment.yml`. If an environment of that name already exists, it asks whether to remove and recreate it, use a different name, or keep it as-is.
 2. Applies the Badger patches to that environment.
@@ -46,94 +57,28 @@ conda activate FermiBadger_env
 badger -g -cf config.local.yaml
 ```
 
+Or load a template straight into the compact `-mini` GUI:
+
+```bash
+badger -mini -cf config.local.yaml -t Xfer400MeV_example.yaml
+```
+
 `config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
 
-Steps 3 and 4 below document what the script does, for anyone who needs to do it by hand.
+Step 3 documents what the script does under the hood, for anyone who needs to apply patches or write the config by hand instead.
 
-### 3. Apply patches for Badger 1.6.0 (done by `setup.sh`)
+### 3. Apply patches and configure by hand (done by `setup.sh`)
 
-**A patch is required** to fix known issues in Badger 1.6.0 that affect template loading and the `turbo_controller: null` configuration.
+`setup.sh` applies three patches to your `FermiBadger_env` installation of Badger 1.6.0 — fixing template-loading errors, `turbo_controller: null` handling, and the `-mini` variable table — and writes `config.local.yaml` with `BADGER_PLUGIN_ROOT`, `BADGER_TEMPLATE_ROOT`, `BADGER_LOG_DIRECTORY` pointed at this clone, plus your chosen archive/logbook directories.
 
-**Patched file:** `badger/gui/components/pydantic_editor.py`
-
-**Issues fixed:**
-1. "Dict type must have subtypes" error when loading templates with dict/list environment params (e.g., `setpoints: {qx: 9.049, qy: 9.035}`)
-2. `turbo_controller: null` handling - prevents warnings and ensures correct null serialization
-3. YAML parsing of 'None' strings in flow maps (inline `{}` or `[]` syntax)
-4. VOCs field not found when it's stored separately from generator parameters
-
-#### Finding your Badger installation
-
-First, locate your Badger installation in your conda environment. Run this command (substitute your environment name):
-
-```bash
-# Replace FermiBadger_env with your environment name
-conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))"
-```
-
-The output will be a path like:
-```
-/Users/yourname/miniconda3/envs/FermiBadger_env/lib/python3.12/site-packages/badger
-```
-
-Navigate to the `gui/components` directory within that path to apply the patch.
-
-#### Applying the patch
-
-**Check if the patch is needed:**
-1. Launch Badger with `badger -g -cf config.yaml`
-2. Load the `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml` template
-3. If you see "Dict type must have subtypes" error, apply the patch
-
-**Method 1: Using `patch` command (standard):**
-
-```bash
-BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
-FERMIBADGERPLUGINS_PATH=`pwd`
-cd "$BADGER_PATH/gui/components"
-patch -p1 < "$FERMIBADGERPLUGINS_PATH/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
-```
-
-The `-mini` patches carry `a/badger/...` paths instead, so they apply from
-`site-packages` with `-p1`:
-
-```bash
-SITE_PACKAGES=$(conda run -n FermiBadger_env python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
-cd "$SITE_PACKAGES"
-patch -p1 < "$FERMIBADGERPLUGINS_PATH/patches/badger-mini-config.patch"
-patch -p1 < "$FERMIBADGERPLUGINS_PATH/patches/badger-mini-var-table-env-configs.patch"
-```
-
-**Method 2: Using `git apply` (if `patch` is not available):**
-
-```bash
-BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
-cd "$BADGER_PATH/gui/components"
-git apply "$FERMIBADGERPLUGINS_PATH/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
-```
-
-**Note:** Replace `FermiBadger_env` with your actual conda environment name. Replace `/path/to/FermiBadgerPlugins` with the actual path where you cloned the repository.
-
-For detailed documentation of each fix, see [`patches/README.md`](patches/README.md).
-
-### 4. Configure Badger (done by `setup.sh`)
-
-Copy `config.yaml` to `config.local.yaml` (which is gitignored) and set the `*_ROOT` directories to absolute paths:
+To do either step manually (e.g. a non-conda Badger install, or a `patch`/`git apply` walkthrough), see [`patches/README.md`](patches/README.md) for the patches. For the config, copy `config.yaml` to `config.local.yaml` (gitignored) and set these to absolute paths, creating each directory if it doesn't exist:
 
 - `BADGER_PLUGIN_ROOT` - the `plugins` directory of this repo
 - `BADGER_TEMPLATE_ROOT` - the `tuning_templates` directory of this repo
 - `BADGER_LOG_DIRECTORY` - the `logs` directory of this repo
 - `BADGER_ARCHIVE_ROOT` and `BADGER_LOGBOOK_ROOT` - where run data and logs go (can be the same, and need not be inside the repo)
 
-Create each of those directories if it does not exist.
-
-### 5. Launch the Badger GUI
-
-```bash
-badger -g -cf config.local.yaml
-```
-
-### 6. Verify your installation (optional)
+### 4. Verify your installation (optional)
 
 Run the test script to verify everything is set up correctly:
 
@@ -158,21 +103,13 @@ The `environment.yml` file defines the complete `FermiBadger_env` environment wi
 
 - **Python**: 3.12.1
 - **Badger**: 1.6.0
-- **Xopt**: 3.2.1 (required for Badger 1.6.0 compatibility)
+- **Xopt**: pulled in transitively by `badger-opt=1.6.0` (currently 3.2.2)
 - **XSuite packages**: xtrack, xobjects, xfields, xcoll, xsuite
 - **FNAL packages**: acsys, cpymad (requires FNAL network)
 
 ### Why Patches Are Required
 
-The patches fix issues in Badger that affect the VirtualAccelerator plugins:
-
-**For Badger 1.6.0:**
-1. **turbo_controller null handling** - Prevents warnings when `turbo_controller: null` is set and ensures correct serialization to YAML null
-2. **vocs field not found** - Fixes error when VOCs data is stored separately from generator parameters
-3. **Startup validation errors** - Fixes validation errors on Badger startup when generator combo box is changed
-4. **Environment config params** - Fixes issue where Badger factory overwrites `configs.yaml` params with model schema defaults
-
-See [`patches/README.md`](patches/README.md) for detailed documentation of each fix.
+Badger 1.6.0 has several bugs that affect template loading and the `-mini` variable table for the VirtualAccelerator plugins. See [`patches/README.md`](patches/README.md) for the full list of issues and which patch fixes each one.
 
 ---
 
@@ -277,8 +214,10 @@ See [`patches/README.md`](patches/README.md) for patch instructions.
 FermiBadgerPlugins/
 ├── patches/                    # Badger bug fixes
 │   ├── pydantic_editor-badger-1.6.0-dict-subtypes.patch
-│   └── README.md
-├── test-quick-start.sh         # Quick Start verification script
+│   ├── README.md
+│   └── ...
+├── setup.sh                    # One-command install/patch/config script
+├── test-quick-start.sh         # Fresh-clone verification script
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)
 │   │   ├── 01_Linac_RIL_tuning_Acsys/
@@ -294,7 +233,8 @@ FermiBadgerPlugins/
 │   └── DeliveryRing/
 ├── docs/                       # Development documentation
 │   ├── progress.md
-│   └── log.md
+│   ├── log.md
+│   └── ...
 ├── config.yaml                 # Badger configuration
 ├── environment.yml             # Conda environment definition
 └── CLAUDE.md                   # Project context and session history

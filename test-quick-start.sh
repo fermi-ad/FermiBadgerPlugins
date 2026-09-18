@@ -140,23 +140,26 @@ echo "4. Verifying installation..."
 BADGER_VERSION=$(python -c "import badger; print(badger.__version__)" 2>/dev/null || echo "unknown")
 echo "   Badger version: $BADGER_VERSION"
 
-# Check if VirtualAccelerator_MADXSuite can be imported
+# Check if 99_Sim_VirtualAccelerator_MADXSuite can be imported. Digit-leading
+# module names aren't a valid 'from x import y' target, so use importlib.
 python -c "
+import importlib
 import sys
-sys.path.insert(0, '$TEST_DIR')
-from plugins.environments.VirtualAccelerator_MADXSuite import Environment
-print('   VirtualAccelerator_MADXSuite: Import successful')
+sys.path.insert(0, '$TEST_DIR/plugins')
+va = importlib.import_module('environments.99_Sim_VirtualAccelerator_MADXSuite')
+Environment = va.Environment
+print('   99_Sim_VirtualAccelerator_MADXSuite: Import successful')
 " || {
-    echo "   ERROR: Could not import VirtualAccelerator_MADXSuite!"
+    echo "   ERROR: Could not import 99_Sim_VirtualAccelerator_MADXSuite!"
     exit 1
 }
 
 echo ""
 echo "5. Verifying plugin directory structure..."
-if [[ -d "plugins/environments/VirtualAccelerator_MADXSuite" ]]; then
-    echo "   OK: plugins/environments/VirtualAccelerator_MADXSuite exists"
+if [[ -d "plugins/environments/99_Sim_VirtualAccelerator_MADXSuite" ]]; then
+    echo "   OK: plugins/environments/99_Sim_VirtualAccelerator_MADXSuite exists"
 else
-    echo "   ERROR: plugins/environments/VirtualAccelerator_MADXSuite not found!"
+    echo "   ERROR: plugins/environments/99_Sim_VirtualAccelerator_MADXSuite not found!"
     exit 1
 fi
 
@@ -172,7 +175,7 @@ echo "6. Verifying plugin is discoverable by Badger..."
 PLUGIN_FOUND=$(python -c "
 from badger.factory import list_env
 envs = list_env()
-if 'VirtualAccelerator_MADXSuite' in envs:
+if '99_Sim_VirtualAccelerator_MADXSuite' in envs:
     print('FOUND')
 else:
     print('NOT_FOUND')
@@ -180,9 +183,9 @@ else:
 " 2>&1)
 
 if echo "$PLUGIN_FOUND" | grep -q "^FOUND$"; then
-    echo "   OK: VirtualAccelerator_MADXSuite found in Badger environment list!"
+    echo "   OK: 99_Sim_VirtualAccelerator_MADXSuite found in Badger environment list!"
 else
-    echo "   WARNING: VirtualAccelerator_MADXSuite not in Badger environment list"
+    echo "   WARNING: 99_Sim_VirtualAccelerator_MADXSuite not in Badger environment list"
     echo "   Output: $PLUGIN_FOUND"
 fi
 

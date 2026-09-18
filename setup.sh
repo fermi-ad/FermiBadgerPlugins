@@ -242,11 +242,11 @@ init_settings(os.path.join(os.environ['REPO'], 'config.local.yaml'))
 from badger.factory import list_env
 
 envs = list_env()
-if 'VirtualAccelerator_MADXSuite' not in envs:
+if '99_Sim_VirtualAccelerator_MADXSuite' not in envs:
     print(f'   plugin not discovered; Badger sees: {envs}')
     sys.exit(1)
 import badger
-print(f'   badger {badger.__version__}, VirtualAccelerator_MADXSuite discovered')
+print(f'   badger {badger.__version__}, 99_Sim_VirtualAccelerator_MADXSuite discovered')
 PYEOF
 then
     echo "   OK"
