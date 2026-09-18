@@ -105,17 +105,18 @@ The `environment.yml` file defines the complete `FermiBadger_env` environment wi
 - **Badger**: 1.6.0
 - **Xopt**: pulled in transitively by `badger-opt=1.6.0` (currently 3.2.2)
 - **XSuite packages**: xtrack, xobjects, xfields, xcoll, xsuite
-- **FNAL packages**: acsys, cpymad (requires FNAL network)
+- **cpymad** for MADX
+- **FNAL Accelerator Control System packages**: acsys-python (requires FNAL network), pacsys
 
 ### Why Patches Are Required
 
-Badger 1.6.0 has several bugs that affect template loading and the `-mini` variable table for the VirtualAccelerator plugins. See [`patches/README.md`](patches/README.md) for the full list of issues and which patch fixes each one.
+Badger 1.6.0 has several pydantic rules that affect template loading and the `-mini` variable table for the VirtualAccelerator plugins (which dynamically build lists of variables & observables from lattice files). See [`patches/README.md`](patches/README.md) for the full list of issues and which patch fixes each one.
 
 ---
 
 ## First-Time GUI Setup
 
-When you first launch Badger:
+When you first launch Badger, if you have not use `setup.sh` for this already:
 
 1. **UNCHECK the "Automatic VARIABLES CHECKBOX"** - There is a known bug that requires this
 2. **Load a tuning template** - Use `File > Open Template` and select one from `tuning_templates/`.  The relevant Environment loads along with preset parameter and algorithm values. 
@@ -125,7 +126,7 @@ When you first launch Badger:
 
 ---
 
-## Using the 99_Sim_VirtualAccelerator_MADXSuite Environment Plugin
+## Using the VirtualAccelerator Environment Plugins
 
 The 99_Sim_VirtualAccelerator_MADXSuite environment:
 
