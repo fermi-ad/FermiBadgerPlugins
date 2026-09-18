@@ -470,3 +470,65 @@ alongside the existing `acsys` line. Committed (`2ea9ab5`) and pushed to
 Still needs a live Kerberos-role write test against real DPM before any
 environment's `configs.yaml` actually points at `BasicPacsysInterface` — not
 done yet, no environment has been switched over.
+
+## 2026-09-18 — Repo cleanup: orphan files, a real settings-file bug, root-dir sweep
+
+User asked for general "repo cleanup," run as a background job. Surveyed the
+whole repo root and found several kinds of clutter and one real bug:
+
+- **`docs/images/gui-full.png` / `gui-mini.png`** were untracked locally
+  while origin/main had them tracked via a separate PR — local `main` was 5
+  commits behind. Verified byte-identical by checksum before letting git
+  adopt them, then fast-forwarded.
+- **`PR_DESCRIPTION.md` / `PR_INSTRUCTIONS.md`** at repo root: leftover
+  scaffolding from an old PR, referenced nowhere (README, setup.sh, docs/,
+  memory/). Deleted.
+- **`badger-1.6.0-none-parsing-fix.patch` / `simple-virtual-accelerator-plugin
+  -fix.patch`** at repo root: unused by `setup.sh`'s current patch workflow
+  (which applies `patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch`
+  instead), but still cited by the older upstream-Badger-fork PR notes in
+  `docs/pr-badger-fork.md` and `docs/handoff.md`. Moved into `patches/`
+  rather than deleted, since that upstream-PR plan may still be live.
+- **Real bug found while investigating a duplicate `SimpleVirtualAccelerator_
+  settings.yaml`** (one copy at repo root, one under
+  `plugins/environments/99_Sim_SimpleVirtualAccelerator/`, with drifted
+  `kqd`/`kqf` values): the environment loaded `settings_filename` via a bare
+  `Path(self.settings_filename)`, i.e. relative to Badger's CWD, not the
+  plugin's own directory. Since the README has you launch Badger from the
+  repo root, the root-level copy was the one actually live, and the
+  plugin-dir copy was the stale one. User chose to fix the code instead of
+  just deleting a duplicate: added a `_settings_path` property that resolves
+  `settings_filename` relative to the plugin's own directory
+  (`Path(__file__).parent`) regardless of Badger's CWD, and deleted the
+  now-redundant root-level file. Verified by instantiating the environment
+  with CWD set to `/tmp` and confirming the settings file still resolved
+  correctly.
+- **`check_RIL_tuning_live_bounds.py`** and **`test-quick-start.sh`**, both
+  loose at repo root, moved into `tests/`. `check_RIL_tuning_live_bounds.py`
+  had a `REPO_ROOT = dirname(abspath(__file__))` that assumed it sat at repo
+  root — fixed to go up one more directory. `test-quick-start.sh` needed no
+  internal fix (it clones a fresh copy of the repo into `/tmp` rather than
+  referencing its own location). Updated the one *living* reference to the
+  live-bounds script's old path (`memory/RIL_tuning-live-bounds-and-dpm-hang.md`)
+  and all three README mentions of the quick-start script; left the
+  *dated/historical* docs (`docs/log.md`, `docs/progress.md`,
+  `docs/handoff.md`, `docs/pr-badger-fork.md`) untouched on the principle
+  that rewriting a chronological log's old paths misrepresents history.
+- Updated README's repo-structure tree diagram to list the two scripts now
+  under `tests/`, and added a real `01_Linac_..._Acsys.yaml` example under
+  `tuning_templates/` alongside the existing `99_Sim_...` ones so the tree
+  shows the naming convention's region-code diversity (mirroring how
+  `environments/` already does). User then hand-edited that section further
+  on GitHub (region-code table corrections, two intentional truncated
+  placeholder lines `03_Booster...` / `06_MIRR...` left in place on request).
+- Also found `.kilo/worktrees/nosy-icicle` — a stale, clean, detached-HEAD
+  git worktree (3.3MB, old already-merged commit) left over from a Kilo-agent
+  session. Left in place; not part of git-tracked content and user didn't
+  ask for it.
+
+All of the above landed on `worktree-repo-cleanup`, opened as PR #7, and
+merged by the user. Local `main` had also picked up an independent, unpushed,
+but byte-identical duplicate commit for the same two screenshots
+(`86863d7`) — confirmed identical by checksum, then `git reset --hard
+origin/main` to resolve the divergence cleanly once the PR was confirmed
+merged.

@@ -341,6 +341,33 @@ lattice_filename: str = Field(default='sim_configs/DeliveryRing/mu2e-dr-model-v2
 
 ---
 
+### Resolve plugin-owned file paths against `__file__`, not CWD
+
+**Problem:** `99_Sim_SimpleVirtualAccelerator` used to read/write its settings
+file via a bare `Path(self.settings_filename)` — resolved relative to
+whatever directory the `badger` process was launched from, not the plugin's
+own directory. Since the README has you launch Badger from the repo root,
+this silently made a repo-root copy of `SimpleVirtualAccelerator_settings.yaml`
+the one actually live, while an identically-named copy sitting in the
+plugin's own directory went stale and drifted out of sync.
+
+**Fix:** Resolve any file a plugin owns (not a lattice/template path — Badger
+resolves those separately) against the plugin's own directory:
+
+```python
+_PLUGIN_DIR = Path(__file__).parent
+
+@property
+def _settings_path(self) -> Path:
+    p = Path(self.settings_filename)
+    return p if p.is_absolute() else _PLUGIN_DIR / p
+```
+
+**See also:** `plugins/environments/99_Sim_SimpleVirtualAccelerator/__init__.py`,
+`memory/simple-virtual-accelerator-settings-path.md`.
+
+---
+
 ## BasicAcsysInterface / Physical-Hardware Templates (01_Linac_RIL_tuning_Acsys, 01_Linac_QuadTuning_Acsys, etc.)
 
 Environments backed by real Fermilab ACNET/DPM hardware (`01_Linac_RIL_tuning_Acsys`,
