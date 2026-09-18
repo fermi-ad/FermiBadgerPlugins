@@ -4,7 +4,7 @@ This repository contains plugins and configurations for using [Badger](https://g
 
 - **Tuning templates** - Pre-configured optimization setups for various accelerator tuning tasks
 - **VirtualAccelerator tuning** - using lattice files of the physical machines and toy simulations
-- **Test script** - `test-quick-start.sh` to verify your installation
+- **Test script** - `tests/test-quick-start.sh` to verify your installation
 
 <table>
 <tr>
@@ -124,7 +124,7 @@ For the patches, see [`patches/README.md`](patches/README.md) for `patch`/`git a
 Run the test script to verify everything is set up correctly:
 
 ```bash
-./test-quick-start.sh
+./tests/test-quick-start.sh
 ```
 
 This script:
@@ -273,10 +273,16 @@ FermiBadgerPlugins/
 ├── setup.sh                    # One-command install/patch/config script
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
-├── test-quick-start.sh         # Fresh-clone verification script
+├── tests/                      # Diagnostic and verification scripts
+│   ├── check_RIL_tuning_live_bounds.py  # Read-only live-bounds diagnostic
+│   └── test-quick-start.sh     # Fresh-clone verification script
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
+    ├── 01_Linac_trims_and_sol_RIL_tuning_Acsys.yaml
+    ├── 03_Booster...
+    ├── 06_MIRR...
     ├── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
-    └── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+    ├── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+    └── ...
 ```
 
 ---
@@ -300,16 +306,16 @@ FermiBadgerPlugins/
 | `01` | Linac |
 | `02` | Xfer400MeV |
 | `03` | Booster |
-| `04` | BoosterNuStub |
+| `04` | BNB (Booster Neutrino Beam line) |
 | `05` | Xfer8GeV |
 | `06` | MIRR (Main Injector/Recycler Ring) |
-| `07` | NuMIStub |
+| `07` | NuMI |
 | `08` | P1toDR (the P1+P2+M1+M2/3 extraction line to the Delivery Ring) |
 | `09` | DeliveryRing |
 | `10` | MuonCampus |
 | `99` | Sim (simulation environments — always sorts last, regardless of how many real regions exist) |
 
-Every real-machine environment (backed by an actual control-system interface, not a simulation) carries an explicit `_Acsys` or `_Pacsys` suffix naming which control system it talks to — even when only one variant currently exists, so the interface choice stays visible to the next developer ahead of the day a second variant needs picking. Drop any part of the descriptive name that would otherwise just repeat the region name (e.g. `LinacQuadTuning` under `01_Linac` becomes `01_Linac_QuadTuning_Acsys`, not `01_Linac_LinacQuadTuning_Acsys`).
+Every real-machine environment (backed by an actual control-system interface, not a simulation) carries an explicit `_Acsys` or `_Pacsys` suffix naming which control system it talks to — even when only one variant currently exists, so the interface choice stays visible to the next developer. Drop any part of the descriptive name that would otherwise just repeat the region name (e.g. `LinacQuadTuning` under `01_Linac` becomes `01_Linac_QuadTuning_Acsys`, not `01_Linac_LinacQuadTuning_Acsys`).
 
 A tuning template's filename follows its own token order, `<region>_<tuning_task>_<env_plugin>[_Acsys|_Pacsys]`, so templates still group and sort by region the same way the environment picker does, while leading with the descriptive part instead of repeating the full environment name up front:
 
@@ -319,7 +325,7 @@ A tuning template's filename follows its own token order, `<region>_<tuning_task
 
 Here `01_Linac` is the region code, `trims_and_sol` is the tuning task, `RIL_tuning` is the `env_plugin` (the parent environment's own name, with its region prefix and interface suffix stripped — i.e. `01_Linac_RIL_tuning_Acsys` minus `01_Linac_` and `_Acsys`), and `Acsys` is the interface suffix. Simulation templates omit the interface suffix, since their parent sim environments don't carry one either, e.g. `99_Sim_TuneQx_SimpleVirtualAccelerator.yaml`.
 
-When a region assignment is ambiguous — an environment that varies a parameter in one region but reads a diagnostic from another — ask before guessing; Fermilab device-prefix meanings require domain knowledge.
+When a region assignment is ambiguous — e.g. an environment that varies a parameter in one region but reads a diagnostic from another — ask before guessing; Fermilab device-prefix meanings require domain knowledge.
 
 **Gotcha:** `badger.factory.load_plugin` loads environment modules via `importlib.import_module(f"environments.{name}")`, which works fine with digit-leading folder names. But a literal `from environments.01_Linac_RIL_tuning_Acsys import X` is a `SyntaxError` — any ad hoc script or test that needs to import a renamed environment module directly must use `importlib.import_module(...)` instead (see `tests/VA_deferred_expressions_test.py` and `tests/VA_plugin_smoke_test.py` for the pattern).
 

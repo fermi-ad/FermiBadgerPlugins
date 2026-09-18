@@ -10,6 +10,8 @@ import yaml
 
 import torch
 
+_PLUGIN_DIR = Path(__file__).parent
+
 class Environment(environment.Environment):
     name = "99_Sim_SimpleVirtualAccelerator"
     variables = { # Also may be taken as Observables
@@ -34,6 +36,13 @@ class Environment(environment.Environment):
     setpoints:        Union[Dict[str, float], str, None] = '{qx: 2.05015, qy: 1.20948}'
     settings_filename:  str = 'SimpleVirtualAccelerator_settings.yaml'
     randomize_settings: bool = True
+
+    @property
+    def _settings_path(self) -> Path:
+        # Resolve relative to this plugin's own directory, not Badger's CWD,
+        # so the settings file is found regardless of where `badger` is launched from.
+        p = Path(self.settings_filename)
+        return p if p.is_absolute() else _PLUGIN_DIR / p
 
     # _xt_env:     Optional[Any] = None 
     # _cell:       Optional[Any] = None 
@@ -74,7 +83,7 @@ class Environment(environment.Environment):
             ]
         )
         # Load settings from the settings file into self._xt_env
-        if Path(self.settings_filename).is_file(): 
+        if self._settings_path.is_file():
             self.load_settings_from_file()
         else: # or, set them in _xt_env, and save to the (new) file
             self._xt_env['kqf']=0.8
@@ -121,22 +130,22 @@ class Environment(environment.Environment):
     def save_settings_to_file(self, set_random=False):
         yamldict = {}
         # if the file exists, load in its contents
-        if Path(self.settings_filename).is_file():
-            with open(self.settings_filename, 'r') as fyaml:
+        if self._settings_path.is_file():
+            with open(self._settings_path, 'r') as fyaml:
                 yamldict = yaml.safe_load(fyaml)
         # Set the _randomize entry
         yamldict['_randomize'] = set_random
         # Now move over the settings from the _xt_env to this dictionary
         for quad_kname in self._quad_k_names:
             yamldict[quad_kname] = float(self._xt_env[quad_kname])
-        if self.debug: print (f'-- Gonna write out yamldict: ',yamldict, f'\n ....as {self.settings_filename}.')
+        if self.debug: print (f'-- Gonna write out yamldict: ',yamldict, f'\n ....as {self._settings_path}.')
         #...and write out the updated yaml file
-        with open(self.settings_filename, 'w') as fyaml:
+        with open(self._settings_path, 'w') as fyaml:
             yaml.dump(yamldict, fyaml)
         return
 
     def load_settings_from_file(self):
-        with open(self.settings_filename, 'r') as fyaml:
+        with open(self._settings_path, 'r') as fyaml:
             settings_dict = yaml.safe_load(fyaml)
         for setting_name, setting_val in settings_dict.items():
             if setting_name == '_randomize': self.randomize_settings = setting_val
