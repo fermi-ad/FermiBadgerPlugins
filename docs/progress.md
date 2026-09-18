@@ -1334,3 +1334,89 @@ Added `pacsys==0.2.2` to `environment.yml` alongside the existing
 - `environment.yml` — added `pacsys==0.2.2`
 
 Committed as `2ea9ab5`, pushed to `origin/main`.
+
+## 2026-09-18: Repo cleanup — orphan files, patches, and a settings-file CWD bug
+
+### Problem
+General "repo cleanup" request (background job). Root directory had
+accumulated PR scaffolding, superseded patch files, a loose diagnostic
+script, and a duplicated `SimpleVirtualAccelerator_settings.yaml` with two
+different sets of quad values.
+
+### Root Cause (the one real bug)
+`plugins/environments/99_Sim_SimpleVirtualAccelerator/__init__.py` read/wrote
+its settings file via a bare `Path(self.settings_filename)` — resolved
+relative to Badger's current working directory, not the plugin's own
+directory. Because the README's Quick Start launches Badger from the repo
+root, the root-level `SimpleVirtualAccelerator_settings.yaml` was the one
+actually in use; the copy under the plugin's own directory (defaults
+`kqd=-0.8`, `kqf=0.8`) was dead and drifting further from the live one
+(`kqd=-0.79...`, `kqf=0.79...`) every time the sim ran.
+
+### Fix Applied
+Added a `_settings_path` property resolving `settings_filename` against
+`Path(__file__).parent` (falling back to an absolute path unchanged) and
+swapped all three `Path(self.settings_filename)` / `open(self.settings_
+filename, ...)` call sites to use it. Deleted the now-genuinely-redundant
+root-level settings file. Verified by instantiating the `Environment` with
+CWD set to `/tmp` and confirming `_settings_path` still resolved to the
+plugin directory's file.
+
+### Other cleanup
+- Deleted `PR_DESCRIPTION.md` / `PR_INSTRUCTIONS.md` (unreferenced anywhere).
+- Moved `badger-1.6.0-none-parsing-fix.patch` and
+  `simple-virtual-accelerator-plugin-fix.patch` into `patches/` — unused by
+  `setup.sh`'s current patch workflow, but still cited by
+  `docs/pr-badger-fork.md` / `docs/handoff.md`'s upstream-Badger-fork notes,
+  so relocated rather than deleted.
+- Moved `check_RIL_tuning_live_bounds.py` and `test-quick-start.sh` into
+  `tests/`, fixing the former's `REPO_ROOT` (assumed it sat at repo root)
+  and updating the one living reference to its old path
+  (`memory/RIL_tuning-live-bounds-and-dpm-hang.md`) plus all README mentions
+  of `test-quick-start.sh`.
+- README's repo-structure tree updated: both relocated scripts listed under
+  `tests/`, and a real `01_Linac_..._Acsys.yaml` example added under
+  `tuning_templates/` next to the existing `99_Sim_...` ones so the tree
+  shows region-code diversity (matching how `environments/` already does).
+- Synced local `main`, which was 5 commits behind `origin/main` (the two
+  `docs/images/*.png` screenshots were untracked locally but byte-identical
+  to what origin already had tracked via a separate PR — adopted, not
+  overwritten).
+
+### Deliberately left alone
+- `docs/log.md`, `docs/progress.md` (this file), `docs/handoff.md`,
+  `docs/pr-badger-fork.md`: dated/historical, not live references — didn't
+  rewrite their old paths to the moved files, since that would misrepresent
+  what was true at the time.
+- `.kilo/worktrees/nosy-icicle`: a stale, clean, detached-HEAD git worktree
+  (3.3MB) left over from a Kilo-agent session. Not git-tracked content and
+  not asked for; noted but not removed.
+- Two intentionally truncated placeholder lines the user added to the
+  README tree by hand afterward (`03_Booster...` / `06_MIRR...`) — confirmed
+  with the user these are deliberate placeholders, left as-is.
+
+### Confirmed
+- `_settings_path` resolves correctly regardless of CWD (tested from `/tmp`).
+- All moved/edited files pass a syntax check (`ast.parse` / `bash -n`).
+- PR #7 (`worktree-repo-cleanup` → `main`) merged by the user; local `main`
+  reset to `origin/main` afterward to clear an independent, unpushed,
+  byte-identical duplicate commit for the same two screenshots.
+
+### Files
+- `plugins/environments/99_Sim_SimpleVirtualAccelerator/__init__.py` —
+  `_settings_path` property, CWD-independent settings resolution
+- `plugins/environments/99_Sim_SimpleVirtualAccelerator/SimpleVirtualAccelerator_settings.yaml`
+  — deleted (was the dead duplicate)
+- `SimpleVirtualAccelerator_settings.yaml` (repo root) — deleted (superseded
+  by the fix; the plugin now finds this same filename via `_settings_path`
+  wherever it's actually needed)
+- `PR_DESCRIPTION.md`, `PR_INSTRUCTIONS.md` — deleted
+- `patches/badger-1.6.0-none-parsing-fix.patch`,
+  `patches/simple-virtual-accelerator-plugin-fix.patch` — moved from root
+- `tests/check_RIL_tuning_live_bounds.py`, `tests/test-quick-start.sh` —
+  moved from root
+- `README.md` — updated repo-structure tree, script paths
+- `memory/RIL_tuning-live-bounds-and-dpm-hang.md` — updated script path
+
+Commits `8fae700`..`cc865e4` on `worktree-repo-cleanup`, merged via PR #7
+(`bcc2c1b`) into `origin/main`.
