@@ -1,0 +1,7 @@
+name: "09_DeliveryRing_Muon_PID_tune_Pacsys"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicPacsysInterface

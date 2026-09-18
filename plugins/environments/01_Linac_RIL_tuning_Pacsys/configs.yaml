@@ -1,0 +1,7 @@
+name: "01_Linac_RIL_tuning_Pacsys"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicPacsysInterface
