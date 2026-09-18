@@ -6,18 +6,42 @@ This repository contains plugins and configurations for using [Badger](https://g
 - **VirtualAccelerator tuning** - using lattice files of the physical machines and toy simulations
 - **Test script** - `test-quick-start.sh` to verify your installation
 
+<table>
+<tr>
+<td valign="top">
+
 ## Contents
 
 - [Quick Start](#quick-start)
 - [Environment Setup Details](#environment-setup-details)
 - [First-Time GUI Setup](#first-time-gui-setup)
-- [Using the Simulated Accelerators](#using-the-99_sim_virtualaccelerator_madxsuite-environment-plugin)
+- [Using the VirtualAccelerator Environment Plugins](#using-the-virtualaccelerator-environment-plugins)
 - [Troubleshooting](#troubleshooting)
 - [Repository Structure](#repository-structure)
 - [For Developers](#for-developers)
 - [Related Documentation](#related-documentation)
 
+</td>
+<td align="center" width="220">
+
+<code>badger -g</code><br>
+<img src="docs/images/gui-full.png" width="200" alt="badger -g: full GUI">
+<!-- TODO: add docs/images/gui-full.png -->
+
+</td>
+<td align="center" width="220">
+
+<code>badger -mini</code><br>
+<img src="docs/images/gui-mini.png" width="200" alt="badger -mini: compact GUI">
+<!-- TODO: add docs/images/gui-mini.png -->
+
+</td>
+</tr>
+</table>
+
 ## Quick Start
+
+[↑ Back to top](#contents)
 
 ### 1. Clone this repository
 
@@ -34,7 +58,7 @@ cd FermiBadgerPlugins
 ./setup.sh
 ```
 
-This does everything documented by hand in step 3 below:
+This creates the `FermiBadger_env` conda environment, applies the Badger patches, writes `config.local.yaml`, and verifies the plugin is discoverable — see [Apply patches and configure by hand](#apply-patches-and-configure-by-hand) for what it does under the hood:
 
 1. Creates the `FermiBadger_env` conda environment from `environment.yml`. If an environment of that name already exists, it asks whether to remove and recreate it, use a different name, or keep it as-is.
 2. Applies the Badger patches to that environment.
@@ -48,9 +72,10 @@ It is safe to re-run: patches already applied are detected and skipped.
 ./setup.sh --yes           # take every default, no prompts
 ./setup.sh --env-name foo  # different environment name
 ./setup.sh --skip-env      # patches and config only
+./setup.sh --config        # rewrite config.local.yaml only (no env, no patches)
 ```
 
-Then launch:
+### 3. Launch
 
 ```bash
 conda activate FermiBadger_env
@@ -65,20 +90,41 @@ badger -mini -cf config.local.yaml -t Xfer400MeV_example.yaml
 
 `config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
 
-Step 3 documents what the script does under the hood, for anyone who needs to apply patches or write the config by hand instead.
+---
 
-### 3. Apply patches and configure by hand (done by `setup.sh`)
+## Environment Setup Details
+
+[↑ Back to top](#contents)
+
+### Conda Environment (`environment.yml`)
+
+The `environment.yml` file defines the complete `FermiBadger_env` environment with:
+
+- **Python**: 3.12.1
+- **Badger**: 1.6.0
+- **Xopt**: pulled in transitively by `badger-opt=1.6.0` (currently 3.2.2)
+- **XSuite packages**: xtrack, xobjects, xfields, xcoll, xsuite
+- **cpymad** for MADX
+- **FNAL Accelerator Control System packages**: acsys (requires FNAL network), pacsys
+
+### Why Patches Are Required
+
+Badger 1.6.0 has several pydantic rules that affect template loading and the `-mini` variable table for the VirtualAccelerator plugins (which dynamically build lists of variables & observables from lattice files). See [`patches/README.md`](patches/README.md) for the full list of issues and which patch fixes each one.
+
+### Apply patches and configure by hand
+
+`setup.sh` does this for you (Quick Start step 2). Do it by hand only for a non-conda Badger install, or to see the mechanics.
 
 `setup.sh` applies three patches to your `FermiBadger_env` installation of Badger 1.6.0 — fixing template-loading errors, `turbo_controller: null` handling, and the `-mini` variable table — and writes `config.local.yaml` with `BADGER_PLUGIN_ROOT`, `BADGER_TEMPLATE_ROOT`, `BADGER_LOG_DIRECTORY` pointed at this clone, plus your chosen archive/logbook directories.
 
-To do either step manually (e.g. a non-conda Badger install, or a `patch`/`git apply` walkthrough), see [`patches/README.md`](patches/README.md) for the patches. For the config, copy `config.yaml` to `config.local.yaml` (gitignored) and set these to absolute paths, creating each directory if it doesn't exist:
+For the patches, see [`patches/README.md`](patches/README.md) for `patch`/`git apply` walkthroughs. For the config, copy `config.yaml` to `config.local.yaml` (gitignored) and set these to absolute paths, creating each directory if it doesn't exist:
 
 - `BADGER_PLUGIN_ROOT` - the `plugins` directory of this repo
 - `BADGER_TEMPLATE_ROOT` - the `tuning_templates` directory of this repo
 - `BADGER_LOG_DIRECTORY` - the `logs` directory of this repo
 - `BADGER_ARCHIVE_ROOT` and `BADGER_LOGBOOK_ROOT` - where run data and logs go (can be the same, and need not be inside the repo)
 
-### 4. Verify your installation (optional)
+### Verifying your installation
 
 Run the test script to verify everything is set up correctly:
 
@@ -95,38 +141,31 @@ This script:
 
 ---
 
-## Environment Setup Details
-
-### Conda Environment (`environment.yml`)
-
-The `environment.yml` file defines the complete `FermiBadger_env` environment with:
-
-- **Python**: 3.12.1
-- **Badger**: 1.6.0
-- **Xopt**: pulled in transitively by `badger-opt=1.6.0` (currently 3.2.2)
-- **XSuite packages**: xtrack, xobjects, xfields, xcoll, xsuite
-- **cpymad** for MADX
-- **FNAL Accelerator Control System packages**: acsys-python (requires FNAL network), pacsys
-
-### Why Patches Are Required
-
-Badger 1.6.0 has several pydantic rules that affect template loading and the `-mini` variable table for the VirtualAccelerator plugins (which dynamically build lists of variables & observables from lattice files). See [`patches/README.md`](patches/README.md) for the full list of issues and which patch fixes each one.
-
----
-
 ## First-Time GUI Setup
 
-When you first launch Badger, if you have not use `setup.sh` for this already:
+[↑ Back to top](#contents)
 
-1. **UNCHECK the "Automatic VARIABLES CHECKBOX"** - There is a known bug that requires this
-2. **Load a tuning template** - Use `File > Open Template` and select one from `tuning_templates/`.  The relevant Environment loads along with preset parameter and algorithm values. 
-   - `99_Sim_TuneQx_SimpleVirtualAccelerator.yaml` - Quick-start example (simulation; fictional storage ring)
-   - `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml` - Delivery ring tune optimization (simulation of Delivery Ring)
-   - Templates for physical-system tuning require valid kerberos credentials AND settings role combination.
+Point Badger at a different `plugins`/`tuning_templates`/archive/logbook location later — a second clone, a shared archive drive, a renamed environment — without recreating the conda environment or reapplying patches:
+
+```bash
+./setup.sh --config
+```
+
+This only rewrites `config.local.yaml`; it asks the same archive/logbook questions as a full `setup.sh` run but skips environment creation and patching entirely.
+
+### Loading a tuning template
+
+Use `File > Open Template` and choose one from `tuning_templates/`. Badger loads the matching Environment and Interface automatically, along with the template's preset variables, objectives, and algorithm settings.
+
+- `99_Sim_TuneQx_SimpleVirtualAccelerator.yaml` - quick-start example (toy simulated storage ring)
+- `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml` - Delivery Ring tune optimization (MAD-X simulation)
+- Templates for physical-system tuning require valid Kerberos credentials and the matching settings role.
 
 ---
 
 ## Using the VirtualAccelerator Environment Plugins
+
+[↑ Back to top](#contents)
 
 The 99_Sim_VirtualAccelerator_MADXSuite environment:
 
@@ -154,6 +193,8 @@ This simulation-tuning environment accepts these parameters in its tuning templa
 ---
 
 ## Troubleshooting
+
+[↑ Back to top](#contents)
 
 ### FNAL Network Required
 
@@ -211,14 +252,21 @@ See [`patches/README.md`](patches/README.md) for patch instructions.
 
 ## Repository Structure
 
+[↑ Back to top](#contents)
+
 ```
 FermiBadgerPlugins/
+├── CLAUDE.md                   # Project context and session history
+├── config.yaml                 # Badger configuration
+├── docs/                       # Development documentation
+│   ├── log.md
+│   ├── progress.md
+│   └── ...
+├── environment.yml             # Conda environment definition
 ├── patches/                    # Badger bug fixes
 │   ├── pydantic_editor-badger-1.6.0-dict-subtypes.patch
 │   ├── README.md
 │   └── ...
-├── setup.sh                    # One-command install/patch/config script
-├── test-quick-start.sh         # Fresh-clone verification script
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)
 │   │   ├── 01_Linac_RIL_tuning_Acsys/
@@ -227,23 +275,20 @@ FermiBadgerPlugins/
 │   │   └── ...
 │   └── interfaces/             # Badger Interface plugins
 │       └── VirtualAccelerator_MADXSuiteInterface/
-├── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
-│   ├── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
-│   └── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
+├── setup.sh                    # One-command install/patch/config script
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
-├── docs/                       # Development documentation
-│   ├── progress.md
-│   ├── log.md
-│   └── ...
-├── config.yaml                 # Badger configuration
-├── environment.yml             # Conda environment definition
-└── CLAUDE.md                   # Project context and session history
+├── test-quick-start.sh         # Fresh-clone verification script
+└── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
+    ├── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
+    └── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
 ```
 
 ---
 
 ## For Developers
+
+[↑ Back to top](#contents)
 
 ### Environment and template naming convention
 
@@ -286,6 +331,8 @@ When a region assignment is ambiguous — an environment that varies a parameter
 ---
 
 ## Related Documentation
+
+[↑ Back to top](#contents)
 
 - [CLAUDE.md](CLAUDE.md) - Project overview and standards
 - [HANDOFF.md](HANDOFF.md) - Developer handoff guide with critical gotchas
