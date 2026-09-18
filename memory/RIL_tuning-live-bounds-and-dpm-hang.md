@@ -37,7 +37,7 @@ range → `xopt.vocs.validate_variable_bounds` raises
 `badger.errors.VariableRangeError`.
 
 This is a live-hardware-state question, not a code bug — don't guess-widen
-bounds. Use `check_RIL_tuning_live_bounds.py` (repo root; **read-only**, only
+bounds. Use `check_RIL_tuning_live_bounds.py` (tests/; **read-only**, only
 calls `get_variables`/`get_settings`, never touches `set_variables`/`set_values`)
 to dump every template variable's live reading next to its declared bounds in
 one shot. Decide per-variable with the user whether to widen the template

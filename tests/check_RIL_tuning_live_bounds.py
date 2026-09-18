@@ -15,9 +15,9 @@ SAFETY: this script only calls Environment.get_variables() / Interface's
 read path (get_settings). It never calls set_variables / set_values, so it
 cannot change anything on the real accelerator -- it only reads.
 
-Usage (run from the FermiBadgerPlugins repo root, inside FermiBadger_env):
+Usage (run from anywhere, inside FermiBadger_env):
 
-    python check_RIL_tuning_live_bounds.py tuning_templates/01_Linac_trims_and_sol_LEBT_MEBTquads_RIL_tuning_Acsys.yaml
+    python tests/check_RIL_tuning_live_bounds.py tuning_templates/01_Linac_trims_and_sol_LEBT_MEBTquads_RIL_tuning_Acsys.yaml
 
 If no path is given it defaults to that same template.
 """
@@ -27,7 +27,7 @@ import os
 import importlib.util
 import yaml
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PLUGIN_ROOT = os.path.join(REPO_ROOT, "plugins")
 
 # Badger normally puts BADGER_PLUGIN_ROOT on sys.path so that plugin modules
