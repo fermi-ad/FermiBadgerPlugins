@@ -1,9 +1,9 @@
 # FermiBadgerPlugins - Use Badger to run Xopt at Fermilab
 
-This repository contains plugins and configuration for using [Badger](https://github.com/xopt-org/Badger) (the Bayesian optimization GUI frontend) with [Xopt](https://github.com/xopt-org/Xopt) at Fermilab. It includes:
+This repository contains plugins and configurations for using [Badger](https://github.com/xopt-org/Badger) (the Bayesian optimization GUI frontend) with [Xopt](https://github.com/xopt-org/Xopt) at Fermilab. It includes:
 
-- **99_Sim_VirtualAccelerator_MADXSuite** - A virtual accelerator environment that uses MAD-X lattice files with XSuite for rapid simulation
-- **Tuning templates** - Pre-configured optimization setups for various accelerator configurations
+- **Tuning templates** - Pre-configured optimization setups for various accelerator tuning tasks
+- **VirtualAccelerator tuning** - using lattice files of the physical machines and toy simulations
 - **Test script** - `test-quick-start.sh` to verify your installation
 
 ## Contents
@@ -11,7 +11,7 @@ This repository contains plugins and configuration for using [Badger](https://gi
 - [Quick Start](#quick-start)
 - [Environment Setup Details](#environment-setup-details)
 - [First-Time GUI Setup](#first-time-gui-setup)
-- [Using the 99_Sim_VirtualAccelerator_MADXSuite Environment Plugin](#using-the-99_sim_virtualaccelerator_madxsuite-environment-plugin)
+- [Using the Simulated Accelerators](#using-the-99_sim_virtualaccelerator_madxsuite-environment-plugin)
 - [Troubleshooting](#troubleshooting)
 - [Repository Structure](#repository-structure)
 - [For Developers](#for-developers)
