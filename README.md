@@ -274,6 +274,7 @@ FermiBadgerPlugins/
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
 ├── tests/                      # Diagnostic and verification scripts
+│   ├── check_RIL_tuning_live_bounds.py  # Read-only live-bounds diagnostic
 │   └── test-quick-start.sh     # Fresh-clone verification script
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
     ├── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
