@@ -17,5 +17,6 @@ sectormap
 optics_*.dat
 checkpoint_restart.dat
 l400mevtrack*
+sim_outputs/
 # Personal Claude Code tool-permission config, not shared project config.
 .claude/
