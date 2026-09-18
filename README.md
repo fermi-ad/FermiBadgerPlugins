@@ -4,7 +4,7 @@ This repository contains plugins and configurations for using [Badger](https://g
 
 - **Tuning templates** - Pre-configured optimization setups for various accelerator tuning tasks
 - **VirtualAccelerator tuning** - using lattice files of the physical machines and toy simulations
-- **Test script** - `test-quick-start.sh` to verify your installation
+- **Test script** - `tests/test-quick-start.sh` to verify your installation
 
 <table>
 <tr>
@@ -124,7 +124,7 @@ For the patches, see [`patches/README.md`](patches/README.md) for `patch`/`git a
 Run the test script to verify everything is set up correctly:
 
 ```bash
-./test-quick-start.sh
+./tests/test-quick-start.sh
 ```
 
 This script:
@@ -273,7 +273,8 @@ FermiBadgerPlugins/
 ├── setup.sh                    # One-command install/patch/config script
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
-├── test-quick-start.sh         # Fresh-clone verification script
+├── tests/                      # Diagnostic and verification scripts
+│   └── test-quick-start.sh     # Fresh-clone verification script
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
     ├── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
     └── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
