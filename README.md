@@ -277,8 +277,10 @@ FermiBadgerPlugins/
 │   ├── check_RIL_tuning_live_bounds.py  # Read-only live-bounds diagnostic
 │   └── test-quick-start.sh     # Fresh-clone verification script
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
+    ├── 01_Linac_trims_and_sol_RIL_tuning_Acsys.yaml
     ├── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
-    └── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+    ├── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+    └── ...
 ```
 
 ---
