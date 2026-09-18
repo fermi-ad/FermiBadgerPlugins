@@ -1,6 +1,0 @@
----
-name: sphere_3d
-description: "3D sphere test environment"
-version: "0.1"
-dependencies:
-  - badger-opt

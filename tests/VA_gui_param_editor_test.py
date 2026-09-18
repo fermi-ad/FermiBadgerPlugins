@@ -22,7 +22,7 @@ app = QApplication([])
 from badger.factory import get_env
 from badger.gui.components.pydantic_editor import BadgerPydanticEditor
 
-for env_name in ['VirtualAccelerator_MADXSuite', 'SimpleVirtualAccelerator']:
+for env_name in ['99_Sim_VirtualAccelerator_MADXSuite', '99_Sim_SimpleVirtualAccelerator']:
     Env, configs = get_env(env_name)
     editor = BadgerPydanticEditor()
     # The exact call from routine_page.select_env (line 1137)

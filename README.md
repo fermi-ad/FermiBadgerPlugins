@@ -2,7 +2,7 @@
 
 This repository contains plugins and configuration for using [Badger](https://github.com/xopt-org/Badger) (the Bayesian optimization GUI frontend) with [Xopt](https://github.com/xopt-org/Xopt) at Fermilab. It includes:
 
-- **VirtualAccelerator_MADXSuite** - A virtual accelerator environment that uses MAD-X lattice files with XSuite for rapid simulation
+- **99_Sim_VirtualAccelerator_MADXSuite** - A virtual accelerator environment that uses MAD-X lattice files with XSuite for rapid simulation
 - **Tuning templates** - Pre-configured optimization setups for various accelerator configurations
 - **Test script** - `test-quick-start.sh` to verify your installation
 
@@ -82,7 +82,7 @@ Navigate to the `gui/components` directory within that path to apply the patch.
 
 **Check if the patch is needed:**
 1. Launch Badger with `badger -g -cf config.yaml`
-2. Load the `DR_BetatronTunes_sim.yaml` template
+2. Load the `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml` template
 3. If you see "Dict type must have subtypes" error, apply the patch
 
 **Method 1: Using `patch` command (standard):**
@@ -182,15 +182,15 @@ When you first launch Badger:
 
 1. **UNCHECK the "Automatic VARIABLES CHECKBOX"** - There is a known bug that requires this
 2. **Load a tuning template** - Use `File > Open Template` and select one from `tuning_templates/`.  The relevant Environment loads along with preset parameter and algorithm values. 
-   - `TuneQx.yaml` - Quick-start example (simulation; fictional storage ring)
-   - `DR_BetatronTunes_sim.yaml` - Delivery ring tune optimization (simulation of Delivery Ring)
+   - `99_Sim_TuneQx_SimpleVirtualAccelerator.yaml` - Quick-start example (simulation; fictional storage ring)
+   - `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml` - Delivery ring tune optimization (simulation of Delivery Ring)
    - Templates for physical-system tuning require valid kerberos credentials AND settings role combination.
 
 ---
 
-## Using the VirtualAccelerator_MADXSuite Environment Plugin
+## Using the 99_Sim_VirtualAccelerator_MADXSuite Environment Plugin
 
-The VirtualAccelerator_MADXSuite environment:
+The 99_Sim_VirtualAccelerator_MADXSuite environment:
 
 1. Loads a MAD-X lattice file (specified by `lattice_filename` parameter)
 2. Automatically deduces variables (knobs, element attributes) and observables (optics, BPM reads) from element names
@@ -258,7 +258,7 @@ conda create -n FermiBadger_env -f environment.yml  # Recreate if missing
 
 ### Dict type must have subtypes Error
 
-When loading a template (e.g., `DR_BetatronTunes_sim.yaml`), you may see:
+When loading a template (e.g., `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml`), you may see:
 ```
 ValueError: Dict type must have subtypes
 ```
@@ -280,13 +280,16 @@ FermiBadgerPlugins/
 │   └── README.md
 ├── test-quick-start.sh         # Quick Start verification script
 ├── plugins/
-│   ├── environments/           # Badger Environment plugins
-│   │   └── VirtualAccelerator_MADXSuite/
+│   ├── environments/           # Badger Environment plugins (see naming convention below)
+│   │   ├── 01_Linac_RIL_tuning_Acsys/
+│   │   ├── 09_DeliveryRing_Muon_PID_tune_Acsys/
+│   │   ├── 99_Sim_VirtualAccelerator_MADXSuite/
+│   │   └── ...
 │   └── interfaces/             # Badger Interface plugins
 │       └── VirtualAccelerator_MADXSuiteInterface/
-├── tuning_templates/           # Pre-configured optimization setups
-│   ├── VirtualAccelerator_MADXSuite_example.yaml
-│   └── DR_BetatronTunes_Sim_MADXSuite.yaml
+├── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
+│   ├── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+│   └── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
 ├── docs/                       # Development documentation
@@ -296,6 +299,48 @@ FermiBadgerPlugins/
 ├── environment.yml             # Conda environment definition
 └── CLAUDE.md                   # Project context and session history
 ```
+
+---
+
+## For Developers
+
+### Environment and template naming convention
+
+`plugins/environments/*` folders and `tuning_templates/*.yaml` files are named so they alpha-sort in the Badger GUI's picker in physical beam order, not plain alphabetical order:
+
+```
+<region>_<Descriptive>[_Acsys|_Pacsys]
+```
+
+`<region>` is a zero-padded two-digit code, chosen so digit-first names sort ahead of any unprefixed legacy name and leave room to insert new regions later without renumbering:
+
+| Code | Region |
+|------|--------|
+| `01` | Linac |
+| `02` | Xfer400MeV |
+| `03` | Booster |
+| `04` | BoosterNuStub |
+| `05` | Xfer8GeV |
+| `06` | MIRR (Main Injector/Recycler Ring) |
+| `07` | NuMIStub |
+| `08` | P1toDR (the P1+P2+M1+M2/3 extraction line to the Delivery Ring) |
+| `09` | DeliveryRing |
+| `10` | MuonCampus |
+| `99` | Sim (simulation environments — always sorts last, regardless of how many real regions exist) |
+
+Every real-machine environment (backed by an actual control-system interface, not a simulation) carries an explicit `_Acsys` or `_Pacsys` suffix naming which control system it talks to — even when only one variant currently exists, so the interface choice stays visible to the next developer ahead of the day a second variant needs picking. Drop any part of the descriptive name that would otherwise just repeat the region name (e.g. `LinacQuadTuning` under `01_Linac` becomes `01_Linac_QuadTuning_Acsys`, not `01_Linac_LinacQuadTuning_Acsys`).
+
+A tuning template's filename follows its own token order, `<region>_<tuning_task>_<env_plugin>[_Acsys|_Pacsys]`, so templates still group and sort by region the same way the environment picker does, while leading with the descriptive part instead of repeating the full environment name up front:
+
+```
+01_Linac_trims_and_sol_RIL_tuning_Acsys.yaml
+```
+
+Here `01_Linac` is the region code, `trims_and_sol` is the tuning task, `RIL_tuning` is the `env_plugin` (the parent environment's own name, with its region prefix and interface suffix stripped — i.e. `01_Linac_RIL_tuning_Acsys` minus `01_Linac_` and `_Acsys`), and `Acsys` is the interface suffix. Simulation templates omit the interface suffix, since their parent sim environments don't carry one either, e.g. `99_Sim_TuneQx_SimpleVirtualAccelerator.yaml`.
+
+When a region assignment is ambiguous — an environment that varies a parameter in one region but reads a diagnostic from another — ask before guessing; Fermilab device-prefix meanings require domain knowledge.
+
+**Gotcha:** `badger.factory.load_plugin` loads environment modules via `importlib.import_module(f"environments.{name}")`, which works fine with digit-leading folder names. But a literal `from environments.01_Linac_RIL_tuning_Acsys import X` is a `SyntaxError` — any ad hoc script or test that needs to import a renamed environment module directly must use `importlib.import_module(...)` instead (see `tests/VA_deferred_expressions_test.py` and `tests/VA_plugin_smoke_test.py` for the pattern).
 
 ---
 

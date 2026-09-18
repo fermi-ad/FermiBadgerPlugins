@@ -6,6 +6,7 @@ Mu2e Delivery Ring lattice and exercises the full read/write API.
 Run from the repo root:
     ~/miniconda3/envs/Badger_154_VirtAcc/bin/python tests/VA_plugin_smoke_test.py
 """
+import importlib
 import math
 import os
 import sys
@@ -14,10 +15,11 @@ import time
 sys.path.insert(0, 'plugins')
 
 t0 = time.time()
-from environments.VirtualAccelerator_MADXSuite import (
-    Environment,
-    MADX_PREDEFINED_CONSTANTS,
-)
+# Digit-leading module name ("99_Sim_...") is not a valid `from x import y`
+# target, so load it via importlib instead.
+va = importlib.import_module('environments.99_Sim_VirtualAccelerator_MADXSuite')
+Environment = va.Environment
+MADX_PREDEFINED_CONSTANTS = va.MADX_PREDEFINED_CONSTANTS
 from interfaces.VirtualAccelerator_MADXSuiteInterface import Interface
 t_import = time.time() - t0
 print(f'import time: {t_import:.2f}s (must be fast: no MAD-X load at import)')
@@ -207,8 +209,6 @@ print('setpoints string param parsed and applied: ok')
 # without parsing the lattice, which is what Badger's per-process env probe
 # needs.  Simulated here by clearing the in-process cache.
 # ---------------------------------------------------------------------- #
-import environments.VirtualAccelerator_MADXSuite as va
-
 assert env._varcache_path().is_file(), 'no sidecar cache written'
 va._LATTICE_CACHE.clear()
 

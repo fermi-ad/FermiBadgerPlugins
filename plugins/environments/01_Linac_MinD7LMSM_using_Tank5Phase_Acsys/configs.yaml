@@ -1,0 +1,7 @@
+name: "01_Linac_MinD7LMSM_using_Tank5Phase_Acsys"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicAcsysInterface

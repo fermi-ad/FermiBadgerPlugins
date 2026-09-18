@@ -1,0 +1,7 @@
+name: "01_Linac_QuadTuning_Acsys"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicAcsysInterface

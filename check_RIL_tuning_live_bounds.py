@@ -17,7 +17,7 @@ cannot change anything on the real accelerator -- it only reads.
 
 Usage (run from the FermiBadgerPlugins repo root, inside FermiBadger_env):
 
-    python check_RIL_tuning_live_bounds.py tuning_templates/RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml
+    python check_RIL_tuning_live_bounds.py tuning_templates/01_Linac_trims_and_sol_LEBT_MEBTquads_RIL_tuning_Acsys.yaml
 
 If no path is given it defaults to that same template.
 """
@@ -48,7 +48,7 @@ def main():
     template_path = (
         sys.argv[1]
         if len(sys.argv) > 1
-        else "tuning_templates/RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml"
+        else "tuning_templates/01_Linac_trims_and_sol_LEBT_MEBTquads_RIL_tuning_Acsys.yaml"
     )
     template_path = os.path.join(REPO_ROOT, template_path) if not os.path.isabs(
         template_path
@@ -59,7 +59,7 @@ def main():
 
     env_mod = load_module(
         "ril_tuning_env",
-        os.path.join(PLUGIN_ROOT, "environments", "RIL_tuning", "__init__.py"),
+        os.path.join(PLUGIN_ROOT, "environments", "01_Linac_RIL_tuning_Acsys", "__init__.py"),
     )
     intf_mod = load_module(
         "basic_acsys_interface",

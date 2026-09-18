@@ -12,6 +12,7 @@ measured: the Delivery Ring tune sweep reproduces the slow-path values, and the
 Run from the repo root:
     ~/miniconda3/envs/FermiBadger_env/bin/python tests/VA_deferred_expressions_test.py
 """
+import importlib
 import sys
 import tempfile
 from pathlib import Path
@@ -20,12 +21,15 @@ sys.path.insert(0, 'plugins')
 
 from cpymad.madx import Madx
 
-from environments.VirtualAccelerator_MADXSuite import (
-    VERIFIED_ELEMENT_ATTRS,
-    Environment,
-    _matches,
-)
-from environments.VirtualAccelerator_MADXSuite.madx_deferred import to_deferred
+# Digit-leading module name ("99_Sim_...") is not a valid `from x import y`
+# target, so load it via importlib instead.
+_va_env = importlib.import_module('environments.99_Sim_VirtualAccelerator_MADXSuite')
+VERIFIED_ELEMENT_ATTRS = _va_env.VERIFIED_ELEMENT_ATTRS
+Environment = _va_env.Environment
+_matches = _va_env._matches
+to_deferred = importlib.import_module(
+    'environments.99_Sim_VirtualAccelerator_MADXSuite.madx_deferred'
+).to_deferred
 from interfaces.VirtualAccelerator_MADXSuiteInterface import Interface
 
 DELIVERY_RING = 'sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx'

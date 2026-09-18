@@ -1,7 +1,0 @@
-name: "Muon_DR_PID_tune "
-version: "0.1"
-dependencies:
-  - badger-opt
-  - numpy
-interface:
-  - BasicAcsysInterface

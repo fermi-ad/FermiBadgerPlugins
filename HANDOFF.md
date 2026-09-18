@@ -16,7 +16,7 @@
    ```
 
 3. **Load a template**:
-   - Open `tuning_templates/VirtualAccelerator_MADXSuite_example.yaml`
+   - Open `tuning_templates/99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml`
    - The lattice file path is relative to the repo root
 
 ### Version Information
@@ -31,9 +31,9 @@ For detailed information on versions and fixes, see `HANDOFF.md` section "Badger
 
 | File | Purpose |
 |------|---------|
-| `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` | Environment plugin - loads MAD-X lattice, deduces vars/observables |
+| `plugins/environments/99_Sim_VirtualAccelerator_MADXSuite/__init__.py` | Environment plugin - loads MAD-X lattice, deduces vars/observables |
 | `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/__init__.py` | Interface plugin - translates channel names to xtrack operations |
-| `tuning_templates/VirtualAccelerator_MADXSuite_example.yaml` | Working example template |
+| `tuning_templates/99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml` | Working example template |
 | `sim_configs/DeliveryRing/` | Lattice files for different accelerator configurations |
 | `patches/pydantic_editor-badger-1.6.0-fixes.patch` | Pydantic editor patches for Badger 1.6.0 |
 
@@ -74,7 +74,7 @@ type(self).variables.clear()
 type(self).variables.update(self._deduce_variables())
 ```
 
-See: `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py:52-58, 173-175`
+See: `plugins/environments/99_Sim_VirtualAccelerator_MADXSuite/__init__.py:52-58, 173-175`
 
 ### 3. GUI Param Editor Bug - Dict/List Values Crash
 
@@ -111,7 +111,7 @@ def _bounds_around(self, value: float) -> list[float]:
     return [min(lo, hi), max(lo, hi)]  # CRITICAL: swap for negatives
 ```
 
-See: `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py:218-225`
+See: `plugins/environments/99_Sim_VirtualAccelerator_MADXSuite/__init__.py:218-225`
 
 ### 5. No `line.update()` Method
 
@@ -131,7 +131,7 @@ mad.beam()  # Keeps values from BEAM statement in lattice, or uses defaults
 mad.use(sequence=matched)
 ```
 
-See: `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py:149-150`
+See: `plugins/environments/99_Sim_VirtualAccelerator_MADXSuite/__init__.py:149-150`
 
 ---
 
@@ -187,7 +187,7 @@ See `patches/README.md` for detailed documentation of each fix.
 | Command | Purpose |
 |---------|---------|
 | `badger -g --config_filepath config.yaml` | Launch GUI with repo config |
-| `python -c "from plugins.environments.VirtualAccelerator_MADXSuite import Environment; print(len(Environment.variables), len(Environment.observables))"` | Quick sanity check |
+| `python -c "import importlib; m=importlib.import_module('plugins.environments.99_Sim_VirtualAccelerator_MADXSuite'); print(len(m.Environment.variables), len(m.Environment.observables))"` | Quick sanity check (digit-leading module name needs `importlib`, not `from ... import`) |
 | `grep -n "TODO\|FIXME\|XXX" plugins/` | Find pending work |
 
 ---
@@ -197,7 +197,7 @@ See `patches/README.md` for detailed documentation of each fix.
 - **Phase 4.3 Complete**: GUI successfully loads template and optimization runs
 - **Badger Version**: 1.6.0 with patches applied
 - **Xopt Version**: 3.2.1
-- **Repository**: `plugins/environments/VirtualAccelerator_MADXSuite/` and `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/`
+- **Repository**: `plugins/environments/99_Sim_VirtualAccelerator_MADXSuite/` and `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/`
 - **Lattice**: Delivery Ring (mu2e-dr-model-v2026.03.23.madx)
 - **Variables**: 2907 (quad knobs, element attrs)
 - **Observables**: 262 (global optics, BPM reads, SETPOINT channels)
@@ -337,21 +337,21 @@ lattice_filename: str | None = None
 lattice_filename: str = Field(default='sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx')
 ```
 
-**See also:** `plugins/environments/VirtualAccelerator_MADXSuite/__init__.py` for the fix.
+**See also:** `plugins/environments/99_Sim_VirtualAccelerator_MADXSuite/__init__.py` for the fix.
 
 ---
 
-## BasicAcsysInterface / Physical-Hardware Templates (RIL_tuning, LinacQuadTuning, etc.)
+## BasicAcsysInterface / Physical-Hardware Templates (01_Linac_RIL_tuning_Acsys, 01_Linac_QuadTuning_Acsys, etc.)
 
-Environments backed by real Fermilab ACNET/DPM hardware (`RIL_tuning`,
-`LinacQuadTuning`, and any future environment listing `BasicAcsysInterface`
+Environments backed by real Fermilab ACNET/DPM hardware (`01_Linac_RIL_tuning_Acsys`,
+`01_Linac_QuadTuning_Acsys`, and any future environment listing `BasicAcsysInterface`
 in its `configs.yaml`) have their own gotchas, distinct from the
-`VirtualAccelerator_MADXSuite` simulation plugin most of this doc covers.
+`99_Sim_VirtualAccelerator_MADXSuite` simulation plugin most of this doc covers.
 
 ### CLI gotcha: template path is relative to `BADGER_TEMPLATE_ROOT`
 
 ```bash
-badger -mini -cf config.yaml -t RIL_tuning_trims_and_sol_LEBT_MEBTquads.yaml
+badger -mini -cf config.yaml -t 01_Linac_RIL_tuning_Acsys_trims_and_sol_LEBT_MEBTquads.yaml
 ```
 
 `-t` takes a **bare filename**, resolved against `BADGER_TEMPLATE_ROOT`
@@ -413,7 +413,7 @@ moment the live value goes negative, or block `add_rand_in_init_table()`'s
 clipped sampling from ever producing a valid initial point. When adding a
 new physical template, check whether a sibling template already has a
 correctly two-sided range for the same device (e.g. `L:ATRMVU`'s `[-4, 1]`
-in the RIL_tuning templates) and mirror it, rather than leaving a stale
+in the 01_Linac_RIL_tuning_Acsys templates) and mirror it, rather than leaving a stale
 one-sided range from an earlier, differently-signed operating point.
 
 ## `BasicPacsysInterface` (pacsys port of `BasicAcsysInterface`)

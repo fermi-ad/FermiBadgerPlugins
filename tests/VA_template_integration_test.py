@@ -23,12 +23,12 @@ from badger.factory import get_env, get_intf, list_env
 
 envs = list_env()
 print(f'environments discovered: {envs}')
-assert 'VirtualAccelerator_MADXSuite' in envs
+assert '99_Sim_VirtualAccelerator_MADXSuite' in envs
 
 Intf, intf_configs = get_intf('VirtualAccelerator_MADXSuiteInterface')
 print(f'interface loaded: {Intf.name}')
 
-Env, configs = get_env('VirtualAccelerator_MADXSuite')
+Env, configs = get_env('99_Sim_VirtualAccelerator_MADXSuite')
 
 variables = configs['variables']
 observations = configs['observations']
@@ -93,7 +93,7 @@ for path in sorted(glob.glob(os.path.join(REPO_ROOT, 'tuning_templates', '*.yaml
             # in the GUI either; not our environment's problem.
             print(f'  {os.path.basename(path)}: skipped, not safe-loadable ({type(e).__name__})')
             continue
-    if template.get('environment', {}).get('name') != 'VirtualAccelerator_MADXSuite':
+    if template.get('environment', {}).get('name') != '99_Sim_VirtualAccelerator_MADXSuite':
         continue
     label = os.path.basename(path)
     vocs = template['vocs']

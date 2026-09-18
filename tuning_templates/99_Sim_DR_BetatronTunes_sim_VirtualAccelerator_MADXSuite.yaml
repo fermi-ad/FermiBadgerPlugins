@@ -1,0 +1,130 @@
+additional_variables: []
+badger_version: 1.6.0
+constraint_formulas: {}
+critical_constraint_names: []
+description: Adjust main DR quad busses to change the horizontal tune (squared-error
+  setpoint objectives). No proximal biasing (TurBO=null)
+environment:
+  name: 99_Sim_VirtualAccelerator_MADXSuite
+  params:
+    beam_p0c_eV: 8889999999.0
+    debug: false
+    lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
+    rel_range: 0.1
+    sequence_name: full
+    setpoints:
+      qx: 9.049
+      qy: 9.035
+    zero_half_range: 1.9
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 1000
+    max_time: 5.0
+    mixed_max_discrete_configurations: 512
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller: null
+  vocs:
+    constants: {}
+    constraints:
+      optics_stable:
+        dtype: None
+        type: GreaterThanConstraint
+        value: 0.5
+    objectives:
+      qx-SETPOINT:
+        dtype: None
+        type: MinimizeObjective
+    observables:
+      optics_stable:
+        dtype: None
+        type: Observable
+      qx:
+        dtype: None
+        type: Observable
+      qx-SETPOINT:
+        dtype: None
+        type: Observable
+      qy:
+        dtype: None
+        type: Observable
+      qy-SETPOINT:
+        dtype: None
+        type: Observable
+    variables:
+      i_dqd:
+        default_value: None
+        domain:
+        - 228.57
+        - 252.63
+        dtype: None
+        type: ContinuousVariable
+      i_dqf:
+        default_value: None
+        domain:
+        - 229.14
+        - 253.26
+        dtype: None
+        type: ContinuousVariable
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: DR_BetatronTunes_sim
+observable_formulas: {}
+relative_to_current: false
+vocs:
+  constants: {}
+  # Unstable optics make every twiss observable NaN; this fences the optimizer
+  # out of that region.  Not critical: a NaN point should not abort the run.
+  constraints:
+    optics_stable:
+      dtype: null
+      type: GreaterThanConstraint
+      value: 0.5
+  objectives:
+    qx-SETPOINT:
+      dtype: null
+      type: MinimizeObjective
+  observables:
+    optics_stable:
+      dtype: null
+      type: Observable
+    qx:
+      dtype: null
+      type: Observable
+    qx-SETPOINT:
+      dtype: null
+      type: Observable
+    qy:
+      dtype: null
+      type: Observable
+    qy-SETPOINT:
+      dtype: null
+      type: Observable
+  variables:
+    i_dqd:
+      default_value: null
+      domain:
+      - 228.57
+      - 252.63
+      dtype: null
+      type: ContinuousVariable
+    i_dqf:
+      default_value: null
+      domain:
+      - 229.14
+      - 253.26
+      dtype: null
+      type: ContinuousVariable
+vrange_hard_limit: {}
+vrange_limit_options: {}
+xopt_version: 3.2.1

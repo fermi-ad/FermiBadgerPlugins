@@ -1,0 +1,17 @@
+name: "99_Sim_VirtualAccelerator_MADXSuite"
+version: "0.2"
+dependencies:
+  - badger-opt
+  - numpy
+  - xtrack
+  - cpymad
+interface:
+  - VirtualAccelerator_MADXSuiteInterface
+params:
+  lattice_filename: "sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx"
+  sequence_name: "full"
+  debug: false
+  beam_p0c_eV: 8890000000.0
+  rel_range: 0.1
+  zero_half_range: 0.1
+  setpoints: ""
