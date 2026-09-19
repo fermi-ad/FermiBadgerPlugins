@@ -5,7 +5,7 @@ description: "- Vary only L:ATRMHD, L:ATRMHU, L:ATRMVD, L:ATRMVU.\n - A:SOL and 
 environment:
   name: 01_Linac_RIL_tuning_Acsys
   params:
-    debug: true
+    debug: false
     sample_event: '@e,52,e,0'
     setpoint: hold
     settings_role: ril_tuning

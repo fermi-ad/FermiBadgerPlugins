@@ -6,7 +6,7 @@ description: ''
 environment:
   name: 01_Linac_QuadTuning_Acsys
   params:
-    debug: true
+    debug: false
     sample_events:
       default: '@e,0A,e,0'
     settings_role: linac_quads

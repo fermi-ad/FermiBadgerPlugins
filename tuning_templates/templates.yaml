@@ -4,7 +4,7 @@ description: Contrain on TK1RAD and D7TOR
 environment:
   name: RIL_tuning
   params:
-    debug: true
+    debug: false
     sample_event: '@e,52,e,0'
     setpoint: hold
     settings_role: ril_tuning
