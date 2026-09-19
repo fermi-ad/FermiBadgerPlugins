@@ -119,6 +119,12 @@ OPTICS_STABLE = 'optics_stable'
 # plugins/environments/<name>/__init__.py -> repo root
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
+# A lattice's own TWISS/TRACK/PLOT statements (and MAD-X's own
+# checkpoint_restart.dat) write into MAD-X's working directory using whatever
+# relative filenames they specify.  Every mad.call() below chdirs MAD-X here
+# first so those land in one gitignored place instead of the repo root.
+SIM_OUTPUT_DIR = REPO_ROOT / 'sim_outputs'
+
 
 # (resolved lattice path, sequence name) -> (Madx, design Line, matched name).
 # Badger rebuilds the environment on every GUI table refresh and once more per
@@ -131,6 +137,18 @@ _LATTICE_CACHE: dict[tuple[str, str], tuple] = {}
 # lattice, so a fresh process can advertise them without parsing it.  Written
 # beside the lattice file, named '<lattice>.<sequence>.varcache.json'.
 VARCACHE_SUFFIX = '.varcache.json'
+
+
+def _new_madx(stdout) -> Madx:
+    """A cpymad Madx instance chdir'd into SIM_OUTPUT_DIR.
+
+    Keeps the TWISS/TRACK/PLOT files a lattice's own statements write (plus
+    MAD-X's checkpoint_restart.dat) out of the repo root.
+    """
+    SIM_OUTPUT_DIR.mkdir(exist_ok=True)
+    mad = Madx(stdout=stdout)
+    mad.chdir(str(SIM_OUTPUT_DIR))
+    return mad
 
 
 def _matches(before, after) -> bool:
@@ -262,6 +280,10 @@ class Environment(environment.Environment):
             raise FileNotFoundError(
                 f'MAD-X lattice file not found: {self._lattice_path}'
             )
+        # Absolute, since mad.call() passes this straight to the MAD-X
+        # subprocess, whose cwd is redirected to SIM_OUTPUT_DIR (_new_madx) --
+        # a path relative to the launch directory would no longer resolve.
+        self._lattice_path = self._lattice_path.resolve()
         self._cache_key = (str(self._lattice_path.resolve()),
                            self.sequence_name.lower())
 
@@ -474,7 +496,7 @@ class Environment(environment.Environment):
             handle.write(rewritten)
             rewritten_path = handle.name
         try:
-            mad = Madx(stdout=None if self.debug else False)
+            mad = _new_madx(None if self.debug else False)
             mad.call(rewritten_path)
         finally:
             Path(rewritten_path).unlink(missing_ok=True)
@@ -489,7 +511,7 @@ class Environment(environment.Environment):
             'reloading MAD-X on every iteration, which is far slower.'
         )
         self._use_deferred = False
-        mad = Madx(stdout=None if self.debug else False)
+        mad = _new_madx(None if self.debug else False)
         mad.call(str(lattice_path))
         return mad
 
@@ -502,7 +524,7 @@ class Environment(environment.Environment):
         VERIFIED_ELEMENT_ATTRS.  A rewrite that left nothing expression-driven
         is reported too: it parsed cleanly but did nothing.
         """
-        original = Madx(stdout=False)
+        original = _new_madx(False)
         try:
             original.call(str(lattice_path))
 
@@ -593,7 +615,7 @@ class Environment(environment.Environment):
             logger.warning(f'No variables found in lattice file: {variable_inputs.keys()}')
 
         # Create a new MAD-X instance from the temporary file
-        mad = Madx(stdout=None if self.debug else False)
+        mad = _new_madx(None if self.debug else False)
         mad.call(temp_lattice_path)
 
         # Re-apply the sequence
