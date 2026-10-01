@@ -275,6 +275,7 @@ FermiBadgerPlugins/
 │   └── DeliveryRing/
 ├── tests/                      # Diagnostic and verification scripts
 │   ├── check_RIL_tuning_live_bounds.py  # Read-only live-bounds diagnostic
+│   ├── template_lint_test.py   # Headless check that every tuning template loads
 │   └── test-quick-start.sh     # Fresh-clone verification script
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
     ├── 01_Linac_trims_and_sol_RIL_tuning_Acsys.yaml

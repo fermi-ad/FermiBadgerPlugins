@@ -2,7 +2,7 @@ badger_version: 1.3.4
 critical_constraint_names: []
 description: Contrain on TK1RAD and D7TOR
 environment:
-  name: RIL_tuning
+  name: 01_Linac_RIL_tuning_Acsys
   params:
     debug: false
     sample_event: '@e,52,e,0'

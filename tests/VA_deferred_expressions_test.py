@@ -19,8 +19,6 @@ from pathlib import Path
 
 sys.path.insert(0, 'plugins')
 
-from cpymad.madx import Madx
-
 # Digit-leading module name ("99_Sim_...") is not a valid `from x import y`
 # target, so load it via importlib instead.
 _va_env = importlib.import_module('environments.99_Sim_VirtualAccelerator_MADXSuite')
@@ -50,7 +48,9 @@ XFER_TWISS_INIT = {
 
 def load(source_path, rewrite):
     """A Madx with source_path loaded, optionally through the ':=' rewrite."""
-    mad = Madx(stdout=False)
+    # _new_madx chdirs into sim_outputs/, so the path must survive that.
+    source_path = Path(source_path).resolve()
+    mad = _va_env._new_madx(stdout=False)
     if not rewrite:
         mad.call(str(source_path))
         return mad, None

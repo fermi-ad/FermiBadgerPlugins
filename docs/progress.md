@@ -1420,3 +1420,55 @@ plugin directory's file.
 
 Commits `8fae700`..`cc865e4` on `worktree-repo-cleanup`, merged via PR #7
 (`bcc2c1b`) into `origin/main`.
+
+## 2026-10-01: Field-use polish — template lint, stale template, test leak
+
+### Problem
+"Polishing for field use" pass. Needed a way to catch a broken tuning
+template before it fails as a dialog box in the control room, and a check
+of what was actually broken.
+
+### Found
+- `tuning_templates/templates.yaml` named environment `RIL_tuning`, which no
+  longer exists (renamed to `01_Linac_RIL_tuning_Acsys` in the convention
+  rollout). Loading it in the GUI raises `BadgerEnvNotFoundError`, uncaught.
+- `tests/VA_deferred_expressions_test.py` built a raw `Madx()` (no chdir), so
+  MAD-X dropped `checkpoint_restart.dat` at the repo root, which then failed
+  `tests/VA_sim_outputs_test.py`'s "no stray files" precondition when the
+  scripts ran back to back.
+
+### Fix Applied
+- `templates.yaml` → `01_Linac_SourceTrims_RIL_tuning_Acsys.yaml` (4 source
+  trims, minimize `L:TUNRAD`), environment name corrected.
+- New `tests/template_lint_test.py`: headless, mirrors
+  `routine_page.set_options_from_template` — required keys, environment
+  exists, VOCS parses, `filter_generator_config` accepts the generator
+  block, filename follows the README convention, and when
+  `relative_to_current` is on, every variable has a `vrange_limit_options`
+  entry not on `limit_option_idx` 0 (the zero-readback-collapses mode).
+  All 15 tracked templates pass.
+- Deferred-expressions test now uses the plugin's `_new_madx` helper
+  (chdir into `sim_outputs/`) and resolves the lattice path first.
+
+### Answered: per-variable readback windows in a template
+Native to Badger 1.6.0, nothing to build. `relative_to_current: true` plus a
+per-variable `vrange_limit_options` entry: `limit_option_idx: 2` + `delta`
+is ± delta in engineering units; `limit_option_idx: 1` + `ratio_full` is
+± half of ratio_full × hard range. Modes can be mixed per variable in one
+template. Logic: `calc_auto_bounds` in Badger's `gui/components/routine_page.py`.
+
+### User decisions
+- `tuning_templates/01_Linac_RILTuning_Acsys.yaml` (1.6.0 GUI re-save with
+  live-captured bounds) is the preferred replacement for the
+  `_trims_and_sol_LEBT_MEBTquads_D34opt_` template, whose name was clunky.
+  Old one deleted. The lint's naming-convention check is advisory (prints
+  `warn`, does not fail) so a readable short name is allowed.
+- `sim_configs/Booster/` stays untracked for now (39MB, Linux x86-64 `madx`
+  binary, zip, MAD-X outputs).
+
+### Files
+- `tuning_templates/01_Linac_SourceTrims_RIL_tuning_Acsys.yaml` (renamed)
+- `tests/template_lint_test.py` (new)
+- `tests/VA_deferred_expressions_test.py`
+- `tuning_templates/01_Linac_RILTuning_Acsys.yaml` (new, replaces the D34opt template, now deleted)
+- `README.md` (tree lists the lint)

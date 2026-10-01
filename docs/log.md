@@ -532,3 +532,19 @@ but byte-identical duplicate commit for the same two screenshots
 (`86863d7`) — confirmed identical by checksum, then `git reset --hard
 origin/main` to resolve the divergence cleanly once the PR was confirmed
 merged.
+
+## 2026-10-01 — field-use polish
+
+Surveyed the repo for anything that would bite in the control room. Wrote
+`tests/template_lint_test.py`, which loads every tuning template the way
+the GUI does; it immediately caught `templates.yaml` pointing at the
+pre-rename environment `RIL_tuning`. Renamed it into the convention as
+`01_Linac_SourceTrims_RIL_tuning_Acsys.yaml` and fixed the env name. Added a
+window-safety rule to the lint (no variable on `limit_option_idx` 0 when
+auto-ranging). Running the four VA test scripts back to back exposed that
+the deferred-expressions test leaked `checkpoint_restart.dat` to the repo
+root via a raw `Madx()`; routed it through `_new_madx`. User asked whether a
+template can natively set per-variable windows around the readback, some as
+a percent of full range and some as an engineering-units delta: yes, that
+is exactly `vrange_limit_options` modes 1 and 2, already in use. See
+docs/progress.md for details.
