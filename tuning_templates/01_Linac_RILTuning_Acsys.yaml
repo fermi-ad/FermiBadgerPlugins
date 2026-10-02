@@ -50,22 +50,22 @@ generator:
   vocs:
     constants: {}
     constraints:
-      L:D7TOR:
+      L:D34LM:
         dtype: None
-        type: GreaterThanConstraint
-        value: 26.0
+        type: LessThanConstraint
+        value: 1.1
       L:TK1RAD:
         dtype: None
         type: LessThanConstraint
-        value: 18.0
+        value: 40.0
       L:TUNRAD:
         dtype: None
         type: LessThanConstraint
-        value: 90.0
+        value: 80.0
     objectives:
-      L:D34LM:
+      G:LINEFF:
         dtype: None
-        type: MinimizeObjective
+        type: MaximizeObjective
     observables:
       B:BLMLAM:
         dtype: None
@@ -83,8 +83,8 @@ generator:
       L:ASOL:
         default_value: None
         domain:
-        - 414.0998840332031
-        - 434.0998840332031
+        - 419.0998840332031
+        - 429.0998840332031
         dtype: None
         type: ContinuousVariable
       L:ATRMHD:
@@ -118,50 +118,64 @@ generator:
       L:LSOL:
         default_value: None
         domain:
-        - 455.7998046875
-        - 475.7998046875
+        - 460.7998046875
+        - 470.7998046875
         dtype: None
         type: ContinuousVariable
       L:LTRMH:
         default_value: None
         domain:
-        - -0.9158935546875
-        - 0.3621826171875
+        - -0.37685546875
+        - -0.17685546875
         dtype: None
         type: ContinuousVariable
       L:LTRMV:
         default_value: None
         domain:
-        - -1.2196044921875
-        - -0.1016845703125
+        - -0.76064453125
+        - -0.56064453125
         dtype: None
         type: ContinuousVariable
       L:MDQ1:
         default_value: None
         domain:
-        - 203.49961853027344
-        - 250.0
+        - 226.49961853027344
+        - 230.49961853027344
         dtype: None
         type: ContinuousVariable
       L:MDQ2:
         default_value: None
         domain:
-        - 157.19960021972656
-        - 180.0
+        - 170.19960021972656
+        - 174.19960021972656
         dtype: None
         type: ContinuousVariable
       L:MUQ1:
         default_value: None
         domain:
-        - 250.0
-        - 298.499755859375
+        - 271.499755859375
+        - 275.499755859375
         dtype: None
         type: ContinuousVariable
       L:MUQ2:
         default_value: None
         domain:
-        - 225.0
-        - 272.59873962402344
+        - 245.59873962402344
+        - 249.59873962402344
+        dtype: None
+        type: ContinuousVariable
+      L:RFBPAH:
+        default_value: None
+        domain:
+        - 170.84173583984375
+        - 190.84173583984375
+        dtype: None
+        type: ContinuousVariable
+      L:RFQPAH:
+        default_value: None
+        domain:
+        - 189.40185546875
+        - 209.40185546875
         dtype: None
         type: ContinuousVariable
 initial_point_actions:
@@ -173,26 +187,26 @@ initial_point_actions:
   type: add_rand
 name: ''
 observable_formulas: {}
-relative_to_current: true
+relative_to_current: false
 vocs:
   constants: {}
   constraints:
-    L:D7TOR:
+    L:D34LM:
       dtype: null
-      type: GreaterThanConstraint
-      value: 26.0
+      type: LessThanConstraint
+      value: 1.1
     L:TK1RAD:
       dtype: null
       type: LessThanConstraint
-      value: 18.0
+      value: 40.0
     L:TUNRAD:
       dtype: null
       type: LessThanConstraint
-      value: 90.0
+      value: 80.0
   objectives:
-    L:D34LM:
+    G:LINEFF:
       dtype: null
-      type: MinimizeObjective
+      type: MaximizeObjective
   observables:
     B:BLMLAM:
       dtype: null
@@ -210,8 +224,8 @@ vocs:
     L:ASOL:
       default_value: null
       domain:
-      - 414.0998840332031
-      - 434.0998840332031
+      - 419.0998840332031
+      - 429.0998840332031
       dtype: null
       type: ContinuousVariable
     L:ATRMHD:
@@ -245,50 +259,64 @@ vocs:
     L:LSOL:
       default_value: null
       domain:
-      - 455.7998046875
-      - 475.7998046875
+      - 460.7998046875
+      - 470.7998046875
       dtype: null
       type: ContinuousVariable
     L:LTRMH:
       default_value: null
       domain:
-      - -0.9158935546875
-      - 0.3621826171875
+      - -0.37685546875
+      - -0.17685546875
       dtype: null
       type: ContinuousVariable
     L:LTRMV:
       default_value: null
       domain:
-      - -1.2196044921875
-      - -0.1016845703125
+      - -0.76064453125
+      - -0.56064453125
       dtype: null
       type: ContinuousVariable
     L:MDQ1:
       default_value: null
       domain:
-      - 203.49961853027344
-      - 250.0
+      - 226.49961853027344
+      - 230.49961853027344
       dtype: null
       type: ContinuousVariable
     L:MDQ2:
       default_value: null
       domain:
-      - 157.19960021972656
-      - 180.0
+      - 170.19960021972656
+      - 174.19960021972656
       dtype: null
       type: ContinuousVariable
     L:MUQ1:
       default_value: null
       domain:
-      - 250.0
-      - 298.499755859375
+      - 271.499755859375
+      - 275.499755859375
       dtype: null
       type: ContinuousVariable
     L:MUQ2:
       default_value: null
       domain:
-      - 225.0
-      - 272.59873962402344
+      - 245.59873962402344
+      - 249.59873962402344
+      dtype: null
+      type: ContinuousVariable
+    L:RFBPAH:
+      default_value: null
+      domain:
+      - 170.84173583984375
+      - 190.84173583984375
+      dtype: null
+      type: ContinuousVariable
+    L:RFQPAH:
+      default_value: null
+      domain:
+      - 189.40185546875
+      - 209.40185546875
       dtype: null
       type: ContinuousVariable
 vrange_hard_limit:
@@ -310,9 +338,33 @@ vrange_hard_limit:
   L:LSOL:
   - 300.0
   - 500
+  L:LTRMH:
+  - -4.0
+  - 4.0
+  L:LTRMV:
+  - -4.0
+  - 4.0
+  L:MDQ1:
+  - 200.0
+  - 250.0
+  L:MDQ2:
+  - 150.0
+  - 180.0
+  L:MUQ1:
+  - 250.0
+  - 300.0
+  L:MUQ2:
+  - 225.0
+  - 275.0
+  L:RFBPAH:
+  - 100.0
+  - 300.0
+  L:RFQPAH:
+  - 185.0
+  - 225.0
 vrange_limit_options:
   L:ASOL:
-    delta: 10.0
+    delta: 5.0
     limit_option_idx: 2
     ratio_curr: 0.047619047619047616
     ratio_full: 1.0
@@ -337,32 +389,48 @@ vrange_limit_options:
     ratio_curr: 0.40122376821683414
     ratio_full: 0.26734619140625
   L:LSOL:
-    delta: 10.0
+    delta: 5.0
     limit_option_idx: 2
     ratio_curr: 0.06451612903225806
     ratio_full: 1.0
   L:LTRMH:
-    limit_option_idx: 1
+    delta: 0.1
+    limit_option_idx: 2
     ratio_curr: 0.5
     ratio_full: 0.159759521484375
   L:LTRMV:
-    limit_option_idx: 1
+    delta: 0.1
+    limit_option_idx: 2
     ratio_curr: 0.5
     ratio_full: 0.139739990234375
   L:MDQ1:
-    limit_option_idx: 1
+    delta: 2.0
+    limit_option_idx: 2
     ratio_curr: 0.2222222222222222
     ratio_full: 1.0
   L:MDQ2:
-    limit_option_idx: 1
+    delta: 2.0
+    limit_option_idx: 2
     ratio_curr: 0.2857142857142857
     ratio_full: 1.0
   L:MUQ1:
-    limit_option_idx: 1
+    delta: 2.0
+    limit_option_idx: 2
     ratio_curr: 0.18181818181818182
     ratio_full: 1.0
   L:MUQ2:
-    limit_option_idx: 1
+    delta: 2.0
+    limit_option_idx: 2
     ratio_curr: 0.2
     ratio_full: 1.0
+  L:RFBPAH:
+    delta: 10.0
+    limit_option_idx: 2
+    ratio_curr: 0.1
+    ratio_full: 0.1
+  L:RFQPAH:
+    delta: 10.0
+    limit_option_idx: 2
+    ratio_curr: 0.1
+    ratio_full: 0.1
 xopt_version: 3.2.2
