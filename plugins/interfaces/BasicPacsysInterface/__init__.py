@@ -6,6 +6,7 @@ from pacsys.errors import DeviceError
 import re
 import numpy as np
 from time import sleep
+from periodic import unwrap
 
 class Interface(interface.Interface):
     name = 'BasicPacsysInterface'
@@ -20,6 +21,7 @@ class Interface(interface.Interface):
     _current_sumsq: float
     _debug: bool
     _regulate_to: float
+    _unwrap_ref: dict
     _timeout: float
     # Test-only seam: set to a pacsys.testing.FakeBackend() to avoid the real
     # control network. Left None in production, in which case every call goes
@@ -35,6 +37,7 @@ class Interface(interface.Interface):
         self._read_set_pair_settle_tol_pattern = re.compile("^.:.+,.:.+,tol.+@*")
         self._setpoint_pattern = re.compile("^.:.+-SETPOINT")
         self._regulate_to = None
+        self._unwrap_ref = {}
         self._timeout = 15.0
         self._backend_override = None
 
@@ -119,7 +122,10 @@ class Interface(interface.Interface):
     # Read values from devices
     # Use the reading device, not the setting device, if they have different names.
     # If a setpoint exists, instead of the readback, return squared difference of readback-setpoint.
-    def get_values(self, drf_list, sample_events={}, setpoints={}, debug=False):
+    # periods: {reading device: period} for phase-like devices (e.g. {'L:CDPHAS': 360.0}).
+    # Their readbacks are unwrapped onto the branch nearest the first reading of this run
+    # (or nearest the setpoint, for -SETPOINT devices), so a wrap through 0 is not a jump.
+    def get_values(self, drf_list, sample_events={}, setpoints={}, periods={}, debug=False):
         readings_list = self.extract_reading_devices(drf_list)
         if debug: print (f'BasicPacsysInterface.get_values() got readings_list: {readings_list} and sample_events: {sample_events}.')
         # List of the one with -SETPOINT keyword in the device name
@@ -141,6 +147,12 @@ class Interface(interface.Interface):
             for i, name in enumerate(drf_list):
                 if debug: print (f'drf_list[{i}] == {name}. Storing value as readbacks[i]={readbacks[i]}')
                 valdict_to_return[name] = readbacks[i]
+            readbacks = list(readbacks)
+            for i, name in enumerate(readings_list):
+                if name in periods:
+                    self._unwrap_ref.setdefault(name, readbacks[i])
+                    readbacks[i] = unwrap(readbacks[i], self._unwrap_ref[name], periods[name])
+                    valdict_to_return[drf_list[i]] = readbacks[i]
             if len(setpoint_devs)>0: # When there's a device (or more) to regulate
                 if setpoints=={} or list(setpoints.values()) == []: exit(f'Please give setpoint(s) parameter value(s) for {setpoint_devs}.')
                 if debug: print(f'setpoint_devs: {setpoint_devs}')
@@ -162,8 +174,10 @@ class Interface(interface.Interface):
                     if setpoints[clean_device_name]=='hold': setpoint = self._regulate_to[setpoint_dev]
                     else: setpoint = float(setpoints[clean_device_name])
 
-                    if debug: print (f'{setpoint_dev} will be measured as ({readbacks[dev_index]} - {setpoint}) squared.')
-                    valdict_to_return[setpoint_dev] = (readbacks[dev_index]-setpoint)**2.0
+                    reading = readbacks[dev_index]
+                    if clean_device_name in periods: reading = unwrap(reading, setpoint, periods[clean_device_name])
+                    if debug: print (f'{setpoint_dev} will be measured as ({reading} - {setpoint}) squared.')
+                    valdict_to_return[setpoint_dev] = (reading-setpoint)**2.0
         if debug: print (f'BasicPacsysInterface.get_values() will return: {valdict_to_return}')
         return valdict_to_return
 
@@ -182,7 +196,7 @@ class Interface(interface.Interface):
         return settings_dict
 
     # Set devices to values settable_devices: dict[str, float]
-    def set_values(self, drf_dict, settings_role, dont_set=False, debug=False):
+    def set_values(self, drf_dict, settings_role, dont_set=False, periods={}, debug=False):
         # Need a list of settings devices. Handle any devices with regex-enabled handling.
         setdevs = self.extract_setting_devices(list(drf_dict.keys()))
         setvals = list(drf_dict.values())
@@ -210,7 +224,7 @@ class Interface(interface.Interface):
         while len(circ_buffers)>0:
             if debug: print ('BasicPacsysInterface.set_values() has circ_buffers: ',circ_buffers)
             settling_devs = list(circ_buffers.keys())
-            newvals = self.get_values(settling_devs)
+            newvals = self.get_values(settling_devs, periods=periods)
             for i, setdev in enumerate(settling_devs):
                 found_buff = circ_buffers[setdev]
                 NaNs_here = np.where(np.isnan(found_buff))

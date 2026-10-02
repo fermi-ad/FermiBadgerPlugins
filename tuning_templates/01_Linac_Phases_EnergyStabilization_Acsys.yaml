@@ -1,0 +1,101 @@
+additional_variables: []
+badger_version: 1.6.0
+constraint_formulas: {}
+critical_constraint_names: []
+description: |
+  Goal: Hold the 400 MeV line energy where it was at the start of the run.
+  Objective: B:400DFT-SETPOINT MINIMIZE, i.e. (B:400DFT - its first reading of the run) squared.
+  Variables: debuncher phase L:LDPADJ (read on L:CDPHAS), tank 7 phase L:L7PADJ (read on
+    L:C7PHAS), tank 5 phase L:V5QSET.
+  Constraints: none.
+  Observables: B:400DF2-SETPOINT, the same squared error for B:400DF2.
+  Windows: +-5 deg on the phases, +-0.5 on L:V5QSET, around the live readback at load (Automatic).
+  Notes: readings on $15. The phases are periodic (360 deg): their bounds are two periods wide,
+    so a setting past the wrap is allowed and means the same as setting - 360. With
+    settings_role nosettings the phases are read but never set; give a real role to tune.
+environment:
+  name: 01_Linac_EnergyStabilization_Acsys
+  params:
+    debug: false
+    periods:
+      L:CDPHAS: 360.0
+      L:C7PHAS: 360.0
+    sample_events:
+      default: '@e,15,e,0'
+    setpoints:
+      B:400DF2: hold
+      B:400DFT: hold
+      defaults: null
+    settings_role: nosettings
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    max_iter: 2000
+    max_time: 5.0
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller:
+    failure_tolerance: 6
+    length: 0.25
+    length_max: 2.0
+    length_min: 0.0078125
+    name: SafetyTurboController
+    restrict_model_data: true
+    scale_factor: 1.25
+    success_tolerance: 6
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: ''
+observable_formulas: {}
+relative_to_current: true
+vocs:
+  constants: {}
+  constraints: {}
+  objectives:
+    B:400DFT-SETPOINT:
+      dtype: null
+      type: MinimizeObjective
+  observables:
+    B:400DF2-SETPOINT:
+      dtype: null
+      type: Observable
+  variables:
+    L:C7PHAS,L:L7PADJ,tol3@0.45:
+      default_value: null
+      domain:
+      - 175.0
+      - 185.0
+      dtype: null
+      type: ContinuousVariable
+    L:CDPHAS,L:LDPADJ,tol2@0.1:
+      default_value: null
+      domain:
+      - 175.0
+      - 185.0
+      dtype: null
+      type: ContinuousVariable
+    L:V5QSET:
+      default_value: null
+      domain:
+      - -35.5
+      - -34.5
+      dtype: null
+      type: ContinuousVariable
+vrange_limit_options:
+  L:C7PHAS,L:L7PADJ,tol3@0.45:
+    delta: 5.0
+    limit_option_idx: 2
+  L:CDPHAS,L:LDPADJ,tol2@0.1:
+    delta: 5.0
+    limit_option_idx: 2
+  L:V5QSET:
+    delta: 0.5
+    limit_option_idx: 2
+xopt_version: 3.2.2

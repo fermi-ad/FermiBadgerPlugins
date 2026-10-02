@@ -548,3 +548,17 @@ template can natively set per-variable windows around the readback, some as
 a percent of full range and some as an engineering-units delta: yes, that
 is exactly `vrange_limit_options` modes 1 and 2, already in use. See
 docs/progress.md for details.
+
+## 2026-10-01 (later) — periodic phase handling
+
+User asked for Badger to treat degree/radian devices as periodic (L:LDPADJ,
+L:CDPHAS). Traced Badger 1.6.0: the hard wall is `validate_setpoints` +
+GUI window clipping on env bounds, plus wrapped readbacks. Checked both
+interfaces at the user's request; Pacsys is a straight port, no periodic
+handling. Added `plugins/periodic.py` unwrap, a `periods` kwarg through
+both interfaces' `get_values`/`set_values`, rewrote the (import-broken)
+EnergyStabilization envs around it with [0, 720] phase bounds and a
+midpoint unwrap in `get_variables`, a first tuning template for that env,
+and an offline FakeBackend test. All offline checks pass; live behaviour
+of the phase devices still needs a field check.
+

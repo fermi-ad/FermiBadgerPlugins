@@ -10,6 +10,8 @@ import sys
 import os
 
 sys.path.insert(0, os.path.dirname(__file__))
+# plugins/ root, for the shared `periodic` helper (Badger puts it on sys.path itself)
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 from __init__ import Interface  # noqa: E402
 
 from pacsys.testing import FakeBackend  # noqa: E402

@@ -1472,3 +1472,54 @@ template. Logic: `calc_auto_bounds` in Badger's `gui/components/routine_page.py`
 - `tests/VA_deferred_expressions_test.py`
 - `tuning_templates/01_Linac_RILTuning_Acsys.yaml` (new, replaces the D34opt template, now deleted)
 - `README.md` (tree lists the lint)
+
+## 2026-10-01 (later): Periodic (phase) variables and observables
+
+### Problem
+Phase devices (L:LDPADJ setting, L:CDPHAS reading, likewise L:L7PADJ /
+L:C7PHAS) are periodic: x and x + n*360 are the same physics, and the
+setting accepts values past the wrap. Badger had no notion of this:
+`validate_setpoints` rejects any setting outside the env's declared bounds,
+the GUI clips auto-windows to those bounds, and a wrapped readback shows up
+as a 360-degree jump in objectives, constraints, `-SETPOINT` squared errors,
+and the settle-to-tolerance loop. Neither interface handled it; the Pacsys
+port is a straight copy of the Acsys one on this point.
+
+### Fix Applied
+- `plugins/periodic.py`: one helper, `unwrap(value, ref, period)` → the
+  branch of value nearest ref. On sys.path the same way `scanner.py` is.
+- `BasicAcsysInterface` / `BasicPacsysInterface`: `get_values(...,
+  periods={})` unwraps readbacks of listed reading devices onto the branch
+  nearest the first reading of the run (`_unwrap_ref`), and measures
+  `-SETPOINT` error on the branch nearest the setpoint. `set_values(...,
+  periods={})` passes it to the settle loop's reads. No period → unchanged.
+- `01_Linac_EnergyStabilization_{Acsys,Pacsys}`: rewritten (they failed at
+  import: bare `hold`, nonexistent `sample_event`/`setpoint_str`). Now the
+  RIL_tuning pattern plus `periods: {'L:CDPHAS': 360, 'L:C7PHAS': 360}`,
+  phase bounds `[0, 720]`, and `get_variables` moves the live reading onto
+  the branch nearest the middle of the bounds (so a window never straddles
+  a bound, and settings never go negative).
+- `tuning_templates/01_Linac_Phases_EnergyStabilization_Acsys.yaml`: first
+  template for that env; delta windows (5 deg phases, 0.5 V5QSET),
+  `B:400DFT-SETPOINT` minimize with `hold`. Domains are placeholders until
+  loaded live. Passes the lint.
+- `tests/periodic_phase_test.py`: offline via pacsys FakeBackend. Covers
+  the helper, first-reading unwrap, setpoint error across the wrap
+  ((365-350)^2 not (5-350)^2), env midpoint unwrap, and a setting past the
+  wrap passing Badger's bounds validator.
+- `test_basic_pacsys_interface.py`: appends plugins/ to sys.path for the
+  shared helper. README: "Periodic (phase) devices" subsection.
+
+### Deliberately left alone
+- `BasicAcsysInterface` settle loop's two cancelling bugs (bare
+  `meets_tolerance`, `np.all(np.where(...))`) noted in
+  memory/basic-pacsys-interface-port.md — still out of scope.
+- Other envs: `periods` is opt-in per env; only EnergyStabilization has it.
+- `99_Sim_VirtualAccelerator_MADXSuite`: MAD-X phases not touched.
+
+### Not verified
+- No controls-network access here: live L:CDPHAS behaviour (does the
+  reading wrap at 360 or 180? does L:LDPADJ accept > 360 as assumed?) must
+  be checked in the field. If the reading wraps into [-180, 180), nothing
+  changes in the code; only the env bounds midpoint matters.
+
