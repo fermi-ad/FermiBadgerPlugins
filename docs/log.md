@@ -562,3 +562,17 @@ midpoint unwrap in `get_variables`, a first tuning template for that env,
 and an offline FakeBackend test. All offline checks pass; live behaviour
 of the phase devices still needs a field check.
 
+## 2026-10-02 — one general RIL template
+
+Mapped variables, objectives, constraints and observables across the ten
+`01_Linac_*` templates. Eight shared `01_Linac_RIL_tuning_Acsys` and were
+just different checked subsets of it, with drifted thresholds and stale
+params. Since Badger fills every table from the env and only uses the
+template to set what is checked, collapsed them to one general template
+(`01_Linac_RIL_tuning_Acsys.yaml`, bare env name) plus the physically
+distinct `01_Linac_OutputTrajectory_RIL_tuning_Acsys.yaml`; deleted the
+other six. Gave every remaining Linac template a line-per-item
+description (Goal / Objective / Variables / Constraints / ...). Made
+L:RFQPAH, L:RFBPAH and L:V5QSET (Tank 5 phase) periodic in both RIL envs,
+keeping their tight operating limits. Lint and periodic test pass; see
+docs/progress.md.

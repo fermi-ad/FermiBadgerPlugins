@@ -2,29 +2,33 @@ additional_variables: []
 badger_version: 1.6.0
 constraint_formulas: {}
 critical_constraint_names: []
-description: '- Vary only Source trims L:ATRMHD, L:ATRMHU, L:ATRMVD, L:ATRMVU.
-
-  + and LEBT trims L:LTRMH and L:LTRMV
-
-  + solenoids A:SOL and L:LSOL
-
-  + MEBT Quads (indepently, not as mults) L:MUQ1, L:MUQ2, L:MDQ1, L:MDQ2
-
-  - Minimize only L:D34LM
-
-  - Constrain L:TK1RAD<18.0 and L:D7TOR>26.0 and L:TUNRAD<80.0
-
-  - Watch L:D7LSM, L:TK4RAD, "B:BLMLAM", "B:BLMQ3"
-
-  - Turbo controller: safety
-
-  '
+description: |
+  Goal: Raise Linac transmission by tuning the ion source, LEBT, MEBT and RF phases.
+  Objective: G:LINEFF MAXIMIZE.
+  Variables: source trims L:ATRMHU, L:ATRMVU, L:ATRMHD, L:ATRMVD; solenoids L:ASOL, L:LSOL;
+    LEBT trims L:LTRMH, L:LTRMV; MEBT quads L:MUQ1, L:MUQ2, L:MDQ1, L:MDQ2 (independently);
+    RF phases L:RFQPAH, L:RFBPAH.
+  Constraints: L:D7TOR > 25, L:TK1RAD < 18, L:TUNRAD < 80, L:D34LM < 1.1.
+  Observables: L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
+  Windows: +-0.5 source trims, +-0.1 LEBT trims, +-5 solenoids, +-2 MEBT quads, +-10 deg RF phases,
+    all around the live readback at load (Automatic).
+  Notes: readings on $52, B:BOOEFF on $1F. L:RFQPAH, L:RFBPAH and L:V5QSET are periodic (360 deg).
+    Expected improvement with the safety turbo controller.
+  Other subsets: uncheck variables in the GUI for a narrower tune (source trims only; trims and
+    solenoids; add LEBT/MEBT; RF phases only). L:V5QSET (Tank 5 phase, +-0.5) is unchecked but
+    ready to tick. Pick the mobo generator and a second objective (e.g. L:TUNRAD MINIMIZE or
+    L:D34LM MINIMIZE) for a Pareto front.
 environment:
   name: 01_Linac_RIL_tuning_Acsys
   params:
     debug: false
-    sample_event: '@e,52,e,0'
-    setpoint: hold
+    periods:
+      L:RFBPAH: 360.0
+      L:RFQPAH: 360.0
+      L:V5QSET: 360.0
+    sample_events:
+      B:BOOEFF: '@e,1f,e,0'
+      default: '@e,52,e,0'
     settings_role: ril_tuning
 formulas: {}
 generator:
@@ -47,137 +51,6 @@ generator:
     restrict_model_data: true
     scale_factor: 1.25
     success_tolerance: 6
-  vocs:
-    constants: {}
-    constraints:
-      L:D34LM:
-        dtype: None
-        type: LessThanConstraint
-        value: 1.1
-      L:TK1RAD:
-        dtype: None
-        type: LessThanConstraint
-        value: 40.0
-      L:TUNRAD:
-        dtype: None
-        type: LessThanConstraint
-        value: 80.0
-    objectives:
-      G:LINEFF:
-        dtype: None
-        type: MaximizeObjective
-    observables:
-      B:BLMLAM:
-        dtype: None
-        type: Observable
-      B:BLMQ3:
-        dtype: None
-        type: Observable
-      L:D7LMSM:
-        dtype: None
-        type: Observable
-      L:TK4RAD:
-        dtype: None
-        type: Observable
-    variables:
-      L:ASOL:
-        default_value: None
-        domain:
-        - 419.0998840332031
-        - 429.0998840332031
-        dtype: None
-        type: ContinuousVariable
-      L:ATRMHD:
-        default_value: None
-        domain:
-        - -1.1055908203125
-        - -0.1055908203125
-        dtype: None
-        type: ContinuousVariable
-      L:ATRMHU:
-        default_value: None
-        domain:
-        - -1.0543212890625
-        - -0.0543212890625
-        dtype: None
-        type: ContinuousVariable
-      L:ATRMVD:
-        default_value: None
-        domain:
-        - -0.9083251953125
-        - 0.0916748046875
-        dtype: None
-        type: ContinuousVariable
-      L:ATRMVU:
-        default_value: None
-        domain:
-        - 0.19775390625
-        - 1.19775390625
-        dtype: None
-        type: ContinuousVariable
-      L:LSOL:
-        default_value: None
-        domain:
-        - 460.7998046875
-        - 470.7998046875
-        dtype: None
-        type: ContinuousVariable
-      L:LTRMH:
-        default_value: None
-        domain:
-        - -0.37685546875
-        - -0.17685546875
-        dtype: None
-        type: ContinuousVariable
-      L:LTRMV:
-        default_value: None
-        domain:
-        - -0.76064453125
-        - -0.56064453125
-        dtype: None
-        type: ContinuousVariable
-      L:MDQ1:
-        default_value: None
-        domain:
-        - 226.49961853027344
-        - 230.49961853027344
-        dtype: None
-        type: ContinuousVariable
-      L:MDQ2:
-        default_value: None
-        domain:
-        - 170.19960021972656
-        - 174.19960021972656
-        dtype: None
-        type: ContinuousVariable
-      L:MUQ1:
-        default_value: None
-        domain:
-        - 271.499755859375
-        - 275.499755859375
-        dtype: None
-        type: ContinuousVariable
-      L:MUQ2:
-        default_value: None
-        domain:
-        - 245.59873962402344
-        - 249.59873962402344
-        dtype: None
-        type: ContinuousVariable
-      L:RFBPAH:
-        default_value: None
-        domain:
-        - 170.84173583984375
-        - 190.84173583984375
-        dtype: None
-        type: ContinuousVariable
-      L:RFQPAH:
-        default_value: None
-        domain:
-        - 189.40185546875
-        - 209.40185546875
-        dtype: None
-        type: ContinuousVariable
 initial_point_actions:
 - type: add_curr
 - config:
@@ -187,7 +60,7 @@ initial_point_actions:
   type: add_rand
 name: ''
 observable_formulas: {}
-relative_to_current: false
+relative_to_current: true
 vocs:
   constants: {}
   constraints:
@@ -195,10 +68,14 @@ vocs:
       dtype: null
       type: LessThanConstraint
       value: 1.1
+    L:D7TOR:
+      dtype: null
+      type: GreaterThanConstraint
+      value: 25.0
     L:TK1RAD:
       dtype: null
       type: LessThanConstraint
-      value: 40.0
+      value: 18.0
     L:TUNRAD:
       dtype: null
       type: LessThanConstraint
@@ -212,6 +89,9 @@ vocs:
       dtype: null
       type: Observable
     B:BLMQ3:
+      dtype: null
+      type: Observable
+    B:BOOEFF:
       dtype: null
       type: Observable
     L:D7LMSM:
@@ -322,7 +202,7 @@ vocs:
 vrange_hard_limit:
   L:ASOL:
   - 300.0
-  - 500
+  - 500.0
   L:ATRMHD:
   - -4.0
   - 4.0
@@ -337,7 +217,7 @@ vrange_hard_limit:
   - 4.0
   L:LSOL:
   - 300.0
-  - 500
+  - 500.0
   L:LTRMH:
   - -4.0
   - 4.0
@@ -362,75 +242,53 @@ vrange_hard_limit:
   L:RFQPAH:
   - 185.0
   - 225.0
+  L:V5QSET:
+  - -40.0
+  - -30.0
 vrange_limit_options:
   L:ASOL:
     delta: 5.0
     limit_option_idx: 2
-    ratio_curr: 0.047619047619047616
-    ratio_full: 1.0
   L:ATRMHD:
     delta: 0.5
     limit_option_idx: 2
-    ratio_curr: 0.5
-    ratio_full: 0.256988525390625
   L:ATRMHU:
     delta: 0.5
     limit_option_idx: 2
-    ratio_curr: 0.5
-    ratio_full: 0.0697479248046875
   L:ATRMVD:
     delta: 0.5
     limit_option_idx: 2
-    ratio_curr: 0.5
-    ratio_full: 0.197509765625
   L:ATRMVU:
     delta: 0.5
     limit_option_idx: 2
-    ratio_curr: 0.40122376821683414
-    ratio_full: 0.26734619140625
   L:LSOL:
     delta: 5.0
     limit_option_idx: 2
-    ratio_curr: 0.06451612903225806
-    ratio_full: 1.0
   L:LTRMH:
     delta: 0.1
     limit_option_idx: 2
-    ratio_curr: 0.5
-    ratio_full: 0.159759521484375
   L:LTRMV:
     delta: 0.1
     limit_option_idx: 2
-    ratio_curr: 0.5
-    ratio_full: 0.139739990234375
   L:MDQ1:
     delta: 2.0
     limit_option_idx: 2
-    ratio_curr: 0.2222222222222222
-    ratio_full: 1.0
   L:MDQ2:
     delta: 2.0
     limit_option_idx: 2
-    ratio_curr: 0.2857142857142857
-    ratio_full: 1.0
   L:MUQ1:
     delta: 2.0
     limit_option_idx: 2
-    ratio_curr: 0.18181818181818182
-    ratio_full: 1.0
   L:MUQ2:
     delta: 2.0
     limit_option_idx: 2
-    ratio_curr: 0.2
-    ratio_full: 1.0
   L:RFBPAH:
     delta: 10.0
     limit_option_idx: 2
-    ratio_curr: 0.1
-    ratio_full: 0.1
   L:RFQPAH:
     delta: 10.0
     limit_option_idx: 2
-    ratio_curr: 0.1
-    ratio_full: 0.1
+  L:V5QSET:
+    delta: 0.5
+    limit_option_idx: 2
 xopt_version: 3.2.2

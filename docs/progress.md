@@ -1523,3 +1523,79 @@ port is a straight copy of the Acsys one on this point.
   be checked in the field. If the reading wraps into [-180, 180), nothing
   changes in the code; only the env bounds midpoint matters.
 
+## 2026-10-02: Linac template consolidation and periodic RF phases
+
+### Overlap map (the 8 templates on `01_Linac_RIL_tuning_Acsys`)
+- Variables: source trims ×4 (5 templates), L:ASOL/L:LSOL (4), LEBT trims
+  (3), MEBT quads (3), L:RFQPAH/L:RFBPAH (3), L:V5QSET (2), D7x vertical
+  trims (1, OutputTrajectory only). The 2026-10-01 `RILTuning` template
+  was already the union minus V5QSET and the D7x trims.
+- Objectives: L:TUNRAD MIN (4), G:LINEFF MAX (1), L:D34LM MIN (1, MOBO),
+  B:BOOEFF MAX + L:D7LMSM MIN (1, MOBO), L:D13LM MIN (1), VTrajError (1).
+- Constraints had drifted: L:D7TOR > 20/24/25/26 in six templates but
+  dropped in the newest; L:TK1RAD < 18 in five, < 40 in the newest;
+  L:TUNRAD < 80/90; one template's B:BLMS06 pointed the wrong way versus
+  its own description.
+- Cruft: five templates carried singular `sample_event` / `setpoint`
+  keys the env ignores (pydantic `extra='ignore'`); the newest had a
+  130-line duplicate `generator.vocs` block and a description that
+  contradicted its vocs.
+
+### Why one template is enough
+`routine_page.set_options_from_template` fills the variable table with
+every env variable and the objective/constraint tables with every env
+observable; the template only sets which rows are checked, plus
+`vrange_limit_options`/`vrange_hard_limit` for any variable named, checked
+or not. So one template = default selection + windows, and the operator
+unchecks in the GUI for the narrower setups.
+
+### Done
+- `tuning_templates/01_Linac_RIL_tuning_Acsys.yaml` (renamed from
+  `01_Linac_RILTuning_Acsys.yaml`): G:LINEFF MAXIMIZE; L:D7TOR > 25,
+  L:TK1RAD < 18, L:TUNRAD < 80, L:D34LM < 1.1; the 14 union variables
+  checked; L:V5QSET window (±0.5) pre-set but unchecked;
+  `relative_to_current: true`; `periods` param; stale keys and the
+  duplicate generator vocs removed.
+- `01_Linac_OutputTrajectory_RIL_tuning_Acsys.yaml` kept as the second
+  template (user decision), brought to the 1.6.0 typed format, its 27
+  unrelated `vrange_limit_options` entries cut to the three D7x trims.
+- Deleted: BooEFF_D7LMSM_mobo, D13LM_reduce_wV5QSET, SourceTrims,
+  trims_and_sol, trims_and_sol_LEBT_MEBTquads, and its D34andTUNRAD_mobo
+  variant. Their setups are in git history and reachable via checkboxes.
+- All four remaining Linac templates have a structured description:
+  Goal / Objective / Variables / Constraints / Observables / Windows /
+  Notes, and "Other subsets" for the general one. Quads had none; Phases
+  was prose.
+- Both `01_Linac_RIL_tuning_*` envs: `periods = {L:RFQPAH, L:RFBPAH,
+  L:V5QSET: 360}` passed to `set_values`/`get_values`, and `get_variables`
+  unwraps a periodic setting to the branch nearest the bounds midpoint.
+  Hard limits stay tight ([185, 225], [100, 300], [-40, -30]) because they
+  are deliberate operating limits far from the wrap; README's periodic
+  section now says when that is fine. L:V5QSET is the Tank 5 RF phase
+  (the `MinD7LMSM_using_Tank5Phase` env drives it as its only variable).
+- README tree and naming example updated; `tests/check_RIL_tuning_live_bounds.py`
+  defaults to the new template; `tests/periodic_phase_test.py` gained a
+  RIL_tuning_Pacsys check (-179 setting read back as 181).
+
+### Verified
+- `python tests/template_lint_test.py`: 10/10 ok, no naming warnings.
+- `python tests/periodic_phase_test.py`: passes.
+
+### Not verified
+- Live GUI load of the two RIL templates and
+  `check_RIL_tuning_live_bounds.py` against the machine (no controls
+  network here). Whether L:RFQPAH/L:RFBPAH readbacks actually wrap, and
+  where, is a field question; the unwrap is a no-op if they never do.
+
+### GUI check (2026-10-02, lab connection up)
+- `badger -mini -t 01_Linac_RIL_tuning_Acsys.yaml -cf config.yaml`: loaded
+  and auto-ranged correctly; user: "Looked perfect on the screen."
+- The log shows two `ERROR ... safety turbo controller can only be used
+  with constraints` lines during load. Benign Badger ordering quirk: the
+  generator combo-box change validates the generator against the env
+  tables' pre-load VOCS (variables only); the template's full VOCS then
+  validates cleanly. Any template with `SafetyTurboController` logs it.
+- `badger -mini -t 01_Linac_OutputTrajectory_RIL_tuning_Acsys.yaml -cf config.yaml`:
+  loaded with no errors logged. (Both runs end with Badger's own
+  `RuntimeError: can't create new thread at interpreter shutdown` from
+  `badger/log.py`'s atexit listener stop; unrelated to the templates.)

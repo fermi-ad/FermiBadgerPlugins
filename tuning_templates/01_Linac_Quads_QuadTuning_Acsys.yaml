@@ -2,7 +2,16 @@ additional_variables: []
 badger_version: 1.4.3
 constraint_formulas: {}
 critical_constraint_names: []
-description: ''
+description: |
+  Goal: Lower Linac beam loss by retuning the drift-tube and side-coupled quads.
+  Objective: W_SumLosses MINIMIZE, the weighted sum of squares of the Linac loss monitors
+    (weights in the environment params, w_sumsq).
+  Variables: tank quads L:Q01-L:Q04, L:Q11-L:Q14; side-coupled quad supplies L:QPS504-L:QPS513.
+  Constraints: L:D7TOR > 20.
+  Observables: L:D7LMSM.
+  Windows: +-12.5% of the hard range around the live readback at load (Automatic).
+  Notes: readings on $0A. Expected improvement with the optimize turbo controller.
+    L:QPS508 runs on an isolation transformer; do not push it high.
 environment:
   name: 01_Linac_QuadTuning_Acsys
   params:

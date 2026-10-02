@@ -1,6 +1,7 @@
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
 from typing import Dict
+from periodic import unwrap
 
 class Environment(environment.Environment):
     name = "01_Linac_RIL_tuning_Pacsys"
@@ -41,7 +42,9 @@ class Environment(environment.Environment):
         "L:MDQ2H" : [-4.0, 4.0],
         "L:MDQ2V" : [-4.0, 4.0],
 
-        "L:RFQPAH" : [ 185.0, 225.0], # Or are there reading,setting,(optional)setting? Like "L:C7PHAS,L:L7PADJ,tol3@0.45"?
+        # RF phases. Periodic (see periods below) but with deliberate operating limits,
+        # so the bounds stay tight rather than two periods wide.
+        "L:RFQPAH" : [ 185.0, 225.0],
         "L:RFBPAH" : [ 100.0, 300.0],
         "L:V5QSET": [-40.0, -30.0],
 
@@ -83,6 +86,8 @@ class Environment(environment.Environment):
     sample_events: Dict[str, str] = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
     settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
+    # {reading device: period} for phase-like devices, in the device's own units.
+    periods:       Dict[str, float] = {'L:RFQPAH': 360.0, 'L:RFBPAH': 360.0, 'L:V5QSET': 360.0}
     #setpoints:     Dict[str, float] = {'defaults': None}
     setpoints:     Dict[str, float | None] = {'defaults': None,
                            'L:D73BPH':  1.2,
@@ -109,14 +114,22 @@ class Environment(environment.Environment):
             raise BadgerNoInterfaceError
         if self.debug: print ('RIL_tuning asking for variables:', variable_names)
         # Interface BasicPacsysInterface handles (read,set) pairs and optional tolerances.
-        return self.interface.get_settings(variable_names, debug=self.debug) # sample_event=self.sample_event,
+        values = self.interface.get_settings(variable_names, debug=self.debug)
+        # A periodic setting may be reported on another branch (e.g. -179 for 181);
+        # move it onto the branch nearest the middle of the declared bounds.
+        for name in variable_names:
+            if name in self.periods:
+                lo, hi = self.variables[name]
+                values[name] = unwrap(values[name], (lo + hi) / 2, self.periods[name])
+        return values
 
     def set_variables(self, settable_devices: dict[str, float]):
         if not self.interface:
             if self.debug: print ("not self.interface: {self.interface}.")
             raise BadgerNoInterfaceError
         # Interface BasicPacsysInterface handles (read,set) pairs and optional tolerances.
-        self.interface.set_values(settable_devices, settings_role=self.settings_role, debug=self.debug)
+        self.interface.set_values(settable_devices, settings_role=self.settings_role,
+                                  periods=self.periods, debug=self.debug)
 
     def get_observables(self, observable_names: list[str]) -> dict:        
         if not self.interface:
@@ -141,6 +154,7 @@ class Environment(environment.Environment):
         result = self.interface.get_values(get_these_observables,
                                            sample_events=self.sample_events,
                                            setpoints   =self.setpoints,
+                                           periods     =self.periods,
                                            debug=self.debug)
         if len(calc_these)>0:
             if 'VTrajError_SumSqBPM_calc' in calc_these:

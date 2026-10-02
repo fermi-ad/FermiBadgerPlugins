@@ -54,4 +54,14 @@ assert env.get_variables([PAIR]) == {PAIR: 350.0}
 env.set_variables({PAIR: 375.0})
 assert fb.writes == []
 
+# --- RIL_tuning: RF phase settings are periodic but keep their tight operating bounds;
+# a setting reported on the other branch is unwrapped to the branch nearest the bounds' midpoint
+ril_mod = importlib.import_module('environments.01_Linac_RIL_tuning_Pacsys')
+fb2 = FakeBackend()
+ril = ril_mod.Environment(interface=Interface())
+ril.interface._backend_override = fb2
+fb2.set_reading('L:RFBPAH.SETTING@I', -179.0)     # same physics as 181, inside [100, 300]
+fb2.set_reading('L:ATRMHU.SETTING@I', -1.5)       # not periodic: untouched
+assert ril.get_variables(['L:RFBPAH', 'L:ATRMHU']) == {'L:RFBPAH': 181.0, 'L:ATRMHU': -1.5}
+
 print('PERIODIC PHASE TEST PASSED')
