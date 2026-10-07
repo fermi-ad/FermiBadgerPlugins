@@ -1,0 +1,765 @@
+diff -ruN a/badger/gui/components/editable_table.py b/badger/gui/components/editable_table.py
+--- a/badger/gui/components/editable_table.py	2026-10-07 14:24:05
++++ b/badger/gui/components/editable_table.py	2026-10-07 14:24:30
+@@ -549,6 +549,7 @@
+         item.setFlags(item.flags() | Qt.ItemIsEditable)
+         item.setForeground(QColor("gray"))
+         self.setItem(row, 1, item)
++        self.setRowHidden(row, True)  # items are added from the picker, not typed here
+ 
+     def get_item_by_name(self, name: str) -> Dict[str, Any]:
+         """
+diff -ruN a/badger/gui/components/env_cbox.py b/badger/gui/components/env_cbox.py
+--- a/badger/gui/components/env_cbox.py	2026-10-07 13:42:11
++++ b/badger/gui/components/env_cbox.py	2026-10-07 14:24:30
+@@ -24,13 +24,12 @@
+ 
+ from gest_api.vocs import ContinuousVariable
+ from pydantic_core import ValidationError
+-from PyQt5.QtCore import QPropertyAnimation, QRegExp, pyqtSignal
++from PyQt5.QtCore import QPropertyAnimation, QTimer, pyqtSignal
+ from PyQt5.QtGui import QFont, QIcon
+ from PyQt5.QtWidgets import (
+     QCheckBox,
+     QHBoxLayout,
+     QLabel,
+-    QLineEdit,
+     QPushButton,
+     QSizePolicy,
+     QStyledItemDelegate,
+@@ -41,6 +40,7 @@
+ 
+ from badger.errors import BadgerRoutineError
+ from badger.gui.components.collapsible_box import CollapsibleBox
++from badger.gui.components.picker import Picker
+ from badger.gui.components.con_table import ConstraintTable
+ from badger.gui.components.data_table import init_data_table
+ from badger.gui.components.obj_table import ObjectiveTable
+@@ -347,8 +347,7 @@
+         hbox_action_var = QHBoxLayout(action_var)
+         hbox_action_var.setContentsMargins(0, 0, 0, 0)
+         vbox_var_edit.addWidget(action_var)
+-        self.edit_var = edit_var = QLineEdit()
+-        edit_var.setPlaceholderText("Filter variables...")
++        self.edit_var = edit_var = Picker(self.list_vars, "Add variable...")
+         edit_var.setFixedWidth(160)
+         self.btn_add_var = btn_add_var = QPushButton("Add")
+         btn_add_var.setFixedSize(96, 24)
+@@ -359,7 +358,8 @@
+         btn_lim_vrange.setFixedSize(144, 24)
+         btn_lim_vrange.setDisabled(True)
+         self.check_only_var = check_only_var = QCheckBox("Show Checked Only")
+-        check_only_var.setChecked(False)
++        check_only_var.setChecked(True)
++        check_only_var.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_var.addWidget(edit_var)
+         hbox_action_var.addWidget(btn_add_var)
+         hbox_action_var.addWidget(btn_lim_vrange)
+@@ -367,8 +367,16 @@
+         hbox_action_var.addWidget(check_only_var)
+ 
+         self.var_table = VariableTable()
++        self.var_table.checked_only = True
+         self.var_table.lock_bounds()
+-        vbox_var_edit.addWidget(self.var_table)
++        cbox_var = CollapsibleBox(self, " Variables")
++        vbox_var_edit.addWidget(cbox_var)
++        vbox_var_tbl = QVBoxLayout()
++        vbox_var_tbl.setContentsMargins(0, 0, 0, 0)
++        vbox_var_tbl.addWidget(self.var_table)
++        cbox_var.setContentLayout(vbox_var_tbl)
++        cbox_var.expand()
++        self.cbox_var = cbox_var
+ 
+         cbox_init = CollapsibleBox(
+             self,
+@@ -425,16 +433,19 @@
+         hbox_action_obj = QHBoxLayout(action_obj)
+         hbox_action_obj.setContentsMargins(0, 0, 0, 0)
+         vbox_obj_edit.addWidget(action_obj)
+-        self.edit_obj = edit_obj = QLineEdit()
+-        edit_obj.setPlaceholderText("Filter objectives...")
++        self.edit_obj = edit_obj = Picker(
++            lambda: self.list_items(self.obj_table), "Add objective..."
++        )
+         edit_obj.setFixedWidth(192)
+         self.check_only_obj = check_only_obj = QCheckBox("Show Checked Only")
+-        check_only_obj.setChecked(False)
++        check_only_obj.setChecked(True)
++        check_only_obj.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_obj.addWidget(edit_obj)
+         hbox_action_obj.addStretch()
+         hbox_action_obj.addWidget(check_only_obj)
+ 
+         self.obj_table = ObjectiveTable()
++        self.obj_table.show_selected_only = True
+         vbox_obj_edit.addWidget(self.obj_table)
+         hbox_obj.addWidget(edit_obj_col)
+ 
+@@ -464,17 +475,19 @@
+         hbox_action_con = QHBoxLayout(action_con)
+         hbox_action_con.setContentsMargins(0, 0, 0, 0)
+         vbox_con_edit.addWidget(action_con)
+-        self.edit_con = edit_con = QLineEdit()
+-        edit_con.setPlaceholderText("Filter constraints...")
++        self.edit_con = edit_con = Picker(
++            lambda: self.list_items(self.con_table), "Add constraint..."
++        )
+         edit_con.setFixedWidth(192)
+         self.check_only_con = check_only_con = QCheckBox("Show Checked Only")
+-        check_only_con.setChecked(False)
++        check_only_con.setChecked(True)
++        check_only_con.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_con.addWidget(edit_con)
+         hbox_action_con.addStretch()
+         hbox_action_con.addWidget(check_only_con)
+ 
+         self.con_table = ConstraintTable()
+-        self.con_table.setMinimumHeight(120)
++        self.con_table.show_selected_only = True
+         vbox_con_edit.addWidget(self.con_table)
+         hbox_con.addWidget(edit_con_col)
+ 
+@@ -500,32 +513,41 @@
+         hbox_action_sta = QHBoxLayout(action_sta)
+         hbox_action_sta.setContentsMargins(0, 0, 0, 0)
+         vbox_sta_edit.addWidget(action_sta)
+-        self.edit_sta = edit_sta = QLineEdit()
+-        edit_sta.setPlaceholderText("Filter observables...")
++        self.edit_sta = edit_sta = Picker(
++            lambda: self.list_items(self.sta_table), "Add observable..."
++        )
+         edit_sta.setFixedWidth(192)
+         self.check_only_sta = check_only_sta = QCheckBox("Show Checked Only")
+-        check_only_sta.setChecked(False)
++        check_only_sta.setChecked(True)
++        check_only_sta.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_sta.addWidget(edit_sta)
+         hbox_action_sta.addStretch()
+         hbox_action_sta.addWidget(check_only_sta)
+ 
+         self.sta_table = ObservableTable()
+-        self.sta_table.setMinimumHeight(120)
++        self.sta_table.show_selected_only = True
+         vbox_sta_edit.addWidget(self.sta_table)
+         hbox_sta.addWidget(edit_sta_col)
+ 
+         cbox_more.setContentLayout(vbox_more)
++        cbox_more.expand()
+ 
++        self._fit_targets = []
++        self._watch_table_rows(self.var_table, cbox_var)
++        self._watch_table_rows(self.obj_table, None)
++        self._watch_table_rows(self.con_table, cbox_more)
++        self._watch_table_rows(self.sta_table, cbox_more)
++
+     def config_logic(self):
+         self.dict_con = {}
+ 
+-        self.edit_var.textChanged.connect(self.filter_var)
++        self.edit_var.picked.connect(self.pick_var)
+         self.check_only_var.stateChanged.connect(self.toggle_var_show_mode)
+-        self.edit_obj.textChanged.connect(self.filter_obj)
++        self.edit_obj.picked.connect(lambda n: self.pick_item(self.obj_table, n))
+         self.check_only_obj.stateChanged.connect(self.toggle_obj_show_mode)
+-        self.edit_con.textChanged.connect(self.filter_con)
++        self.edit_con.picked.connect(lambda n: self.pick_item(self.con_table, n))
+         self.check_only_con.stateChanged.connect(self.toggle_con_show_mode)
+-        self.edit_sta.textChanged.connect(self.filter_sta)
++        self.edit_sta.picked.connect(lambda n: self.pick_item(self.sta_table, n))
+         self.check_only_sta.stateChanged.connect(self.toggle_sta_show_mode)
+         self.btn_params.toggled.connect(self.toggle_params)
+         self.animation.finished.connect(self.animation_finished)
+@@ -562,37 +584,57 @@
+ 
+     def add_var(self, name, lb, ub):
+         self.var_table.add_variable(name, lb, ub)
+-        self.filter_var()
++        self.var_table.update_variables(self.var_table.all_variables, 1)
+ 
+-    def filter_var(self):
+-        keyword = self.edit_var.text()
+-        rx = QRegExp(keyword)
+ 
+-        _variables = []
+-        for var in self.var_table.all_variables:
+-            vname = next(iter(var))
+-            if rx.indexIn(vname, 0) != -1:
+-                _variables.append(var)
++    # --- pick-to-add: the dropdowns list only unselected rows, in table order ---
++    def list_vars(self) -> list[tuple[str, bool]]:
++        table = self.var_table
++        return [(n, table.is_checked(n)) for n in (next(iter(v)) for v in table.all_variables)]
+ 
+-        self.var_table.update_variables(_variables, 1)
++    def pick_var(self, name: str):
++        if self.var_table.is_checked(name):
++            return
++        self.var_table.selected[name] = True
++        self.var_table.update_variables(self.var_table.variables, 2)
+ 
++    @staticmethod
++    def list_items(table) -> list[tuple[str, bool]]:
++        return [(n, table.status.get(n, False)) for n in (next(iter(i)) for i in table.data)]
++
++    @staticmethod
++    def pick_item(table, name: str):
++        if table.status.get(name, False):
++            return
++        table.status[name] = True
++        table.update_items()
++
++    def _watch_table_rows(self, table, box):
++        # size the table to its visible rows (hidden placeholder row excluded) so there is
++        # no empty space; zero rows -> header only. Runs after the current refresh finishes.
++        self._fit_targets.append((table, box))
++        table.model().rowsInserted.connect(self._schedule_fit)
++        table.model().rowsRemoved.connect(self._schedule_fit)
++
++    def _schedule_fit(self, *_):
++        QTimer.singleShot(0, self._fit_tables)
++
++    def _fit_tables(self):
++        for t, box in self._fit_targets:
++            h = t.horizontalHeader().height() + t.verticalHeader().length() + 2 * t.frameWidth()
++            t.setFixedHeight(min(h, 400))  # ponytail: hard cap; long lists scroll inside
++            if box is not None:
++                box.updateContentLayout()
++
+     def toggle_obj_show_mode(self, _):
+         self.obj_table.update_show_selected_only(self.check_only_obj.isChecked())
+ 
+-    def filter_obj(self):
+-        self.obj_table.update_keyword(self.edit_obj.text())
+-
+     def toggle_con_show_mode(self, _):
+         self.con_table.update_show_selected_only(self.check_only_con.isChecked())
+ 
+-    def filter_con(self):
+-        self.con_table.update_keyword(self.edit_con.text())
+-
+     def toggle_sta_show_mode(self, _):
+         self.sta_table.update_show_selected_only(self.check_only_sta.isChecked())
+ 
+-    def filter_sta(self):
+-        self.sta_table.update_keyword(self.edit_sta.text())
+ 
+     def _fit_content(self, list):
+         height = list.sizeHintForRow(0) * list.count() + 2 * list.frameWidth() + 4
+diff -ruN a/badger/gui/components/picker.py b/badger/gui/components/picker.py
+--- a/badger/gui/components/picker.py	1969-12-31 18:00:00
++++ b/badger/gui/components/picker.py	2026-10-07 14:24:30
+@@ -0,0 +1,85 @@
++"""Search-and-pick combo box for adding an item to a table.
++
++An editable QComboBox whose dropdown lists the names the given ``source``
++callable returns as ``(name, checked)`` pairs, in table order, with a check
++icon on the ones already selected. The list opens as soon as the box gets
++focus, narrows by substring as you type, and closes when focus leaves.
++Choosing an entry emits ``picked(name)`` and clears the box. The list is
++rebuilt every time the box gains focus or opens, so no signal wiring is needed.
++"""
++
++from typing import Callable
++
++from PyQt5.QtCore import QEvent, Qt, QTimer, pyqtSignal
++from PyQt5.QtGui import QIcon
++from PyQt5.QtWidgets import QComboBox, QCompleter, QStyle
++
++
++class Picker(QComboBox):
++    picked = pyqtSignal(str)
++
++    def __init__(self, source: Callable[[], list[tuple[str, bool]]], placeholder: str = ""):
++        super().__init__()
++        self._source = source
++        self._check = self.style().standardIcon(QStyle.StandardPixmap.SP_DialogApplyButton)
++        self.setEditable(True)
++        self.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
++        self.lineEdit().setPlaceholderText(placeholder)
++        completer = QCompleter(self.model(), self)
++        completer.setCompletionMode(QCompleter.CompletionMode.PopupCompletion)
++        completer.setFilterMode(Qt.MatchFlag.MatchContains)
++        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
++        self.setCompleter(completer)
++        self.setCurrentIndex(-1)
++        self.lineEdit().installEventFilter(self)  # a click opens the list even if already focused
++        self.activated[str].connect(self._pick)
++        completer.activated[str].connect(self._pick)  # harmless if both fire: _pick is idempotent
++
++    def refresh(self):
++        self.blockSignals(True)
++        super().clear()
++        for name, checked in self._source():
++            self.addItem(self._check if checked else QIcon(), name)
++        self.setCurrentIndex(-1)
++        self.blockSignals(False)
++
++    def showPopup(self):
++        self.refresh()
++        self.view().setMinimumWidth(self.view().sizeHintForColumn(0) + 24)
++        super().showPopup()
++
++    USER_FOCUS = (
++        Qt.FocusReason.MouseFocusReason,
++        Qt.FocusReason.TabFocusReason,
++        Qt.FocusReason.BacktabFocusReason,
++    )
++
++    def focusInEvent(self, event):
++        self.refresh()
++        super().focusInEvent(event)
++        # Only a click or Tab opens the list. Focus also comes back with
++        # PopupFocusReason each time the popup closes; opening on that reopens it forever.
++        if event.reason() in self.USER_FOCUS:
++            QTimer.singleShot(0, self._open_list)
++
++    def eventFilter(self, obj, event):
++        if obj is self.lineEdit() and event.type() == QEvent.Type.MouseButtonPress:
++            QTimer.singleShot(0, self._open_list)
++        return super().eventFilter(obj, event)
++
++    def _open_list(self):
++        if not self.hasFocus():
++            return
++        completer = self.completer()
++        completer.setCompletionPrefix(self.currentText())
++        completer.complete()  # popup of all matches; closes itself when focus leaves
++
++    def clear(self):  # routine pages call edit_*.clear(); only clear the text
++        self.clearEditText()
++        self.setCurrentIndex(-1)
++
++    def _pick(self, name: str):
++        if name in dict(self._source()):
++            self.picked.emit(name)
++        self.clear()
++        self.completer().popup().hide()
+diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
+--- a/badger/gui/components/routine_page.py	2026-10-07 13:42:11
++++ b/badger/gui/components/routine_page.py	2026-10-07 14:24:30
+@@ -500,7 +500,7 @@
+         # Override the hard limits with the ones from the routine
+         all_variables.update(self.var_hard_limit)
+         # Format for update_variables method
+-        all_variables = dict(sorted(all_variables.items()))
++        pass  # keep env (beam) order; dict is insertion-ordered
+         all_variables = [{key: value} for key, value in all_variables.items()]
+ 
+         self.env_box.var_table.update_variables(all_variables)
+@@ -760,8 +760,8 @@
+             init_table.setColumnCount(0)
+ 
+             # Reset the routine configs check box status
+-            self.env_box.check_only_var.setChecked(False)
+-            self.env_box.check_only_obj.setChecked(False)
++            self.env_box.check_only_var.setChecked(True)
++            self.env_box.check_only_obj.setChecked(True)
+             self.env_box.relative_to_curr.setChecked(True)
+             self.try_populate_init_table()
+ 
+@@ -847,7 +847,7 @@
+         # Override the hard limits with the ones from the routine
+         all_variables.update(self.var_hard_limit)
+         # Format for update_variables method
+-        all_variables = dict(sorted(all_variables.items()))
++        pass  # keep env (beam) order; dict is insertion-ordered
+         all_variables = [{key: value} for key, value in all_variables.items()]
+ 
+         with BlockSignalsContext(self.env_box.var_table):
+@@ -1167,8 +1167,8 @@
+         vars_combine = [*vars_env]
+ 
+         self.env_box.check_only_var.blockSignals(True)
+-        self.env_box.check_only_var.setChecked(False)
+-        self.env_box.var_table.checked_only = False  # reset the checked only flag
++        self.env_box.check_only_var.setChecked(True)
++        self.env_box.var_table.checked_only = True  # reset the checked only flag
+         self.env_box.check_only_var.blockSignals(False)
+         with BlockSignalsContext(self.env_box.var_table):
+             self.env_box.var_table.update_variables(vars_combine)
+@@ -1188,9 +1188,9 @@
+             status[name] = False  # selected
+             objectives.append(cons)
+         self.env_box.check_only_obj.blockSignals(True)
+-        self.env_box.check_only_obj.setChecked(False)
++        self.env_box.check_only_obj.setChecked(True)
+         self.env_box.check_only_obj.blockSignals(False)
+-        self.env_box.obj_table.show_selected_only = False
++        self.env_box.obj_table.show_selected_only = True
+         # with BlockSignalsContext(self.env_box.obj_table):
+         self.env_box.obj_table.update_items(
+             objectives, status, formulas={}, vocs_signal=False
+@@ -1204,9 +1204,9 @@
+             status[name] = False  # selected
+             constraints.append(cons)
+         self.env_box.check_only_con.blockSignals(True)
+-        self.env_box.check_only_con.setChecked(False)
++        self.env_box.check_only_con.setChecked(True)
+         self.env_box.check_only_con.blockSignals(False)
+-        self.env_box.con_table.show_selected_only = False
++        self.env_box.con_table.show_selected_only = True
+         # with BlockSignalsContext(self.env_box.con_table):
+         self.env_box.con_table.update_items(
+             constraints, status, formulas={}, vocs_signal=False
+@@ -1225,9 +1225,9 @@
+             status[name] = False  # selected
+             observables.append(obs)
+         self.env_box.check_only_sta.blockSignals(True)
+-        self.env_box.check_only_sta.setChecked(False)
++        self.env_box.check_only_sta.setChecked(True)
+         self.env_box.check_only_sta.blockSignals(False)
+-        self.env_box.sta_table.show_selected_only = False
++        self.env_box.sta_table.show_selected_only = True
+         # with BlockSignalsContext(self.env_box.sta_table):
+         self.env_box.sta_table.update_items(
+             observables, status, formulas={}, vocs_signal=False
+diff -ruN a/badger/gui/components/var_table.py b/badger/gui/components/var_table.py
+--- a/badger/gui/components/var_table.py	2026-10-07 14:24:05
++++ b/badger/gui/components/var_table.py	2026-10-07 14:24:30
+@@ -462,6 +462,7 @@
+         item.setFlags(item.flags() | Qt.ItemIsEditable)
+         item.setForeground(QColor("gray"))
+         self.setItem(n - 1, 1, item)
++        self.setRowHidden(n - 1, True)  # variables are added from the picker, not typed here
+ 
+         self.setHorizontalHeaderLabels(["", "Name", "Min", "Max", ""])
+         self.setVerticalHeaderLabels([str(i) for i in range(n)])
+diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-07 13:42:11
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-07 14:24:30
+@@ -18,7 +18,6 @@
+     QStyle,
+     QStyleOptionComboBox,
+     QWidget,
+-    QLineEdit,
+     QTreeWidget,
+ )
+ from PyQt5.QtWidgets import (
+@@ -26,13 +25,14 @@
+     QStyledItemDelegate,
+     QLabel,
+ )
+-from PyQt5.QtCore import QRegExp, pyqtSignal
++from PyQt5.QtCore import QTimer, pyqtSignal
+ from badger.gui.components.obs_table import ObservableTable
+ from badger.settings import init_settings
+ from pydantic_core import ValidationError
+ 
+ from badger.errors import BadgerRoutineError
+ from badger.gui.components.collapsible_box import CollapsibleBox
++from badger.gui.components.picker import Picker
+ from badger.gui.components.pydantic_editor import BadgerPydanticEditor
+ from badger.gui.mini.components.var_table import VariableTable
+ from badger.gui.components.obj_table import ObjectiveTable
+@@ -410,8 +410,7 @@
+         hbox_action_var.setSpacing(0)
+         vbox_var_edit.addWidget(action_var)
+         # filter variables
+-        self.edit_var = edit_var = QLineEdit()
+-        edit_var.setPlaceholderText("Filter variables...")
++        self.edit_var = edit_var = Picker(self.list_vars, "Add variable...")
+         edit_var.setFixedWidth(192)
+ 
+         # refresh current
+@@ -420,7 +419,8 @@
+ 
+         # show checked only
+         self.check_only_var = check_only_var = QCheckBox("Show Checked Only")
+-        check_only_var.setChecked(False)
++        check_only_var.setChecked(True)
++        check_only_var.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_var.addWidget(edit_var)
+         hbox_action_var.addSpacing(14)
+         hbox_action_var.addWidget(self.refresh_current_btn)
+@@ -429,10 +429,16 @@
+ 
+         # var table
+         self.var_table = VariableTable()
+-        # self.var_table.lock_bounds()
+-        self.var_table.setMinimumHeight(240)
++        self.var_table.checked_only = True
+         self.var_table.verticalHeader().setVisible(False)
+-        vbox_var_edit.addWidget(self.var_table, 1)
++        cbox_var = CollapsibleBox(self, " Variables")
++        vbox_var_edit.addWidget(cbox_var)
++        vbox_var_tbl = QVBoxLayout()
++        vbox_var_tbl.setContentsMargins(0, 0, 0, 0)
++        vbox_var_tbl.addWidget(self.var_table)
++        cbox_var.setContentLayout(vbox_var_tbl)
++        cbox_var.expand()
++        self.cbox_var = cbox_var
+ 
+         self.var_table.verticalHeader().setDefaultSectionSize(27)
+ 
+@@ -494,17 +500,19 @@
+         hbox_action_obj = QHBoxLayout(action_obj)
+         hbox_action_obj.setContentsMargins(0, 0, 0, 0)
+         vbox_obj_edit.addWidget(action_obj)
+-        self.edit_obj = edit_obj = QLineEdit()
+-        edit_obj.setPlaceholderText("Filter objectives...")
++        self.edit_obj = edit_obj = Picker(
++            lambda: self.list_items(self.obj_table), "Add objective..."
++        )
+         edit_obj.setFixedWidth(192)
+         self.check_only_obj = check_only_obj = QCheckBox("Show Checked Only")
+-        check_only_obj.setChecked(False)
++        check_only_obj.setChecked(True)
++        check_only_obj.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_obj.addWidget(edit_obj)
+         hbox_action_obj.addStretch()
+         hbox_action_obj.addWidget(check_only_obj)
+ 
+         self.obj_table = ObjectiveTable()
+-        self.obj_table.setMinimumHeight(120)
++        self.obj_table.show_selected_only = True
+         vbox_obj_edit.addWidget(self.obj_table)
+         hbox_obj.addWidget(edit_obj_col)
+ 
+@@ -536,17 +544,19 @@
+         hbox_action_con = QHBoxLayout(action_con)
+         hbox_action_con.setContentsMargins(0, 0, 0, 0)
+         vbox_con_edit.addWidget(action_con)
+-        self.edit_con = edit_con = QLineEdit()
+-        edit_con.setPlaceholderText("Filter constraints...")
++        self.edit_con = edit_con = Picker(
++            lambda: self.list_items(self.con_table), "Add constraint..."
++        )
+         edit_con.setFixedWidth(192)
+         self.check_only_con = check_only_con = QCheckBox("Show Checked Only")
+-        check_only_con.setChecked(False)
++        check_only_con.setChecked(True)
++        check_only_con.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_con.addWidget(edit_con)
+         hbox_action_con.addStretch()
+         hbox_action_con.addWidget(check_only_con)
+ 
+         self.con_table = ConstraintTable()
+-        self.con_table.setMinimumHeight(120)
++        self.con_table.show_selected_only = True
+         vbox_con_edit.addWidget(self.con_table)
+         hbox_con.addWidget(edit_con_col)
+ 
+@@ -574,29 +584,40 @@
+         hbox_action_sta = QHBoxLayout(action_sta)
+         hbox_action_sta.setContentsMargins(0, 0, 0, 0)
+         vbox_sta_edit.addWidget(action_sta)
+-        self.edit_sta = edit_sta = QLineEdit()
+-        edit_sta.setPlaceholderText("Filter observables...")
++        self.edit_sta = edit_sta = Picker(
++            lambda: self.list_items(self.sta_table), "Add observable..."
++        )
+         edit_sta.setFixedWidth(192)
+         self.check_only_sta = check_only_sta = QCheckBox("Show Checked Only")
+-        check_only_sta.setChecked(False)
++        check_only_sta.setChecked(True)
++        check_only_sta.hide()  # lists always show checked items; the picker holds the rest
+         hbox_action_sta.addWidget(edit_sta)
+         hbox_action_sta.addStretch()
+         hbox_action_sta.addWidget(check_only_sta)
+ 
+         self.sta_table = ObservableTable()
+-        self.sta_table.setMinimumHeight(120)
++        self.sta_table.show_selected_only = True
+         vbox_sta_edit.addWidget(self.sta_table)
+         hbox_sta.addWidget(edit_sta_col)
+ 
+         cbox_more.setContentLayout(vbox_more)
++        cbox_more.expand()
+ 
++        self._fit_targets = []
++        self._watch_table_rows(self.var_table, cbox_var)
++        self._watch_table_rows(self.obj_table, None)
++        self._watch_table_rows(self.con_table, cbox_more)
++        self._watch_table_rows(self.sta_table, cbox_more)
++
+     def config_logic(self):
+-        self.edit_var.textChanged.connect(self.filter_var)
++        self.edit_var.picked.connect(self.pick_var)
+         self.check_only_var.stateChanged.connect(self.toggle_var_show_mode)
+-        self.edit_obj.textChanged.connect(self.filter_obj)
++        self.edit_obj.picked.connect(lambda n: self.pick_item(self.obj_table, n))
+         self.check_only_obj.stateChanged.connect(self.toggle_obj_show_mode)
+-        self.edit_con.textChanged.connect(self.filter_con)
++        self.edit_con.picked.connect(lambda n: self.pick_item(self.con_table, n))
+         self.check_only_con.stateChanged.connect(self.toggle_con_show_mode)
++        self.edit_sta.picked.connect(lambda n: self.pick_item(self.sta_table, n))
++        self.check_only_sta.stateChanged.connect(self.toggle_sta_show_mode)
+         self.btn_env_params.toggled.connect(self.toggle_env_params)
+         self.btn_algo_parans.toggled.connect(self.toggle_algorithm_params)
+         self.refresh_current_btn.clicked.connect(self.var_table.refresh_current_values)
+@@ -645,37 +666,57 @@
+ 
+     def add_var(self, name, lb, ub):
+         self.var_table.add_variable(name, lb, ub)
+-        self.filter_var()
++        self.var_table.update_variables(self.var_table.all_variables, 1)
+ 
+-    def filter_var(self):
+-        keyword = self.edit_var.text()
+-        rx = QRegExp(keyword)
+ 
+-        _variables = []
+-        for var in self.var_table.all_variables:
+-            vname = next(iter(var))
+-            if rx.indexIn(vname, 0) != -1:
+-                _variables.append(var)
++    # --- pick-to-add: the dropdowns list only unselected rows, in table order ---
++    def list_vars(self) -> list[tuple[str, bool]]:
++        table = self.var_table
++        return [(n, table.is_checked(n)) for n in (next(iter(v)) for v in table.all_variables)]
+ 
+-        self.var_table.update_variables(_variables, 1)
++    def pick_var(self, name: str):
++        if self.var_table.is_checked(name):
++            return
++        self.var_table.selected[name] = True
++        self.var_table.update_variables(self.var_table.variables, 2)
+ 
++    @staticmethod
++    def list_items(table) -> list[tuple[str, bool]]:
++        return [(n, table.status.get(n, False)) for n in (next(iter(i)) for i in table.data)]
++
++    @staticmethod
++    def pick_item(table, name: str):
++        if table.status.get(name, False):
++            return
++        table.status[name] = True
++        table.update_items()
++
++    def _watch_table_rows(self, table, box):
++        # size the table to its visible rows (hidden placeholder row excluded) so there is
++        # no empty space; zero rows -> header only. Runs after the current refresh finishes.
++        self._fit_targets.append((table, box))
++        table.model().rowsInserted.connect(self._schedule_fit)
++        table.model().rowsRemoved.connect(self._schedule_fit)
++
++    def _schedule_fit(self, *_):
++        QTimer.singleShot(0, self._fit_tables)
++
++    def _fit_tables(self):
++        for t, box in self._fit_targets:
++            h = t.horizontalHeader().height() + t.verticalHeader().length() + 2 * t.frameWidth()
++            t.setFixedHeight(min(h, 400))  # ponytail: hard cap; long lists scroll inside
++            if box is not None:
++                box.updateContentLayout()
++
+     def toggle_obj_show_mode(self, _):
+         self.obj_table.update_show_selected_only(self.check_only_obj.isChecked())
+ 
+-    def filter_obj(self):
+-        self.obj_table.update_keyword(self.edit_obj.text())
+-
+     def toggle_con_show_mode(self, _):
+         self.con_table.update_show_selected_only(self.check_only_con.isChecked())
+ 
+-    def filter_con(self):
+-        self.con_table.update_keyword(self.edit_con.text())
+-
+     def toggle_sta_show_mode(self, _):
+         self.sta_table.update_show_selected_only(self.check_only_sta.isChecked())
+ 
+-    def filter_sta(self):
+-        self.sta_table.update_keyword(self.edit_sta.text())
+ 
+     def update_template_cb(self, template_name):
+         """
+diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components/var_table.py
+--- a/badger/gui/mini/components/var_table.py	2026-10-07 14:24:05
++++ b/badger/gui/mini/components/var_table.py	2026-10-07 14:24:30
+@@ -895,6 +895,7 @@
+         item.setFlags(item.flags() | Qt.ItemIsEditable)
+         item.setForeground(QColor("gray"))
+         self.setItem(n - 1, 1, item)
++        self.setRowHidden(n - 1, True)  # variables are added from the picker, not typed here
+ 
+         self.setHorizontalHeaderLabels(
+             ["", "Name", "Saved", "Current", "Range (Δ)", ""]
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-07 13:42:11
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-07 14:24:30
+@@ -477,7 +477,7 @@
+         )
+ 
+         # Format for update_variables method
+-        all_variables = dict(sorted(all_variables.items()))
++        pass  # keep env (beam) order; dict is insertion-ordered
+         all_variables = [{key: value} for key, value in all_variables.items()]
+         self.env_box.var_table.update_variables(all_variables)
+ 
+@@ -743,8 +743,8 @@
+             init_table.setColumnCount(0)
+ 
+             # Reset the routine configs check box status
+-            self.env_box.check_only_var.setChecked(False)
+-            self.env_box.check_only_obj.setChecked(False)
++            self.env_box.check_only_var.setChecked(True)
++            self.env_box.check_only_obj.setChecked(True)
+             # self.env_box.relative_to_curr.setChecked(True)
+             self.try_populate_init_table()
+ 
+@@ -836,7 +836,7 @@
+             }
+         )
+         # Format for update_variables method
+-        all_variables = dict(sorted(all_variables.items()))
++        pass  # keep env (beam) order; dict is insertion-ordered
+         all_variables = [{key: value} for key, value in all_variables.items()]
+ 
+         with BlockSignalsContext(self.env_box.var_table):
+@@ -949,7 +949,7 @@
+         self.env_box.edit_con.setText("")
+         self.env_box.edit_con.blockSignals(False)
+         self.env_box.con_table.keyword = ""
+-        # self.env_box.con_table.show_selected_only = False
++        # self.env_box.con_table.show_selected_only = True
+ 
+         self.env_box.con_table.update_items(constraints, status, formulas)
+ 
+@@ -1143,8 +1143,8 @@
+         )
+ 
+         self.env_box.check_only_var.blockSignals(True)
+-        self.env_box.check_only_var.setChecked(False)
+-        self.env_box.var_table.checked_only = False  # reset the checked only flag
++        self.env_box.check_only_var.setChecked(True)
++        self.env_box.var_table.checked_only = True  # reset the checked only flag
+         self.env_box.check_only_var.blockSignals(False)
+         with BlockSignalsContext(self.env_box.var_table):
+             self.env_box.var_table.update_variables(vars_combine)
+@@ -1160,9 +1160,9 @@
+             status[name] = False  # selected
+             objectives.append(cons)
+         self.env_box.check_only_obj.blockSignals(True)
+-        self.env_box.check_only_obj.setChecked(False)
++        self.env_box.check_only_obj.setChecked(True)
+         self.env_box.check_only_obj.blockSignals(False)
+-        self.env_box.obj_table.show_selected_only = False
++        self.env_box.obj_table.show_selected_only = True
+         # with BlockSignalsContext(self.env_box.obj_table):
+         self.env_box.obj_table.update_items(
+             objectives, status, formulas={}, vocs_signal=False
+@@ -1176,9 +1176,9 @@
+             status[name] = False  # selected
+             constraints.append(cons)
+         self.env_box.check_only_con.blockSignals(True)
+-        self.env_box.check_only_con.setChecked(False)
++        self.env_box.check_only_con.setChecked(True)
+         self.env_box.check_only_con.blockSignals(False)
+-        self.env_box.con_table.show_selected_only = False
++        self.env_box.con_table.show_selected_only = True
+         # with BlockSignalsContext(self.env_box.con_table):
+         self.env_box.con_table.update_items(
+             constraints, status, formulas={}, vocs_signal=False
+@@ -1197,9 +1197,9 @@
+             status[name] = False  # selected
+             observables.append(obs)
+         self.env_box.check_only_sta.blockSignals(True)
+-        self.env_box.check_only_sta.setChecked(False)
++        self.env_box.check_only_sta.setChecked(True)
+         self.env_box.check_only_sta.blockSignals(False)
+-        self.env_box.sta_table.show_selected_only = False
++        self.env_box.sta_table.show_selected_only = True
+         # with BlockSignalsContext(self.env_box.sta_table):
+         self.env_box.sta_table.update_items(
+             observables, status, formulas={}, vocs_signal=False

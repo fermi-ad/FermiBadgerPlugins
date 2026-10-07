@@ -171,6 +171,8 @@ else
         "$REPO/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
     apply_patch "$SP" 1 "$REPO/patches/badger-mini-config.patch"
     apply_patch "$SP" 1 "$REPO/patches/badger-mini-var-table-env-configs.patch"
+    # must come after the two -mini patches: it was diffed against that tree
+    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-device-list-gui.patch"
 
     # ponytail: xopt-pydantic-serialization-fix.patch is deliberately not applied.
     # Its context lines assume hand-edits that are not in a pristine xopt 3.2.1, so

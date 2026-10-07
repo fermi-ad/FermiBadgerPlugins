@@ -576,3 +576,35 @@ description (Goal / Objective / Variables / Constraints / ...). Made
 L:RFQPAH, L:RFBPAH and L:V5QSET (Tank 5 phase) periodic in both RIL envs,
 keeping their tight operating limits. Lint and periodic test pass; see
 docs/progress.md.
+
+## 2026-10-06 — bulk supply limit for trim groups
+
+User asked for a hard limit on sum |I| over trims that share a bulk power
+supply (Acsys/Pacsys scope plus a template). Explored both interfaces (no
+validation, one batched write each) and all Linac envs (no shared base;
+Badger bounds check is per-variable). User chose: clip the largest |I|
+rather than raise, one-line warning, and also expose the sum as an
+observable for a soft vocs constraint. Groups: source trims and MEBT
+trims, corrected after the user's GUI load to four separate supplies
+(source A, source B, MEBT Q1, MEBT Q2) at a 7 A stand-in rating. Added `plugins/supply_limits.py`, wired both RIL envs
+(`supply_groups`/`supply_limits` params, `SumAbs_<group>` observables),
+the RIL Acsys template, a README note and an offline test. Supply
+ratings are 7.0 A stand-ins pending expert opinion. All offline checks
+pass; GUI load not yet done.
+
+## 2026-10-07 — device-list GUI behavior
+
+User: variables show alphabetically in `-g`/`-mini` (want beam order) and
+checked/unchecked rows share one list; wanted a collapsible selected list
+with a search dropdown of unselected items. User chose all four lists and
+the existing CollapsibleBox. Traced the sort to four lines in the two
+routine pages; everything else already preserved plugin order. Added
+`picker.py`, rewired both env boxes, wrapped the variable table, shipped
+as `patches/badger-1.6.0-device-list-gui.patch` (applied last by
+setup.sh), offline picker test passes. User click-through OK; then
+refined: checkboxes gone (always checked-only), picker lists all with
+check icons and opens on focus, constraints box open by default,
+variable table fits its rows. Fixed a stuck completer popup (focus
+reason loop; headless repro + regression test), hid the placeholder
+rows, all four tables fit their rows. User: dropdown behavior perfect.
+See docs/progress.md.

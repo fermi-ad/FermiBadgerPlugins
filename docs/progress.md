@@ -1599,3 +1599,111 @@ unchecks in the GUI for the narrower setups.
   loaded with no errors logged. (Both runs end with Badger's own
   `RuntimeError: can't create new thread at interpreter shutdown` from
   `badger/log.py`'s atexit listener stop; unrelated to the templates.)
+
+## 2026-10-06: Bulk power supply limit on trim-magnet groups
+
+### Problem
+Groups of trims share one bulk supply; per-variable bounds cannot stop the
+optimizer from pushing the group's sum |I| past what the supply can source.
+Badger's `validate_setpoints` is per-variable only; the Acsys/Pacsys
+interfaces write whatever they are given.
+
+### Done
+- `plugins/supply_limits.py`: `clip_to_supply_limits(requested, groups,
+  limits, read_settings)`. Members not being set count at their live
+  setting. Over the limit: the largest |I| being set is reduced (to zero,
+  then the next largest) until the sum fits, one console warning line. If
+  the non-set members alone already exceed the limit: `BadgerEnvVarError`.
+- `01_Linac_RIL_tuning_{Acsys,Pacsys}`: params `supply_groups`
+  (`{group: 'DEV,...'}`) and `supply_limits` (`{group: amps}`), defaults
+  SourceATrims (L:ATRM*), SourceBTrims (L:BTRM*), MEBTQ1trims (L:M[UD]Q1[HV]),
+  MEBTQ2trims (L:M[UD]Q2[HV]), each on its own bulk supply (corrected after
+  the user's first GUI load: sources A/B and Q1/Q2 are separate supplies); clip
+  call in `set_variables`; `SumAbs_<group>` computed observables (static
+  names in `observables`; a new group needs a new line there).
+- `01_Linac_RIL_tuning_Acsys.yaml`: params mirrored, `SumAbs_SourceATrims`
+  LessThanConstraint 7.0 (only the source A trims are variables there).
+- README "For Developers" section; `tests/supply_limits_test.py`.
+
+### Verified
+- `python tests/supply_limits_test.py`: 6 checks pass.
+- `python tests/template_lint_test.py`: 10/10 ok.
+- Pacsys interface FakeBackend test: 8 checks pass.
+- End-to-end on FakeBackend (scratch script): RIL Pacsys env with 4 source A
+  trims at 1.0 A, request L:ATRMHU=4.0 and L:ATRMVU=4.0 (sum 10) ->
+  warning, one of them written as 1.0,
+  `SumAbs_SourceATrims` = 4.0.
+
+### Not verified / open
+- **PENDING: supply ratings.** 7.0 A each is the user's stand-in ("perhaps")
+  while expert opinions are gathered; `# TODO` in the envs and template.
+- GUI load of the RIL template: done by the user on 2026-10-06, it loaded.
+  Not yet observed: a clip warning during a run.
+- `01_Linac_AutoSteerRestore_*` (D7 trims) not wired; add the same three
+  lines when a D7 group and rating are known.
+- Found but not fixed in `BasicAcsysInterface.set_values`: bare
+  `meets_tolerance` (NameError when a tolerance buffer fills), wrong
+  buffer-full test (`np.all(np.where(...))`); the settle loop in both
+  interfaces has no timeout and runs even when the write was skipped.
+
+## 2026-10-07: device lists in beam order, pick-to-add dropdowns
+
+### Problem
+`badger -g` and `-mini` listed variables alphabetically after a template loaded
+(plugins list them in beam order), and every list mixed checked and unchecked
+rows behind a free-text filter.
+
+### Root Cause
+Only the template/routine loaders sort: `all_variables = dict(sorted(...))` at
+`gui/components/routine_page.py:503,850` and `gui/mini/pages/routine_page.py:480,839`.
+Environment selection, `factory.load_plugin`, and the objective/constraint/
+observable lists already keep plugin order.
+
+### Fix Applied (installed Badger 1.6.0, shipped as `patches/badger-1.6.0-device-list-gui.patch`)
+- Dropped the four `sorted()` calls (dicts keep insertion order).
+- New `gui/components/picker.py`: editable `QComboBox` + contains-match
+  `QCompleter`, rebuilt from the table on focus/open (no signal wiring, so
+  `BlockSignalsContext` refreshes cannot stale it). `clear()` only clears text so
+  the routine pages' `edit_*.clear()` calls still work.
+- Both `env_cbox.py`: the four "Filter…" boxes are now Pickers listing unselected
+  rows; picking marks the row selected (`var_table.selected` + `update_variables(…, 2)`;
+  `EditableTable.status` + `update_items()`). Variable table wrapped in a
+  `CollapsibleBox(" Variables")`, expanded by default. Dead `filter_*` methods removed.
+  `-mini` observables "Show Checked Only" checkbox wired (upstream never connected it).
+- `setup.sh` applies the new patch last (it was diffed against the already-patched tree).
+- `tests/picker_test.py` (offscreen Qt, run as a script; no pytest in the env) passes.
+
+### Refinements (same day, after user click-through)
+- "Show Checked Only" checkboxes hidden; every list always shows checked rows.
+  All `setChecked(False)` / `= False` resets in both routine pages flipped to True
+  (sed over `check_only_*`, `checked_only`, `show_selected_only`); tables start
+  selected-only in both env boxes.
+- Picker lists *all* items with a check icon (`SP_DialogApplyButton`) on checked
+  ones, opens its completer popup on focus (`QTimer.singleShot(0, complete)`),
+  closes when focus leaves. Picking a checked item is a no-op.
+- "More" / "Constraints + Observables" box expanded by default.
+- Variable table sized to its rows: `fit_var_table` on the model's
+  `rowsInserted`/`rowsRemoved` (model signals are not blocked by
+  `BlockSignalsContext` on the table), capped at 400 px, then
+  `cbox_var.updateContentLayout()`.
+
+### Verification status
+- [x] modules import, picker test passes, patch reverse-applies cleanly
+- [x] GUI click-through of first version (user: came up fine, behavior good)
+- [x] GUI click-through of refinements (user: "Perfect GUI behavior on the dropdowns")
+
+### Second round of refinements
+- Stuck-popup bug: focus returned from a closing completer popup (PopupFocusReason)
+  re-triggered the open-on-focus handler forever. Reproduced headlessly with QTest
+  (`.patch_work/repro*.py`, now a regression test). Fix: open only on Mouse/Tab focus
+  or a click on the line edit; hide the popup after a pick.
+  Lesson: a first attempt "applied" nothing because `conda run python - <<EOF` drops
+  stdin; always run edit scripts from a file.
+- "Enter new … here" placeholder rows hidden (`setRowHidden`) in `EditableTable.
+  add_empty_row` and both `VariableTable.update_variables`; the last-row indexing
+  that add-by-typing / drag-drop use stays intact.
+- All four tables size to their visible rows (`_watch_table_rows` on model
+  rowsInserted/rowsRemoved, deferred one event-loop turn so the hidden row is
+  excluded); 120 px minimum heights removed; zero selected -> header only.
+- Patch now covers 8 files: picker.py (new), both env_cbox.py, both routine_page.py,
+  editable_table.py, both var_table.py.

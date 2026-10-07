@@ -11,6 +11,7 @@
 | `apply_xopt_fix.py` | Python script to apply the Xopt fix automatically | Xopt 3.2.0+ |
 | `badger-mini-config.patch` | Initializes the settings singleton before template loading in `-mini` | Badger 1.6.0 |
 | `badger-mini-var-table-env-configs.patch` | Rebuilds the `-mini` variable table's env configs *and* its rows from the template, so the table lists and queries the template's machine rather than the plugin defaults | Badger 1.6.0 |
+| `badger-1.6.0-device-list-gui.patch` | Lists variables in environment (beam) order instead of alphabetical when a template/routine loads; replaces each "Filter…" box and "Show Checked Only" checkbox in `-g` and `-mini` with a search dropdown that opens on focus, lists every item in beam order with a check icon on selected ones, and adds an item when picked; lists always show checked rows; the "Enter new … here" placeholder rows are hidden and all four tables size to their visible rows (zero rows when nothing is checked); variable table sits in a collapsible box. Apply **after** the two `-mini` patches. | Badger 1.6.0 |
 
 ## Issues Fixed
 
@@ -20,6 +21,8 @@
 4. **VOCs field not found** - Fixes error when VOCs data is stored separately from generator parameters
 5. **PydanticSerializationUnexpectedValue warnings** - Suppresses spurious warnings during TurboController model_dump/model_dump_json operations (every iteration of optimization loop)
 6. **`-mini` variable table lists and queries the wrong machine** - Two caches hold the plugin's `configs.yaml` defaults and are never refreshed when a template points the environment elsewhere: `BadgerVariableTable.configs` (captured in `select_env()`, and the environment is rebuilt from it on every refresh) and `routine_page.vars_env`, the table's *rows*, which come from `configs["variables"]` — computed once by `factory.load_plugin` from an environment built with those same defaults. Loading a template on another lattice therefore reloads the *default* lattice repeatedly, errors on variables only the template's lattice has (e.g. `Cannot read 'iq2'`), and lists thousands of rows belonging to the wrong machine. Fixed by `badger-mini-var-table-env-configs.patch`, which re-runs `add_var()` and rebuilds `vars_env` from an environment carrying the template's params. Measured on `Xfer400MeV_example.yaml`: 2284 default-lattice rows → 124 rows of its own.
+
+7. **Alphabetical device lists / checked and unchecked rows mixed together** - Both routine pages sort the variable dict (`dict(sorted(...))`) when loading a template or routine, so the plugin's beam-order listing is lost (environment selection alone preserved it). The four lists also showed every device with a free-text filter. Fixed by `badger-1.6.0-device-list-gui.patch`: drops the sort (dicts keep insertion order: env variables, then `additional_variables`, hard-limit overrides change values only), adds `gui/components/picker.py` (an editable `QComboBox` + contains-match `QCompleter` rebuilt from the table on focus/open, no signal wiring) in place of each filter box, and wraps the variable table in the existing `CollapsibleBox`. Also wires the `-mini` observables "Show Checked Only" checkbox, which upstream never connected.
 
 ## Applying the Patches
 
@@ -56,7 +59,7 @@ git apply /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-
 
 ### The `-mini` Patches
 
-Both `-mini` patches carry `a/badger/...` paths, so apply them from the
+All three of these patches carry `a/badger/...` paths, so apply them from the
 `site-packages` directory with `-p1`:
 
 ```bash
@@ -64,6 +67,7 @@ CONDA_PREFIX=$(conda run -n FermiBadger_env python -c "import sys; print(sys.pre
 cd "$CONDA_PREFIX/lib/python3.12/site-packages"
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-config.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-var-table-env-configs.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.patch
 ```
 
 ## Applying the Xopt Patch
