@@ -15,7 +15,7 @@ This session fixed the YAML flow map `'None'` parsing issue in Badger 1.6.0. Whe
    - Lines ~77-82
 
 ### Distribution Files (in this repository)
-1. `badger-1.6.0-none-parsing-fix.patch` - Single patch for fresh environments
+1. `badger-1.6.0-none-parsing-fix.patch` - Single patch for fresh environments (since folded into `patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch` and deleted on 2026-10-07)
 2. `docs/pr-badger-fork.md` - PR description for Badger fork
 3. `docs/progress.md` - Updated with session status
 4. `docs/log.md` - Updated with session log
@@ -28,9 +28,9 @@ conda create -n FermiBadger_env -c conda-forge badger-opt=1.6.0
 conda activate FermiBadger_env
 pip install xopt>=3.2.0
 
-# Apply the patch
-cd /path/to/badger/source
-patch -p1 < /path/to/FermiBadgerPlugins/badger-1.6.0-none-parsing-fix.patch
+# Apply the patches (2026-10-07: the standalone none-parsing patch is gone;
+# ./setup.sh applies the current set, see patches/README.md)
+cd /path/to/FermiBadgerPlugins && ./setup.sh --skip-env
 ```
 
 ## Quick Summary of the Fix

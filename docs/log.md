@@ -624,3 +624,13 @@ untested on the machine, user will try it next chance.
 Then renamed the top-level template to `01_Linac_RIL_tuning.yaml`: operators
 need not know the Acsys/Pacsys choice, which `environment.name` inside the
 file still records. Lint rule: top-level templates drop the interface suffix.
+
+## 2026-10-07 — fresh-install patch check
+
+Verified the fresh-install path: downloaded pristine badger-opt 1.6.0 from
+PyPI, applied the four patches in setup.sh order, and diffed against the
+live install — identical except `_version.py`. Deleted the two dead files
+in `patches/` (`badger-1.6.0-none-parsing-fix.patch`, folded into the
+dict-subtypes patch; `simple-virtual-accelerator-plugin-fix.patch`, for a
+renamed plugin path with the fix already committed) and pointed the old
+handoff/PR docs and the README tree at the current set.

@@ -260,10 +260,13 @@ FermiBadgerPlugins/
 │   ├── progress.md
 │   └── ...
 ├── environment.yml             # Conda environment definition
-├── patches/                    # Badger bug fixes
+├── patches/                    # Badger bug fixes, applied by setup.sh in the order patches/README.md lists
 │   ├── pydantic_editor-badger-1.6.0-dict-subtypes.patch
-│   ├── README.md
-│   └── ...
+│   ├── badger-mini-config.patch
+│   ├── badger-mini-var-table-env-configs.patch
+│   ├── badger-1.6.0-device-list-gui.patch
+│   ├── xopt-pydantic-serialization-fix.patch   # documented but not applied (see patches/README.md)
+│   └── README.md
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)
 │   │   ├── 01_Linac_RIL_tuning_Acsys/

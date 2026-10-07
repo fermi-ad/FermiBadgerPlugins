@@ -114,6 +114,11 @@ The following patches have been superseded by `pydantic_editor-badger-1.6.0-dict
 - `pydantic_editor-null-turbo_controller.patch`
 - `pydantic_editor-turbo_controller-string-PR.patch`
 - `pydantic_editor-turbo_controller-string-fix.patch`
+- `badger-1.6.0-none-parsing-fix.patch` (deleted 2026-10-07; its `pydantic_editor.py` change is in the dict-subtypes patch and its `gui/utils.py` change is not needed — a pristine 1.6.0 plus the four live patches is byte-identical to the working install)
+
+### Deleted plugin patch
+
+- `simple-virtual-accelerator-plugin-fix.patch` (deleted 2026-10-07): targeted `plugins/environments/SimpleVirtualAccelerator/`, which was renamed `99_Sim_SimpleVirtualAccelerator` with the fix already committed in the plugin itself.
 
 ### New Patches
 

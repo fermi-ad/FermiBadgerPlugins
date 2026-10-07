@@ -53,13 +53,10 @@ Generator validation passes without errors.
 
 ## Patch File
 
-A patch file is available at: `badger-1.6.0-none-parsing-fix.patch`
-
-To apply to a fresh environment:
-```bash
-cd /path/to/badger
-patch -p1 < /path/to/badger-1.6.0-none-parsing-fix.patch
-```
+The fix is carried by `patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch`
+(the standalone `badger-1.6.0-none-parsing-fix.patch` was folded into it and
+deleted on 2026-10-07). To apply to a fresh environment see `patches/README.md`,
+or run `./setup.sh --skip-env`.
 
 ## Instructions for Fork
 
