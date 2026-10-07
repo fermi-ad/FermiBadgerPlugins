@@ -342,6 +342,12 @@ A phase in degrees or radians is the same physics at `x` and `x + n*period`, and
 
 Offline check: `python tests/periodic_phase_test.py`.
 
+### Trim magnets that share a bulk power supply
+
+Per-variable bounds cannot stop several trims on one bulk supply from together drawing more than the supply can source. An environment declares the groups and their ratings as two template-overridable parameters, `supply_groups` (`{group: 'DEV1,DEV2,...'}` of setting devices) and `supply_limits` (`{group: max sum |I| in amps}`), and calls `clip_to_supply_limits` (`plugins/supply_limits.py`) in `set_variables` before writing. Members not being set count at their live setting. If the sum would exceed the limit, the largest |I| being set is reduced (to zero, then the next largest) until it fits, with a one-line console warning; if the members *not* being set already exceed the limit on their own, the write is refused with `BadgerEnvVarError`. Each group's sum is also offered as the observable `SumAbs_<group>` (listed in the environment's `observables`), so a template can add a `LessThanConstraint` on it and the optimizer learns to stay clear of the clip. See `01_Linac_RIL_tuning_*` (source A, source B, MEBT Q1 and MEBT Q2 trims each on their own supply) and the `SumAbs_SourceATrims` constraint in `tuning_templates/01_Linac_RIL_tuning_Acsys.yaml`.
+
+Offline check: `python tests/supply_limits_test.py`.
+
 ## Related Documentation
 
 [↑ Back to top](#contents)

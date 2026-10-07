@@ -9,6 +9,9 @@ description: |
     LEBT trims L:LTRMH, L:LTRMV; MEBT quads L:MUQ1, L:MUQ2, L:MDQ1, L:MDQ2 (independently);
     RF phases L:RFQPAH, L:RFBPAH.
   Constraints: L:D7TOR > 25, L:TK1RAD < 18, L:TUNRAD < 80, L:D34LM < 1.1.
+    SumAbs_SourceATrims < 7 (sum |I| of the source A trims, one bulk supply; 7 A is a stand-in
+    pending expert confirmation). The environment also clips the largest trim to keep each
+    supply group's sum under its limit before any setting.
   Observables: L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
   Windows: +-0.5 source trims, +-0.1 LEBT trims, +-5 solenoids, +-2 MEBT quads, +-10 deg RF phases,
     all around the live readback at load (Automatic).
@@ -30,6 +33,16 @@ environment:
       B:BOOEFF: '@e,1f,e,0'
       default: '@e,52,e,0'
     settings_role: ril_tuning
+    supply_groups:
+      MEBTQ1trims: L:MUQ1H,L:MUQ1V,L:MDQ1H,L:MDQ1V
+      MEBTQ2trims: L:MUQ2H,L:MUQ2V,L:MDQ2H,L:MDQ2V
+      SourceATrims: L:ATRMHU,L:ATRMVU,L:ATRMHD,L:ATRMVD
+      SourceBTrims: L:BTRMHU,L:BTRMVU,L:BTRMHD,L:BTRMVD
+    supply_limits:
+      MEBTQ1trims: 7.0
+      MEBTQ2trims: 7.0
+      SourceATrims: 7.0
+      SourceBTrims: 7.0
 formulas: {}
 generator:
   max_travel_distances: null
@@ -80,6 +93,10 @@ vocs:
       dtype: null
       type: LessThanConstraint
       value: 80.0
+    SumAbs_SourceATrims:
+      dtype: null
+      type: LessThanConstraint
+      value: 7.0
   objectives:
     G:LINEFF:
       dtype: null

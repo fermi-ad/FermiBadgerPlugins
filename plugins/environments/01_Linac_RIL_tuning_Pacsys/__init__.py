@@ -2,6 +2,7 @@ from badger import environment
 from badger.errors import BadgerNoInterfaceError
 from typing import Dict
 from periodic import unwrap
+from supply_limits import clip_to_supply_limits, group_devices
 
 class Environment(environment.Environment):
     name = "01_Linac_RIL_tuning_Pacsys"
@@ -80,7 +81,9 @@ class Environment(environment.Environment):
         "L:DELM8", "L:DELM2", "L:DELM3", "L:DELM9", "L:DELM4",
         "VTrajError_SumSqBPM_calc", 
         "W_SumLosses", 
-        "DummySumSq"
+        "DummySumSq",
+        # sum |I| per bulk supply group; a new entry in supply_groups needs a SumAbs_<group> line here.
+        "SumAbs_SourceATrims", "SumAbs_SourceBTrims", "SumAbs_MEBTQ1trims", "SumAbs_MEBTQ2trims",
     ]
     #sample_event:  str = '@e,52,e,0'
     sample_events: Dict[str, str] = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
@@ -88,6 +91,17 @@ class Environment(environment.Environment):
     debug:         bool= False
     # {reading device: period} for phase-like devices, in the device's own units.
     periods:       Dict[str, float] = {'L:RFQPAH': 360.0, 'L:RFBPAH': 360.0, 'L:V5QSET': 360.0}
+    # {group: comma-separated trims that share one bulk power supply} and {group: max sum |I| in amps}.
+    # set_variables clips the largest |I| in a group to stay under its limit; SumAbs_<group> is observable.
+    # Sources A and B and MEBT Q1 and Q2 each have their own bulk supply; the two sources must not interfere.
+    supply_groups: Dict[str, str] = {
+        'SourceATrims': 'L:ATRMHU,L:ATRMVU,L:ATRMHD,L:ATRMVD',
+        'SourceBTrims': 'L:BTRMHU,L:BTRMVU,L:BTRMHD,L:BTRMVD',
+        'MEBTQ1trims':  'L:MUQ1H,L:MUQ1V,L:MDQ1H,L:MDQ1V',
+        'MEBTQ2trims':  'L:MUQ2H,L:MUQ2V,L:MDQ2H,L:MDQ2V'}
+    # TODO: 7.0 A is a stand-in pending expert confirmation of each bulk supply's rating.
+    supply_limits: Dict[str, float] = {'SourceATrims': 7.0, 'SourceBTrims': 7.0,
+                                       'MEBTQ1trims': 7.0, 'MEBTQ2trims': 7.0}
     #setpoints:     Dict[str, float] = {'defaults': None}
     setpoints:     Dict[str, float | None] = {'defaults': None,
                            'L:D73BPH':  1.2,
@@ -127,6 +141,9 @@ class Environment(environment.Environment):
         if not self.interface:
             if self.debug: print ("not self.interface: {self.interface}.")
             raise BadgerNoInterfaceError
+        settable_devices = clip_to_supply_limits(settable_devices, self.supply_groups,
+                                                 self.supply_limits,
+                                                 lambda devs: self.interface.get_settings(devs, debug=self.debug))
         # Interface BasicPacsysInterface handles (read,set) pairs and optional tolerances.
         self.interface.set_values(settable_devices, settings_role=self.settings_role,
                                   periods=self.periods, debug=self.debug)
@@ -143,6 +160,9 @@ class Environment(environment.Environment):
             for input_dev in list(self.w_sumsq.keys()):
                 if not input_dev in observable_names: observable_names.append(input_dev)
             observable_names.remove('W_SumLosses') # only removes first occurrence. 
+
+        sumabs_names = [n for n in observable_names if n.startswith('SumAbs_')]
+        for n in sumabs_names: observable_names.remove(n)
 
         get_these_observables = []
         for observable_name in observable_names:
@@ -168,6 +188,9 @@ class Environment(environment.Environment):
                 if dev_read not in result.keys(): print (f'Unable to find {dev_read} among the read-back results: {list(result.keys())}')
                 sumsq += pow(weight * (1.0+result[dev_read]), 2.0) # Add unity, then scale by the weight, then square and add to the sum.
             result['W_SumLosses'] = sumsq
+        for name in sumabs_names:
+            devs = group_devices(self.supply_groups[name[len('SumAbs_'):]])
+            result[name] = sum(abs(v) for v in self.interface.get_settings(devs, debug=self.debug).values())
 
         return result
 
