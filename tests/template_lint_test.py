@@ -22,7 +22,7 @@ REQUIRED = ['name', 'description', 'relative_to_current', 'generator',
             'critical_constraint_names', 'vocs']
 
 failures = []
-for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '*.yaml'))):
+for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '**', '*.yaml'), recursive=True)):
     fname = os.path.basename(path)
     try:
         t = yaml.safe_load(open(path))
@@ -49,9 +49,15 @@ for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '*.yaml'))):
             r1, r2, core = env.split('_', 2)
             suffix = next((s for s in ('_Acsys', '_Pacsys') if core.endswith(s)), '')
             core = core.removesuffix(suffix)
-            if not re.fullmatch(rf'{r1}_{r2}_.+_{core}{suffix}\.yaml', fname):
+            # Templates under simulation/ drop the region prefix: the directory says it.
+            # Top-level (operations) templates drop the interface suffix: operators need not know it.
+            tier = os.path.basename(os.path.dirname(path))
+            region = '' if tier == 'simulation' else f'{r1}_{r2}_'
+            if tier == 'tuning_templates':
+                suffix = ''
+            if not re.fullmatch(rf'{region}(.+_)?{core}{suffix}\.yaml', fname):
                 # Advisory only: readability beats the convention when the full form is clunky.
-                print(f'warn  {fname}: name does not follow <region>_<task>_{core}{suffix}.yaml')
+                print(f'warn  {fname}: name does not follow {region}<task>_{core}{suffix}.yaml')
         print(f'ok    {fname}  ({len(vocs.variables)} vars, {len(vocs.objectives)} obj)')
     except Exception as e:  # noqa: BLE001 - report every template, then fail once
         failures.append(fname)

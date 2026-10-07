@@ -16,7 +16,7 @@
    ```
 
 3. **Load a template**:
-   - Open `tuning_templates/99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml`
+   - Open `tuning_templates/simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml`
    - The lattice file path is relative to the repo root
 
 ### Version Information
@@ -33,7 +33,7 @@ For detailed information on versions and fixes, see `HANDOFF.md` section "Badger
 |------|---------|
 | `plugins/environments/99_Sim_VirtualAccelerator_MADXSuite/__init__.py` | Environment plugin - loads MAD-X lattice, deduces vars/observables |
 | `plugins/interfaces/VirtualAccelerator_MADXSuiteInterface/__init__.py` | Interface plugin - translates channel names to xtrack operations |
-| `tuning_templates/99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml` | Working example template |
+| `tuning_templates/simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml` | Working example template |
 | `sim_configs/DeliveryRing/` | Lattice files for different accelerator configurations |
 | `patches/pydantic_editor-badger-1.6.0-fixes.patch` | Pydantic editor patches for Badger 1.6.0 |
 
@@ -381,9 +381,9 @@ in its `configs.yaml`) have their own gotchas, distinct from the
 badger -mini -cf config.yaml -t 01_Linac_RIL_tuning_Acsys_trims_and_sol_LEBT_MEBTquads.yaml
 ```
 
-`-t` takes a **bare filename**, resolved against `BADGER_TEMPLATE_ROOT`
-(the `tuning_templates/` dir per `config.yaml`) — **not** a path into the
-repo. Passing a full/relative repo path here fails to find the template.
+`-t` takes a filename **relative to `BADGER_TEMPLATE_ROOT`**
+(the `tuning_templates/` dir per `config.yaml`), so `-t simulation/X.yaml`
+or `-t development/Y.yaml` — **not** a path into the repo. Passing a full/relative repo path here fails to find the template.
 
 ### Auto-ranging: `relative_to_current` / `vrange_limit_options`
 

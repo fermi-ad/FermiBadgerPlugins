@@ -84,7 +84,7 @@ print('template objectives present')
 import glob
 import yaml
 
-for path in sorted(glob.glob(os.path.join(REPO_ROOT, 'tuning_templates', '*.yaml'))):
+for path in sorted(glob.glob(os.path.join(REPO_ROOT, 'tuning_templates', '**', '*.yaml'), recursive=True)):
     with open(path) as handle:
         try:
             template = yaml.safe_load(handle)

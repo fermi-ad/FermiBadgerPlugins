@@ -80,7 +80,7 @@ badger -g -cf config.local.yaml
 Or load a template straight into the compact `-mini` GUI:
 
 ```bash
-badger -mini -cf config.local.yaml -t Xfer400MeV_example.yaml
+badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
 ```
 
 `config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
@@ -152,9 +152,11 @@ This only rewrites `config.local.yaml`; it asks the same archive/logbook questio
 
 Use `File > Open Template` and choose one from `tuning_templates/`. Badger loads the matching Environment and Interface automatically, along with the template's preset variables, objectives, and algorithm settings.
 
-- `99_Sim_TuneQx_SimpleVirtualAccelerator.yaml` - quick-start example (toy simulated storage ring)
-- `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml` - Delivery Ring tune optimization (MAD-X simulation)
-- Templates for physical-system tuning require valid Kerberos credentials and the matching settings role.
+- Top level of `tuning_templates/` holds the operations-ready physical-machine templates (currently `01_Linac_RIL_tuning.yaml`). These are the only ones the `-mini` GUI's template dropdown lists; the full GUI's file dialog can browse into the subdirectories.
+- `tuning_templates/development/` - physical-machine templates still being worked on. They require valid Kerberos credentials and the matching settings role.
+- `tuning_templates/simulation/` - simulation templates, no credentials needed:
+  - `TuneQx_SimpleVirtualAccelerator.yaml` - quick-start example (toy simulated storage ring)
+  - `DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml` - Delivery Ring tune optimization (MAD-X simulation)
 
 ---
 
@@ -232,7 +234,7 @@ conda create -n FermiBadger_env -f environment.yml  # Recreate if missing
 
 ### Dict type must have subtypes Error
 
-When loading a template (e.g., `99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml`), you may see:
+When loading a template (e.g., `simulation/DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml`), you may see:
 ```
 ValueError: Dict type must have subtypes
 ```
@@ -278,13 +280,14 @@ FermiBadgerPlugins/
 │   ├── template_lint_test.py   # Headless check that every tuning template loads
 │   └── test-quick-start.sh     # Fresh-clone verification script
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
-    ├── 01_Linac_RIL_tuning_Acsys.yaml
-    ├── 01_Linac_OutputTrajectory_RIL_tuning_Acsys.yaml
-    ├── 03_Booster...
-    ├── 06_MIRR...
-    ├── 99_Sim_DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
-    ├── 99_Sim_Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
-    └── ...
+    ├── 01_Linac_RIL_tuning.yaml            # operations-ready physical-machine templates live at the top level
+    ├── development/                        # physical-machine templates still being worked on
+    │   ├── 01_Linac_OutputTrajectory_RIL_tuning_Acsys.yaml
+    │   └── ...
+    └── simulation/                         # simulation templates (no 99_Sim_ prefix: the directory says it)
+        ├── DR_BetatronTunes_sim_VirtualAccelerator_MADXSuite.yaml
+        ├── Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+        └── ...
 ```
 
 ---
@@ -325,7 +328,7 @@ A tuning template's filename follows its own token order, `<region>_<tuning_task
 01_Linac_OutputTrajectory_RIL_tuning_Acsys.yaml
 ```
 
-Here `01_Linac` is the region code, `OutputTrajectory` is the tuning task, `RIL_tuning` is the `env_plugin` (the parent environment's own name, with its region prefix and interface suffix stripped — i.e. `01_Linac_RIL_tuning_Acsys` minus `01_Linac_` and `_Acsys`), and `Acsys` is the interface suffix. Simulation templates omit the interface suffix, since their parent sim environments don't carry one either, e.g. `99_Sim_TuneQx_SimpleVirtualAccelerator.yaml`. An environment's general-purpose template is named after the environment alone, e.g. `01_Linac_RIL_tuning_Acsys.yaml`; it checks the recommended default selection, and the operator reaches the narrower setups by unchecking variables in the GUI rather than by picking a different template.
+Here `01_Linac` is the region code, `OutputTrajectory` is the tuning task, `RIL_tuning` is the `env_plugin` (the parent environment's own name, with its region prefix and interface suffix stripped — i.e. `01_Linac_RIL_tuning_Acsys` minus `01_Linac_` and `_Acsys`), and `Acsys` is the interface suffix. Simulation templates live in `tuning_templates/simulation/` and drop the `99_Sim_` region prefix as well as the interface suffix (their parent sim environments keep the prefix, since they share one picker with the real-machine environments), e.g. `simulation/TuneQx_SimpleVirtualAccelerator.yaml`. Physical-machine templates go in `tuning_templates/development/` until they are ready for operations, then move to the top level, which is the only level the `-mini` dropdown lists. Top-level templates also drop the `_Acsys`/`_Pacsys` suffix (e.g. `01_Linac_RIL_tuning.yaml`): operators need not know which control-system interface the template's environment uses, and the `environment.name` inside the file still records it. An environment's general-purpose template is named after the environment alone, e.g. `development/01_Linac_RIL_tuning_Pacsys.yaml`; it checks the recommended default selection, and the operator reaches the narrower setups by unchecking variables in the GUI rather than by picking a different template.
 
 When a region assignment is ambiguous — e.g. an environment that varies a parameter in one region but reads a diagnostic from another — ask before guessing; Fermilab device-prefix meanings require domain knowledge.
 
@@ -344,7 +347,7 @@ Offline check: `python tests/periodic_phase_test.py`.
 
 ### Trim magnets that share a bulk power supply
 
-Per-variable bounds cannot stop several trims on one bulk supply from together drawing more than the supply can source. An environment declares the groups and their ratings as two template-overridable parameters, `supply_groups` (`{group: 'DEV1,DEV2,...'}` of setting devices) and `supply_limits` (`{group: max sum |I| in amps}`), and calls `clip_to_supply_limits` (`plugins/supply_limits.py`) in `set_variables` before writing. Members not being set count at their live setting. If the sum would exceed the limit, the largest |I| being set is reduced (to zero, then the next largest) until it fits, with a one-line console warning; if the members *not* being set already exceed the limit on their own, the write is refused with `BadgerEnvVarError`. Each group's sum is also offered as the observable `SumAbs_<group>` (listed in the environment's `observables`), so a template can add a `LessThanConstraint` on it and the optimizer learns to stay clear of the clip. See `01_Linac_RIL_tuning_*` (source A, source B, MEBT Q1 and MEBT Q2 trims each on their own supply) and the `SumAbs_SourceATrims` constraint in `tuning_templates/01_Linac_RIL_tuning_Acsys.yaml`.
+Per-variable bounds cannot stop several trims on one bulk supply from together drawing more than the supply can source. An environment declares the groups and their ratings as two template-overridable parameters, `supply_groups` (`{group: 'DEV1,DEV2,...'}` of setting devices) and `supply_limits` (`{group: max sum |I| in amps}`), and calls `clip_to_supply_limits` (`plugins/supply_limits.py`) in `set_variables` before writing. Members not being set count at their live setting. If the sum would exceed the limit, the largest |I| being set is reduced (to zero, then the next largest) until it fits, with a one-line console warning; if the members *not* being set already exceed the limit on their own, the write is refused with `BadgerEnvVarError`. Each group's sum is also offered as the observable `SumAbs_<group>` (listed in the environment's `observables`), so a template can add a `LessThanConstraint` on it and the optimizer learns to stay clear of the clip. See `01_Linac_RIL_tuning_*` (source A, source B, MEBT Q1 and MEBT Q2 trims each on their own supply) and the `SumAbs_SourceATrims` constraint in `tuning_templates/01_Linac_RIL_tuning.yaml`.
 
 Offline check: `python tests/supply_limits_test.py`.
 

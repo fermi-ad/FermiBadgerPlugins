@@ -1,0 +1,311 @@
+additional_variables: []
+badger_version: 1.6.0
+constraint_formulas: {}
+critical_constraint_names: []
+description: |
+  Goal: Raise Linac transmission by tuning the ion source, LEBT, MEBT and RF phases.
+  Objective: G:LINEFF MAXIMIZE.
+  Variables: source trims L:ATRMHU, L:ATRMVU, L:ATRMHD, L:ATRMVD; solenoids L:ASOL, L:LSOL;
+    LEBT trims L:LTRMH, L:LTRMV; MEBT quads L:MUQ1, L:MUQ2, L:MDQ1, L:MDQ2 (independently);
+    RF phases L:RFQPAH, L:RFBPAH.
+  Constraints: L:D7TOR > 25, L:TK1RAD < 18, L:TUNRAD < 80, L:D34LM < 1.1.
+    SumAbs_SourceATrims < 7 (sum |I| of the source A trims, one bulk supply; 7 A is a stand-in
+    pending expert confirmation). The environment also clips the largest trim to keep each
+    supply group's sum under its limit before any setting.
+  Observables: L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
+  Windows: +-0.5 source trims, +-0.1 LEBT trims, +-5 solenoids, +-2 MEBT quads, +-10 deg RF phases,
+    all around the live readback at load (Automatic).
+  Notes: readings on $52, B:BOOEFF on $1F. L:RFQPAH, L:RFBPAH and L:V5QSET are periodic (360 deg).
+    Expected improvement with the safety turbo controller.
+  Other subsets: uncheck variables in the GUI for a narrower tune (source trims only; trims and
+    solenoids; add LEBT/MEBT; RF phases only). L:V5QSET (Tank 5 phase, +-0.5) is unchecked but
+    ready to tick. Pick the mobo generator and a second objective (e.g. L:TUNRAD MINIMIZE or
+    L:D34LM MINIMIZE) for a Pareto front.
+environment:
+  name: 01_Linac_RIL_tuning_Pacsys
+  params:
+    debug: false
+    periods:
+      L:RFBPAH: 360.0
+      L:RFQPAH: 360.0
+      L:V5QSET: 360.0
+    sample_events:
+      B:BOOEFF: '@e,1f,e,0'
+      default: '@e,52,e,0'
+    settings_role: ril_tuning
+    supply_groups:
+      MEBTQ1trims: L:MUQ1H,L:MUQ1V,L:MDQ1H,L:MDQ1V
+      MEBTQ2trims: L:MUQ2H,L:MUQ2V,L:MDQ2H,L:MDQ2V
+      SourceATrims: L:ATRMHU,L:ATRMVU,L:ATRMHD,L:ATRMVD
+      SourceBTrims: L:BTRMHU,L:BTRMVU,L:BTRMHD,L:BTRMVD
+    supply_limits:
+      MEBTQ1trims: 7.0
+      MEBTQ2trims: 7.0
+      SourceATrims: 7.0
+      SourceBTrims: 7.0
+formulas: {}
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 2000
+    max_time: 5.0
+    mixed_max_discrete_configurations: 512
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller:
+    failure_tolerance: 6
+    length: 0.021475
+    length_max: 2.0
+    length_min: 0.007813
+    name: SafetyTurboController
+    restrict_model_data: true
+    scale_factor: 1.25
+    success_tolerance: 6
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+name: ''
+observable_formulas: {}
+relative_to_current: true
+vocs:
+  constants: {}
+  constraints:
+    L:D34LM:
+      dtype: null
+      type: LessThanConstraint
+      value: 1.1
+    L:D7TOR:
+      dtype: null
+      type: GreaterThanConstraint
+      value: 25.0
+    L:TK1RAD:
+      dtype: null
+      type: LessThanConstraint
+      value: 18.0
+    L:TUNRAD:
+      dtype: null
+      type: LessThanConstraint
+      value: 80.0
+    SumAbs_SourceATrims:
+      dtype: null
+      type: LessThanConstraint
+      value: 7.0
+  objectives:
+    G:LINEFF:
+      dtype: null
+      type: MaximizeObjective
+  observables:
+    B:BLMLAM:
+      dtype: null
+      type: Observable
+    B:BLMQ3:
+      dtype: null
+      type: Observable
+    B:BOOEFF:
+      dtype: null
+      type: Observable
+    L:D7LMSM:
+      dtype: null
+      type: Observable
+    L:TK4RAD:
+      dtype: null
+      type: Observable
+  variables:
+    L:ASOL:
+      default_value: null
+      domain:
+      - 419.0998840332031
+      - 429.0998840332031
+      dtype: null
+      type: ContinuousVariable
+    L:ATRMHD:
+      default_value: null
+      domain:
+      - -1.1055908203125
+      - -0.1055908203125
+      dtype: null
+      type: ContinuousVariable
+    L:ATRMHU:
+      default_value: null
+      domain:
+      - -1.0543212890625
+      - -0.0543212890625
+      dtype: null
+      type: ContinuousVariable
+    L:ATRMVD:
+      default_value: null
+      domain:
+      - -0.9083251953125
+      - 0.0916748046875
+      dtype: null
+      type: ContinuousVariable
+    L:ATRMVU:
+      default_value: null
+      domain:
+      - 0.19775390625
+      - 1.19775390625
+      dtype: null
+      type: ContinuousVariable
+    L:LSOL:
+      default_value: null
+      domain:
+      - 460.7998046875
+      - 470.7998046875
+      dtype: null
+      type: ContinuousVariable
+    L:LTRMH:
+      default_value: null
+      domain:
+      - -0.37685546875
+      - -0.17685546875
+      dtype: null
+      type: ContinuousVariable
+    L:LTRMV:
+      default_value: null
+      domain:
+      - -0.76064453125
+      - -0.56064453125
+      dtype: null
+      type: ContinuousVariable
+    L:MDQ1:
+      default_value: null
+      domain:
+      - 226.49961853027344
+      - 230.49961853027344
+      dtype: null
+      type: ContinuousVariable
+    L:MDQ2:
+      default_value: null
+      domain:
+      - 170.19960021972656
+      - 174.19960021972656
+      dtype: null
+      type: ContinuousVariable
+    L:MUQ1:
+      default_value: null
+      domain:
+      - 271.499755859375
+      - 275.499755859375
+      dtype: null
+      type: ContinuousVariable
+    L:MUQ2:
+      default_value: null
+      domain:
+      - 245.59873962402344
+      - 249.59873962402344
+      dtype: null
+      type: ContinuousVariable
+    L:RFBPAH:
+      default_value: null
+      domain:
+      - 170.84173583984375
+      - 190.84173583984375
+      dtype: null
+      type: ContinuousVariable
+    L:RFQPAH:
+      default_value: null
+      domain:
+      - 189.40185546875
+      - 209.40185546875
+      dtype: null
+      type: ContinuousVariable
+vrange_hard_limit:
+  L:ASOL:
+  - 300.0
+  - 500.0
+  L:ATRMHD:
+  - -4.0
+  - 4.0
+  L:ATRMHU:
+  - -4.0
+  - 4.0
+  L:ATRMVD:
+  - -4.0
+  - 4.0
+  L:ATRMVU:
+  - -4.0
+  - 4.0
+  L:LSOL:
+  - 300.0
+  - 500.0
+  L:LTRMH:
+  - -4.0
+  - 4.0
+  L:LTRMV:
+  - -4.0
+  - 4.0
+  L:MDQ1:
+  - 200.0
+  - 250.0
+  L:MDQ2:
+  - 150.0
+  - 180.0
+  L:MUQ1:
+  - 250.0
+  - 300.0
+  L:MUQ2:
+  - 225.0
+  - 275.0
+  L:RFBPAH:
+  - 100.0
+  - 300.0
+  L:RFQPAH:
+  - 185.0
+  - 225.0
+  L:V5QSET:
+  - -40.0
+  - -30.0
+vrange_limit_options:
+  L:ASOL:
+    delta: 5.0
+    limit_option_idx: 2
+  L:ATRMHD:
+    delta: 0.5
+    limit_option_idx: 2
+  L:ATRMHU:
+    delta: 0.5
+    limit_option_idx: 2
+  L:ATRMVD:
+    delta: 0.5
+    limit_option_idx: 2
+  L:ATRMVU:
+    delta: 0.5
+    limit_option_idx: 2
+  L:LSOL:
+    delta: 5.0
+    limit_option_idx: 2
+  L:LTRMH:
+    delta: 0.1
+    limit_option_idx: 2
+  L:LTRMV:
+    delta: 0.1
+    limit_option_idx: 2
+  L:MDQ1:
+    delta: 2.0
+    limit_option_idx: 2
+  L:MDQ2:
+    delta: 2.0
+    limit_option_idx: 2
+  L:MUQ1:
+    delta: 2.0
+    limit_option_idx: 2
+  L:MUQ2:
+    delta: 2.0
+    limit_option_idx: 2
+  L:RFBPAH:
+    delta: 10.0
+    limit_option_idx: 2
+  L:RFQPAH:
+    delta: 10.0
+    limit_option_idx: 2
+  L:V5QSET:
+    delta: 0.5
+    limit_option_idx: 2
+xopt_version: 3.2.2

@@ -608,3 +608,19 @@ variable table fits its rows. Fixed a stuck completer popup (focus
 reason loop; headless repro + regression test), hid the placeholder
 rows, all four tables fit their rows. User: dropdown behavior perfect.
 See docs/progress.md.
+
+## 2026-10-07 — template tiers, first Pacsys RIL template
+
+Moved every physical-machine template except `01_Linac_RIL_tuning_Acsys.yaml`
+into `tuning_templates/development/`, and the simulation templates into
+`tuning_templates/simulation/` without the `99_Sim_` prefix. `-mini`'s
+dropdown globs only the top level, so it now lists just the operations-ready
+template; `-t simulation/X.yaml` and the full GUI's file dialog reach the
+rest. Lint and integration-test globs recurse; lint accepts prefix-free
+names under `simulation/`. README/HANDOFF/CLAUDE paths updated. Added
+`development/01_Linac_RIL_tuning_Pacsys.yaml`, a copy of the Acsys RIL
+template on the Pacsys environment (the two envs differ only in interface);
+untested on the machine, user will try it next chance.
+Then renamed the top-level template to `01_Linac_RIL_tuning.yaml`: operators
+need not know the Acsys/Pacsys choice, which `environment.name` inside the
+file still records. Lint rule: top-level templates drop the interface suffix.
