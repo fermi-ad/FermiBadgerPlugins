@@ -77,9 +77,10 @@ conda activate FermiBadger_env
 badger -g -cf config.local.yaml
 ```
 
-Or load a template straight into the compact `-mini` GUI:
+Or load a template straight into either GUI (the name is relative to `tuning_templates/`):
 
 ```bash
+badger -g -cf config.local.yaml -t 01_Linac_RIL_tuning.yaml
 badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
 ```
 
@@ -265,6 +266,7 @@ FermiBadgerPlugins/
 │   ├── badger-mini-config.patch
 │   ├── badger-mini-var-table-env-configs.patch
 │   ├── badger-1.6.0-device-list-gui.patch
+│   ├── badger-1.6.0-full-gui-template-option.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
 ├── plugins/

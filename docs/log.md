@@ -693,3 +693,16 @@ Added `plugins/mults.py`, the same edits in both RIL envs, the template
 (mult:MUQ / mult:MDQ checked, the four quads unchecked), `tests/mults_test.py`,
 README subsection. User then supplied the numbers: coefficients 20.0, step
 size 0.05 (one step = 1.0 A per quad); placeholders replaced.
+
+## 2026-10-08 — -t for the full GUI
+
+User wanted `badger -g -t <template>` like `-mini`. Three-file Badger patch
+(`badger-1.6.0-full-gui-template-option.patch`): CLI help text, the action
+dispatch passes `args.template`, and the full launcher calls the home page's
+`load_template_yaml` after the window exists, name relative to
+BADGER_TEMPLATE_ROOT. Edited via temp-file-and-rename (hard-link rule).
+First try loaded before the event loop ran: off-site, the template's
+automatic-range read of live settings failed and the uncaught error killed
+the process. Now loaded via QTimer.singleShot(0) after window.show(), so the
+failure is Badger's usual error dialog and the window stays open, same as a
+manual File > Open Template. Verified: process alive, no exit.

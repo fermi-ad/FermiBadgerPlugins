@@ -7,6 +7,7 @@
 | Patch | Description | Required Components |
 |-------|-------------|---------------------|
 | `pydantic_editor-badger-1.6.0-dict-subtypes.patch` | Fixes "Dict type must have subtypes" error, handles `turbo_controller: null`, and fixes YAML parsing for 'None' strings | Badger 1.6.0 |
+| `badger-1.6.0-full-gui-template-option.patch` | `badger -g -t <template>` loads a template at launch, as `-mini -t` already did (three files: CLI help, action dispatch, full-GUI launcher) | Badger 1.6.0 |
 | `xopt-3.2.2-turbo-serialization.patch` | Stops the `PydanticSerializationUnexpectedValue` warning Badger logs on every iteration with a TuRBO controller: declares `_initial_state` as a private attribute and stores `best_value` as a plain float | Xopt 3.2.2 |
 | `badger-mini-config.patch` | Initializes the settings singleton before template loading in `-mini` | Badger 1.6.0 |
 | `badger-mini-var-table-env-configs.patch` | Rebuilds the `-mini` variable table's env configs *and* its rows from the template, so the table lists and queries the template's machine rather than the plugin defaults | Badger 1.6.0 |
@@ -71,7 +72,7 @@ git apply /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-
 
 ### The `-mini` Patches
 
-All three of these patches carry `a/badger/...` paths, so apply them from the
+All of these patches carry `a/badger/...` paths, so apply them from the
 `site-packages` directory with `-p1`:
 
 ```bash
@@ -80,6 +81,7 @@ cd "$CONDA_PREFIX/lib/python3.12/site-packages"
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-config.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-var-table-env-configs.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-full-gui-template-option.patch
 ```
 
 ## Applying the Xopt Patch
