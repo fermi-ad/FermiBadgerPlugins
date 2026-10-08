@@ -87,6 +87,9 @@ class Environment(environment.Environment):
     ]
     #sample_event:  str = '@e,52,e,0'
     sample_events: Dict[str, str] = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
+    # {reading device or 'default': N}: an observable is the mean of N fresh events (N > 1
+    # needs a streaming sample event, not @i). Costs N cycles per evaluation; smoother objectives.
+    average_events: Dict[str, int] = {'default': 1}
     settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
     # {reading device: period} for phase-like devices, in the device's own units.
@@ -175,6 +178,7 @@ class Environment(environment.Environment):
                                            sample_events=self.sample_events,
                                            setpoints   =self.setpoints,
                                            periods     =self.periods,
+                                           average_events=self.average_events,
                                            debug=self.debug)
         if len(calc_these)>0:
             if 'VTrajError_SumSqBPM_calc' in calc_these:

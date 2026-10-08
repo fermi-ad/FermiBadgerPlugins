@@ -3,10 +3,24 @@ import pacsys
 from pacsys import KerberosAuth
 from pacsys.backends import Backend
 from pacsys.errors import DeviceError
+from pacsys.exp import read_fresh
+import math
 import re
 import numpy as np
-from time import sleep
+from time import sleep, monotonic
 from periodic import unwrap
+
+# Array observables: "<DRF>|<reduce>" reads the (optionally ranged) array DRF and returns
+# one number. '|' cannot occur in a DRF, so the split is unambiguous.
+REDUCTIONS = {
+    'mean':   lambda a: float(np.mean(a)),
+    'rms':    lambda a: float(np.sqrt(np.mean(np.square(a)))),
+    'std':    lambda a: float(np.std(a)),
+    'min':    lambda a: float(np.min(a)),
+    'max':    lambda a: float(np.max(a)),
+    'sum':    lambda a: float(np.sum(a)),
+    'absmax': lambda a: float(np.max(np.abs(a))),
+}
 
 class Interface(interface.Interface):
     name = 'BasicPacsysInterface'
@@ -23,10 +37,15 @@ class Interface(interface.Interface):
     _regulate_to: float
     _unwrap_ref: dict
     _timeout: float
+    _warned_pairs: set
     # Test-only seam: set to a pacsys.testing.FakeBackend() to avoid the real
     # control network. Left None in production, in which case every call goes
     # through the module-level pacsys.* functions (global default backend).
     _backend_override: Backend
+    # ponytail: readback tolerance for a bare device's stored SETTING vs the value sent.
+    # Only quantisation or front-end clipping can differ; widen if a device class needs it.
+    _readback_rtol = 1e-3
+    _readback_atol = 1e-6
 
     def __init__(self, **data):
         super().__init__(**data)
@@ -40,11 +59,21 @@ class Interface(interface.Interface):
         self._unwrap_ref = {}
         self._timeout = 15.0
         self._backend_override = None
+        self._warned_pairs = set()
+
+    # "<DRF>|<reduce>" -> (DRF, reduce); anything else -> (name, None)
+    def split_reduction(self, name):
+        if '|' not in name: return name, None
+        drf, reduce = name.rsplit('|', 1)
+        if reduce not in REDUCTIONS:
+            raise ValueError(f'{name}: unknown reduction {reduce!r}; choose from {sorted(REDUCTIONS)}')
+        return drf, reduce
 
     # Handle read/set/[settling tolerance] devices, getting just the reading
     def extract_reading_devices(self, device_list):
         ret_list = []
         for device in device_list:
+            device, _ = self.split_reduction(device)
             isreadsetpair = self._read_set_pair_pattern.fullmatch(device)
             isreadsettolr = self._read_set_pair_settle_tol_pattern.fullmatch(device)
             issetpoint_dev = self._setpoint_pattern.match(device)
@@ -67,6 +96,15 @@ class Interface(interface.Interface):
                 ret_list.append(device.split(',')[1])
             else: ret_list.append(device)
         return ret_list
+
+    # Which DRF tells us a setting landed. A read/set pair's readback is its READING device,
+    # a different physical quantity (e.g. measured phase L:CDPHAS for the adjust L:LDPADJ),
+    # so it is never compared to the value sent: the settle loop (tolN@T) verifies pairs.
+    # A bare device's readback is its stored setting. -SETPOINT names are never written.
+    def readback_drf(self, name):
+        if self._setpoint_pattern.match(name): return None
+        if self._read_set_pair_pattern.fullmatch(name): return name.split(',')[0]
+        return f'{name}.SETTING@I'
 
     def meets_tolerance(self, buff, tol, debug=False):
         spread = max(buff) - min(buff)
@@ -119,14 +157,50 @@ class Interface(interface.Interface):
                 raise DeviceError(r.drf, r.facility_code, r.error_code, r.message)
         return [r.value for r in readings]
 
+    @staticmethod
+    def _reduce(value, reduce):
+        if reduce is None: return value
+        if np.ndim(value) == 0:
+            raise ValueError(f'reduction {reduce!r} needs an array reading, got scalar {value!r}')
+        return REDUCTIONS[reduce](np.asarray(value, dtype=float))
+
+    # Read one value per DRF: a single reading (count 1, via get_many) or the mean of
+    # `count` fresh events (via a temporary subscription). Array readings are reduced
+    # per event before averaging.
+    def _read_values(self, event_drfs, counts, reduces, debug=False):
+        values = [None] * len(event_drfs)
+        single = [i for i, n in enumerate(counts) if n <= 1]
+        if single:
+            for i, v in zip(single, self._get_many([event_drfs[i] for i in single], debug=debug)):
+                values[i] = self._reduce(v, reduces[i])
+        for n in sorted({n for n in counts if n > 1}):
+            idx = [i for i, c in enumerate(counts) if c == n]
+            for i in idx:
+                if '@' not in event_drfs[i] or event_drfs[i].lower().endswith('@i'):
+                    raise ValueError(f'{event_drfs[i]}: averaging {n} events needs a streaming event, not @i')
+            results = read_fresh([event_drfs[i] for i in idx], count=n, timeout=self._timeout,
+                                 backend=self._backend_override)
+            for i, res in zip(idx, results):
+                per_event = []
+                for r in res.readings:
+                    if not r.ok:
+                        raise DeviceError(r.drf, r.facility_code, r.error_code, r.message)
+                    per_event.append(self._reduce(r.value, reduces[i]))
+                values[i] = float(np.mean(per_event))
+                if debug: print (f'{event_drfs[i]}: mean of {n} events {per_event} = {values[i]}')
+        return values
+
     # Read values from devices
     # Use the reading device, not the setting device, if they have different names.
     # If a setpoint exists, instead of the readback, return squared difference of readback-setpoint.
     # periods: {reading device: period} for phase-like devices (e.g. {'L:CDPHAS': 360.0}).
     # Their readbacks are unwrapped onto the branch nearest the first reading of this run
     # (or nearest the setpoint, for -SETPOINT devices), so a wrap through 0 is not a jump.
-    def get_values(self, drf_list, sample_events={}, setpoints={}, periods={}, debug=False):
+    # average_events: {reading device or 'default': N} -- N > 1 returns the mean of N fresh events.
+    # Observable names may carry "|<reduce>" (see REDUCTIONS) to turn an array reading into a number.
+    def get_values(self, drf_list, sample_events={}, setpoints={}, periods={}, average_events={}, debug=False):
         readings_list = self.extract_reading_devices(drf_list)
+        reduces = [self.split_reduction(name)[1] for name in drf_list]
         if debug: print (f'BasicPacsysInterface.get_values() got readings_list: {readings_list} and sample_events: {sample_events}.')
         # List of the one with -SETPOINT keyword in the device name
         setpoint_devs = self.get_setpoints(drf_list)
@@ -141,9 +215,10 @@ class Interface(interface.Interface):
             # a plain current-value read, e.g. Environment.get_variables()) uses '@i' instead of
             # raising KeyError.
             event_drfs = [name + sample_events.get(name, sample_events.get('default', '@i')) for name in readings_list]
-            if debug: print (f'About to run get_many().  setpoint_devs was :{setpoint_devs}.')
-            readbacks = self._get_many(event_drfs, debug=debug)
-            if debug: print (f'get_many returned readbacks: {readbacks}.')
+            counts = [int(average_events.get(name, average_events.get('default', 1))) for name in readings_list]
+            if debug: print (f'About to read {event_drfs} (events to average: {counts}).  setpoint_devs was :{setpoint_devs}.')
+            readbacks = self._read_values(event_drfs, counts, reduces, debug=debug)
+            if debug: print (f'readbacks: {readbacks}.')
             for i, name in enumerate(drf_list):
                 if debug: print (f'drf_list[{i}] == {name}. Storing value as readbacks[i]={readbacks[i]}')
                 valdict_to_return[name] = readbacks[i]
@@ -195,6 +270,24 @@ class Interface(interface.Interface):
         if debug: print (f'BasicPacsysInterface.get_settings() returning settings_dict: {settings_dict}')
         return settings_dict
 
+    # After a batch write: a bare device's stored SETTING must match what was sent (warn
+    # only -- quantisation and front-end clipping are legitimate); a pair's readback is
+    # its READING device, verified by the settle loop, so no value comparison here.
+    def _check_readbacks(self, drf_dict, debug=False):
+        bare = [(name, val) for name, val in drf_dict.items()
+                if self.readback_drf(name) == f'{name}.SETTING@I']
+        if bare:
+            stored = self._get_many([self.readback_drf(name) for name, _ in bare], debug=debug)
+            for (name, sent), got in zip(bare, stored):
+                if not math.isclose(got, sent, rel_tol=self._readback_rtol, abs_tol=self._readback_atol):
+                    print(f'BasicPacsysInterface: {name} stored setting {got} differs from the {sent} sent.')
+        for name in drf_dict:
+            if (self._read_set_pair_pattern.fullmatch(name)
+                    and not self._read_set_pair_settle_tol_pattern.fullmatch(name)
+                    and name not in self._warned_pairs):
+                self._warned_pairs.add(name)
+                print(f'BasicPacsysInterface: {name} has no tolN@T spec, so its reading is not verified after a setting.')
+
     # Set devices to values settable_devices: dict[str, float]
     def set_values(self, drf_dict, settings_role, dont_set=False, periods={}, debug=False):
         # Need a list of settings devices. Handle any devices with regex-enabled handling.
@@ -207,21 +300,30 @@ class Interface(interface.Interface):
             backend = self._backend_override
             opened_backend = False
             if backend is None:
-                backend = pacsys.dpm(auth=KerberosAuth(), role=settings_role)
+                backend = pacsys.dpm(auth=KerberosAuth(), role=settings_role, timeout=self._timeout)
                 opened_backend = True
             try:
-                results = backend.write_many(list(zip(setdevs, setvals)), timeout=self._timeout)
-                for setdev, result in zip(setdevs, results):
-                    if not result.success:
-                        print(f'BasicPacsysInterface.set_values() failed to set {setdev}: {result.message}')
-                    elif debug:
-                        print(f'BasicPacsysInterface.set_values() set {setdev}.')
+                # Explicit .SETTING: identical on the wire (pacsys retargets a bare name to SETTING)
+                # and it keeps pacsys.testing.FakeBackend's stored SETTING in step with the write.
+                results = backend.write_many([(f'{d}.SETTING', v) for d, v in zip(setdevs, setvals)],
+                                             timeout=self._timeout)
+                failed = [f'{setdev}: error {result.error_code} {result.message}'
+                          for setdev, result in zip(setdevs, results) if not result.ok]
+                if failed:
+                    # Never carry on optimizing with the machine in an unknown state.
+                    raise RuntimeError('BasicPacsysInterface.set_values() failed to set ' + '; '.join(failed))
+                if debug: print(f'BasicPacsysInterface.set_values() set {setdevs}.')
+                self._check_readbacks(drf_dict, debug=debug)
             finally:
                 if opened_backend: backend.close()
 
         # Check that any specified tolerances have been met
         settled_tols, circ_buffers = self.extract_PID_tolerances(drf_dict) # JMSJ Set a unitory-sized buffer for non-toleranced devices?
+        deadline = monotonic() + self._timeout
         while len(circ_buffers)>0:
+            if monotonic() > deadline:
+                raise RuntimeError('BasicPacsysInterface.set_values(): readings did not settle within '
+                                   f'{self._timeout} s: ' + '; '.join(f'{d} last {b}' for d, b in circ_buffers.items()))
             if debug: print ('BasicPacsysInterface.set_values() has circ_buffers: ',circ_buffers)
             settling_devs = list(circ_buffers.keys())
             newvals = self.get_values(settling_devs, periods=periods)

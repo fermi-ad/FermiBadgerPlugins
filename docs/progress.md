@@ -1707,3 +1707,39 @@ observable lists already keep plugin order.
   excluded); 120 px minimum heights removed; zero selected -> header only.
 - Patch now covers 8 files: picker.py (new), both env_cbox.py, both routine_page.py,
   editable_table.py, both var_table.py.
+
+## 2026-10-07: pacsys 0.3.0 upgrade and interface features
+
+### Done
+- `environment.yml`: `pacsys==0.3.0`; installed in FermiBadger_env.
+- `plugins/interfaces/BasicPacsysInterface/__init__.py`:
+  - `set_values` raises `RuntimeError` naming each device DPM rejected; writes
+    `<dev>.SETTING` explicitly; `pacsys.dpm(..., timeout=self._timeout)`.
+  - `readback_drf(name)`: bare -> `<dev>.SETTING@I` (compared to the sent value,
+    `_readback_rtol`/`_readback_atol`, warn only); pair -> READING device (verified
+    by the `tolN@T` settle loop, never value-compared); `-SETPOINT` -> None.
+    Pair without a `tol` spec: one warning per interface instance.
+  - Settle loop deadline = `_timeout`; raises listing unsettled devices and buffers.
+  - `get_values(..., average_events=)`: N > 1 via `pacsys.exp.read_fresh`, mean of
+    N events; `@i` with N > 1 raises.
+  - `REDUCTIONS` and `"<DRF>|<reduce>"` observable names; reduction applied per
+    event before averaging; scalar + reduction is an error.
+- `01_Linac_RIL_tuning_Pacsys`: `average_events: {'default': 1}` param, passed through.
+- Tests: `tests/pacsys_interface_test.py`, `tests/pacsys_drf_lint_test.py` (all six
+  Pacsys envs clean). `periodic_phase_test`, `template_lint_test` still pass.
+- README "For Developers": three new subsections.
+
+### Facts verified against pacsys 0.3.0
+- `write_many` never sets `WriteResult.verified`; only `Device.write(verify=Verify)`
+  does, per device. pacsys's own verify reads back `SETTING@I`, same as ours.
+- The real DPM backend retargets a bare name to SETTING; `FakeBackend` stores a
+  bare write under READING, hence the explicit `.SETTING` in our write.
+- `FakeBackend.get` rejects bad fields/events/ranges; device names are not
+  validated offline.
+- `pacsys.exp` (read_fresh, Monitor) is the experimental namespace.
+
+### Next
+- [ ] Live check with `development/ZZ_PacsysTesting.yaml`: setting lands, no readback warning.
+- [ ] RIL Pacsys template with `average_events: {default: 3}`; expect ~3 cycles slower, smoother objectives.
+- [ ] Pick an array device for a first `|rms` observable.
+- [ ] Ramps (Booster) when a Booster environment exists.

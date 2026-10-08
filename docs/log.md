@@ -634,3 +634,17 @@ in `patches/` (`badger-1.6.0-none-parsing-fix.patch`, folded into the
 dict-subtypes patch; `simple-virtual-accelerator-plugin-fix.patch`, for a
 renamed plugin path with the fix already committed) and pointed the old
 handoff/PR docs and the README tree at the current set.
+
+## 2026-10-07 — pacsys 0.3.0
+
+Bumped to pacsys 0.3.0 (environment.yml; installed). Our interface's five
+calls all survive; periodic test passed unchanged. User chose reliability,
+averaged observables and array observables (ramps deferred, no Booster env
+yet). BasicPacsysInterface: failed settings raise; bare devices' stored
+SETTING read back (warn on mismatch); read/set pairs verified only by their
+READING device settling, never compared to the sent value (user's point:
+L:CDPHAS/L:LDPADJ are different quantities); settle loop has a deadline;
+writes name `.SETTING` explicitly (same on the wire, keeps FakeBackend in
+step). `average_events` env param -> `read_fresh` mean of N events.
+`<DRF>|<reduce>` observables for arrays. Two new offline tests; README
+subsections. Not tried on the machine yet.
