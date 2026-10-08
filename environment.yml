@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - badger-opt=1.6.0
+  - ipywidgets  # xopt's pip metadata requires it; the conda recipe does not pull it in
   - python=3.12.1
   - pip:
       - cpymad==1.19.0

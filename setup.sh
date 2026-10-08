@@ -174,11 +174,7 @@ else
     # must come after the two -mini patches: it was diffed against that tree
     apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-device-list-gui.patch"
 
-    # ponytail: xopt-pydantic-serialization-fix.patch is deliberately not applied.
-    # Its context lines assume hand-edits that are not in a pristine xopt 3.2.1, so
-    # it cannot apply to a fresh install.  See patches/README.md.
-    echo "   skipped xopt-pydantic-serialization-fix.patch (does not apply to a"
-    echo "           pristine xopt 3.2.1 -- see patches/README.md)"
+    apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
 fi
 
 # --------------------------------------------------------------------------

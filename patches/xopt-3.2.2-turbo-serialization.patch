@@ -1,0 +1,27 @@
+diff -ruN xa/xopt/generators/bayesian/turbo.py xb/xopt/generators/bayesian/turbo.py
+--- a/xopt/generators/bayesian/turbo.py	2026-10-08 08:53:29
++++ b/xopt/generators/bayesian/turbo.py	2026-10-08 09:29:08
+@@ -93,6 +93,9 @@
+ 
+     _failure_counter: int = PrivateAttr(0)
+     _success_counter: int = PrivateAttr(0)
++    # Declared so pydantic keeps it private: an undeclared `_initial_state` leaks into
++    # Xopt.json() as an unexpected field and warns on every serialization.
++    _initial_state: dict = PrivateAttr(default_factory=dict)
+ 
+     vocs: VOCS = Field(description="VOCS object")
+     batch_size: PositiveInt = Field(
+@@ -429,10 +432,11 @@
+ 
+         if self.minimize:
+             best_idx = objective_data.idxmin()
+-            self.best_value = objective_data.min()[self.vocs.objective_names[0]]
++            # float(): pandas hands back numpy.float64, which the Xopt-level serializer rejects
++            self.best_value = float(objective_data.min()[self.vocs.objective_names[0]])
+         else:
+             best_idx = objective_data.idxmax()
+-            self.best_value = objective_data.max()[self.vocs.objective_names[0]]
++            self.best_value = float(objective_data.max()[self.vocs.objective_names[0]])
+ 
+         self.center_x = (
+             variable_data.loc[best_idx][self.vocs.variable_names].iloc[0].to_dict()

@@ -265,7 +265,7 @@ FermiBadgerPlugins/
 │   ├── badger-mini-config.patch
 │   ├── badger-mini-var-table-env-configs.patch
 │   ├── badger-1.6.0-device-list-gui.patch
-│   ├── xopt-pydantic-serialization-fix.patch   # documented but not applied (see patches/README.md)
+│   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)

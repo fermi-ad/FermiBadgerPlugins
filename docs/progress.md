@@ -1743,3 +1743,44 @@ observable lists already keep plugin order.
 - [ ] RIL Pacsys template with `average_events: {default: 3}`; expect ~3 cycles slower, smoother objectives.
 - [ ] Pick an array device for a first `|rms` observable.
 - [ ] Ramps (Booster) when a Booster environment exists.
+
+## 2026-10-08: pip check cleanup, Xopt turbo serialization patch
+
+### pip check
+- Cause: duplicate dist-info records, not a version conflict. Removed
+  `pydantic-2.13.4.dist-info`, `pydantic_core-2.46.4.dist-info`,
+  `xopt-3.2.1.dist-info` from site-packages (no files unique to them).
+  `pip check`: "No broken requirements found". Fresh installs never had this.
+
+### Xopt patch
+- `patches/xopt-pydantic-serialization-fix.patch` and `apply_xopt_fix.py` deleted:
+  written against hand-edited xopt 3.2.1 that no longer exists in the env.
+- Root causes in pristine xopt 3.2.2 `generators/bayesian/turbo.py`, found with
+  `model_dump(warnings='error')` to get the failing field:
+  1. `TurboController.__init__` sets undeclared `self._initial_state` -> stored on
+     the instance -> unexpected field when `Xopt.json()` serializes (safety ctrl).
+  2. `OptimizeTurboController.update_state` stores `best_value` as `numpy.float64`
+     -> Xopt-level serializer rejects it (optimize ctrl). Generator- and
+     controller-level dumps were clean; only the whole-Xopt dump warned.
+- New `patches/xopt-3.2.2-turbo-serialization.patch` (declare `_initial_state`
+  as PrivateAttr; `float()` both `best_value` assignments). Applied to the live
+  env; applies cleanly to a pristine copy; reverse-applies (setup.sh "already
+  applied" path). setup.sh applies it last. patches/README rewritten for it.
+- Verified offline (`.patch_work/turbo_warn7.py`): 1 warning per `json()` before,
+  0 after, optimize and safety controllers, 3 rounds each.
+- Pre-existing, untouched: `TurboController.reset()` restores `vocs` from a dict
+  and then `dim` breaks; nothing in Badger or Xopt calls `reset()`.
+- Worth an upstream PR to xopt-org/Xopt (same three lines).
+
+### From-scratch install check (2026-10-08)
+- `/tmp/FermiBadger_envTEST` (rsync of working tree, acsys dropped off-site) +
+  `./setup.sh --yes --env-name FermiBadger_envTEST`: all five patches `applied`;
+  `badger/` and `xopt/` identical to FermiBadger_env; picker, pacsys interface,
+  pacsys DRF lint, periodic, template lint, supply limits, VA smoke all pass.
+- Found and fixed: in-place edits had propagated through conda hard links into
+  `pkgs/` and three other envs. Cache restored (extracted dirs deleted, archives
+  kept). Rule in patches/README: only `patch` touches site-packages.
+- `environment.yml` gains `ipywidgets` (pip check clean on fresh env).
+- Open: `FermiBadger_test_clean`, `FermiBadger_envTEST2`, `BoosterLatticePlay_env`
+  still hold the six edited files (functional, just unintended). Fix if wanted:
+  `conda install -n <env> --force-reinstall badger-opt xopt` now that the cache is pristine.

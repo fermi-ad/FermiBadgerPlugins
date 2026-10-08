@@ -7,8 +7,7 @@
 | Patch | Description | Required Components |
 |-------|-------------|---------------------|
 | `pydantic_editor-badger-1.6.0-dict-subtypes.patch` | Fixes "Dict type must have subtypes" error, handles `turbo_controller: null`, and fixes YAML parsing for 'None' strings | Badger 1.6.0 |
-| `xopt-pydantic-serialization-fix.patch` | Suppresses `PydanticSerializationUnexpectedValue` warnings during TurboController serialization | Xopt 3.2.0+ |
-| `apply_xopt_fix.py` | Python script to apply the Xopt fix automatically | Xopt 3.2.0+ |
+| `xopt-3.2.2-turbo-serialization.patch` | Stops the `PydanticSerializationUnexpectedValue` warning Badger logs on every iteration with a TuRBO controller: declares `_initial_state` as a private attribute and stores `best_value` as a plain float | Xopt 3.2.2 |
 | `badger-mini-config.patch` | Initializes the settings singleton before template loading in `-mini` | Badger 1.6.0 |
 | `badger-mini-var-table-env-configs.patch` | Rebuilds the `-mini` variable table's env configs *and* its rows from the template, so the table lists and queries the template's machine rather than the plugin defaults | Badger 1.6.0 |
 | `badger-1.6.0-device-list-gui.patch` | Lists variables in environment (beam) order instead of alphabetical when a template/routine loads; replaces each "Filter…" box and "Show Checked Only" checkbox in `-g` and `-mini` with a search dropdown that opens on focus, lists every item in beam order with a check icon on selected ones, and adds an item when picked; lists always show checked rows; the "Enter new … here" placeholder rows are hidden and all four tables size to their visible rows (zero rows when nothing is checked); variable table sits in a collapsible box. Apply **after** the two `-mini` patches. | Badger 1.6.0 |
@@ -19,12 +18,25 @@
 2. **`turbo_controller: null` handling** - Prevents warnings and ensures correct null serialization
 3. **YAML 'None' strings** - Fixes parsing of 'None' strings in flow maps (inline `{}` or `[]` syntax)
 4. **VOCs field not found** - Fixes error when VOCs data is stored separately from generator parameters
-5. **PydanticSerializationUnexpectedValue warnings** - Suppresses spurious warnings during TurboController model_dump/model_dump_json operations (every iteration of optimization loop)
+5. **PydanticSerializationUnexpectedValue warnings** - Every iteration, Badger serializes the whole Xopt object (`Xopt.json()`), and two things in `xopt/generators/bayesian/turbo.py` trip pydantic: `TurboController.__init__` assigns `self._initial_state` without declaring it, so pydantic stores it on the instance and the serializer sees an unexpected field (safety controller); and `OptimizeTurboController.update_state` stores `best_value` as the `numpy.float64` pandas returns, which the Xopt-level serializer rejects (optimize controller). Fixed at the root by `xopt-3.2.2-turbo-serialization.patch` (three lines) rather than by filtering the warning. Verified offline on pristine xopt 3.2.2: 1 warning per `json()` before, 0 after, for both selectable controllers (optimize and safety).
 6. **`-mini` variable table lists and queries the wrong machine** - Two caches hold the plugin's `configs.yaml` defaults and are never refreshed when a template points the environment elsewhere: `BadgerVariableTable.configs` (captured in `select_env()`, and the environment is rebuilt from it on every refresh) and `routine_page.vars_env`, the table's *rows*, which come from `configs["variables"]` — computed once by `factory.load_plugin` from an environment built with those same defaults. Loading a template on another lattice therefore reloads the *default* lattice repeatedly, errors on variables only the template's lattice has (e.g. `Cannot read 'iq2'`), and lists thousands of rows belonging to the wrong machine. Fixed by `badger-mini-var-table-env-configs.patch`, which re-runs `add_var()` and rebuilds `vars_env` from an environment carrying the template's params. Measured on `Xfer400MeV_example.yaml`: 2284 default-lattice rows → 124 rows of its own.
 
 7. **Alphabetical device lists / checked and unchecked rows mixed together** - Both routine pages sort the variable dict (`dict(sorted(...))`) when loading a template or routine, so the plugin's beam-order listing is lost (environment selection alone preserved it). The four lists also showed every device with a free-text filter. Fixed by `badger-1.6.0-device-list-gui.patch`: drops the sort (dicts keep insertion order: env variables, then `additional_variables`, hard-limit overrides change values only), adds `gui/components/picker.py` (an editable `QComboBox` + contains-match `QCompleter` rebuilt from the table on focus/open, no signal wiring) in place of each filter box, and wraps the variable table in the existing `CollapsibleBox`. Also wires the `-mini` observables "Show Checked Only" checkbox, which upstream never connected.
 
 ## Applying the Patches
+
+> **Never edit files under `site-packages` in place.** conda hard-links them to its
+> package cache (`~/miniconda3/pkgs/`) and to every other env that installed the same
+> build, so an in-place write (`open(path, 'w')`, an edit script, GNU `sed -i`) lands in
+> all of them at once and makes conda report `SafetyError` on the next env build.
+> Applying a `.patch` with `patch` is safe: it writes a new file. If `SafetyError`
+> appears, delete the extracted `pkgs/<pkg>/` directory (keep the `.conda` archive)
+> and rebuild the env.
+>
+> **From-scratch check** (do this before committing a new patch): `rsync` the working
+> tree to `/tmp/X` excluding `.git`, then `cd /tmp/X && ./setup.sh --yes --env-name X`.
+> Off-site, drop the `acsys` lines from the copy's `environment.yml` first. Expect
+> `applied` for every patch and a `badger/` + `xopt/` tree identical to the working env.
 
 ### Finding Badger Installation
 
@@ -72,33 +84,17 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.pat
 
 ## Applying the Xopt Patch
 
-> **This patch does not apply to a pristine Xopt 3.2.1, and `setup.sh` skips it.**
-> It was generated against an installation that already carried hand-written
-> edits to `xopt/pydantic.py` and `xopt/generators/bayesian/turbo.py` (a
-> `model_dump` override, an `_initial_state_value` private attribute, a
-> `model_dump_json` override) which no file in this directory contains — the
-> patch *amends* that code rather than adding it, so its context lines are
-> absent from a fresh install. `apply_xopt_fix.py` has the same problem: its
-> search strings match nothing in a pristine tree. The patch header is also
-> malformed (`patch` rejects it at line 22).
->
-> To restore this fix for new clones, the hand-edits need to be captured as a
-> real diff against pristine 3.2.1 first.
-
-The Xopt patch fixes the TurboController serialization warnings. Apply it to your conda environment's xopt package:
+`xopt-3.2.2-turbo-serialization.patch` carries `a/xopt/...` paths and applies from
+`site-packages` with `-p1`, like the `-mini` patches; `setup.sh` applies it last.
+It touches only `xopt/generators/bayesian/turbo.py`.
 
 ```bash
 CONDA_PREFIX=$(conda run -n FermiBadger_env python -c "import sys; print(sys.prefix)")
 cd "$CONDA_PREFIX/lib/python3.12/site-packages"
-
-# Apply the patch to xopt/pydantic.py
-patch -p0 < /path/to/FermiBadgerPlugins/patches/xopt-pydantic-serialization-fix.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/xopt-3.2.2-turbo-serialization.patch
 ```
 
-**Note:** 
-- Replace `/path/to/FermiBadgerPlugins` with the actual path where you cloned the repository.
-- The Xopt patch affects `xopt/pydantic.py`, `xopt/__init__.py`, and `xopt/generators/bayesian/turbo.py`
-- The Xopt patch also removes an unnecessary warning filter from `badger/core_subprocess.py`
+The same three lines are worth offering upstream to xopt-org/Xopt.
 
 
 ## Patch History
@@ -120,9 +116,9 @@ The following patches have been superseded by `pydantic_editor-badger-1.6.0-dict
 
 - `simple-virtual-accelerator-plugin-fix.patch` (deleted 2026-10-07): targeted `plugins/environments/SimpleVirtualAccelerator/`, which was renamed `99_Sim_SimpleVirtualAccelerator` with the fix already committed in the plugin itself.
 
-### New Patches
+### Retired Xopt patch
 
-- `xopt-pydantic-serialization-fix.patch` - Suppresses `PydanticSerializationUnexpectedValue` warnings during TurboController serialization (applies to xopt package)
+- `xopt-pydantic-serialization-fix.patch` and `apply_xopt_fix.py` (deleted 2026-10-08): generated against hand-edited xopt 3.2.1 files that the 2026-09-16 env rebuild replaced with pristine conda-forge xopt 3.2.2, so they could never apply to a fresh install. Replaced by `xopt-3.2.2-turbo-serialization.patch`, which fixes the cause instead of filtering the warning.
 
 ## Environment
 

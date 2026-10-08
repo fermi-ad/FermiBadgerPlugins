@@ -648,3 +648,33 @@ writes name `.SETTING` explicitly (same on the wire, keeps FakeBackend in
 step). `average_events` env param -> `read_fresh` mean of N events.
 `<DRF>|<reduce>` observables for arrays. Two new offline tests; README
 subsections. Not tried on the machine yet.
+
+## 2026-10-08 — pip check hiccup and the Xopt patch
+
+`pip check`'s pydantic-core complaint was stale metadata only: three leftover
+dist-info dirs (pydantic 2.13.4, pydantic_core 2.46.4, xopt 3.2.1) from
+August installs beside the conda-forge 2.13.5/2.46.5/3.2.2 the Sep 16 env
+build put in; Python imported the right ones all along. Deleted the three
+dirs; pip check clean. Checked whether the Xopt serialization patch could
+be retired: the hand-edits it amended were gone since Sep 16, but pristine
+xopt 3.2.2 still warns once per `Xopt.json()` (every Badger iteration).
+Found both causes in turbo.py (undeclared `_initial_state`; `best_value`
+stored as numpy.float64) and replaced the dead patch + helper script with
+`xopt-3.2.2-turbo-serialization.patch` (3 lines, applies to pristine,
+applied by setup.sh). Offline: 0 warnings for optimize and safety.
+
+## 2026-10-08 — from-scratch install check
+
+User asked for a scratch install before committing the Xopt patch. First
+run surfaced conda `SafetyError`s: the day's in-place edit scripts had
+written through conda's hard links into the pkgs cache and into
+FermiBadger_test_clean, FermiBadger_envTEST2 and BoosterLatticePlay_env
+(six files: xopt turbo.py and five Badger GUI files). Removed the two
+extracted cache dirs (archives kept) and the compromised test env, dropped
+`acsys` from the test copy (403 off-site), reran: no SafetyError, all five
+patches `applied`, fresh badger/ and xopt/ trees identical to the working
+env, all seven offline tests pass there. Added `ipywidgets` to
+environment.yml (xopt pip metadata wants it; pip check now clean on a
+fresh env). Rule recorded in patches/README and memory: change
+site-packages only via `patch`. The three other envs still carry the
+edits; user to decide.
