@@ -706,3 +706,16 @@ automatic-range read of live settings failed and the uncaught error killed
 the process. Now loaded via QTimer.singleShot(0) after window.show(), so the
 failure is Badger's usual error dialog and the window stays open, same as a
 manual File > Open Template. Verified: process alive, no exit.
+
+## 2026-10-08 — production template: new objective and constraints
+
+A GUI "Save as Template" off-site had landed a re-serialized copy of the
+production template in development/. Semantic diff showed deliberate edits
+(objective L:D7TOR MAXIMIZE; constraints L:D7LMSM < 18, L:TK4RAD < 50,
+L:TUNRAD < 150; MEBT trims L:MDQ1H/V, L:MDQ2H/V checked) mixed with
+off-site artefacts (relative_to_current false, every window widened to the
+hard range, SumAbs and MultOOB constraints and all observables dropped).
+User confirmed which were intended; applied those by hand to
+01_Linac_RIL_tuning.yaml (G:LINEFF kept as an observable, MEBT trims on a
++-0.5 A window like the other trims), deleted the development copy.
+Lint: 16 vars, 1 obj, clean.

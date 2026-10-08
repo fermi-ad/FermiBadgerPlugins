@@ -4,21 +4,21 @@ constraint_formulas: {}
 critical_constraint_names: []
 description: |
   Goal: Raise Linac transmission by tuning the ion source, LEBT, MEBT and RF phases.
-  Objective: G:LINEFF MAXIMIZE.
+  Objective: L:D7TOR MAXIMIZE (toroid at the Linac end); G:LINEFF is kept as an observable.
   Variables: source trims L:ATRMHU, L:ATRMVU, L:ATRMHD, L:ATRMVD; solenoids L:ASOL, L:LSOL;
     LEBT trims L:LTRMH, L:LTRMV; MEBT quads as mults mult:MUQ (L:MUQ1, L:MUQ2) and mult:MDQ
     (L:MDQ1, L:MDQ2): the variable is the knob's integer step count, each quad moves by
     coefficient x mult_step_size x steps from its as-found setting (the four quads stay
     available to tick individually instead, but not together with their mult);
-    RF phases L:RFQPAH, L:RFBPAH.
-  Constraints: L:D7TOR > 25, L:TK1RAD < 18, L:TUNRAD < 80, L:D34LM < 1.1.
+    MEBT trims L:MDQ1H, L:MDQ1V, L:MDQ2H, L:MDQ2V; RF phases L:RFQPAH, L:RFBPAH.
+  Constraints: L:D7LMSM < 18, L:TK4RAD < 50, L:TUNRAD < 150.
     SumAbs_SourceATrims < 7 (sum |I| of the source A trims, one bulk supply; 7 A is a stand-in
     pending expert confirmation). The environment also clips the largest trim to keep each
     supply group's sum under its limit before any setting.
     MultOOB_MUQ, MultOOB_MDQ < 0.5: fraction of the last mult step lost to a quad's own bounds
     (0 good; nonzero means the optimum wants to go past a quad's bounds, the quad was clipped).
-  Observables: L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
-  Windows: +-0.5 source trims, +-0.1 LEBT trims, +-5 solenoids, +-2 steps mults, +-10 deg RF phases,
+  Observables: G:LINEFF, L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
+  Windows: +-0.5 source and MEBT trims, +-0.1 LEBT trims, +-5 solenoids, +-2 steps mults, +-10 deg RF phases,
     all around the live readback at load (Automatic).
   Notes: readings on $52, B:BOOEFF on $1F. L:RFQPAH, L:RFBPAH and L:V5QSET are periodic (360 deg).
     Expected improvement with the safety turbo controller.
@@ -89,22 +89,18 @@ relative_to_current: true
 vocs:
   constants: {}
   constraints:
-    L:D34LM:
-      dtype: null
-      type: LessThanConstraint
-      value: 1.1
-    L:D7TOR:
-      dtype: null
-      type: GreaterThanConstraint
-      value: 25.0
-    L:TK1RAD:
+    L:D7LMSM:
       dtype: null
       type: LessThanConstraint
       value: 18.0
+    L:TK4RAD:
+      dtype: null
+      type: LessThanConstraint
+      value: 50.0
     L:TUNRAD:
       dtype: null
       type: LessThanConstraint
-      value: 80.0
+      value: 150.0
     MultOOB_MDQ:
       dtype: null
       type: LessThanConstraint
@@ -118,10 +114,13 @@ vocs:
       type: LessThanConstraint
       value: 7.0
   objectives:
-    G:LINEFF:
+    L:D7TOR:
       dtype: null
       type: MaximizeObjective
   observables:
+    G:LINEFF:
+      dtype: null
+      type: Observable
     B:BLMLAM:
       dtype: null
       type: Observable
@@ -186,6 +185,34 @@ vocs:
       - 470.7998046875
       dtype: null
       type: ContinuousVariable
+    L:MDQ1H:
+      default_value: null
+      domain:
+      - -0.5
+      - 0.5
+      dtype: null
+      type: ContinuousVariable
+    L:MDQ1V:
+      default_value: null
+      domain:
+      - -0.5
+      - 0.5
+      dtype: null
+      type: ContinuousVariable
+    L:MDQ2H:
+      default_value: null
+      domain:
+      - -0.5
+      - 0.5
+      dtype: null
+      type: ContinuousVariable
+    L:MDQ2V:
+      default_value: null
+      domain:
+      - -0.5
+      - 0.5
+      dtype: null
+      type: ContinuousVariable
     L:LTRMH:
       default_value: null
       domain:
@@ -229,6 +256,18 @@ vocs:
       dtype: null
       type: ContinuousVariable
 vrange_hard_limit:
+  L:MDQ1H:
+  - -4.0
+  - 4.0
+  L:MDQ1V:
+  - -4.0
+  - 4.0
+  L:MDQ2H:
+  - -4.0
+  - 4.0
+  L:MDQ2V:
+  - -4.0
+  - 4.0
   L:ASOL:
   - 300.0
   - 500.0
@@ -281,6 +320,18 @@ vrange_hard_limit:
   - -10.0
   - 10.0
 vrange_limit_options:
+  L:MDQ1H:
+    delta: 0.5
+    limit_option_idx: 2
+  L:MDQ1V:
+    delta: 0.5
+    limit_option_idx: 2
+  L:MDQ2H:
+    delta: 0.5
+    limit_option_idx: 2
+  L:MDQ2V:
+    delta: 0.5
+    limit_option_idx: 2
   L:ASOL:
     delta: 5.0
     limit_option_idx: 2
