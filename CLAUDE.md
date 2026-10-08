@@ -27,6 +27,7 @@ When testing for full functionality, do not set sleep or timeout limits.  The Ba
 Running work history lives in docs/ — do NOT load these by default, only when
 resuming work or when the current task needs the history:
 
+- TODO.md — the open-work list (load this one when asked what is next)
 - docs/progress.md — current phase status, verified facts, next steps
 - docs/log.md — chronological session log
 - memory/MEMORY.md - pointers to agentic session history and handoff guide file

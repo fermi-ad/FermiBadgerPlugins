@@ -677,4 +677,6 @@ env, all seven offline tests pass there. Added `ipywidgets` to
 environment.yml (xopt pip metadata wants it; pip check now clean on a
 fresh env). Rule recorded in patches/README and memory: change
 site-packages only via `patch`. The three other envs still carry the
-edits; user to decide.
+edits; at the user's request restored those six files in all three from
+the pristine cache (rm then cp, so no inode is shared with FermiBadger_env,
+whose own copies now have link count 1).

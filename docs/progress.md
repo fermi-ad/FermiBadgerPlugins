@@ -1781,6 +1781,6 @@ observable lists already keep plugin order.
   `pkgs/` and three other envs. Cache restored (extracted dirs deleted, archives
   kept). Rule in patches/README: only `patch` touches site-packages.
 - `environment.yml` gains `ipywidgets` (pip check clean on fresh env).
-- Open: `FermiBadger_test_clean`, `FermiBadger_envTEST2`, `BoosterLatticePlay_env`
-  still hold the six edited files (functional, just unintended). Fix if wanted:
-  `conda install -n <env> --force-reinstall badger-opt xopt` now that the cache is pristine.
+- Restored: the six edited files in `FermiBadger_test_clean`, `FermiBadger_envTEST2`
+  and `BoosterLatticePlay_env` replaced from the pristine cache (rm + cp, new inodes);
+  verified identical; FermiBadger_env untouched.
