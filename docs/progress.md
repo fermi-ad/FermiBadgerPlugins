@@ -1784,3 +1784,26 @@ observable lists already keep plugin order.
 - Restored: the six edited files in `FermiBadger_test_clean`, `FermiBadger_envTEST2`
   and `BoosterLatticePlay_env` replaced from the pristine cache (rm + cp, new inodes);
   verified identical; FermiBadger_env untouched.
+
+## 2026-10-08: mults for the RIL environments
+
+### Done
+- `plugins/mults.py`: `parse_mult`, `mult_members`, `expand_mults(requested, mults,
+  step_sizes, as_found, hard_bounds)` -> (settings, steps, oob). Rounds to the
+  nearest integer step, clips members to their bounds, OOB = worst member's lost
+  fraction of the requested offset, raises on member+mult in one call.
+- Both `01_Linac_RIL_tuning_{Acsys,Pacsys}`: `mult:MUQ`, `mult:MDQ` variables
+  (±10), `MultOOB_MUQ/MDQ` observables, `mults` and `mult_step_size` params,
+  private `_as_found/_mult_steps/_mult_oob`, `_capture_as_found` on first touch,
+  `get_variables` returns the cached step, `set_variables` expands before the
+  supply-limit clip, `get_observables` serves MultOOB.
+- Template `01_Linac_RIL_tuning.yaml`: params, two mult variables (window ±2
+  steps, hard ±10), four quads unchecked, MultOOB constraints (< 0.5) and
+  observables, description updated.
+- `tests/mults_test.py`; DRF lint skips `mult:` / `MultOOB_`.
+
+### Open
+- [x] Coefficients 20.0 and step size 0.05 supplied by the user; one step = 1.0 A per quad.
+- [ ] GUI check: mults listed after the quads, read 0, Add Current works.
+- [ ] Machine check on the Pacsys testing role: both quads of a pair move by
+  coefficient × step × steps; MultOOB stays 0.

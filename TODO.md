@@ -42,4 +42,4 @@ Open work, roughly in priority order. Session-by-session detail lives in
 - [ ] `-mini` has no "Save as Template" button (upstream removed it; the handler
   `save_template_yaml` still exists). One button in the mini env box if wanted.
 - [ ] Bulk-supply ratings in the RIL environments are 7.0 A stand-ins pending expert
-  confirmation.
+  confirmation. (Mult coefficients 20.0 and step size 0.05 were confirmed 2026-10-08.)

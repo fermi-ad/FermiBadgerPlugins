@@ -3,6 +3,8 @@ from badger.errors import BadgerNoInterfaceError
 from typing import Dict
 from periodic import unwrap
 from supply_limits import clip_to_supply_limits, group_devices
+from mults import expand_mults, is_mult, mult_name, mult_members, OOB_PREFIX
+from pydantic import PrivateAttr
 
 class Environment(environment.Environment):
     name = "01_Linac_RIL_tuning_Pacsys"
@@ -24,11 +26,14 @@ class Environment(environment.Environment):
 
         "L:BSOL" : [300.0, 500],
 
-        #"multL:MUQ1*20,L:MUQ2*20",
         "L:MUQ1" : [ 250.0, 300.0],
         "L:MUQ2" : [ 225.0, 275.0],
         "L:MDQ1" : [ 200.0, 250.0],
         "L:MDQ2" : [ 150.0, 180.0],
+        # Mults (console-style knobs): integer step count in the knob's range; each member quad is
+        # written as as_found + coefficient * mult_step_size * steps (see mults / mult_step_size).
+        "mult:MUQ": [-10, 10],
+        "mult:MDQ": [-10, 10],
 
 
         "L:MUQ1H" : [-4.0, 4.0],
@@ -84,6 +89,8 @@ class Environment(environment.Environment):
         "DummySumSq",
         # sum |I| per bulk supply group; a new entry in supply_groups needs a SumAbs_<group> line here.
         "SumAbs_SourceATrims", "SumAbs_SourceBTrims", "SumAbs_MEBTQ1trims", "SumAbs_MEBTQ2trims",
+        # fraction of the last mult step lost to a member's hard bounds (0 good, 1 = member could not move)
+        "MultOOB_MUQ", "MultOOB_MDQ",
     ]
     #sample_event:  str = '@e,52,e,0'
     sample_events: Dict[str, str] = {'default':'@e,52,e,0', 'B:BOOEFF': '@e,1f,e,0'}
@@ -105,6 +112,15 @@ class Environment(environment.Environment):
     # TODO: 7.0 A is a stand-in pending expert confirmation of each bulk supply's rating.
     supply_limits: Dict[str, float] = {'SourceATrims': 7.0, 'SourceBTrims': 7.0,
                                        'MEBTQ1trims': 7.0, 'MEBTQ2trims': 7.0}
+    # Mults: {name: 'DEV*coeff,DEV*coeff,...'} and {name: step size}. Variable mult:<name> is the
+    # integer step count; member = as_found + coeff * step_size * steps, clipped to the member's
+    # bounds with the lost fraction reported as MultOOB_<name>. Operators adjust the step size here.
+    # Coefficients 20.0 and step size 0.05 confirmed by the user on 2026-10-08.
+    mults:          Dict[str, str] = {'MUQ': 'L:MUQ1*20.0,L:MUQ2*20.0', 'MDQ': 'L:MDQ1*20.0,L:MDQ2*20.0'}
+    mult_step_size: Dict[str, float] = {'MUQ': 0.05, 'MDQ': 0.05}
+    _as_found:   dict = PrivateAttr(default_factory=dict)   # member settings at first touch of a mult (run start)
+    _mult_steps: dict = PrivateAttr(default_factory=dict)   # {name: int} last step count applied
+    _mult_oob:   dict = PrivateAttr(default_factory=dict)   # {name: lost fraction} from the last step
     #setpoints:     Dict[str, float] = {'defaults': None}
     setpoints:     Dict[str, float | None] = {'defaults': None,
                            'L:D73BPH':  1.2,
@@ -124,14 +140,23 @@ class Environment(environment.Environment):
                            "L:DELM15": 1., "L:DELM13": 1., "L:DELM1": 1., "L:DELM12": 1., "L:DELM11": 1., "L:DELM5": 1., "L:DELM6": 1., "L:DELM7": 1.,
                            "L:DELM8": 1., "L:DELM2": 1., "L:DELM3": 1., "L:DELM9": 1., "L:DELM4": 1.}
 
-    #mults:         str = 'multL:MUQ1*20,L:MUQ2*20;'
     
+    def _capture_as_found(self, mult_vars):
+        # as-found settings of every mult member, read once per run (first touch of any mult)
+        if not mult_vars or self._as_found: return
+        self._as_found = dict(self.interface.get_settings(mult_members(self.mults), debug=self.debug))
+
     def get_variables(self, variable_names: list[str]) -> dict:
         if not self.interface:
             raise BadgerNoInterfaceError
         if self.debug: print ('RIL_tuning asking for variables:', variable_names)
         # Interface BasicPacsysInterface handles (read,set) pairs and optional tolerances.
-        values = self.interface.get_settings(variable_names, debug=self.debug)
+        mult_vars = [n for n in variable_names if is_mult(n)]
+        self._capture_as_found(mult_vars)
+        values = {v: float(self._mult_steps.get(mult_name(v), 0)) for v in mult_vars}
+        device_names = [n for n in variable_names if not is_mult(n)]
+        if device_names:
+            values.update(self.interface.get_settings(device_names, debug=self.debug))
         # A periodic setting may be reported on another branch (e.g. -179 for 181);
         # move it onto the branch nearest the middle of the declared bounds.
         for name in variable_names:
@@ -144,6 +169,13 @@ class Environment(environment.Environment):
         if not self.interface:
             if self.debug: print ("not self.interface: {self.interface}.")
             raise BadgerNoInterfaceError
+        mult_vars = [n for n in settable_devices if is_mult(n)]
+        if mult_vars:
+            self._capture_as_found(mult_vars)
+            settable_devices, steps, oob = expand_mults(settable_devices, self.mults, self.mult_step_size,
+                                                        self._as_found, self.variables)
+            self._mult_steps.update(steps)
+            self._mult_oob.update(oob)
         settable_devices = clip_to_supply_limits(settable_devices, self.supply_groups,
                                                  self.supply_limits,
                                                  lambda devs: self.interface.get_settings(devs, debug=self.debug))
@@ -166,6 +198,8 @@ class Environment(environment.Environment):
 
         sumabs_names = [n for n in observable_names if n.startswith('SumAbs_')]
         for n in sumabs_names: observable_names.remove(n)
+        oob_names = [n for n in observable_names if n.startswith(OOB_PREFIX)]
+        for n in oob_names: observable_names.remove(n)
 
         get_these_observables = []
         for observable_name in observable_names:
@@ -195,6 +229,8 @@ class Environment(environment.Environment):
         for name in sumabs_names:
             devs = group_devices(self.supply_groups[name[len('SumAbs_'):]])
             result[name] = sum(abs(v) for v in self.interface.get_settings(devs, debug=self.debug).values())
+        for name in oob_names:
+            result[name] = self._mult_oob.get(name[len(OOB_PREFIX):], 0.0)
 
         return result
 

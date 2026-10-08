@@ -680,3 +680,16 @@ site-packages only via `patch`. The three other envs still carry the
 edits; at the user's request restored those six files in all three from
 the pristine cache (rm then cp, so no inode is shared with FermiBadger_env,
 whose own copies now have link count 1).
+
+## 2026-10-08 — mults
+
+User wants parameter-page style "mults" (fixed-proportion additive knobs) for
+the production RIL template on both interfaces; pacsys cannot read page
+definitions, so they are declared in the env. Decisions: variable `mult:<Name>`
+is the knob's integer step count (±10), per-mult settable `mult_step_size`,
+member = as_found + coeff * step * steps; a member past its bounds is clipped
+and the lost fraction is the `MultOOB_<Name>` observable, constrained < 0.5.
+Added `plugins/mults.py`, the same edits in both RIL envs, the template
+(mult:MUQ / mult:MDQ checked, the four quads unchecked), `tests/mults_test.py`,
+README subsection. User then supplied the numbers: coefficients 20.0, step
+size 0.05 (one step = 1.0 A per quad); placeholders replaced.

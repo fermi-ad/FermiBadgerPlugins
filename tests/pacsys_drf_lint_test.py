@@ -35,7 +35,8 @@ for path in sorted(glob.glob(os.path.join(REPO, 'plugins', 'environments', '*_Pa
     names = list(Env.variables) + list(Env.observables)
     drfs = []
     for name in names:
-        if name in SKIP or name.endswith('_calc') or name.startswith('SumAbs_') or name == 'W_SumLosses':
+        if (name in SKIP or name.endswith('_calc') or name.startswith('SumAbs_') or name == 'W_SumLosses'
+                or name.startswith('mult:') or name.startswith('MultOOB_')):
             continue
         try:
             reading = intf.extract_reading_devices([name])[0]
