@@ -1,0 +1,188 @@
+#!/bin/bash
+# Run via `pixi run setup` (or `pixi run -e onsite setup` on the MCR host):
+#   1. apply the Badger patches to this pixi environment
+#   2. write config.local.yaml with this clone's paths
+#   3. check that Badger can actually see the plugins
+#
+# Safe to re-run: patches already applied are detected and skipped.
+#
+#   pixi run setup -- --yes      take every default, never prompt
+#   pixi run setup -- --config   rewrite config.local.yaml only (no patches)
+set -euo pipefail
+
+REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ASSUME_YES=0
+[[ -t 0 ]] || ASSUME_YES=1
+SKIP_PATCHES=0
+for arg in "$@"; do
+    case "$arg" in
+        --yes|-y) ASSUME_YES=1 ;;
+        --config) SKIP_PATCHES=1 ;;
+    esac
+done
+FAILED=0
+
+ask() {
+    local prompt="$1" default="$2" reply
+    if [[ $ASSUME_YES -eq 1 ]]; then
+        echo "$default"
+        return
+    fi
+    read -r -p "$prompt [$default]: " reply </dev/tty
+    echo "${reply:-$default}"
+}
+
+PY="$(command -v python)"
+echo "=========================================="
+echo "FermiBadgerPlugins pixi setup"
+echo "  repo:   $REPO"
+echo "  python: $PY"
+echo "=========================================="
+
+# --------------------------------------------------------------------------
+# 1. Patches
+# --------------------------------------------------------------------------
+echo
+echo "1. Badger patches"
+
+if [[ $SKIP_PATCHES -eq 1 ]]; then
+    echo "   skipped (--config)"
+else
+    SP="$("$PY" -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")"
+    echo "   site-packages: $SP"
+
+    apply_patch() {
+        local dir="$1" strip="$2" file="$3" name
+        name="$(basename "$file")"
+
+        if [[ ! -d "$dir" ]]; then
+            echo "   FAILED  $name (no such directory: $dir)"
+            FAILED=1
+            return
+        fi
+
+        if patch -d "$dir" -p"$strip" -R --dry-run --force < "$file" >/dev/null 2>&1; then
+            echo "   skipped $name (already applied)"
+        elif patch -d "$dir" -p"$strip" --dry-run --force < "$file" >/dev/null 2>&1; then
+            patch -d "$dir" -p"$strip" --force < "$file" >/dev/null
+            echo "   applied $name"
+        else
+            echo "   FAILED  $name"
+            FAILED=1
+        fi
+    }
+
+    apply_patch "$SP/badger/gui/components" 1 \
+        "$REPO/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
+    apply_patch "$SP" 1 "$REPO/patches/badger-mini-config.patch"
+    apply_patch "$SP" 1 "$REPO/patches/badger-mini-var-table-env-configs.patch"
+    # must come after the two -mini patches: it was diffed against that tree
+    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-device-list-gui.patch"
+    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-full-gui-template-option.patch"
+
+    apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
+fi
+
+# --------------------------------------------------------------------------
+# 2. config.local.yaml
+# --------------------------------------------------------------------------
+echo
+echo "2. Badger configuration"
+
+CONFIG_OUT="$REPO/config.local.yaml"
+if [[ -e "$CONFIG_OUT" && $ASSUME_YES -eq 0 ]]; then
+    overwrite="$(ask "   config.local.yaml exists. Overwrite? [y/N]" "N")"
+    case "$overwrite" in
+        [yY]*) ;;
+        *) echo "   Keeping the existing config.local.yaml."; CONFIG_OUT="" ;;
+    esac
+fi
+
+if [[ -n "$CONFIG_OUT" ]]; then
+    ARCHIVE_ROOT="$(ask '   Archive root (optimization run data)' "$HOME/BadgerArchive")"
+    LOGBOOK_ROOT="$(ask '   Logbook root (GUI logs)' "$HOME/BadgerLogs")"
+
+    ARCHIVE_ROOT="$ARCHIVE_ROOT" LOGBOOK_ROOT="$LOGBOOK_ROOT" \
+    REPO="$REPO" CONFIG_OUT="$CONFIG_OUT" "$PY" - <<'PYEOF'
+import os
+from pathlib import Path
+import yaml
+
+repo = Path(os.environ['REPO'])
+out = Path(os.environ['CONFIG_OUT'])
+
+def resolve(p):
+    return str(Path(p).expanduser().resolve())
+
+paths = {
+    'BADGER_PLUGIN_ROOT': str(repo / 'plugins'),
+    'BADGER_TEMPLATE_ROOT': str(repo / 'tuning_templates'),
+    'BADGER_LOG_DIRECTORY': str(repo / 'logs'),
+    'BADGER_ARCHIVE_ROOT': resolve(os.environ['ARCHIVE_ROOT']),
+    'BADGER_LOGBOOK_ROOT': resolve(os.environ['LOGBOOK_ROOT']),
+}
+
+config = yaml.safe_load((repo / 'config.yaml').read_text())
+for key, value in paths.items():
+    config[key]['value'] = value
+    Path(value).mkdir(parents=True, exist_ok=True)
+
+out.write_text(yaml.safe_dump(config, sort_keys=True, default_flow_style=False))
+
+for key in paths:
+    print(f'   {key}: {config[key]["value"]}')
+PYEOF
+    echo "   wrote $CONFIG_OUT"
+fi
+
+# --------------------------------------------------------------------------
+# 3. Verify
+# --------------------------------------------------------------------------
+echo
+echo "3. Verifying"
+
+if REPO="$REPO" "$PY" - <<'PYEOF'
+import os, sys
+from badger.settings import init_settings
+
+init_settings(os.path.join(os.environ['REPO'], 'config.local.yaml'))
+from badger.factory import list_env
+
+envs = list_env()
+if '99_Sim_VirtualAccelerator_MADXSuite' not in envs:
+    print(f'   plugin not discovered; Badger sees: {envs}')
+    sys.exit(1)
+import badger
+print(f'   badger {badger.__version__}, 99_Sim_VirtualAccelerator_MADXSuite discovered')
+PYEOF
+then
+    echo "   OK"
+else
+    echo "   FAILED: Badger cannot load the plugins from this config."
+    FAILED=1
+fi
+
+echo
+echo "=========================================="
+if [[ $FAILED -eq 0 ]]; then
+    echo "Setup complete."
+else
+    echo "Setup finished WITH ERRORS (see FAILED lines above)."
+fi
+echo "=========================================="
+ENV_FLAG=""
+[[ -n "${PIXI_ENVIRONMENT_NAME:-}" && "$PIXI_ENVIRONMENT_NAME" != "default" ]] && \
+    ENV_FLAG="-e $PIXI_ENVIRONMENT_NAME "
+cat <<EOF
+
+To use it:
+
+    cd $REPO
+    pixi run ${ENV_FLAG}badger -g -cf config.local.yaml
+
+Or load a template straight into the compact GUI:
+
+    pixi run ${ENV_FLAG}badger -mini -cf config.local.yaml -t Xfer400MeV_example.yaml
+EOF
+
+exit $FAILED

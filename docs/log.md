@@ -731,3 +731,63 @@ clone-root paths (a/src/badger/...). Output `dist/badger-1.6.0-fermi-gui-mods.zi
 (gitignored) → `fermi_gui_mods/` with 01–04 patches + short README. Verified on
 a fresh v1.6.0 checkout: `git apply` clean, tree identical, patched modules
 import, tests/picker_test.py ok.
+
+## 2026-10-20 — production migration plan: Pacsys then pixi
+
+User wants off conda+acsys-python and onto pixi+pacsys for the production
+(MCR) deployment. Researched and planned in plan mode (no code changes);
+plan saved to `~/.claude/plans/it-s-time-to-move-peppy-sky.md`. Findings:
+no operator launcher script lives in this repo — the MCR shortcut runs
+`conda activate FermiBadger_env` + `badger -g -cf config.local.yaml -t
+<template>` against a clone at `/home/lcape/FermiBadgerPlugins`
+(`config_MCR.yaml`); both Acsys and Pacsys interfaces already coexist per
+environment, as do the environment.yml/TODO.md-spec'd pixi plan and the
+current conda setup. User decisions: both are dual-run cutovers (old path stays live until the
+new one is verified on hardware, then retires); the external shortcut
+itself is out of scope — hand over the exact command line at each cutover
+instead of editing it. Order was decided Pacsys-first, then swapped same
+day to pixi-first (environment tooling settled before touching the
+control-system interface, and pixi groundwork doesn't need machine access
+so it can start immediately). TODO.md and the plan file restructured to
+match; see TODO.md for the open checklist.
+
+## 2026-10-20 — pixi groundwork built and verified
+
+Implemented the pixi side of the plan above. `pixi.toml`: base environment
+mirrors `environment.yml` minus `acsys` (so it installs off-site); an
+`onsite` feature/environment adds `acsys` from the FNAL index. Discovered
+along the way: macOS wheels for `cpymad`/`xtrack`/etc. are tagged
+`macosx_15_0`; pixi's default platform assumption is older, so it fell back
+to a from-source `cpymad` build that failed (missing bundled MAD-X headers)
+until `platforms` declared a `macos = "15.0"` virtual package. `pixi init
+--import environment.yml` generated the base `[dependencies]`/
+`[pypi-dependencies]` tables (after stripping the `--extra-index-url` line,
+which its importer can't parse) rather than hand-typing every pin.
+`pixi_setup.sh` (ported from `setup.sh`'s patch/config/verify steps, minus
+conda's env-creation step) backs a `pixi run setup` task; `bootstrap.sh`
+installs pixi if missing, then runs `pixi install` [`-e onsite`] +
+`pixi run setup`. Both environments were built and verified locally:
+patches apply, `config.local.yaml` generates, the plugin is discoverable,
+and the offline test suite (`mults_test.py`, `pacsys_drf_lint_test.py`,
+`pacsys_interface_test.py`, `periodic_phase_test.py`, `supply_limits_test.py`,
+`template_lint_test.py`, `VA_plugin_smoke_test.py`) passes under
+`pixi run python tests/...py`. The feared `badger`-on-`PATH` blocker turned
+out to be a non-issue: `pixi run badger ...` needs no PATH setup, so the
+MCR shortcut's eventual edit is a one-line command swap, not a profile
+change.
+
+Swapped `conda run -n FermiBadger_env` → `pixi run` in test docstrings,
+`patches/README.md`, `README.md` (Quick Start, Environment Setup Details,
+Troubleshooting, Repository Structure), `CLAUDE.md`, `HANDOFF.md`'s Quick
+Start block, and rewrote `Dockerfile` onto `ghcr.io/prefix-dev/pixi` (not
+rebuilt/tested — the prior Dockerfile was already stale/unmaintained, with
+commented-out mamba lines and a placeholder env name). `setup.sh` and
+`environment.yml` kept working, explicitly marked legacy, per the dual-run
+decision. `tests/test-quick-start.sh` now runs the pixi path; the old
+conda version moved to `tests/test-quick-start-conda.sh` (not re-run here,
+since it clones from GitHub `main`, which doesn't have this work yet).
+`.pixi/` added to `.gitignore`.
+
+Remaining before cutover (needs the actual MCR host, tracked in TODO.md):
+confirm it can reach conda-forge/PyPI and write a pixi cache, then the
+dual-run comparison and the external-shortcut command swap.

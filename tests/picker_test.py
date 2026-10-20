@@ -1,6 +1,6 @@
 """Offscreen check for the pick-to-add dropdown patched into Badger's env boxes.
 
-Run:  conda run -n FermiBadger_env python -m pytest tests/picker_test.py
+Run:  pixi run python -m pytest tests/picker_test.py
 """
 
 import os

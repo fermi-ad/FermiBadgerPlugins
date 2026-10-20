@@ -1,0 +1,41 @@
+[workspace]
+name = "FermiBadgerPlugins"
+channels = ["conda-forge"]
+# macOS wheels for cpymad/xtrack etc. are tagged macosx_15_0; without this,
+# pixi assumes an older minimum macOS and falls back to a from-source build
+# that fails (no bundled MAD-X headers).
+platforms = [{ name = "osx-arm64-macos15", platform = "osx-arm64", macos = "15.0" }, "linux-64"]
+
+[tasks]
+# Patches + config.local.yaml + discoverability check, for whichever
+# environment this is run in (`pixi run setup` for default,
+# `pixi run -e onsite setup` on the MCR host).
+setup = "bash pixi_setup.sh"
+
+[dependencies]
+python = "3.12.1.*"
+badger-opt = "1.6.0.*"
+ipywidgets = "*"  # xopt's pip metadata requires it; the conda recipe does not pull it in
+
+[pypi-dependencies]
+cpymad = "==1.19.0"
+xcoll = "==0.11.1"
+xdeps = "==0.10.19"
+xfields = "==0.25.18"
+xobjects = "==0.6.4"
+xpart = "==0.23.13"
+xsuite = "==0.54.0"
+xtrack = "==0.107.0"
+pacsys = "==0.3.0"
+
+# acsys is FNAL-network-only, so it's an opt-in feature rather than a base
+# dependency: `pixi install` (the default env) works off-site, and the MCR
+# host uses `pixi install -e onsite`.
+[feature.onsite.pypi-dependencies]
+acsys = "==0.12.8"
+
+[feature.onsite.pypi-options]
+extra-index-urls = ["https://www-bd.fnal.gov/pip3"]
+
+[environments]
+onsite = ["onsite"]

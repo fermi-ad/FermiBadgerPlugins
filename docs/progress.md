@@ -1814,3 +1814,34 @@ observable lists already keep plugin order.
   rooted at a Badger source clone (`git apply fermi_gui_mods/*.patch` on v1.6.0) + README.
 - Verified: applies clean on fresh v1.6.0, imports ok, picker_test ok.
 - One-off handoff, now with the Badger devs; not maintained. Do not regenerate it when `patches/` changes.
+
+## 2026-10-20: production migration — pixi groundwork landed
+
+- Plan: pixi first, then Pacsys, both dual-run cutovers on the MCR host;
+  see TODO.md and `~/.claude/plans/it-s-time-to-move-peppy-sky.md`.
+- `pixi.toml`/`pixi.lock` (osx-arm64, linux-64): base environment (no
+  `acsys`, off-site-installable) + `onsite` feature/environment adding
+  `acsys` from the FNAL index. `pixi_setup.sh` backs a `pixi run setup`
+  task (patches/config/verify, ported from `setup.sh`); `bootstrap.sh`
+  installs pixi if missing and runs install + setup.
+- Verified locally: `pixi install` and `pixi install -e onsite` both
+  resolve and build; patches apply; `config.local.yaml` generates; plugin
+  discoverable; offline test suite green under
+  `pixi run python tests/*.py` (mults, pacsys_drf_lint, pacsys_interface,
+  periodic_phase, supply_limits, template_lint, VA_plugin_smoke).
+- `conda run -n FermiBadger_env` → `pixi run` swapped in test docstrings,
+  `patches/README.md`, `README.md`, `CLAUDE.md`, `HANDOFF.md`'s quick
+  start; `Dockerfile` rewritten onto `ghcr.io/prefix-dev/pixi` (not
+  rebuilt/tested). `setup.sh`/`environment.yml` kept, marked legacy.
+  `tests/test-quick-start.sh` is now the pixi version;
+  `tests/test-quick-start-conda.sh` is the legacy one.
+- `badger`-on-`PATH` was the original blocker for this move (TODO.md,
+  decided 2026-10-08); turned out to be moot — `pixi run badger ...` needs
+  no PATH setup, so the MCR shortcut's eventual edit is a one-line command
+  swap.
+
+### Open
+- [ ] Confirm the MCR host can reach conda-forge/PyPI and write a pixi
+  cache — needs the actual host, not verifiable from a dev checkout.
+- [ ] Dual-run comparison on the MCR host, then hand over the pixi launch
+  line for the external shortcut (not ours to edit) and retire conda there.

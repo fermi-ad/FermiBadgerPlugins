@@ -35,21 +35,24 @@
 > and rebuild the env.
 >
 > **From-scratch check** (do this before committing a new patch): `rsync` the working
-> tree to `/tmp/X` excluding `.git`, then `cd /tmp/X && ./setup.sh --yes --env-name X`.
-> Off-site, drop the `acsys` lines from the copy's `environment.yml` first. Expect
-> `applied` for every patch and a `badger/` + `xopt/` tree identical to the working env.
+> tree to `/tmp/X` excluding `.git` and `.pixi`, then `cd /tmp/X && ./bootstrap.sh --yes`
+> (off-site; add `--onsite` on the FNAL network). Legacy conda path:
+> `./setup.sh --yes --env-name X` (drop the `acsys` lines from the copy's
+> `environment.yml` first if off-site). Expect `applied` for every patch and a
+> `badger/` + `xopt/` tree identical to the working env.
 
 ### Finding Badger Installation
 
-First, locate your Badger installation in your conda environment:
+First, locate your Badger installation in your pixi environment:
 
 ```bash
-# Replace FermiBadger_env with your environment name
-conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))"
+pixi run python -c "import badger; import os; print(os.path.dirname(badger.__file__))"
 ```
 
-**`./setup.sh` applies all of these for you** — the manual steps below are the
-fallback.
+Legacy conda path: `conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))"` (replace `FermiBadger_env` with your environment name).
+
+**`./bootstrap.sh` (or `./setup.sh` for the legacy conda path) applies all of
+these for you** — the manual steps below are the fallback.
 
 ### Using `patch` Command
 
@@ -57,7 +60,7 @@ This patch carries `a/pydantic_editor.py` paths, so apply it from the
 `gui/components` directory with `-p1`:
 
 ```bash
-BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+BADGER_PATH=$(pixi run python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
 cd "$BADGER_PATH/gui/components"
 patch -p1 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
 ```
@@ -65,7 +68,7 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dic
 ### Using `git apply`
 
 ```bash
-BADGER_PATH=$(conda run -n FermiBadger_env python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
+BADGER_PATH=$(pixi run python -c "import badger; import os; print(os.path.dirname(badger.__file__))")
 cd "$BADGER_PATH/gui/components"
 git apply /path/to/FermiBadgerPlugins/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch
 ```
@@ -76,8 +79,8 @@ All of these patches carry `a/badger/...` paths, so apply them from the
 `site-packages` directory with `-p1`:
 
 ```bash
-CONDA_PREFIX=$(conda run -n FermiBadger_env python -c "import sys; print(sys.prefix)")
-cd "$CONDA_PREFIX/lib/python3.12/site-packages"
+SITE_PACKAGES=$(pixi run python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
+cd "$SITE_PACKAGES"
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-config.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-var-table-env-configs.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.patch
@@ -87,12 +90,12 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-full-gui-template-o
 ## Applying the Xopt Patch
 
 `xopt-3.2.2-turbo-serialization.patch` carries `a/xopt/...` paths and applies from
-`site-packages` with `-p1`, like the `-mini` patches; `setup.sh` applies it last.
+`site-packages` with `-p1`, like the `-mini` patches; `bootstrap.sh`/`setup.sh` applies it last.
 It touches only `xopt/generators/bayesian/turbo.py`.
 
 ```bash
-CONDA_PREFIX=$(conda run -n FermiBadger_env python -c "import sys; print(sys.prefix)")
-cd "$CONDA_PREFIX/lib/python3.12/site-packages"
+SITE_PACKAGES=$(pixi run python -c "import sysconfig; print(sysconfig.get_paths()['purelib'])")
+cd "$SITE_PACKAGES"
 patch -p1 < /path/to/FermiBadgerPlugins/patches/xopt-3.2.2-turbo-serialization.patch
 ```
 

@@ -1,4 +1,8 @@
 #!/bin/bash
+# LEGACY (conda path). pixi + ./bootstrap.sh is now the default; this stays
+# as a fallback during the dual-run cutover, see TODO.md. Both are kept
+# working in the meantime, as one does not replace the other yet.
+#
 # One-command setup for a fresh clone of FermiBadgerPlugins:
 #   1. create (or reuse) the conda environment from environment.yml
 #   2. apply the Badger patches this plugin set needs
@@ -56,7 +60,7 @@ ask() {
 }
 
 echo "=========================================="
-echo "FermiBadgerPlugins setup"
+echo "FermiBadgerPlugins setup (legacy conda path - see ./bootstrap.sh for pixi)"
 echo "  repo: $REPO"
 echo "=========================================="
 

@@ -4,16 +4,16 @@
 
 ### Getting Started
 
-1. **Set up your environment**:
+1. **Set up your environment** (`./bootstrap.sh` from the repo root if you haven't already; see README's Quick Start):
    ```bash
-   conda activate FermiBadger_env
    cd /Users/stjohn/Development/BayesOptimization_Xopt/FermiBadgerPlugins
    ```
 
 2. **Launch the GUI** (with repo-specific config):
    ```bash
-   badger -g --config_filepath config.yaml
+   pixi run badger -g -cf config.local.yaml
    ```
+   Legacy conda path: `conda activate FermiBadger_env` then drop the `pixi run` prefix.
 
 3. **Load a template**:
    - Open `tuning_templates/simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml`
@@ -21,9 +21,11 @@
 
 ### Version Information
 
-- **Badger**: 1.6.0 (with patches in `patches/pydantic_editor-badger-1.6.0-fixes.patch`)
-- **Xopt**: 3.2.1
-- **Conda environment**: `FermiBadger_env`
+- **Badger**: 1.6.0 (see `patches/README.md` for the current patch set)
+- **Xopt**: 3.2.2
+- **Environment**: pixi (`pixi.toml`/`pixi.lock`) is now the default; the
+  `FermiBadger_env` conda environment is kept as a legacy fallback during
+  the cutover — see TODO.md.
 
 For detailed information on versions and fixes, see `HANDOFF.md` section "Badger 1.6.0 Fixes and Gotchas".
 

@@ -6,7 +6,7 @@ to the value sent; the settle loop times out; averaged reads via read_fresh; arr
 observables via the "|<reduce>" suffix.
 
 Run from the repo root:
-    conda run -n FermiBadger_env python tests/pacsys_interface_test.py
+    pixi run python tests/pacsys_interface_test.py
 """
 import contextlib
 import dataclasses

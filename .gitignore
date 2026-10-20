@@ -21,5 +21,7 @@ sim_outputs/
 # Personal Claude Code tool-permission config, not shared project config.
 .claude/
 .patch_work/
+# pixi-managed environments; pixi.toml/pixi.lock are the tracked source of truth.
+.pixi/
 # Build products (e.g. the shareable Badger patch zip); sources live in patches/.
 dist/

@@ -8,7 +8,7 @@ any I/O. Device-name typos cannot be caught offline: ACNET names are only checke
 the wire.
 
 Run from the repo root:
-    conda run -n FermiBadger_env python tests/pacsys_drf_lint_test.py
+    pixi run python tests/pacsys_drf_lint_test.py
 """
 import glob
 import importlib

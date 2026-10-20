@@ -5,7 +5,7 @@ pacsys.testing.FakeBackend. The Acsys environment shares the same helper and the
 method bodies but has no fake backend.
 
 Run from the repo root:
-    conda run -n FermiBadger_env python tests/mults_test.py
+    pixi run python tests/mults_test.py
 """
 import contextlib
 import importlib

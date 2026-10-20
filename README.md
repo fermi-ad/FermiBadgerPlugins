@@ -45,44 +45,46 @@ git clone git@github.com:fermi-ad/FermiBadgerPlugins.git
 cd FermiBadgerPlugins
 ```
 
-### 2. Run the setup script
-
-**Prerequisite**: You must be on the FNAL private network (on-site or via VPN). The `acsys` package requires access to FNAL's internal pip repository.
+### 2. Run the bootstrap script
 
 ```bash
-./setup.sh
+./bootstrap.sh
 ```
 
-This creates the `FermiBadger_env` conda environment, applies the Badger patches, writes `config.local.yaml`, and verifies the plugin is discoverable — see [Apply patches and configure by hand](#apply-patches-and-configure-by-hand) for what it does under the hood:
+This installs [pixi](https://pixi.sh) if it's not already on your `PATH`, resolves and builds the environment from `pixi.toml`, applies the Badger patches, writes `config.local.yaml`, and verifies the plugin is discoverable — see [Apply patches and configure by hand](#apply-patches-and-configure-by-hand) for what it does under the hood:
 
-1. Creates the `FermiBadger_env` conda environment from `environment.yml`. If an environment of that name already exists, it asks whether to remove and recreate it, use a different name, or keep it as-is.
-2. Applies the Badger patches to that environment.
-3. Writes `config.local.yaml` with this clone's paths — it works no matter where you cloned the repo, `/tmp` included. Your archive and logbook directories default to `~/BadgerArchive` and `~/BadgerLogs`; press Enter to accept or type your own.
-4. Verifies that Badger can discover the plugins.
+1. Installs pixi, if missing.
+2. `pixi install` builds the environment from `pixi.toml`/`pixi.lock`. The default environment needs no FNAL network access; on the FNAL network (on-site or VPN), `./bootstrap.sh --onsite` adds the `acsys` package instead, from FNAL's internal pip repository.
+3. Applies the Badger patches to that environment.
+4. Writes `config.local.yaml` with this clone's paths — it works no matter where you cloned the repo, `/tmp` included. Your archive and logbook directories default to `~/BadgerArchive` and `~/BadgerLogs`; press Enter to accept or type your own.
+5. Verifies that Badger can discover the plugins.
 
 It is safe to re-run: patches already applied are detected and skipped.
 
 ```bash
-./setup.sh --help          # options
-./setup.sh --yes           # take every default, no prompts
-./setup.sh --env-name foo  # different environment name
-./setup.sh --skip-env      # patches and config only
-./setup.sh --config        # rewrite config.local.yaml only (no env, no patches)
+./bootstrap.sh --help     # options
+./bootstrap.sh --yes      # take every default, no prompts
+./bootstrap.sh --onsite   # add acsys (needs the FNAL network); use on the MCR host
 ```
+
+**Legacy conda path**: `./setup.sh` still works the same way, using the `FermiBadger_env` conda environment instead of pixi (`./setup.sh --help` for its options). Kept during the pixi cutover; see `TODO.md`.
 
 ### 3. Launch
 
 ```bash
-conda activate FermiBadger_env
-badger -g -cf config.local.yaml
+pixi run badger -g -cf config.local.yaml
 ```
 
 Or load a template straight into either GUI (the name is relative to `tuning_templates/`):
 
 ```bash
-badger -g -cf config.local.yaml -t 01_Linac_RIL_tuning.yaml
-badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+pixi run badger -g -cf config.local.yaml -t 01_Linac_RIL_tuning.yaml
+pixi run badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
 ```
+
+On the `onsite` environment, add `-e onsite`: `pixi run -e onsite badger -g -cf config.local.yaml`.
+
+Legacy conda path: `conda activate FermiBadger_env` then the same `badger ...` commands without the `pixi run` prefix.
 
 `config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
 
@@ -92,16 +94,20 @@ badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccel
 
 [↑ Back to top](#contents)
 
-### Conda Environment (`environment.yml`)
+### Pixi Environment (`pixi.toml` / `pixi.lock`)
 
-The `environment.yml` file defines the complete `FermiBadger_env` environment with:
+`pixi.toml` defines the environment with:
 
 - **Python**: 3.12.1
 - **Badger**: 1.6.0
 - **Xopt**: pulled in transitively by `badger-opt=1.6.0` (currently 3.2.2)
 - **XSuite packages**: xtrack, xobjects, xfields, xcoll, xsuite
 - **cpymad** for MADX
-- **FNAL Accelerator Control System packages**: acsys (requires FNAL network), pacsys
+- **pacsys** (FNAL Accelerator Control System)
+
+`acsys` (also FNAL Accelerator Control System, but requiring the FNAL network to install) is an opt-in `onsite` feature rather than a base dependency, so the default environment installs off-site. `pixi.lock` pins exact versions for `osx-arm64` and `linux-64`; regenerate it with `pixi install` (or `pixi install -e onsite`) after editing `pixi.toml`, and commit the updated lock file.
+
+**Legacy conda path**: `environment.yml` defines the equivalent `FermiBadger_env` conda environment, with `acsys` as an unconditional dependency (so it always needs the FNAL network). Kept during the pixi cutover.
 
 ### Why Patches Are Required
 
@@ -109,9 +115,9 @@ Badger 1.6.0 has several pydantic rules that affect template loading and the `-m
 
 ### Apply patches and configure by hand
 
-`setup.sh` does this for you (Quick Start step 2). Do it by hand only for a non-conda Badger install, or to see the mechanics.
+`bootstrap.sh` does this for you (Quick Start step 2). Do it by hand only for a non-pixi Badger install, or to see the mechanics.
 
-`setup.sh` applies three patches to your `FermiBadger_env` installation of Badger 1.6.0 — fixing template-loading errors, `turbo_controller: null` handling, and the `-mini` variable table — and writes `config.local.yaml` with `BADGER_PLUGIN_ROOT`, `BADGER_TEMPLATE_ROOT`, `BADGER_LOG_DIRECTORY` pointed at this clone, plus your chosen archive/logbook directories.
+`bootstrap.sh` (via `pixi run setup`) applies the Badger patches to your pixi environment — fixing template-loading errors, `turbo_controller: null` handling, and the `-mini` variable table — and writes `config.local.yaml` with `BADGER_PLUGIN_ROOT`, `BADGER_TEMPLATE_ROOT`, `BADGER_LOG_DIRECTORY` pointed at this clone, plus your chosen archive/logbook directories.
 
 For the patches, see [`patches/README.md`](patches/README.md) for `patch`/`git apply` walkthroughs. For the config, copy `config.yaml` to `config.local.yaml` (gitignored) and set these to absolute paths, creating each directory if it doesn't exist:
 
@@ -129,11 +135,11 @@ Run the test script to verify everything is set up correctly:
 ```
 
 This script:
-- Clones a fresh copy of the repository to `/tmp/FermiBadger_envTEST`
-- Creates a new conda environment named `FermiBadger_envTEST`
-- Installs the plugin and verifies it's discoverable by Badger
+- Clones a fresh copy of the repository to `/tmp/FermiBadgerPluginsTEST`
+- Runs `./bootstrap.sh --yes` there, in its own `.pixi/` environment
+- Verifies the plugin is discoverable by Badger
 
-**Note:** The test uses a separate environment (`FermiBadger_envTEST`) to avoid conflicts with your main `FermiBadger_env`.
+**Note:** The test uses a separate clone to avoid touching your own `config.local.yaml` or `.pixi/` environment. The legacy conda equivalent is `tests/test-quick-start-conda.sh`.
 
 ---
 
@@ -141,13 +147,13 @@ This script:
 
 [↑ Back to top](#contents)
 
-Point Badger at a different `plugins`/`tuning_templates`/archive/logbook location later — a second clone, a shared archive drive, a renamed environment — without recreating the conda environment or reapplying patches:
+Point Badger at a different `plugins`/`tuning_templates`/archive/logbook location later — a second clone, a shared archive drive — without rebuilding the pixi environment or reapplying patches:
 
 ```bash
-./setup.sh --config
+pixi run setup -- --config
 ```
 
-This only rewrites `config.local.yaml`; it asks the same archive/logbook questions as a full `setup.sh` run but skips environment creation and patching entirely.
+This only rewrites `config.local.yaml`; it asks the same archive/logbook questions as a full setup but skips patching. (Legacy conda path: `./setup.sh --config`.)
 
 ### Loading a tuning template
 
@@ -194,13 +200,13 @@ This simulation-tuning environment accepts these parameters in its tuning templa
 
 [↑ Back to top](#contents)
 
-### FNAL Network Required
+### FNAL Network Required (`onsite` environment only)
 
-The `acsys` package is hosted on FNAL's internal pip repository (`https://www-bd.fnal.gov/pip3`). You must be on the FNAL network (on-site or VPN) to install it.
+The `acsys` package, in the `onsite` pixi feature (or always, on the legacy conda path), is hosted on FNAL's internal pip repository (`https://www-bd.fnal.gov/pip3`). You must be on the FNAL network (on-site or VPN) to install it. The default pixi environment doesn't need it.
 
 **Error if off-network**:
 ```
-ERROR: Could not find a version that satisfies the requirement acsys
+error: Because acsys was not found in the package registry and you require acsys==0.12.8, we can conclude that your requirements are unsatisfiable.
 ```
 
 ### libGL.so.1 Missing
@@ -212,7 +218,7 @@ ImportError: libGL.so.1: cannot open shared object file
 
 **Fix**:
 ```bash
-conda install -c conda-forge mesa-libgl-cos7-x86_64
+pixi add mesa-libgl-cos7-x86_64
 # or on Ubuntu/Debian:
 sudo apt-get install libgl1-mesa-glx
 ```
@@ -227,7 +233,9 @@ to prevent slow performance from thread contention.
 
 ### Environment Not Found
 
-If `conda activate FermiBadger_env` fails:
+If `pixi run badger` fails with no environment built, re-run `pixi install` (or `pixi install -e onsite`) from the repo root; `pixi.toml` defines it, so there's no separate "does it exist" check like conda's.
+
+Legacy conda path: if `conda activate FermiBadger_env` fails:
 ```bash
 conda env list  # Verify the environment exists
 conda create -n FermiBadger_env -f environment.yml  # Recreate if missing
@@ -255,13 +263,14 @@ See [`patches/README.md`](patches/README.md) for patch instructions.
 ```
 FermiBadgerPlugins/
 ├── CLAUDE.md                   # Project context and session history
+├── bootstrap.sh                # One-command pixi install/patch/config script
 ├── config.yaml                 # Badger configuration
 ├── docs/                       # Development documentation
 │   ├── log.md
 │   ├── progress.md
 │   └── ...
-├── environment.yml             # Conda environment definition
-├── patches/                    # Badger bug fixes, applied by setup.sh in the order patches/README.md lists
+├── environment.yml             # Legacy conda environment definition
+├── patches/                    # Badger bug fixes, applied by bootstrap.sh/setup.sh in the order patches/README.md lists
 │   ├── pydantic_editor-badger-1.6.0-dict-subtypes.patch
 │   ├── badger-mini-config.patch
 │   ├── badger-mini-var-table-env-configs.patch
@@ -269,6 +278,9 @@ FermiBadgerPlugins/
 │   ├── badger-1.6.0-full-gui-template-option.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
+├── pixi.toml                   # Pixi environment definition (default, and an onsite feature adding acsys)
+├── pixi.lock                   # Pinned resolution for osx-arm64 and linux-64
+├── pixi_setup.sh               # Patch/config/verify logic behind `pixi run setup`
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)
 │   │   ├── 01_Linac_RIL_tuning_Acsys/
@@ -277,13 +289,14 @@ FermiBadgerPlugins/
 │   │   └── ...
 │   └── interfaces/             # Badger Interface plugins
 │       └── VirtualAccelerator_MADXSuiteInterface/
-├── setup.sh                    # One-command install/patch/config script
+├── setup.sh                    # Legacy conda install/patch/config script
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
 ├── tests/                      # Diagnostic and verification scripts
 │   ├── check_RIL_tuning_live_bounds.py  # Read-only live-bounds diagnostic
 │   ├── template_lint_test.py   # Headless check that every tuning template loads
-│   └── test-quick-start.sh     # Fresh-clone verification script
+│   ├── test-quick-start.sh     # Fresh-clone verification script (pixi)
+│   └── test-quick-start-conda.sh  # Fresh-clone verification script (legacy conda)
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
     ├── 01_Linac_RIL_tuning.yaml            # operations-ready physical-machine templates live at the top level
     ├── development/                        # physical-machine templates still being worked on
