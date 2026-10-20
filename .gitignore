@@ -21,3 +21,5 @@ sim_outputs/
 # Personal Claude Code tool-permission config, not shared project config.
 .claude/
 .patch_work/
+# Build products (e.g. the shareable Badger patch zip); sources live in patches/.
+dist/

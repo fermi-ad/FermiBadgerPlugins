@@ -719,3 +719,15 @@ User confirmed which were intended; applied those by hand to
 01_Linac_RIL_tuning.yaml (G:LINEFF kept as an observable, MEBT trims on a
 +-0.5 A window like the other trims), deleted the development copy.
 Lint: 16 vars, 1 obj, clean.
+
+## 2026-10-14 — shareable GUI-mods zip for Badger developers
+
+User wanted to share the GUI mods with Badger devs as a zip to unpack into a
+Badger 1.6.0 source clone. Upstream main is 136 commits past v1.6.0 and 3 of 5
+patches conflict there, so the zip targets v1.6.0. Scope: pydantic_editor,
+the two -mini fixes, device-list GUI (not -g -t, not xopt). Applied in
+setup.sh order on a v1.6.0 worktree, one commit each, re-diffed to
+clone-root paths (a/src/badger/...). Output `dist/badger-1.6.0-fermi-gui-mods.zip`
+(gitignored) → `fermi_gui_mods/` with 01–04 patches + short README. Verified on
+a fresh v1.6.0 checkout: `git apply` clean, tree identical, patched modules
+import, tests/picker_test.py ok.

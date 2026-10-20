@@ -1807,3 +1807,10 @@ observable lists already keep plugin order.
 - [ ] GUI check: mults listed after the quads, read 0, Add Current works.
 - [ ] Machine check on the Pacsys testing role: both quads of a pair move by
   coefficient × step × steps; MultOOB stays 0.
+
+## 2026-10-14: shareable GUI-mods zip
+
+- `dist/badger-1.6.0-fermi-gui-mods.zip` (gitignored build product): 4 patches
+  rooted at a Badger source clone (`git apply fermi_gui_mods/*.patch` on v1.6.0) + README.
+- Verified: applies clean on fresh v1.6.0, imports ok, picker_test ok.
+- One-off handoff, now with the Badger devs; not maintained. Do not regenerate it when `patches/` changes.
