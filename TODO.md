@@ -15,32 +15,38 @@ it to paste in.
 ### Environment and setup — do first
 
 - [x] **Make pixi the default environment manager** (decided 2026-10-08,
-  built 2026-10-20). `pixi.toml` with a base environment (no `acsys`, so
-  off-site installs work) and an `onsite` feature/environment adding `acsys`
-  from the FNAL index; committed `pixi.lock` for osx-arm64 and linux-64;
+  built 2026-10-20). `pixi.toml`: the default environment includes `acsys`
+  from the FNAL index (matches the MCR host, which always has FNAL network);
+  an `offsite` environment (`pixi install -e offsite` / `./bootstrap.sh
+  --offsite`) drops it for off-network dev work — swapped same day from the
+  original default-is-offsite layout once the MCR host turned out to need
+  the flag-free command. Committed `pixi.lock` for osx-arm64 and linux-64;
   patches/config/verify wired as `pixi run setup` (`pixi_setup.sh`); a
   `bootstrap.sh` that installs pixi if missing and runs install + setup;
   swapped the `conda run -n FermiBadger_env` references in test docstrings,
   `patches/README.md`, `README.md`, `CLAUDE.md`, `HANDOFF.md`, `Dockerfile`
   to `pixi run ...`; `setup.sh` and `environment.yml` kept as the legacy
   conda path per the dual-run decision, clearly marked as such. Verified
-  locally: both `default` and `onsite` environments resolve and install
-  (`pixi install`, `pixi install -e onsite`), patches apply, `config.local.yaml`
-  generates, the plugin is discoverable, and the existing offline test
-  suite (`mults_test.py`, `pacsys_drf_lint_test.py`, `pacsys_interface_test.py`,
-  `periodic_phase_test.py`, `supply_limits_test.py`, `template_lint_test.py`,
-  `VA_plugin_smoke_test.py`) passes under `pixi run python tests/...py`.
-  The `badger`-on-`PATH` blocker turned out to be moot: `pixi run badger ...`
-  needs no PATH setup at all, so the external shortcut's edit (next item)
-  is a one-line swap, not a profile change.
-  - [ ] **Needs the MCR host, not verifiable from a dev checkout:** confirm
-    the MCR host(s) (`config_MCR.yaml`, `/home/lcape/...`) can reach
-    conda-forge and PyPI and can write a pixi cache.
-  - [ ] Dual-run on the MCR host once confirmed: run the (still Acsys, at
-    this point) production template through both conda and pixi envs,
-    compare, then hand over the pixi-based launch line
-    (`pixi run badger -g -cf config.local.yaml -t <template>`, add
-    `-e onsite` for the onsite environment) for the external shortcut —
+  locally: both `default` and `offsite` environments resolve and install,
+  patches apply, `config.local.yaml` generates, the plugin is discoverable,
+  and the existing offline test suite (`mults_test.py`, `pacsys_drf_lint_test.py`,
+  `pacsys_interface_test.py`, `periodic_phase_test.py`, `supply_limits_test.py`,
+  `template_lint_test.py`, `VA_plugin_smoke_test.py`) passes under
+  `pixi run python tests/...py`.
+  - [x] MCR host confirmed reachable: `./bootstrap.sh` ran there
+    successfully (conda-forge/PyPI/FNAL index all reachable, pixi cache
+    writable).
+  - **Gotcha found on the MCR host:** the pixi installer's `export PATH=...`
+    only lands in the shell that ran it, and a headless/login session
+    doesn't source `~/.bashrc` the way an interactive one does, so `pixi`
+    wasn't found in the session that matters. Fixed with
+    `sudo ln -s ~/.pixi/bin/pixi /usr/local/bin/pixi` (a system-PATH
+    directory, not a shell-rc one) rather than relying on PATH exports or
+    aliases, neither of which a headless session picks up.
+  - [ ] Dual-run on the MCR host: run the (still Acsys, at this point)
+    production template through both conda and pixi, compare, then hand
+    over the pixi-based launch line (`pixi run badger -g -cf config.local.yaml
+    -t <template>`, no `-e` flag needed now) for the external shortcut —
     don't edit it ourselves.
   - [ ] Cutover: once validated for several sessions, retire the conda env
     on that host, update README's Quick Start to drop the legacy conda

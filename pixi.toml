@@ -8,8 +8,8 @@ platforms = [{ name = "osx-arm64-macos15", platform = "osx-arm64", macos = "15.0
 
 [tasks]
 # Patches + config.local.yaml + discoverability check, for whichever
-# environment this is run in (`pixi run setup` for default,
-# `pixi run -e onsite setup` on the MCR host).
+# environment this is run in (`pixi run setup` for default/onsite,
+# `pixi run -e offsite setup` off the FNAL network).
 setup = "bash pixi_setup.sh"
 
 [dependencies]
@@ -28,9 +28,9 @@ xsuite = "==0.54.0"
 xtrack = "==0.107.0"
 pacsys = "==0.3.0"
 
-# acsys is FNAL-network-only, so it's an opt-in feature rather than a base
-# dependency: `pixi install` (the default env) works off-site, and the MCR
-# host uses `pixi install -e onsite`.
+# acsys is FNAL-network-only. The default environment includes it (operators
+# on the MCR host always have FNAL network, and dropping the -e flag there
+# is worth it); off-network dev work opts out with `pixi install -e offsite`.
 [feature.onsite.pypi-dependencies]
 acsys = "==0.12.8"
 
@@ -38,4 +38,5 @@ acsys = "==0.12.8"
 extra-index-urls = ["https://www-bd.fnal.gov/pip3"]
 
 [environments]
-onsite = ["onsite"]
+default = { features = ["onsite"] }
+offsite = []

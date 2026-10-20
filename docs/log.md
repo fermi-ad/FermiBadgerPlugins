@@ -791,3 +791,36 @@ since it clones from GitHub `main`, which doesn't have this work yet).
 Remaining before cutover (needs the actual MCR host, tracked in TODO.md):
 confirm it can reach conda-forge/PyPI and write a pixi cache, then the
 dual-run comparison and the external-shortcut command swap.
+
+## 2026-10-20 — MCR host bootstrap: PATH gotcha, then onsite-by-default
+
+User ran `./bootstrap.sh` on the production (MCR) machine as the production
+user (`lcape`). `git pull` there was a no-op at first ask — this session's
+pixi work hadn't been committed/pushed yet; committed (`0d1da28`) and pushed.
+After that, bootstrap ran and installed pixi via the official installer, but
+the follow-up `pixi run -e onsite badger -mini ...` command failed with
+`pixi: command not found`. Diagnosed: the installer's `export PATH=...`
+only affects the script's own subshell; it also appends a line to
+`~/.bashrc`, which is sourced only by an *interactive non-login* shell —
+not a login shell (reads `~/.bash_profile`/`~/.profile` instead) and not a
+non-interactive one (scripts, most headless/display-manager autostart
+launches that just `exec` a command). The operator's shortcut is exactly
+that kind of session, so the `.bashrc` PATH line can't be relied on there.
+Fixed at the root rather than per-shell: `sudo ln -s ~/.pixi/bin/pixi
+/usr/local/bin/pixi` — a directory on the system default PATH regardless of
+shell type, config file, or session kind.
+
+User then asked to make the `onsite` (acsys) environment the default, to
+drop the `-e onsite` flag from the operator-facing command entirely. Flipped
+`pixi.toml`: `acsys` moved into the base so the unnamed `default` environment
+now includes it; the old off-site/no-acsys behavior moved to a new `offsite`
+environment (`pixi install -e offsite` / `./bootstrap.sh --offsite`).
+`bootstrap.sh --onsite` kept as a no-op alias (harmless, since that's the
+flag already told to the user minutes earlier) rather than breaking it
+silently. Regenerated `pixi.lock` for both environments; re-verified locally
+(patches apply, config generates, plugin discoverable, same offline test
+suite green) under the new default. Docs (`README.md`, `patches/README.md`,
+`TODO.md`) updated to describe `default`/`offsite` instead of
+`default`/`onsite`. The MCR-host network/cache-access TODO item is now
+confirmed done (bootstrap ran there successfully); dual-run comparison and
+the shortcut's command-line swap are still open.

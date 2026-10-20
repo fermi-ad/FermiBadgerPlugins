@@ -1841,7 +1841,23 @@ observable lists already keep plugin order.
   swap.
 
 ### Open
-- [ ] Confirm the MCR host can reach conda-forge/PyPI and write a pixi
-  cache — needs the actual host, not verifiable from a dev checkout.
+- [x] Confirm the MCR host can reach conda-forge/PyPI and write a pixi
+  cache — `./bootstrap.sh` ran there successfully.
 - [ ] Dual-run comparison on the MCR host, then hand over the pixi launch
   line for the external shortcut (not ours to edit) and retire conda there.
+
+## 2026-10-20: MCR host follow-up — PATH gotcha, onsite made the default
+
+- `pixi` installed fine on the MCR host, but `pixi: command not found` in
+  the operator's actual launch session: the installer's PATH export only
+  reaches the shell it ran in, and `~/.bashrc` (where it also wrote a PATH
+  line) is sourced only by an interactive non-login shell — not login, not
+  non-interactive, which is what a headless/shortcut session usually is.
+  Fixed with `sudo ln -s ~/.pixi/bin/pixi /usr/local/bin/pixi` (system PATH,
+  not a shell rc file) rather than per-shell PATH/alias fixes.
+- Flipped `pixi.toml` so the unnamed `default` environment includes `acsys`
+  (matches the MCR host, drops the `-e onsite` flag from the operator
+  command) and moved the old off-site/no-acsys behavior to a new `offsite`
+  environment. `bootstrap.sh --onsite` kept as a no-op alias. Re-verified:
+  both environments resolve/install, patches apply, plugin discoverable,
+  offline tests green.

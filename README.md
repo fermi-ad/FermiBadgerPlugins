@@ -54,7 +54,7 @@ cd FermiBadgerPlugins
 This installs [pixi](https://pixi.sh) if it's not already on your `PATH`, resolves and builds the environment from `pixi.toml`, applies the Badger patches, writes `config.local.yaml`, and verifies the plugin is discoverable — see [Apply patches and configure by hand](#apply-patches-and-configure-by-hand) for what it does under the hood:
 
 1. Installs pixi, if missing.
-2. `pixi install` builds the environment from `pixi.toml`/`pixi.lock`. The default environment needs no FNAL network access; on the FNAL network (on-site or VPN), `./bootstrap.sh --onsite` adds the `acsys` package instead, from FNAL's internal pip repository.
+2. `pixi install` builds the environment from `pixi.toml`/`pixi.lock`. The default environment includes `acsys` from FNAL's internal pip repository, so it needs the FNAL network (on-site or VPN) — this matches the MCR host. Off that network, use `./bootstrap.sh --offsite` instead, which skips `acsys`.
 3. Applies the Badger patches to that environment.
 4. Writes `config.local.yaml` with this clone's paths — it works no matter where you cloned the repo, `/tmp` included. Your archive and logbook directories default to `~/BadgerArchive` and `~/BadgerLogs`; press Enter to accept or type your own.
 5. Verifies that Badger can discover the plugins.
@@ -64,7 +64,7 @@ It is safe to re-run: patches already applied are detected and skipped.
 ```bash
 ./bootstrap.sh --help     # options
 ./bootstrap.sh --yes      # take every default, no prompts
-./bootstrap.sh --onsite   # add acsys (needs the FNAL network); use on the MCR host
+./bootstrap.sh --offsite  # skip acsys; no FNAL network needed, for off-site dev work
 ```
 
 **Legacy conda path**: `./setup.sh` still works the same way, using the `FermiBadger_env` conda environment instead of pixi (`./setup.sh --help` for its options). Kept during the pixi cutover; see `TODO.md`.
@@ -82,7 +82,7 @@ pixi run badger -g -cf config.local.yaml -t 01_Linac_RIL_tuning.yaml
 pixi run badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
 ```
 
-On the `onsite` environment, add `-e onsite`: `pixi run -e onsite badger -g -cf config.local.yaml`.
+Off-site, on the `offsite` environment, add `-e offsite`: `pixi run -e offsite badger -g -cf config.local.yaml`.
 
 Legacy conda path: `conda activate FermiBadger_env` then the same `badger ...` commands without the `pixi run` prefix.
 
@@ -105,7 +105,7 @@ Legacy conda path: `conda activate FermiBadger_env` then the same `badger ...` c
 - **cpymad** for MADX
 - **pacsys** (FNAL Accelerator Control System)
 
-`acsys` (also FNAL Accelerator Control System, but requiring the FNAL network to install) is an opt-in `onsite` feature rather than a base dependency, so the default environment installs off-site. `pixi.lock` pins exact versions for `osx-arm64` and `linux-64`; regenerate it with `pixi install` (or `pixi install -e onsite`) after editing `pixi.toml`, and commit the updated lock file.
+`acsys` (also FNAL Accelerator Control System, but requiring the FNAL network to install) is part of the default environment, matching the MCR host. Off-site dev work uses the `offsite` environment instead, which skips it. `pixi.lock` pins exact versions for `osx-arm64` and `linux-64`; regenerate it with `pixi install` (or `pixi install -e offsite`) after editing `pixi.toml`, and commit the updated lock file.
 
 **Legacy conda path**: `environment.yml` defines the equivalent `FermiBadger_env` conda environment, with `acsys` as an unconditional dependency (so it always needs the FNAL network). Kept during the pixi cutover.
 
@@ -200,9 +200,9 @@ This simulation-tuning environment accepts these parameters in its tuning templa
 
 [↑ Back to top](#contents)
 
-### FNAL Network Required (`onsite` environment only)
+### FNAL Network Required (default pixi environment, or the legacy conda path)
 
-The `acsys` package, in the `onsite` pixi feature (or always, on the legacy conda path), is hosted on FNAL's internal pip repository (`https://www-bd.fnal.gov/pip3`). You must be on the FNAL network (on-site or VPN) to install it. The default pixi environment doesn't need it.
+The `acsys` package is hosted on FNAL's internal pip repository (`https://www-bd.fnal.gov/pip3`). You must be on the FNAL network (on-site or VPN) to install it. The `offsite` pixi environment (`pixi install -e offsite` / `./bootstrap.sh --offsite`) doesn't need it.
 
 **Error if off-network**:
 ```
@@ -233,7 +233,7 @@ to prevent slow performance from thread contention.
 
 ### Environment Not Found
 
-If `pixi run badger` fails with no environment built, re-run `pixi install` (or `pixi install -e onsite`) from the repo root; `pixi.toml` defines it, so there's no separate "does it exist" check like conda's.
+If `pixi run badger` fails with no environment built, re-run `pixi install` (or `pixi install -e offsite`) from the repo root; `pixi.toml` defines it, so there's no separate "does it exist" check like conda's.
 
 Legacy conda path: if `conda activate FermiBadger_env` fails:
 ```bash
@@ -278,7 +278,7 @@ FermiBadgerPlugins/
 │   ├── badger-1.6.0-full-gui-template-option.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
-├── pixi.toml                   # Pixi environment definition (default, and an onsite feature adding acsys)
+├── pixi.toml                   # Pixi environment definition (default includes acsys; offsite drops it)
 ├── pixi.lock                   # Pinned resolution for osx-arm64 and linux-64
 ├── pixi_setup.sh               # Patch/config/verify logic behind `pixi run setup`
 ├── plugins/

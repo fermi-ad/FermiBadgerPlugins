@@ -36,7 +36,8 @@
 >
 > **From-scratch check** (do this before committing a new patch): `rsync` the working
 > tree to `/tmp/X` excluding `.git` and `.pixi`, then `cd /tmp/X && ./bootstrap.sh --yes`
-> (off-site; add `--onsite` on the FNAL network). Legacy conda path:
+> (defaults to the FNAL-network-requiring onsite environment; add `--offsite`
+> off that network). Legacy conda path:
 > `./setup.sh --yes --env-name X` (drop the `acsys` lines from the copy's
 > `environment.yml` first if off-site). Expect `applied` for every patch and a
 > `badger/` + `xopt/` tree identical to the working env.

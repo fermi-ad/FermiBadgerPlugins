@@ -4,8 +4,8 @@
 #   2. pixi install (resolves and builds the environment from pixi.toml)
 #   3. pixi run setup (patches, config.local.yaml, discoverability check)
 #
-#   ./bootstrap.sh                 off-site/dev: no acsys, no FNAL network needed
-#   ./bootstrap.sh --onsite        MCR host: adds acsys (needs the FNAL network)
+#   ./bootstrap.sh                 default: adds acsys (needs the FNAL network); use on the MCR host
+#   ./bootstrap.sh --offsite       off-site/dev: no acsys, no FNAL network needed
 #   ./bootstrap.sh --yes           never prompt during the setup step
 set -euo pipefail
 
@@ -18,7 +18,8 @@ SETUP_YES=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --onsite)   ENV_NAME="onsite"; ENV_FLAG="-e onsite"; shift ;;
+        --offsite)  ENV_NAME="offsite"; ENV_FLAG="-e offsite"; shift ;;
+        --onsite)   shift ;;  # now the default; accepted as a no-op for anyone who already typed it
         --yes|-y)   SETUP_YES="--yes"; shift ;;
         --help|-h)  sed -n '2,8p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1 (try --help)" >&2; exit 2 ;;
