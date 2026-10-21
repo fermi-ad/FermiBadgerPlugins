@@ -186,6 +186,8 @@ else
     apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mini-vocs-full-width.patch"
     # must come after the above: diffed against its tree
     apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mini-always-expanded.patch"
+    # must come after the above: diffed against its tree
+    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mini-tuning-task-box.patch"
 
     apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
 fi

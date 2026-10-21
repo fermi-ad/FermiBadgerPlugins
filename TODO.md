@@ -141,5 +141,11 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
   keeps its bar for visual separation but is locked expanded — clicking it
   does nothing (`badger-1.6.0-mini-always-expanded.patch`). See docs/log.md
   2026-10-21.
+- [x] Renamed "Template" to "Tuning Task", and moved the Parameters row
+  (Machine Interface/Optimization Algo) into that same styled box as a
+  second line, instead of its own separate row below it
+  (`badger-1.6.0-mini-tuning-task-box.patch`). Noted, not fixed: the
+  buttons' checked/expanded state isn't visually distinct from unchecked
+  against the box's dark background. See docs/log.md 2026-10-21.
 - [ ] More `simpler_mini` streamlining changes to come; this file should
   track each one as it lands, same as this entry.

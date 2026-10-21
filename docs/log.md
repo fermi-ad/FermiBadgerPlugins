@@ -1140,3 +1140,34 @@ bug, just the wrong test); the real check was programmatically clicking
 the toggle button in the loaded page and confirming the content area's
 height is identical (238px) before and after the click. Full offline test
 suite and from-scratch check (all 10 patches) clean.
+
+## 2026-10-21 — `simpler_mini`: Parameters row moves into the Tuning Task box
+
+Two asks: move the Parameters row (Machine Interface/Optimization Algo
+buttons) into the styled box at the top, as a second line under the
+template-selection line, rather than floating below it as its own row;
+and rename "Template" to "Tuning Task".
+
+Renamed `self.label = QLabel("Template")` → `QLabel("Tuning Task")` in
+`TemplateSelectorRow` — fit fine at the existing fixed label width, no
+clipping (checked via screenshot, same lesson as "Observables" clipping
+earlier — never assume, always render and look). Restructured
+`TemplateSelectorRow`'s single `QHBoxLayout` into an outer `QVBoxLayout`
+wrapping that same row, plus a new `add_row(widget)` method. In
+`BadgerEnvBox.init_ui()`, swapped `vbox.addWidget(params_row)` for
+`self.template_row.add_row(params_row)` — the params row/buttons were
+already fully built by that point, construction order didn't need to
+change, just which layout the finished row gets added to.
+
+Gave the Parameters row's label and both buttons the box's own existing
+object names (`TemplateSelectorLabel`, `TemplateSelectorButton`) instead
+of writing new CSS — Qt's stylesheet cascade applies the frame's
+object-name-scoped rules to any descendant with that name, so this was
+free: same light label text, same bordered/hover button look as "From
+file", no new rules needed. Screenshot-verified the merged box renders
+correctly, and checked the buttons' `checked` (expanded) visual state too
+— noticed it doesn't look visually distinct from unchecked against the
+dark background; flagged to the user, not fixed (not asked for).
+
+New patch `badger-1.6.0-mini-tuning-task-box.patch`. Full offline test
+suite and from-scratch check (all 11 patches) clean.
