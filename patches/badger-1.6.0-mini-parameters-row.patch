@@ -1,6 +1,6 @@
 diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
---- a/badger/gui/mini/components/env_cbox.py	2026-10-21 10:28:03
-+++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 10:28:03
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-21 11:16:54
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 11:16:54
 @@ -295,8 +295,15 @@
          separator.setStyleSheet("background-color: #61748c;")
          vbox.addWidget(separator)
@@ -78,7 +78,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_algo = QHBoxLayout(algo_widget)
          hbox_algo.setContentsMargins(0, 0, 0, 0)
          hbox_algo.setSpacing(6)
-@@ -351,27 +362,55 @@
+@@ -351,27 +362,58 @@
          algo_cb.addItems(self.generators)
          algo_cb.setCurrentIndex(-1)
          algo_cb.installEventFilter(MouseWheelWidgetAdjustmentGuard(algo_cb))
@@ -129,11 +129,14 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 +        hbox_params.setSpacing(6)
 +        params_lbl = QLabel("Parameters")
 +        params_lbl.setFixedWidth(LABEL_WIDTH)
++        params_button_style = "QPushButton { padding: 6px 14px; }"
 +        self.btn_env_params = QPushButton("Machine Interface")
-+        self.btn_env_params.setFixedHeight(24)
++        self.btn_env_params.setFixedHeight(32)
++        self.btn_env_params.setStyleSheet(params_button_style)
 +        self.btn_env_params.setCheckable(True)
 +        self.btn_algo_parans = QPushButton("Optimization Algo")
-+        self.btn_algo_parans.setFixedHeight(24)
++        self.btn_algo_parans.setFixedHeight(32)
++        self.btn_algo_parans.setStyleSheet(params_button_style)
 +        self.btn_algo_parans.setCheckable(True)
 +        hbox_params.addWidget(params_lbl)
 +        hbox_params.addWidget(self.btn_env_params)
@@ -147,7 +150,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.relative_to_curr = QCheckBox("Automatic")
          self.relative_to_curr.setChecked(True)
          self.relative_to_curr.hide()
-@@ -640,21 +679,21 @@
+@@ -640,21 +682,21 @@
  
      def toggle_env_params(self, checked: bool):
          if not checked:
