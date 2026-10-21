@@ -12,6 +12,7 @@
 | `badger-mini-config.patch` | Initializes the settings singleton before template loading in `-mini` | Badger 1.6.0 |
 | `badger-mini-var-table-env-configs.patch` | Rebuilds the `-mini` variable table's env configs *and* its rows from the template, so the table lists and queries the template's machine rather than the plugin defaults | Badger 1.6.0 |
 | `badger-1.6.0-device-list-gui.patch` | Lists variables in environment (beam) order instead of alphabetical when a template/routine loads; replaces each "Filter…" box and "Show Checked Only" checkbox in `-g` and `-mini` with a search dropdown that opens on focus, lists every item in beam order with a check icon on selected ones, and adds an item when picked; lists always show checked rows; the "Enter new … here" placeholder rows are hidden and all four tables size to their visible rows (zero rows when nothing is checked); variable table sits in a collapsible box. Apply **after** the two `-mini` patches. | Badger 1.6.0 |
+| `badger-1.6.0-spinbox-wheel-guard.patch` | Stops the mouse wheel from changing numeric field values in the Environment/Algorithm Parameters editor and the range-limit dialogs — a frequent source of accidental edits. Reuses Badger's own existing `MouseWheelWidgetAdjustmentGuard` (already used for the variable table's spin boxes) everywhere else it was missing. | Badger 1.6.0 |
 
 ## Issues Fixed
 
@@ -24,6 +25,7 @@
 
 7. **Alphabetical device lists / checked and unchecked rows mixed together** - Both routine pages sort the variable dict (`dict(sorted(...))`) when loading a template or routine, so the plugin's beam-order listing is lost (environment selection alone preserved it). The four lists also showed every device with a free-text filter. Fixed by `badger-1.6.0-device-list-gui.patch`: drops the sort (dicts keep insertion order: env variables, then `additional_variables`, hard-limit overrides change values only), adds `gui/components/picker.py` (an editable `QComboBox` + contains-match `QCompleter` rebuilt from the table on focus/open, no signal wiring) in place of each filter box, and wraps the variable table in the existing `CollapsibleBox`. Also wires the `-mini` observables "Show Checked Only" checkbox, which upstream never connected.
 8. **`AttributeError: 'Picker' object has no attribute 'setText'`** - Stopping/resetting a routine (`refresh_ui` in both routine pages) clears `edit_obj`/`edit_con`/`edit_sta` via `setText("")`, the way it cleared the `QLineEdit` filter boxes `Picker` replaced. Fixed by adding a `setText()` compatibility shim directly to `Picker` (clears the combo via `setCurrentIndex(-1)`) in `badger-1.6.0-device-list-gui.patch`, one guard covering all four call sites in both GUI variants instead of patching each caller.
+9. **Mouse wheel changes numeric field values** - Hovering over a `QSpinBox`/`QDoubleSpinBox` and scrolling changes its value even without focus or a click — Qt's default behavior, and an easy way to silently mis-set an Environment/Algorithm parameter or a range-limit ratio/delta. Badger already has `RobustSpinBox` (`gui/components/robust_spinbox.py`) with wheel protection built in (`MouseWheelWidgetAdjustmentGuard`, `gui/utils.py`), but only wires it into the variable table; the parameter editor (`pydantic_editor.py`'s `resolve_qt`, one guard covering every int/float field it creates) and four dialogs that build plain `QSpinBox`/`QDoubleSpinBox` directly (`lim_vrange_dialog.py`, `ind_lim_vrange_dialog.py`, `terminition_condition_dialog.py`, `add_random_dialog.py`) never got it. Fixed by `badger-1.6.0-spinbox-wheel-guard.patch`: installs the same existing guard at all 10 previously-unprotected construction sites, reusing Badger's own mechanism rather than inventing a new one.
 
 ## Applying the Patches
 
@@ -94,6 +96,7 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-config.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-var-table-env-configs.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-full-gui-template-option.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-spinbox-wheel-guard.patch
 ```
 
 ## Applying the Xopt Patch

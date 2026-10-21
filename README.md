@@ -276,6 +276,7 @@ FermiBadgerPlugins/
 │   ├── badger-mini-var-table-env-configs.patch
 │   ├── badger-1.6.0-device-list-gui.patch
 │   ├── badger-1.6.0-full-gui-template-option.patch
+│   ├── badger-1.6.0-spinbox-wheel-guard.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
 ├── pixi.toml                   # Pixi environment definition (default includes acsys; offsite drops it)

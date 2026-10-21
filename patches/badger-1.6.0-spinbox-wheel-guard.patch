@@ -1,0 +1,146 @@
+diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pydantic_editor.py
+--- a/badger/gui/components/pydantic_editor.py	2026-10-20 20:42:43
++++ b/badger/gui/components/pydantic_editor.py	2026-10-20 20:42:43
+@@ -47,6 +47,7 @@
+     QVBoxLayout,
+     QWidget,
+ )
++from badger.gui.utils import MouseWheelWidgetAdjustmentGuard
+ from xopt.errors import VOCSError
+ from xopt.generators import get_generator
+ from xopt.generators.bayesian.bax.algorithms import Algorithm
+@@ -346,6 +347,10 @@
+                 widget.textChanged.connect(lambda: handle_changed(editor_info))
+ 
+         widget.setProperty("badger_nullable", resolved_type.nullable)
++        if isinstance(widget, (QSpinBox, QDoubleSpinBox)):
++            # A mouse wheel over a numeric field changes its value even
++            # without focus; this is a frequent source of accidental edits.
++            widget.installEventFilter(MouseWheelWidgetAdjustmentGuard(widget))
+         return widget
+ 
+ 
+diff -ruN a/badger/gui/windows/add_random_dialog.py b/badger/gui/windows/add_random_dialog.py
+--- a/badger/gui/windows/add_random_dialog.py	2026-10-20 20:42:43
++++ b/badger/gui/windows/add_random_dialog.py	2026-10-20 20:42:43
+@@ -9,6 +9,7 @@
+ from PyQt5.QtWidgets import QGroupBox, QLabel, QComboBox, QStyledItemDelegate
+ from PyQt5.QtCore import Qt
+ from badger.gui.components.robust_spinbox import RobustSpinBox
++from badger.gui.utils import MouseWheelWidgetAdjustmentGuard
+ 
+ 
+ class BadgerAddRandomDialog(QDialog):
+@@ -68,6 +69,7 @@
+         lbl = QLabel("Number of points")
+         lbl.setFixedWidth(128)
+         self.sb_np = sb_np = QSpinBox()
++        sb_np.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_np))
+         sb_np.setMinimum(1)
+         sb_np.setMaximum(100000)
+         sb_np.setValue(self.configs["n_points"])
+diff -ruN a/badger/gui/windows/ind_lim_vrange_dialog.py b/badger/gui/windows/ind_lim_vrange_dialog.py
+--- a/badger/gui/windows/ind_lim_vrange_dialog.py	2026-10-20 20:42:43
++++ b/badger/gui/windows/ind_lim_vrange_dialog.py	2026-10-20 20:42:43
+@@ -23,6 +23,7 @@
+ )
+ from PyQt5.QtCore import Qt
+ from badger.gui.components.bounds_preview import BoundsPreviewBar
++from badger.gui.utils import MouseWheelWidgetAdjustmentGuard
+ 
+ 
+ class BadgerIndividualLimitVariableRangeDialog(QDialog):
+@@ -121,6 +122,7 @@
+         hbox_ratio_curr.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Ratio")
+         self.sb_ratio_curr = sb_ratio_curr = QDoubleSpinBox()
++        sb_ratio_curr.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_ratio_curr))
+         sb_ratio_curr.setMinimum(0)
+         # sb_ratio_curr.setMaximum(1)
+         sb_ratio_curr.setValue(self.configs.get("ratio_curr", 0.1))
+@@ -134,6 +136,7 @@
+         hbox_ratio_full.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Ratio")
+         self.sb_ratio_full = sb_ratio_full = QDoubleSpinBox()
++        sb_ratio_full.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_ratio_full))
+         sb_ratio_full.setMinimum(0)
+         sb_ratio_full.setMaximum(1)
+         sb_ratio_full.setValue(self.configs.get("ratio_full", 0.1))
+@@ -147,6 +150,7 @@
+         hbox_delta.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Delta")
+         self.sb_delta = sb_delta = QDoubleSpinBox()
++        sb_delta.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_delta))
+         sb_delta.setMinimum(0)
+         sb_delta.setMaximum(1e4)
+         sb_delta.setValue(self.configs.get("delta", 0.1))
+diff -ruN a/badger/gui/windows/lim_vrange_dialog.py b/badger/gui/windows/lim_vrange_dialog.py
+--- a/badger/gui/windows/lim_vrange_dialog.py	2026-10-20 20:42:43
++++ b/badger/gui/windows/lim_vrange_dialog.py	2026-10-20 20:42:43
+@@ -22,6 +22,7 @@
+     QStackedWidget,
+ )
+ from PyQt5.QtCore import Qt
++from badger.gui.utils import MouseWheelWidgetAdjustmentGuard
+ 
+ 
+ class BadgerLimitVariableRangeDialog(QDialog):
+@@ -94,6 +95,7 @@
+         hbox_ratio_curr.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Ratio")
+         self.sb_ratio_curr = sb_ratio_curr = QDoubleSpinBox()
++        sb_ratio_curr.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_ratio_curr))
+         sb_ratio_curr.setMinimum(0)
+         sb_ratio_curr.setMaximum(1)
+         sb_ratio_curr.setValue(self.configs["ratio_curr"])
+@@ -107,6 +109,7 @@
+         hbox_ratio_full.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Ratio")
+         self.sb_ratio_full = sb_ratio_full = QDoubleSpinBox()
++        sb_ratio_full.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_ratio_full))
+         sb_ratio_full.setMinimum(0)
+         sb_ratio_full.setMaximum(1)
+         sb_ratio_full.setValue(self.configs["ratio_full"])
+@@ -120,6 +123,7 @@
+         hbox_delta.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Delta")
+         self.sb_delta = sb_delta = QDoubleSpinBox()
++        sb_delta.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_delta))
+         sb_delta.setMinimum(0)
+         sb_delta.setMaximum(1e4)
+         sb_delta.setValue(self.configs["delta"])
+diff -ruN a/badger/gui/windows/terminition_condition_dialog.py b/badger/gui/windows/terminition_condition_dialog.py
+--- a/badger/gui/windows/terminition_condition_dialog.py	2026-10-20 20:42:43
++++ b/badger/gui/windows/terminition_condition_dialog.py	2026-10-20 20:42:43
+@@ -18,6 +18,7 @@
+     QStyledItemDelegate,
+     QStackedWidget,
+ )
++from badger.gui.utils import MouseWheelWidgetAdjustmentGuard
+ 
+ 
+ stylesheet_run = """
+@@ -88,6 +89,7 @@
+         hbox_max_eval.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Max evaluation")
+         self.sb_max_eval = sb_max_eval = QSpinBox()
++        sb_max_eval.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_max_eval))
+         sb_max_eval.setMinimum(1)
+         sb_max_eval.setMaximum(100000)
+         sb_max_eval.setValue(self.configs["max_eval"])
+@@ -100,6 +102,7 @@
+         hbox_max_time.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Timeout (sec)")
+         self.sb_max_time = sb_max_time = QDoubleSpinBox()
++        sb_max_time.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_max_time))
+         sb_max_time.setMinimum(0.0)
+         sb_max_time.setMaximum(86400)
+         sb_max_time.setValue(self.configs["max_time"])
+@@ -113,6 +116,7 @@
+         hbox_tol.setContentsMargins(0, 0, 0, 0)
+         lbl = QLabel("Tolerance on objective")
+         self.sb_tol = sb_tol = QDoubleSpinBox()
++        sb_tol.installEventFilter(MouseWheelWidgetAdjustmentGuard(sb_tol))
+         sb_tol.setMinimum(0.0)
+         sb_tol.setMaximum(1000)
+         sb_tol.setValue(self.configs["ftol"])

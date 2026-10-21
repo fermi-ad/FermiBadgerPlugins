@@ -1895,3 +1895,23 @@ observable lists already keep plugin order.
   clean. Lesson: re-running `pixi run setup` against an already-patched
   tree reports "already applied" and would never have caught this — only
   the project's own documented from-scratch check does.
+
+## 2026-10-20: stop the mouse wheel from editing numeric fields
+
+- User-reported: scrolling over a numeric field in the Environment/Algorithm
+  Parameters dialogs or the range-configuration box changes its value.
+- Badger already has the fix (`RobustSpinBox` + `MouseWheelWidgetAdjustmentGuard`
+  in `gui/utils.py`), just not wired into most spin boxes: `pydantic_editor.py`'s
+  `resolve_qt` (every int/float param field), `lim_vrange_dialog.py`,
+  `ind_lim_vrange_dialog.py` (the range-config box — 3 spin boxes each),
+  `terminition_condition_dialog.py` (3 more), and one field in
+  `add_random_dialog.py`. 10 unprotected construction sites across 5 files.
+- New patch `badger-1.6.0-spinbox-wheel-guard.patch`: installs Badger's own
+  existing guard at all 10 sites (one guard at `resolve_qt`'s shared return
+  for the parameter editor, inline after construction elsewhere) — reuses
+  the existing mechanism rather than inventing a new one.
+- Verified concretely: scripted `QWheelEvent` against an unguarded spin box
+  confirmed the bug, then confirmed the guard blocks it; exercised
+  `BadgerResolvedType.resolve_qt(float/int, ...)` directly and confirmed
+  wheel-protected widgets come out. Full from-scratch check (all 7 patches,
+  offline test suite, `picker_test.py`) clean.

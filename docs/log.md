@@ -941,3 +941,37 @@ the write. Noted in `patches/README.md`: a from-scratch `/tmp/X` check
 now also points the per-user file at `/tmp/X` temporarily (harmless,
 just re-run setup against the real clone afterward). Closed the TODO.md
 item that asked for a manual per-host check — no longer needed.
+
+## 2026-10-20 — stop the mouse wheel from editing numeric fields
+
+User reported: hovering over a numeric field in the Environment/Algorithm
+Parameters dialogs or the range-configuration box and scrolling changes
+its value — an easy, silent mis-set. Found Badger already has the fix
+built, just not everywhere: `RobustSpinBox` (`gui/components/robust_spinbox.py`)
+installs `MouseWheelWidgetAdjustmentGuard` (`gui/utils.py`, a tiny
+`QObject` event filter that swallows `QEvent.Wheel`), but it's only used
+in the variable table and one field of `add_random_dialog.py`. Everywhere
+else — `pydantic_editor.py`'s `resolve_qt` (every int/float Environment
+or Algorithm param field), `lim_vrange_dialog.py` and
+`ind_lim_vrange_dialog.py` (the range-configuration box the user named,
+3 spin boxes each), `terminition_condition_dialog.py` (3 more), and the
+one unprotected field in `add_random_dialog.py` — builds a plain
+`QSpinBox`/`QDoubleSpinBox` with no guard. 10 construction sites across 5
+files, all fixed the same way: install the existing guard, right after
+construction (or once, at `resolve_qt`'s single shared return point, for
+the parameter editor). New patch: `badger-1.6.0-spinbox-wheel-guard.patch`.
+
+Verified concretely, not just by inspection: a scripted
+`QApplication.sendEvent(widget, QWheelEvent(...))` against a plain
+unguarded `QDoubleSpinBox` confirmed the baseline bug (value moved
+5.0→6.0), then confirmed the guard blocks it, then exercised
+`BadgerResolvedType.resolve_qt(float, ...)` and `resolve_qt(int, ...)`
+directly (the actual function the parameter editor calls) and confirmed
+both come back wheel-protected. Generated the patch from a real diff
+(baseline = fresh from-scratch bootstrap with only the previously-existing
+patches, so `pydantic_editor.py`'s diff is against its already-patched
+state, not pristine upstream) rather than hand-assembling hunks, learning
+from the device-list-gui header mistake earlier today. Full from-scratch
+check (rsync to `/tmp`, `./bootstrap.sh --offsite --yes`): all seven
+patches apply clean, the wheel-protection script and the full offline
+test suite (including `tests/picker_test.py`) pass.
