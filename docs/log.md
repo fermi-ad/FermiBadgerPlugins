@@ -824,3 +824,42 @@ suite green) under the new default. Docs (`README.md`, `patches/README.md`,
 `default`/`onsite`. The MCR-host network/cache-access TODO item is now
 confirmed done (bootstrap ran there successfully); dual-run comparison and
 the shortcut's command-line swap are still open.
+
+## 2026-10-20 — pydantic version drift: "Dict type must have subtypes" is back
+
+Loading `01_Linac_RIL_tuning.yaml` into `-mini` under pixi reproduced
+exactly the symptom `pydantic_editor-badger-1.6.0-dict-subtypes.patch`
+exists to prevent: "Dict type must have subtypes" on the production host
+(crashing in `select_env()`'s `set_params_from_dict`), and separately, a
+"safety turbo controller can only be used with constraints" error on this
+dev machine (empty VOCS downstream). First suspected a `-mini`-specific gap
+in that patch — it rebuilds the variable list from the template's params
+but not `self.configs["observations"]` — and started writing a follow-up
+patch, but a headless repro (`select_env()` → `load_template_yaml()` →
+`compose_vocs()`, using the real plugin classes) disproved it: the
+environment's `observations` list already includes `MultOOB_MUQ`,
+`MultOOB_MDQ`, `SumAbs_SourceATrims` etc. unconditionally, template or not,
+so that cache is never stale for this template. Diffed the conda
+`FermiBadger_env` and pixi `default` badger installs on the production
+host directly (`diff -rq`): `pydantic_editor.py` is byte-identical between
+them — same patched code — but `pydantic` itself resolved to 2.13.5 under
+conda vs 2.14.1 under pixi (confirmed on both the production host and
+locally; `pixi.toml`'s `badger-opt` dependency doesn't pin pydantic, so
+pixi picks conda-forge's current release each resolve, while the
+conda env was created months ago and kept whatever it originally solved).
+Root cause: that patch's fix is pydantic-version-sensitive (patches/README.md
+only ever said "Pydantic 2.x"), and 2.14.1 reintroduces the bug it fixes.
+
+Fix: pinned `pydantic = "2.13.5.*"` in `pixi.toml` (available directly on
+conda-forge), regenerated `pixi.lock`. Re-verified: both `default` and
+`offsite` environments resolve to 2.13.5, the full offline test suite
+stays green, and the headless `-mini` repro above now gets through
+`select_env()` cleanly and produces the correct non-empty constraint set
+end to end. Also noted in passing (not fixed, no evidence it's causing a
+problem): three unrelated upstream `badger-opt` files
+(`actions/__init__.py`, `gui/__init__.py`, `__main__.py`) differ between
+the two installs on the production host — conda-forge can rebuild a
+noarch package's source without bumping the version string, so pixi's
+fresh resolve got a newer `badger-opt` build than conda's months-old
+cached one. Worth an exact-build pin too if it ever causes a real
+discrepancy; not done preemptively.

@@ -43,6 +43,18 @@ it to paste in.
     `sudo ln -s ~/.pixi/bin/pixi /usr/local/bin/pixi` (a system-PATH
     directory, not a shell-rc one) rather than relying on PATH exports or
     aliases, neither of which a headless session picks up.
+  - **Gotcha found testing the RIL template under `-mini` on the MCR host:**
+    `pixi.toml` didn't pin `pydantic`, so pixi resolved conda-forge's
+    current release (2.14.1) instead of the conda env's months-old cached
+    one (2.13.5) — and `pydantic_editor-badger-1.6.0-dict-subtypes.patch`'s
+    fix is version-sensitive, so 2.14.1 reintroduced "Dict type must have
+    subtypes". Fixed by pinning `pydantic = "2.13.5.*"` in `pixi.toml`;
+    re-verified (offline tests, headless `-mini` repro of
+    `select_env`→`load_template_yaml`→`compose_vocs` on the production
+    template). Noted but not fixed: three unrelated upstream `badger-opt`
+    files also differ between the two installs (conda-forge can rebuild a
+    noarch package's source without a version bump) — no evidence yet
+    that matters; an exact-build pin is the fallback if it ever does.
   - [ ] Dual-run on the MCR host: run the (still Acsys, at this point)
     production template through both conda and pixi, compare, then hand
     over the pixi-based launch line (`pixi run badger -g -cf config.local.yaml

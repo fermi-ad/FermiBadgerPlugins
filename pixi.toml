@@ -16,6 +16,12 @@ setup = "bash pixi_setup.sh"
 python = "3.12.1.*"
 badger-opt = "1.6.0.*"
 ipywidgets = "*"  # xopt's pip metadata requires it; the conda recipe does not pull it in
+# Pinned to match the conda env's resolution: our Badger patches (notably
+# pydantic_editor-badger-1.6.0-dict-subtypes.patch) are version-sensitive to
+# pydantic's type-introspection internals, and pixi's unpinned resolve picked
+# a newer point release (2.14.1) than conda's cached one (2.13.5) that
+# reintroduced the "Dict type must have subtypes" error the patch fixes.
+pydantic = "2.13.5.*"
 
 [pypi-dependencies]
 cpymad = "==1.19.0"
