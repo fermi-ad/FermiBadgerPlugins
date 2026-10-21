@@ -990,3 +990,52 @@ snapshot outside those three triggers (e.g. sanity-checking current
 readbacks before "Add Current"). Not acted on — no code change. User is
 weighing renaming it ("Re-Read Values") vs. removing it; tracked as an
 open item in TODO.md's Later section.
+
+## 2026-10-21 — `simpler_mini` branch: collapse Environment/Algorithm into one Parameters row
+
+New branch `simpler_mini` off `main` (`8c7b557`) for `-mini` UI redesign
+work, started per user's request to make the GUI more streamlined for
+typical operators (not Badger developers). First change: the user's
+rationale — a template already sets the environment and algorithm, so the
+typical operator doesn't need a dedicated "Badger Environment" row (they
+think "machine"/"accelerator section", not "Badger Environment") or a
+combo box to change the algorithm; at most they want to glance at either's
+parameters. Asked to collapse both rows into a "Parameters" row with two
+buttons, "Machine Interface" and "Optimization Algo", each still expanding
+a collapsible panel below. Docs buttons: user explicitly undecided ("not
+sure what to do with the Docs buttons, but I do think we want a way to
+easily display documentation" — and flagged that the docs content itself
+is bare-bones and needs filling in separately, out of scope here).
+
+Traced `env_cbox.py` (`BadgerEnvBox`) fully first: `env_cb`/`algo_cb` are
+not cosmetic — 18+ references in `routine_page.py` (`currentIndexChanged`
+→ `select_env`/`select_generator`, `.currentText()`/`.itemText()` as the
+source of truth elsewhere) mean they must stay alive and functional, just
+not shown. New patch `badger-1.6.0-mini-parameters-row.patch`: removed the
+old per-row "Parameters"/"Open Docs" buttons, kept `env_cb`/`algo_cb`'s
+rows constructed but out of the visible layout, added one "Parameters" row
+with the two renamed buttons, and wrapped each parameter editor
+(`edit_env_params`/`edit_algo_params`) with its own "Open Docs" button
+directly above it in a small panel toggled as a unit — my own provisional
+choice for the undecided Docs-button question, flagged as such, easy to
+revisit once documentation strategy is settled.
+
+Hit two real Qt gotchas building this, both caught before committing:
+(1) a widget removed from the visible layout but constructed with no
+parent (`QWidget()`) gets garbage-collected once the local variable goes
+out of scope — `RuntimeError: wrapped C/C++ object ... has been deleted`
+the first time `env_cb`'s signal fired. Fixed by parenting explicitly
+(`QWidget(self)`). (2) Even parented and alive, a widget outside any
+layout isn't automatically invisible — it renders at a stray default
+position unless also explicitly `.hide()`'d; caught via an actual
+offscreen-rendered screenshot (`QT_QPA_PLATFORM=offscreen`, `page.grab()`
+→ PNG, read back and visually inspected — not just structural asserts)
+showing "Algorith" text bleeding through top-left. Fixed with explicit
+`.hide()` calls on the two orphaned row containers.
+
+Verified: headless construction/toggle/signal-wiring checks, a full
+`BadgerRoutinePage` integration test (env selected via the hidden combo,
+docs buttons still connected, Parameters panels toggle correctly), a
+visual screenshot confirming the final layout matches what was asked for,
+the full offline test suite, and the from-scratch check (all 8 patches
+apply clean). Committed to `simpler_mini`, not `main`.

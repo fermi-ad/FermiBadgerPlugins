@@ -1915,3 +1915,26 @@ observable lists already keep plugin order.
   `BadgerResolvedType.resolve_qt(float/int, ...)` directly and confirmed
   wheel-protected widgets come out. Full from-scratch check (all 7 patches,
   offline test suite, `picker_test.py`) clean.
+
+## 2026-10-21: `simpler_mini` branch started — collapse Environment/Algorithm rows
+
+- New branch `simpler_mini` off `main` (`8c7b557`) for `-mini` UI redesign,
+  aimed at typical operators rather than Badger developers.
+- First change: collapsed the separate "Badger Environment" and
+  "Algorithm" rows (each combo + Parameters + Open Docs) into one
+  "Parameters" row with two buttons, "Machine Interface" and
+  "Optimization Algo" — each still expands the same parameter editor as
+  before. `env_cb`/`algo_cb` stay fully functional (18+ references
+  elsewhere drive selection through them), just not shown; a template
+  still sets both the same way it always did.
+- Docs buttons relocated inside each expandable panel (provisional — user
+  hasn't decided where documentation should live yet, and the docs
+  content itself needs filling in, tracked separately).
+- Two Qt gotchas hit and fixed: an unparented widget removed from a
+  layout gets garbage-collected (needs `QWidget(self)`); and even
+  parented, it's not automatically invisible outside a layout (needs an
+  explicit `.hide()`) — caught via an actual offscreen screenshot, not
+  just structural asserts.
+- New patch: `badger-1.6.0-mini-parameters-row.patch`. Verified: headless
+  integration test, visual screenshot, full offline suite, from-scratch
+  check (8 patches). Committed to `simpler_mini`.

@@ -112,3 +112,21 @@ it to paste in.
   Env, Dial In, and after each evaluated point — see docs/log.md 2026-10-21).
   User is considering either renaming it to something clearer like
   "Re-Read Values" or removing it outright; undecided, not yet acted on.
+
+## `simpler_mini` branch — UI redesign for typical operators, not developers
+
+Branch off `main` at `8c7b557` (2026-10-21), not merged. Goal: streamline
+`-mini` for the typical user, who thinks "machine"/"accelerator section"
+and doesn't need Badger-developer concepts surfaced as main-window rows.
+
+- [x] Collapsed the "Badger Environment" and "Algorithm" rows into one
+  "Parameters" row with "Machine Interface"/"Optimization Algo" buttons
+  (`badger-1.6.0-mini-parameters-row.patch`). `env_cb`/`algo_cb` stay
+  functional, just not shown — see docs/log.md 2026-10-21.
+- [ ] **Open: where should "Open Docs" live, and what should it show?**
+  Currently a provisional button inside each new collapsible panel. User
+  explicitly undecided on placement, and separately noted the docs
+  content itself (`BadgerDocsWindow`) is bare-bones and needs filling in
+  — that's a distinct task from the button's placement.
+- [ ] More `simpler_mini` streamlining changes to come; this file should
+  track each one as it lands, same as this entry.

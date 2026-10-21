@@ -14,6 +14,12 @@
 | `badger-1.6.0-device-list-gui.patch` | Lists variables in environment (beam) order instead of alphabetical when a template/routine loads; replaces each "Filter…" box and "Show Checked Only" checkbox in `-g` and `-mini` with a search dropdown that opens on focus, lists every item in beam order with a check icon on selected ones, and adds an item when picked; lists always show checked rows; the "Enter new … here" placeholder rows are hidden and all four tables size to their visible rows (zero rows when nothing is checked); variable table sits in a collapsible box. Apply **after** the two `-mini` patches. | Badger 1.6.0 |
 | `badger-1.6.0-spinbox-wheel-guard.patch` | Stops the mouse wheel from changing numeric field values in the Environment/Algorithm Parameters editor and the range-limit dialogs — a frequent source of accidental edits. Reuses Badger's own existing `MouseWheelWidgetAdjustmentGuard` (already used for the variable table's spin boxes) everywhere else it was missing. | Badger 1.6.0 |
 
+### Patches for the `simpler_mini` branch (UI design changes, not bug fixes)
+
+| Patch | Description | Required Components |
+|-------|-------------|---------------------|
+| `badger-1.6.0-mini-parameters-row.patch` | `-mini`: collapses the separate "Badger Environment" and "Algorithm" rows (combo box + Parameters + Open Docs each) into one "Parameters" row with two buttons, "Machine Interface" and "Optimization Algo", each still expanding its own parameter editor (with an "Open Docs" button) below. The underlying env/algo combo boxes stay fully functional, just not shown — template loading still drives them. | Badger 1.6.0 |
+
 ## Issues Fixed
 
 1. **"Dict type must have subtypes"** - Occurs when loading templates with dict/list environment params (e.g., `setpoints: {qx: 9.049, qy: 9.035}`)
@@ -26,6 +32,10 @@
 7. **Alphabetical device lists / checked and unchecked rows mixed together** - Both routine pages sort the variable dict (`dict(sorted(...))`) when loading a template or routine, so the plugin's beam-order listing is lost (environment selection alone preserved it). The four lists also showed every device with a free-text filter. Fixed by `badger-1.6.0-device-list-gui.patch`: drops the sort (dicts keep insertion order: env variables, then `additional_variables`, hard-limit overrides change values only), adds `gui/components/picker.py` (an editable `QComboBox` + contains-match `QCompleter` rebuilt from the table on focus/open, no signal wiring) in place of each filter box, and wraps the variable table in the existing `CollapsibleBox`. Also wires the `-mini` observables "Show Checked Only" checkbox, which upstream never connected.
 8. **`AttributeError: 'Picker' object has no attribute 'setText'`** - Stopping/resetting a routine (`refresh_ui` in both routine pages) clears `edit_obj`/`edit_con`/`edit_sta` via `setText("")`, the way it cleared the `QLineEdit` filter boxes `Picker` replaced. Fixed by adding a `setText()` compatibility shim directly to `Picker` (clears the combo via `setCurrentIndex(-1)`) in `badger-1.6.0-device-list-gui.patch`, one guard covering all four call sites in both GUI variants instead of patching each caller.
 9. **Mouse wheel changes numeric field values** - Hovering over a `QSpinBox`/`QDoubleSpinBox` and scrolling changes its value even without focus or a click — Qt's default behavior, and an easy way to silently mis-set an Environment/Algorithm parameter or a range-limit ratio/delta. Badger already has `RobustSpinBox` (`gui/components/robust_spinbox.py`) with wheel protection built in (`MouseWheelWidgetAdjustmentGuard`, `gui/utils.py`), but only wires it into the variable table; the parameter editor (`pydantic_editor.py`'s `resolve_qt`, one guard covering every int/float field it creates) and four dialogs that build plain `QSpinBox`/`QDoubleSpinBox` directly (`lim_vrange_dialog.py`, `ind_lim_vrange_dialog.py`, `terminition_condition_dialog.py`, `add_random_dialog.py`) never got it. Fixed by `badger-1.6.0-spinbox-wheel-guard.patch`: installs the same existing guard at all 10 previously-unprotected construction sites, reusing Badger's own mechanism rather than inventing a new one.
+
+## Design Changes (`simpler_mini` branch)
+
+1. **Collapse the Environment/Algorithm rows into one Parameters row** - The full "Badger Environment: [combo] [Parameters] [Open Docs]" and "Algorithm [combo] [Parameters] [Open Docs]" rows are full-GUI/developer-oriented: a `-mini` operator picks a template, which sets both, and has no reason to see "Badger Environment" framed as a thing to choose. `badger-1.6.0-mini-parameters-row.patch` replaces both rows with one "Parameters" row holding two buttons, "Machine Interface" and "Optimization Algo", each still expanding the same parameter editor as before (now with its "Open Docs" button moved inside, above the editor, since the row itself no longer has room for it). `env_cb`/`algo_cb` are still constructed and still drive selection via their existing signals (`currentIndexChanged` → `select_env`/`select_generator` in `routine_page.py`) — they're just not added to any visible layout, so a template still sets them the same way it always did. Gotcha hit twice while building this: a widget never added to a layout is garbage-collected unless explicitly parented (`QWidget(self)`, not `QWidget()`); and even once parented, it still renders at a stray default position unless also explicitly `.hide()`'d — "not in a layout" alone doesn't mean "invisible". Where the "Open Docs" buttons best belong, and the documentation content itself (currently close to empty), are open questions, not resolved by this patch.
 
 ## Applying the Patches
 
@@ -97,6 +107,7 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-var-table-env-config
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-full-gui-template-option.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-spinbox-wheel-guard.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-mini-parameters-row.patch
 ```
 
 ## Applying the Xopt Patch
