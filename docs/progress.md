@@ -1861,3 +1861,35 @@ observable lists already keep plugin order.
   environment. `bootstrap.sh --onsite` kept as a no-op alias. Re-verified:
   both environments resolve/install, patches apply, plugin discoverable,
   offline tests green.
+
+## 2026-10-20: ZZ_PacsysTesting live run — two pre-existing bugs found and fixed
+
+- Confirmed `pacsys==0.3.0` (already pinned) is the actual latest
+  PyPI/GitHub release before testing against it.
+- **Not pixi's fault, either time** — both bugs below are pre-existing
+  (one has leftover evidence dated August, long before this work).
+- Bug 1: pressing Go failed with the run's temp-routine file "not found" —
+  the subprocess read `BADGER_ARCHIVE_ROOT` from Badger's own *per-user*
+  settings file (`~/Library/Application Support/Badger/config.yaml` on
+  macOS), not from `-cf config.local.yaml`, and that file had stale paths
+  from a defunct old clone. Synced its paths to match `config.local.yaml`
+  as a pragmatic fix (not the root-cause code fix — didn't chase why `-cf`
+  doesn't thread through to the subprocess). **The production host has its
+  own separate per-user config file (Linux XDG path) that needs the same
+  check** before trusting a live Go there.
+- Bug 2: `AttributeError: 'Picker' object has no attribute 'setText'` on
+  stop — our own `badger-1.6.0-device-list-gui.patch` swapped the old
+  filter `QLineEdit` for `Picker` (a `QComboBox`) but never gave it
+  `setText()`. Fixed with one shim method on `Picker` covering all 4 call
+  sites (`edit_obj`/`edit_con`/`edit_sta`, both GUI variants).
+- Verifying bug 2's fix from scratch surfaced a third, independent
+  pre-existing bug: the `picker.py` hunk's header in that patch already had
+  a wrong line count (claimed 85, actual 87) that `patch` had been
+  silently tolerating; editing it pushed the mismatch far enough to start
+  truncating the file, dropping an already-shipped fix for a different
+  regression (`tests/picker_test.py`'s "popup reopens itself forever").
+  Recomputed the exact count (90, after the new lines) and reran the
+  from-scratch check (`rsync` to `/tmp` + `./bootstrap.sh --offsite --yes`)
+  clean. Lesson: re-running `pixi run setup` against an already-patched
+  tree reports "already applied" and would never have caught this — only
+  the project's own documented from-scratch check does.

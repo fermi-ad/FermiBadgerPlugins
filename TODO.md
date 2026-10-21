@@ -68,8 +68,17 @@ it to paste in.
 
 ### Pacsys interface (needs the machine) — after pixi lands
 
-- [ ] Live check with `development/ZZ_PacsysTesting.yaml`: a setting lands, no
-  readback warning fires.
+- [ ] **Before any live "Go" on the production host**: check its per-user
+  Badger config file (`~/.config/Badger/config.yaml` or wherever
+  `get_user_config_folder()` resolves on Linux) for stale paths — Badger's
+  run-subprocess path falls back to that file instead of `-cf
+  config.local.yaml` in some cases, and it caused a same-machine "file not
+  found" failure here (unrelated to Pacsys/pixi; see docs/log.md
+  2026-10-20).
+- [x] Live check with `development/ZZ_PacsysTesting.yaml`: ran to
+  completion (dev machine, VPN); no readback warning reported. Hit and
+  fixed two unrelated pre-existing bugs along the way (stale per-user
+  config above, and `Picker.setText` on stop — see docs/log.md).
 - [ ] `01_Linac_RIL_tuning_Pacsys` with `average_events: {default: 3}`: expect each
   evaluation ~3 cycles slower and smoother objectives.
 - [ ] Try `development/01_Linac_RIL_tuning_Pacsys.yaml` at all (untested copy of the

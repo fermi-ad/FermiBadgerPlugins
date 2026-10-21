@@ -249,7 +249,7 @@ diff -ruN a/badger/gui/components/env_cbox.py b/badger/gui/components/env_cbox.p
 diff -ruN a/badger/gui/components/picker.py b/badger/gui/components/picker.py
 --- a/badger/gui/components/picker.py	1969-12-31 18:00:00
 +++ b/badger/gui/components/picker.py	2026-10-07 14:24:30
-@@ -0,0 +1,85 @@
+@@ -0,0 +1,90 @@
 +"""Search-and-pick combo box for adding an item to a table.
 +
 +An editable QComboBox whose dropdown lists the names the given ``source``
@@ -286,6 +286,11 @@ diff -ruN a/badger/gui/components/picker.py b/badger/gui/components/picker.py
 +        self.lineEdit().installEventFilter(self)  # a click opens the list even if already focused
 +        self.activated[str].connect(self._pick)
 +        completer.activated[str].connect(self._pick)  # harmless if both fire: _pick is idempotent
++
++    def setText(self, text: str = "") -> None:
++        # Compatibility shim: routine_page.py still clears this box with
++        # setText("") the way it cleared the QLineEdit this replaced.
++        self.setCurrentIndex(-1)
 +
 +    def refresh(self):
 +        self.blockSignals(True)

@@ -863,3 +863,59 @@ noarch package's source without bumping the version string, so pixi's
 fresh resolve got a newer `badger-opt` build than conda's months-old
 cached one. Worth an exact-build pin too if it ever causes a real
 discrepancy; not done preemptively.
+
+## 2026-10-20 — ZZ_PacsysTesting live run: two pre-existing, non-pixi bugs
+
+Loaded `development/ZZ_PacsysTesting.yaml` via `-mini` and pressed Go.
+Confirmed on PyPI/GitHub first that `pacsys==0.3.0` (already pinned in both
+`pixi.toml` and `environment.yml`) is in fact the latest release (and tag)
+of `fermi-ad/pacsys` — nothing to bump before testing against it.
+
+**Bug 1 — "Go" failed immediately** with `OSError: file
+.../BadgerArchive/.tmp/.tmp-BadgerOpt-<ts>.yaml is not found`, reproducible
+every time. The main process wrote the routine correctly to the configured
+`/Users/stjohn/BadgerArchive/.tmp/`, but the run subprocess looked in
+`/Users/stjohn/Development/BadgerArchive/.tmp/` instead — a directory full
+of leftover files dated **August–September**, long before this pixi work,
+proving this is a pre-existing bug, not a pixi regression. Root cause:
+Badger keeps its own *per-user* settings file outside this repo
+(`~/Library/Application Support/Badger/config.yaml` on macOS, via
+`get_user_config_folder()`), separate from `-cf config.local.yaml`.
+Something in the Go path (`create_process.py`'s
+`init_settings()._instance.config_path`, or the subprocess's own
+`init_settings(config_path)`) falls back to that per-user file instead of
+the one passed on the command line. That file still had `BADGER_ARCHIVE_ROOT`,
+`BADGER_LOGBOOK_ROOT`, and `BADGER_TEMPLATE_ROOT` pointing at a defunct old
+clone (`.../testjunk/FermiBadgerPlugins/...`). Fixed pragmatically by
+syncing those three values to match the current `config.local.yaml` — not
+a root-cause code fix (didn't chase why `-cf`'s value doesn't thread
+through to the subprocess), just gets this machine working again. This is
+a per-OS-user file outside git, so **the production host will need the
+same check** (its own per-user config, at the Linux XDG path) before a
+live "Go" there can be trusted — unrelated to Pacsys or pixi specifically.
+
+**Bug 2 — after stopping the run**: `AttributeError: 'Picker' object has
+no attribute 'setText'`, from `routine_page.py`'s `refresh_ui()` calling
+`self.env_box.edit_obj.setText("")` the way it used to clear the old
+`QLineEdit` filter box. Our own `badger-1.6.0-device-list-gui.patch`
+replaced that box with `Picker` (a `QComboBox`) and never gave it a
+`setText()`; four call sites across both GUI variants
+(`edit_obj`/`edit_con`/`edit_sta`) hit this. Root-cause fix: added a
+`setText()` shim directly to the shared `Picker` class (one guard, not
+four call-site patches) that clears via `setCurrentIndex(-1)`.
+
+Verifying this exposed a **second, unrelated pre-existing bug in the
+tracked patch file itself**: the `picker.py` hunk's header
+(`@@ -0,0 +1,85 @@`) was already stale (true content was 87 lines, not 85)
+before touching anything — `patch` had evidently been tolerating the
+mismatch. Editing the header to `+4` (89) pushed it far enough off that
+`patch` started truncating the file, silently dropping the
+`completer().popup().hide()` fix for the "popup reopens itself forever"
+regression `tests/picker_test.py` already guards against — caught only
+because the from-scratch check (rsync to `/tmp`, `./bootstrap.sh --offsite
+--yes`, this project's own documented practice) is byte-exact, unlike
+just re-running `pixi run setup` against an already-patched tree, which
+reported "already applied" and would have hidden it. Recomputed the true
+count precisely with `awk`/`grep -c '^+'` (90, including the new 4 lines)
+and reran the from-scratch check clean: all six patches apply, `picker.py`
+comes out complete, and all three `tests/picker_test.py` cases pass.
