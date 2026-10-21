@@ -1171,3 +1171,31 @@ dark background; flagged to the user, not fixed (not asked for).
 
 New patch `badger-1.6.0-mini-tuning-task-box.patch`. Full offline test
 suite and from-scratch check (all 11 patches) clean.
+
+## 2026-10-21 — `simpler_mini`: scrollbar clipping and tab rename
+
+User reported the new Tuning Task box's right edge getting cut off by the
+tab's vertical scrollbar, plus "Environment + VOCS" being too technical a
+tab label — wanted "Tuning". Reproduced the clipping first (resized the
+page short enough to force the scrollbar, screenshotted): the box's
+rounded border and "Optimization Algo" button were visibly cut.
+
+Found the cause in `routine_page.py` (not `env_cbox.py` — first
+`simpler_mini` patch to touch this file): `scroll_layout_env
+.setContentsMargins(0, 0, 5, 0)`, a hardcoded 5px right margin with the
+comment "add extra right margin for macOS to prevent scrollbar overlap" —
+already a guess, and already wrong for whatever's rendering this session.
+Didn't just bump the number (same brittleness, different wrong value):
+queried the real scrollbar width instead,
+`QApplication.style().pixelMetric(QStyle.PM_ScrollBarExtent)`, added a
+small 4px pad, and used that as the margin. Also renamed the
+`tabs.addTab(scroll_area, "Environment + VOCS")` tab to `"Tuning"` —
+checked first that the exact string `"Environment + VOCS"` only appears
+once in the mini GUI (the full GUI's separate `gui/components/routine_page.py`
+has its own copy, intentionally untouched — out of scope, we're only
+redesigning `-mini`).
+
+Re-ran the same forced-scrollbar screenshot: border and buttons now clear
+of the scrollbar, tab reads "Tuning". New patch
+`badger-1.6.0-mini-tuning-tab.patch`. Full offline test suite and
+from-scratch check (all 12 patches) clean.

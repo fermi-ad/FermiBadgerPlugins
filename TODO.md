@@ -147,5 +147,10 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
   (`badger-1.6.0-mini-tuning-task-box.patch`). Noted, not fixed: the
   buttons' checked/expanded state isn't visually distinct from unchecked
   against the box's dark background. See docs/log.md 2026-10-21.
+- [x] Fixed the Tuning Task box's right edge being clipped by the tab's
+  vertical scrollbar (hardcoded 5px margin → actual scrollbar width via
+  `QStyle.PM_ScrollBarExtent`), and renamed the "Environment + VOCS" tab
+  to "Tuning" (`badger-1.6.0-mini-tuning-tab.patch`). See docs/log.md
+  2026-10-21.
 - [ ] More `simpler_mini` streamlining changes to come; this file should
   track each one as it lands, same as this entry.

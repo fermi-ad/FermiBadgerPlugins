@@ -1,0 +1,35 @@
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-21 13:29:28
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-21 13:29:28
+@@ -22,6 +22,7 @@
+ from PyQt5.QtWidgets import QLineEdit, QPushButton, QFileDialog
+ from PyQt5.QtWidgets import QMessageBox, QWidget, QTabWidget
+ from PyQt5.QtWidgets import QVBoxLayout, QScrollArea
++from PyQt5.QtWidgets import QApplication, QStyle
+ from PyQt5.QtWidgets import QTableWidgetItem, QPlainTextEdit
+ from badger.gui.components.navigators import HistoryNavigator
+ from coolname import generate_slug
+@@ -214,14 +215,20 @@
+         )
+         scroll_content_env = QWidget()
+         scroll_layout_env = QVBoxLayout(scroll_content_env)
+-        # add extra right margin for macOS to prevent scrollbar overlap
+-        scroll_layout_env.setContentsMargins(0, 0, 5, 0)
++        # Right margin to clear the vertical scrollbar -- styled, full-width
++        # content (like the Tuning Task box) is otherwise clipped by it. A
++        # hardcoded guess (previously 5px, tuned for one platform) is the
++        # wrong fix: ask the actual style for the real scrollbar width.
++        scrollbar_extent = QApplication.style().pixelMetric(
++            QStyle.PM_ScrollBarExtent
++        )
++        scroll_layout_env.setContentsMargins(0, 0, scrollbar_extent + 4, 0)
+         self.env_box.var_table.setColumnWidth(5, 44)
+ 
+         scroll_layout_env.addWidget(self.env_box)
+         scroll_area.setWidgetResizable(True)
+         scroll_area.setWidget(scroll_content_env)
+-        tabs.addTab(scroll_area, "Environment + VOCS")
++        tabs.addTab(scroll_area, "Tuning")
+ 
+         # Data panel
+         self.data_panel = BadgerDataPanel(self)
