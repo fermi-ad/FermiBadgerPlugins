@@ -1039,3 +1039,45 @@ docs buttons still connected, Parameters panels toggle correctly), a
 visual screenshot confirming the final layout matches what was asked for,
 the full offline test suite, and the from-scratch check (all 8 patches
 apply clean). Committed to `simpler_mini`, not `main`.
+
+## 2026-10-21 — `simpler_mini`: bigger Parameters buttons, then full-width VOCS tables
+
+Quick follow-up to the Parameters row: "Machine Interface"/"Optimization
+Algo" text looked cramped at height 24. Bumped to 32 with
+`padding: 6px 14px`, confirmed via screenshot, regenerated
+`badger-1.6.0-mini-parameters-row.patch` (same patch, not a new one —
+still an unpushed branch, same still-being-refined feature), full
+from-scratch check clean, committed as a separate commit (never amend
+without being asked, even on a WIP branch).
+
+Then the user asked about the empty left sidebar next to the four VOCS
+sections (Variables/Objectives/Constraints/Observables): each had its
+label in a fixed `LABEL_WIDTH=96` column with `addStretch(1)` pinning it
+to the top, leaving a tall empty strip below down to the table's own
+height. Proposed first step: let each table expand left to the label's
+own position. Implemented by changing each section's `QHBoxLayout`
+(label-left, content-right) to a `QVBoxLayout` (label-top, full-width
+content below) — new patch `badger-1.6.0-mini-vocs-full-width.patch`,
+layered on top of the parameters-row patch (diffed against its tree, so
+ordered after it in both setup scripts).
+
+Screenshot-verified in two passes: a tall artificial window (760x950)
+showed what looked like a bug — a gap between a section's label and its
+content — but rendering at the page's natural content size (`adjustSize()`,
+or a height close to it) showed no gap at all. Traced it to
+`vbox.addWidget(var_panel_origin, 1)`'s pre-existing stretch factor (same
+before and after this patch): previously the OLD hbox layout absorbed any
+extra allotted height invisibly, inside the narrow label column's own
+nested stretch; the new vbox has nowhere equivalent to hide it, so it
+surfaced as a visible gap — but only when something forces the panel
+taller than its content, which the real app's embedding (inside a
+scrollable area, not a bare resized widget) doesn't do. Confirmed with a
+properly-sized screenshot (500x700, close to natural) showing all four
+tables spanning full width with no gap, exactly as asked. Also had to
+rebuild the local `.pixi/envs/default` site-packages from scratch once
+here — repeated hand-edits across several patches this session had let it
+drift from what a clean sequential patch-apply produces (the authoritative
+from-scratch check in `/tmp` never showed this; only the local dev
+convenience copy did).
+
+Full offline test suite and from-scratch check (all 9 patches) clean.

@@ -19,6 +19,7 @@
 | Patch | Description | Required Components |
 |-------|-------------|---------------------|
 | `badger-1.6.0-mini-parameters-row.patch` | `-mini`: collapses the separate "Badger Environment" and "Algorithm" rows (combo box + Parameters + Open Docs each) into one "Parameters" row with two buttons, "Machine Interface" and "Optimization Algo", each still expanding its own parameter editor (with an "Open Docs" button) below. The underlying env/algo combo boxes stay fully functional, just not shown — template loading still drives them. | Badger 1.6.0 |
+| `badger-1.6.0-mini-vocs-full-width.patch` | `-mini`: removes the fixed-width "Variables"/"Objectives"/"Constraints"/"Observables" sidebar column (each had a label floating at the top of a tall, mostly-empty strip) in favor of stacking the label above its table, so every device-list table spans the full width, left-justified where the labels used to start. Apply **after** `badger-1.6.0-mini-parameters-row.patch`: diffed against its tree. | Badger 1.6.0 |
 
 ## Issues Fixed
 
@@ -36,6 +37,7 @@
 ## Design Changes (`simpler_mini` branch)
 
 1. **Collapse the Environment/Algorithm rows into one Parameters row** - The full "Badger Environment: [combo] [Parameters] [Open Docs]" and "Algorithm [combo] [Parameters] [Open Docs]" rows are full-GUI/developer-oriented: a `-mini` operator picks a template, which sets both, and has no reason to see "Badger Environment" framed as a thing to choose. `badger-1.6.0-mini-parameters-row.patch` replaces both rows with one "Parameters" row holding two buttons, "Machine Interface" and "Optimization Algo", each still expanding the same parameter editor as before (now with its "Open Docs" button moved inside, above the editor, since the row itself no longer has room for it). `env_cb`/`algo_cb` are still constructed and still drive selection via their existing signals (`currentIndexChanged` → `select_env`/`select_generator` in `routine_page.py`) — they're just not added to any visible layout, so a template still sets them the same way it always did. Gotcha hit twice while building this: a widget never added to a layout is garbage-collected unless explicitly parented (`QWidget(self)`, not `QWidget()`); and even once parented, it still renders at a stray default position unless also explicitly `.hide()`'d — "not in a layout" alone doesn't mean "invisible". Where the "Open Docs" buttons best belong, and the documentation content itself (currently close to empty), are open questions, not resolved by this patch.
+2. **Full-width VOCS tables, no sidebar** - Each of the four device-list sections (Variables, Objectives, Constraints, Observables) put its label in a fixed-width (`LABEL_WIDTH = 96`) column to the left of its table, with a `addStretch(1)` pinning the label to the top of a column whose height matched the table's — producing a tall, visually empty strip under each label. `badger-1.6.0-mini-vocs-full-width.patch` replaces that side-by-side `QHBoxLayout` with a `QVBoxLayout` per section: the label sits directly above its own table (and the Picker/Refresh/checkbox action row), and the table now spans the full width, left-justified at the same x-position the label used to start at. Nothing about the tables, Pickers, or `CollapsibleBox`es changed — only which layout direction holds the label and its content. Verified visually with an offscreen screenshot (`QT_QPA_PLATFORM=offscreen`, `page.grab()`) at the page's natural content size — a first attempt at an artificially taller window showed an apparent gap between a label and its content, which turned out to be a test-harness artifact (forcing a bare widget taller than its content outside any scroll area), not a real layout bug.
 
 ## Applying the Patches
 
@@ -108,6 +110,7 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.pat
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-full-gui-template-option.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-spinbox-wheel-guard.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-mini-parameters-row.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-mini-vocs-full-width.patch
 ```
 
 ## Applying the Xopt Patch

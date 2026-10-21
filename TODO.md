@@ -128,5 +128,10 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
   explicitly undecided on placement, and separately noted the docs
   content itself (`BadgerDocsWindow`) is bare-bones and needs filling in
   — that's a distinct task from the button's placement.
+- [x] Removed the empty left sidebar next to Variables/Objectives/
+  Constraints/Observables: each table now spans full width, left-justified
+  where the label used to start, instead of a fixed 96px label column with
+  a tall empty strip below it (`badger-1.6.0-mini-vocs-full-width.patch`).
+  See docs/log.md 2026-10-21.
 - [ ] More `simpler_mini` streamlining changes to come; this file should
   track each one as it lands, same as this entry.
