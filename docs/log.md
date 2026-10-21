@@ -975,3 +975,18 @@ from the device-list-gui header mistake earlier today. Full from-scratch
 check (rsync to `/tmp`, `./bootstrap.sh --offsite --yes`): all seven
 patches apply clean, the wheel-protection script and the full offline
 test suite (including `tests/picker_test.py`) pass.
+
+## 2026-10-21 — what does the `-mini` Variables "Refresh" button do?
+
+User asked while considering removing it. Traced `refresh_current_btn`
+(`gui/mini/components/env_cbox.py`) → `var_table.refresh_current_values()`:
+instantiates a fresh environment and calls `get_variables(...)`, a live
+read of every listed variable, into the table's "Current" column. Checked
+every other caller of that same method to see if the button is actually
+redundant: it's also auto-called on Reset Env, on Dial In, and after each
+evaluated point during a run (using that point's own values, not a fresh
+read) — so the button's unique role is an on-demand, no-side-effect live
+snapshot outside those three triggers (e.g. sanity-checking current
+readbacks before "Add Current"). Not acted on — no code change. User is
+weighing renaming it ("Re-Read Values") vs. removing it; tracked as an
+open item in TODO.md's Later section.

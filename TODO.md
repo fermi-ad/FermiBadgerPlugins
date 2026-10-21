@@ -106,3 +106,9 @@ it to paste in.
   `save_template_yaml` still exists). One button in the mini env box if wanted.
 - [ ] Bulk-supply ratings in the RIL environments are 7.0 A stand-ins pending expert
   confirmation. (Mult coefficients 20.0 and step size 0.05 were confirmed 2026-10-08.)
+- [ ] **Deferred design decision**: the `-mini` "Refresh" button next to Variables
+  (`refresh_current_btn` in `env_cbox.py`) does an on-demand live read of all
+  listed variables' current values (distinct from the auto-refresh on Reset
+  Env, Dial In, and after each evaluated point — see docs/log.md 2026-10-21).
+  User is considering either renaming it to something clearer like
+  "Re-Read Values" or removing it outright; undecided, not yet acted on.
