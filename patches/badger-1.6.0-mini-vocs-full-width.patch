@@ -1,17 +1,30 @@
 diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
---- a/badger/gui/mini/components/env_cbox.py	2026-10-21 11:44:31
-+++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 11:44:31
-@@ -419,27 +419,21 @@
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-21 11:59:02
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 11:59:02
+@@ -48,6 +48,10 @@
+ import logging
+ 
+ LABEL_WIDTH = 96
++# A bit wider than LABEL_WIDTH: these labels are bold ("Observables" at
++# font-weight 600 just clips at 96px), and they lead a row rather than
++# sitting in a dedicated column, so there's no other alignment to match.
++VOCS_LABEL_WIDTH = LABEL_WIDTH + 14
+ 
+ 
+ CONS_RELATION_DICT = {
+@@ -419,27 +423,17 @@
          self.relative_to_curr.hide()
          vbox.addWidget(self.relative_to_curr)
  
 -        # Variables
-+        # Variables. Stacked (heading above, full-width content below)
-+        # rather than a side label column -- the label column used to
-+        # leave a tall empty strip below itself, since its height was
-+        # whatever the table's height turned out to be.
++        # Variables. The label leads the action row (same line as the
++        # Picker/Refresh), not a heading of its own -- a separate heading
++        # line wastes vertical space a row doesn't need.
          var_panel_origin = QWidget()
--
++        vbox_var_panel = QVBoxLayout(var_panel_origin)
++        vbox_var_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_var_panel.setSpacing(4)
+ 
 -        # construct variables as an hbox, with label, stretch, then table on the right
 -        hbox_var = QHBoxLayout(var_panel_origin)
 -        hbox_var.setContentsMargins(0, 0, 0, 0)
@@ -21,17 +34,12 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 -        lbl_var_col.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_var = QVBoxLayout(lbl_var_col)
 -        vbox_lbl_var.setContentsMargins(0, 0, 0, 0)
-+        vbox_var_panel = QVBoxLayout(var_panel_origin)
-+        vbox_var_panel.setContentsMargins(0, 0, 0, 0)
-+        vbox_var_panel.setSpacing(4)
-         lbl_var = QLabel("Variables")
+-        lbl_var = QLabel("Variables")
 -        lbl_var.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_var.addWidget(lbl_var)
 -        vbox_lbl_var.addStretch(1)
 -        hbox_var.addWidget(lbl_var_col)
-+        lbl_var.setStyleSheet("font-weight: 600;")
-+        vbox_var_panel.addWidget(lbl_var)
- 
+-
          vbox.addWidget(var_panel_origin, 1)
  
 -        # Edit variables (right side of hbox_var)
@@ -39,7 +47,25 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          edit_var_col = QWidget()
          vbox_var_edit = QVBoxLayout(edit_var_col)
          vbox_var_edit.setContentsMargins(0, 2, 0, 2)
-@@ -516,23 +510,17 @@
+@@ -451,6 +445,9 @@
+         hbox_action_var.setContentsMargins(0, 0, 0, 0)
+         hbox_action_var.setSpacing(0)
+         vbox_var_edit.addWidget(action_var)
++        lbl_var = QLabel("Variables")
++        lbl_var.setStyleSheet("font-weight: 600;")
++        lbl_var.setFixedWidth(VOCS_LABEL_WIDTH)
+         # filter variables
+         self.edit_var = edit_var = Picker(self.list_vars, "Add variable...")
+         edit_var.setFixedWidth(192)
+@@ -463,6 +460,7 @@
+         self.check_only_var = check_only_var = QCheckBox("Show Checked Only")
+         check_only_var.setChecked(True)
+         check_only_var.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_var.addWidget(lbl_var)
+         hbox_action_var.addWidget(edit_var)
+         hbox_action_var.addSpacing(14)
+         hbox_action_var.addWidget(self.refresh_current_btn)
+@@ -516,23 +514,15 @@
          collapsiblebox_init.setContentLayout(vbox_init)
          # cbox_init.expand()
  
@@ -47,7 +73,8 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 +        vbox_var_panel.addWidget(edit_var_col)
  
 -        # Objectives config (table style)
-+        # Objectives config (table style). Same stacked layout as Variables.
++        # Objectives config (table style). Label leads the action row,
++        # same as Variables.
          obj_panel = QWidget()
          vbox.addWidget(obj_panel)
 -        hbox_obj = QHBoxLayout(obj_panel)
@@ -57,20 +84,36 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 -        lbl_obj_col.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_obj = QVBoxLayout(lbl_obj_col)
 -        vbox_lbl_obj.setContentsMargins(0, 0, 0, 0)
-+        vbox_obj_panel = QVBoxLayout(obj_panel)
-+        vbox_obj_panel.setContentsMargins(0, 0, 0, 0)
-+        vbox_obj_panel.setSpacing(4)
-         lbl_obj = QLabel("Objectives")
+-        lbl_obj = QLabel("Objectives")
 -        lbl_obj.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_obj.addWidget(lbl_obj)
 -        vbox_lbl_obj.addStretch(1)
 -        hbox_obj.addWidget(lbl_obj_col)
-+        lbl_obj.setStyleSheet("font-weight: 600;")
-+        vbox_obj_panel.addWidget(lbl_obj)
++        vbox_obj_panel = QVBoxLayout(obj_panel)
++        vbox_obj_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_obj_panel.setSpacing(4)
  
          edit_obj_col = QWidget()
          vbox_obj_edit = QVBoxLayout(edit_obj_col)
-@@ -556,27 +544,21 @@
+@@ -542,6 +532,9 @@
+         hbox_action_obj = QHBoxLayout(action_obj)
+         hbox_action_obj.setContentsMargins(0, 0, 0, 0)
+         vbox_obj_edit.addWidget(action_obj)
++        lbl_obj = QLabel("Objectives")
++        lbl_obj.setStyleSheet("font-weight: 600;")
++        lbl_obj.setFixedWidth(VOCS_LABEL_WIDTH)
+         self.edit_obj = edit_obj = Picker(
+             lambda: self.list_items(self.obj_table), "Add objective..."
+         )
+@@ -549,6 +542,7 @@
+         self.check_only_obj = check_only_obj = QCheckBox("Show Checked Only")
+         check_only_obj.setChecked(True)
+         check_only_obj.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_obj.addWidget(lbl_obj)
+         hbox_action_obj.addWidget(edit_obj)
+         hbox_action_obj.addStretch()
+         hbox_action_obj.addWidget(check_only_obj)
+@@ -556,27 +550,18 @@
          self.obj_table = ObjectiveTable()
          self.obj_table.show_selected_only = True
          vbox_obj_edit.addWidget(self.obj_table)
@@ -82,7 +125,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          vbox_more = QVBoxLayout()
  
 -        # Constraints config
-+        # Constraints config. Same stacked layout as Variables/Objectives.
++        # Constraints config. Label leads the action row, same as above.
          con_panel = QWidget()
          vbox_more.addWidget(con_panel)
 -        hbox_con = QHBoxLayout(con_panel)
@@ -92,20 +135,36 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 -        lbl_con_col.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_con = QVBoxLayout(lbl_con_col)
 -        vbox_lbl_con.setContentsMargins(0, 0, 0, 0)
-+        vbox_con_panel = QVBoxLayout(con_panel)
-+        vbox_con_panel.setContentsMargins(0, 0, 0, 0)
-+        vbox_con_panel.setSpacing(4)
-         lbl_con = QLabel("Constraints")
+-        lbl_con = QLabel("Constraints")
 -        lbl_con.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_con.addWidget(lbl_con)
 -        vbox_lbl_con.addStretch(1)
 -        hbox_con.addWidget(lbl_con_col)
-+        lbl_con.setStyleSheet("font-weight: 600;")
-+        vbox_con_panel.addWidget(lbl_con)
++        vbox_con_panel = QVBoxLayout(con_panel)
++        vbox_con_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_con_panel.setSpacing(4)
  
          edit_con_col = QWidget()
          vbox_con_edit = QVBoxLayout(edit_con_col)
-@@ -600,23 +582,17 @@
+@@ -586,6 +571,9 @@
+         hbox_action_con = QHBoxLayout(action_con)
+         hbox_action_con.setContentsMargins(0, 0, 0, 0)
+         vbox_con_edit.addWidget(action_con)
++        lbl_con = QLabel("Constraints")
++        lbl_con.setStyleSheet("font-weight: 600;")
++        lbl_con.setFixedWidth(VOCS_LABEL_WIDTH)
+         self.edit_con = edit_con = Picker(
+             lambda: self.list_items(self.con_table), "Add constraint..."
+         )
+@@ -593,6 +581,7 @@
+         self.check_only_con = check_only_con = QCheckBox("Show Checked Only")
+         check_only_con.setChecked(True)
+         check_only_con.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_con.addWidget(lbl_con)
+         hbox_action_con.addWidget(edit_con)
+         hbox_action_con.addStretch()
+         hbox_action_con.addWidget(check_only_con)
+@@ -600,23 +589,15 @@
          self.con_table = ConstraintTable()
          self.con_table.show_selected_only = True
          vbox_con_edit.addWidget(self.con_table)
@@ -113,7 +172,8 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 +        vbox_con_panel.addWidget(edit_con_col)
  
 -        # States config
-+        # States (Observables) config. Same stacked layout as the others.
++        # States (Observables) config. Label leads the action row, same
++        # as above.
          sta_panel = QWidget()
          vbox_more.addWidget(sta_panel)
 -        hbox_sta = QHBoxLayout(sta_panel)
@@ -123,20 +183,36 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 -        lbl_sta_col.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_sta = QVBoxLayout(lbl_sta_col)
 -        vbox_lbl_sta.setContentsMargins(0, 0, 0, 0)
-+        vbox_sta_panel = QVBoxLayout(sta_panel)
-+        vbox_sta_panel.setContentsMargins(0, 0, 0, 0)
-+        vbox_sta_panel.setSpacing(4)
-         lbl_sta = QLabel("Observables")
+-        lbl_sta = QLabel("Observables")
 -        lbl_sta.setFixedWidth(LABEL_WIDTH)
 -        vbox_lbl_sta.addWidget(lbl_sta)
 -        vbox_lbl_sta.addStretch(1)
 -        hbox_sta.addWidget(lbl_sta_col)
-+        lbl_sta.setStyleSheet("font-weight: 600;")
-+        vbox_sta_panel.addWidget(lbl_sta)
++        vbox_sta_panel = QVBoxLayout(sta_panel)
++        vbox_sta_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_sta_panel.setSpacing(4)
  
          edit_sta_col = QWidget()
          vbox_sta_edit = QVBoxLayout(edit_sta_col)
-@@ -640,7 +616,7 @@
+@@ -626,6 +607,9 @@
+         hbox_action_sta = QHBoxLayout(action_sta)
+         hbox_action_sta.setContentsMargins(0, 0, 0, 0)
+         vbox_sta_edit.addWidget(action_sta)
++        lbl_sta = QLabel("Observables")
++        lbl_sta.setStyleSheet("font-weight: 600;")
++        lbl_sta.setFixedWidth(VOCS_LABEL_WIDTH)
+         self.edit_sta = edit_sta = Picker(
+             lambda: self.list_items(self.sta_table), "Add observable..."
+         )
+@@ -633,6 +617,7 @@
+         self.check_only_sta = check_only_sta = QCheckBox("Show Checked Only")
+         check_only_sta.setChecked(True)
+         check_only_sta.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_sta.addWidget(lbl_sta)
+         hbox_action_sta.addWidget(edit_sta)
+         hbox_action_sta.addStretch()
+         hbox_action_sta.addWidget(check_only_sta)
+@@ -640,7 +625,7 @@
          self.sta_table = ObservableTable()
          self.sta_table.show_selected_only = True
          vbox_sta_edit.addWidget(self.sta_table)

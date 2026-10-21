@@ -1081,3 +1081,28 @@ from-scratch check in `/tmp` never showed this; only the local dev
 convenience copy did).
 
 Full offline test suite and from-scratch check (all 9 patches) clean.
+
+## 2026-10-21 — `simpler_mini`: pull each VOCS label onto its action row
+
+Quick follow-up: the previous patch put each label ("Variables" etc.) on
+its own heading line above the Picker/Refresh row, which the user pointed
+out wastes vertical space — asked for the label to lead that same row
+instead, with the "Add …" dropdown to its right (and, for Variables, the
+Refresh button further right). Moved each `lbl_X` from its own
+`vbox_X_panel.addWidget(lbl_X)` line into the start of `hbox_action_X`
+(before the Picker), for all four sections. Re-widened the labels
+slightly: at the shared `LABEL_WIDTH = 96` used elsewhere, bold
+"Observables" clipped by a few pixels (visible in a screenshot at 500px
+width); added `VOCS_LABEL_WIDTH = LABEL_WIDTH + 14` so all four fit and
+stay aligned with each other.
+
+Regenerated the same `badger-1.6.0-mini-vocs-full-width.patch` rather than
+adding a third patch — still the same not-yet-pushed branch, same
+still-being-refined concern (VOCS section layout). Screenshot-verified the
+result: each row now reads "Variables | Add variable... | Refresh",
+"Objectives | Add objective...", etc., with no clipping and no wasted
+line. Rebuilt the local `.pixi/envs/default` from scratch again before
+verifying (same lesson as last time: iterative hand-edits drift from what
+a clean patch-apply produces; the from-scratch `/tmp` check is the
+authoritative one). Full offline test suite and from-scratch check (all 9
+patches) clean.

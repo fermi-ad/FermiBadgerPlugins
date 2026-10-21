@@ -131,7 +131,9 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
 - [x] Removed the empty left sidebar next to Variables/Objectives/
   Constraints/Observables: each table now spans full width, left-justified
   where the label used to start, instead of a fixed 96px label column with
-  a tall empty strip below it (`badger-1.6.0-mini-vocs-full-width.patch`).
-  See docs/log.md 2026-10-21.
+  a tall empty strip below it. Each label leads its own action row (same
+  line as its "Add …" dropdown, Refresh too for Variables) rather than a
+  separate heading line (`badger-1.6.0-mini-vocs-full-width.patch`). See
+  docs/log.md 2026-10-21.
 - [ ] More `simpler_mini` streamlining changes to come; this file should
   track each one as it lands, same as this entry.
