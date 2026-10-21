@@ -11,6 +11,13 @@ platforms = [{ name = "osx-arm64-macos15", platform = "osx-arm64", macos = "15.0
 # environment this is run in (`pixi run setup` for default/onsite,
 # `pixi run -e offsite setup` off the FNAL network).
 setup = "bash pixi_setup.sh"
+# The operator launch line: -mini under a launcher that restores every device
+# the session changed if Badger exits without a Keep/Revert answer
+# (plugins/settings_snapshot.py). Append -t <template>.
+mini = "python plugins/settings_snapshot.py run badger -mini -cf config.local.yaml"
+# Put a snapshot's devices back by hand: pixi run restore logs/snapshots/<file>
+restore = "python plugins/settings_snapshot.py restore"
+diff = "python plugins/settings_snapshot.py diff"
 
 [dependencies]
 python = "3.12.1.*"
