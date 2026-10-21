@@ -1236,3 +1236,15 @@ is `.pyc` compilation plus a cold disk cache (torch etc.), paid once per
 env rebuild, and I'd rebuilt the local env several times today. Patch
 count doesn't affect launch time at all: patches are applied once at
 setup, not at launch.
+
+## 2026-10-21 — `simpler_mini`: larger VOCS section labels
+
+Variables/Objectives/Constraints/Observables labels now 16px semi-bold
+(were default size, semi-bold), so they read as section headers on par
+with the Tuning Task box's labels. Moved the style into one constant,
+`VOCS_LABEL_STYLE`, used by all four. Measured rendered text widths
+(`fontMetrics().horizontalAdvance`): longest is "Observables" at 98px,
+inside the existing 110px `VOCS_LABEL_WIDTH`, so no width change needed.
+Regenerated `badger-1.6.0-mini-simpler-ui.patch`; its real content diff is
+just the constant plus four `setStyleSheet` lines. From-scratch apply is
+byte-identical to the local env; offline suite and picker test pass.

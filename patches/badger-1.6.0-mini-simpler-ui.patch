@@ -1,7 +1,7 @@
 diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
---- a/badger/gui/mini/components/env_cbox.py	2026-10-21 13:38:23
-+++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 13:38:23
-@@ -48,6 +48,10 @@
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-21 14:28:22
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 14:28:22
+@@ -48,6 +48,11 @@
  import logging
  
  LABEL_WIDTH = 96
@@ -9,10 +9,11 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 +# font-weight 600 just clips at 96px), and they lead a row rather than
 +# sitting in a dedicated column, so there's no other alignment to match.
 +VOCS_LABEL_WIDTH = LABEL_WIDTH + 14
++VOCS_LABEL_STYLE = "font-weight: 600; font-size: 16px;"
  
  
  CONS_RELATION_DICT = {
-@@ -185,11 +189,19 @@
+@@ -185,11 +190,19 @@
  
          self.setStyleSheet(self.unselected_stylesheet)
  
@@ -35,7 +36,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.label.setObjectName("TemplateSelectorLabel")
          self.label.setFixedWidth(label_width)
  
-@@ -213,10 +225,16 @@
+@@ -213,10 +226,16 @@
          layout.addSpacing(14)
          layout.addWidget(self.load_template_button)
          layout.addStretch()
@@ -52,7 +53,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
      def sync_selection_state(self):
          has_selection = self.template_cb.currentIndex() != -1
          self.setStyleSheet(
-@@ -295,8 +313,15 @@
+@@ -295,8 +314,15 @@
          separator.setStyleSheet("background-color: #61748c;")
          vbox.addWidget(separator)
  
@@ -70,7 +71,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          vbox_env = QVBoxLayout(env)
          vbox_env.setContentsMargins(0, 0, 0, 0)
          select_env = QWidget()
-@@ -312,34 +337,38 @@
+@@ -312,34 +338,38 @@
          env_cb.addItems(self.envs)
          env_cb.setCurrentIndex(-1)
          env_cb.setPlaceholderText("")
@@ -129,7 +130,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_algo = QHBoxLayout(algo_widget)
          hbox_algo.setContentsMargins(0, 0, 0, 0)
          hbox_algo.setSpacing(6)
-@@ -351,53 +380,80 @@
+@@ -351,53 +381,80 @@
          algo_cb.addItems(self.generators)
          algo_cb.setCurrentIndex(-1)
          algo_cb.installEventFilter(MouseWheelWidgetAdjustmentGuard(algo_cb))
@@ -240,17 +241,17 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          edit_var_col = QWidget()
          vbox_var_edit = QVBoxLayout(edit_var_col)
          vbox_var_edit.setContentsMargins(0, 2, 0, 2)
-@@ -409,6 +465,9 @@
+@@ -409,6 +466,9 @@
          hbox_action_var.setContentsMargins(0, 0, 0, 0)
          hbox_action_var.setSpacing(0)
          vbox_var_edit.addWidget(action_var)
 +        lbl_var = QLabel("Variables")
-+        lbl_var.setStyleSheet("font-weight: 600;")
++        lbl_var.setStyleSheet(VOCS_LABEL_STYLE)
 +        lbl_var.setFixedWidth(VOCS_LABEL_WIDTH)
          # filter variables
          self.edit_var = edit_var = Picker(self.list_vars, "Add variable...")
          edit_var.setFixedWidth(192)
-@@ -421,28 +480,26 @@
+@@ -421,28 +481,26 @@
          self.check_only_var = check_only_var = QCheckBox("Show Checked Only")
          check_only_var.setChecked(True)
          check_only_var.hide()  # lists always show checked items; the picker holds the rest
@@ -287,7 +288,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          collapsiblebox_init = CollapsibleBox(
              self,
              " Initial Points",
-@@ -472,25 +529,21 @@
+@@ -472,25 +530,21 @@
          self.init_table.set_uneditable()
          vbox_init.addWidget(self.init_table)
          collapsiblebox_init.setContentLayout(vbox_init)
@@ -324,17 +325,17 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_obj_col = QWidget()
          vbox_obj_edit = QVBoxLayout(edit_obj_col)
-@@ -500,6 +553,9 @@
+@@ -500,6 +554,9 @@
          hbox_action_obj = QHBoxLayout(action_obj)
          hbox_action_obj.setContentsMargins(0, 0, 0, 0)
          vbox_obj_edit.addWidget(action_obj)
 +        lbl_obj = QLabel("Objectives")
-+        lbl_obj.setStyleSheet("font-weight: 600;")
++        lbl_obj.setStyleSheet(VOCS_LABEL_STYLE)
 +        lbl_obj.setFixedWidth(VOCS_LABEL_WIDTH)
          self.edit_obj = edit_obj = Picker(
              lambda: self.list_items(self.obj_table), "Add objective..."
          )
-@@ -507,6 +563,7 @@
+@@ -507,6 +564,7 @@
          self.check_only_obj = check_only_obj = QCheckBox("Show Checked Only")
          check_only_obj.setChecked(True)
          check_only_obj.hide()  # lists always show checked items; the picker holds the rest
@@ -342,7 +343,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_obj.addWidget(edit_obj)
          hbox_action_obj.addStretch()
          hbox_action_obj.addWidget(check_only_obj)
-@@ -514,27 +571,22 @@
+@@ -514,27 +572,22 @@
          self.obj_table = ObjectiveTable()
          self.obj_table.show_selected_only = True
          vbox_obj_edit.addWidget(self.obj_table)
@@ -382,17 +383,17 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_con_col = QWidget()
          vbox_con_edit = QVBoxLayout(edit_con_col)
-@@ -544,6 +596,9 @@
+@@ -544,6 +597,9 @@
          hbox_action_con = QHBoxLayout(action_con)
          hbox_action_con.setContentsMargins(0, 0, 0, 0)
          vbox_con_edit.addWidget(action_con)
 +        lbl_con = QLabel("Constraints")
-+        lbl_con.setStyleSheet("font-weight: 600;")
++        lbl_con.setStyleSheet(VOCS_LABEL_STYLE)
 +        lbl_con.setFixedWidth(VOCS_LABEL_WIDTH)
          self.edit_con = edit_con = Picker(
              lambda: self.list_items(self.con_table), "Add constraint..."
          )
-@@ -551,6 +606,7 @@
+@@ -551,6 +607,7 @@
          self.check_only_con = check_only_con = QCheckBox("Show Checked Only")
          check_only_con.setChecked(True)
          check_only_con.hide()  # lists always show checked items; the picker holds the rest
@@ -400,7 +401,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_con.addWidget(edit_con)
          hbox_action_con.addStretch()
          hbox_action_con.addWidget(check_only_con)
-@@ -558,23 +614,15 @@
+@@ -558,23 +615,15 @@
          self.con_table = ConstraintTable()
          self.con_table.show_selected_only = True
          vbox_con_edit.addWidget(self.con_table)
@@ -430,17 +431,17 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_sta_col = QWidget()
          vbox_sta_edit = QVBoxLayout(edit_sta_col)
-@@ -584,6 +632,9 @@
+@@ -584,6 +633,9 @@
          hbox_action_sta = QHBoxLayout(action_sta)
          hbox_action_sta.setContentsMargins(0, 0, 0, 0)
          vbox_sta_edit.addWidget(action_sta)
 +        lbl_sta = QLabel("Observables")
-+        lbl_sta.setStyleSheet("font-weight: 600;")
++        lbl_sta.setStyleSheet(VOCS_LABEL_STYLE)
 +        lbl_sta.setFixedWidth(VOCS_LABEL_WIDTH)
          self.edit_sta = edit_sta = Picker(
              lambda: self.list_items(self.sta_table), "Add observable..."
          )
-@@ -591,6 +642,7 @@
+@@ -591,6 +643,7 @@
          self.check_only_sta = check_only_sta = QCheckBox("Show Checked Only")
          check_only_sta.setChecked(True)
          check_only_sta.hide()  # lists always show checked items; the picker holds the rest
@@ -448,7 +449,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_sta.addWidget(edit_sta)
          hbox_action_sta.addStretch()
          hbox_action_sta.addWidget(check_only_sta)
-@@ -598,16 +650,13 @@
+@@ -598,16 +651,13 @@
          self.sta_table = ObservableTable()
          self.sta_table.show_selected_only = True
          vbox_sta_edit.addWidget(self.sta_table)
@@ -469,7 +470,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
      def config_logic(self):
          self.edit_var.picked.connect(self.pick_var)
-@@ -640,21 +689,21 @@
+@@ -640,21 +690,21 @@
  
      def toggle_env_params(self, checked: bool):
          if not checked:
@@ -496,8 +497,8 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
      def _qtree_height_hint(self, widget: QTreeWidget) -> int:
          # set height based on number of rows * row size
 diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
---- a/badger/gui/mini/pages/routine_page.py	2026-10-21 13:38:23
-+++ b/badger/gui/mini/pages/routine_page.py	2026-10-21 13:38:23
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-21 14:28:22
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-21 14:28:22
 @@ -22,6 +22,7 @@
  from PyQt5.QtWidgets import QLineEdit, QPushButton, QFileDialog
  from PyQt5.QtWidgets import QMessageBox, QWidget, QTabWidget
