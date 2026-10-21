@@ -1248,3 +1248,31 @@ inside the existing 110px `VOCS_LABEL_WIDTH`, so no width change needed.
 Regenerated `badger-1.6.0-mini-simpler-ui.patch`; its real content diff is
 just the constant plus four `setStyleSheet` lines. From-scratch apply is
 byte-identical to the local env; offline suite and picker test pass.
+## 2026-10-21 — startup snapshot, Revert button, automatic restore on interruption
+
+Nothing recorded the machine's settings when `-mini` started; Reset environment
+only covers checked variables back to the latest run's start, in memory. Built
+on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
+
+- `plugins/settings_snapshot.py` (stdlib + pacsys, no Badger imports):
+  `capture(variables, role)` reads `<dev>.SETTING@I` for every variable the
+  environment class declares (mults and `-SETPOINT` skipped, read/set pair →
+  setting device, `nosettings`/no role → nothing), first-seen merge, atomic
+  write. `diff`, `restore` (only differing devices, one `pacsys.dpm` session
+  per role, re-read, 3 passes). Capture reads the class + template params, not
+  `create_env()`: sim environments load a lattice on init.
+- Launcher (`run`): Badger in its own session; on exit or SIGINT/TERM/HUP it
+  TERM→KILLs the whole process group (orphaned run subprocess included), then
+  restores unless the snapshot is resolved. Leftover unresolved snapshots of
+  dead launchers become `*.stale`, never auto-restored. macOS: `killpg(pg, 0)`
+  on a group holding only a zombie gives EPERM, treated as gone.
+- Kerberos check asks `pacsys.KerberosAuth()`: pixi's own MIT `klist` can't
+  see the macOS ticket cache and falsely reported no ticket.
+- **Incident:** a "failure-path" smoke of the launcher, run trusting that
+  false warning, really wrote Z:CUBE_X 1.0 → 5.0 (VPN up, ticket valid).
+  Restored to 1.0 at once with `settings_snapshot.py restore`. Tests now only
+  use FakeBackend.
+- `badger-1.6.0-mini-revert-settings.patch`: Revert button (hidden in `-g`),
+  capture on `sig_load_template`, Keep/Revert/Cancel in `closeEvent`.
+- pixi tasks `mini`, `restore`, `diff`. Offline suite + both new tests pass;
+  from-scratch bootstrap check run.

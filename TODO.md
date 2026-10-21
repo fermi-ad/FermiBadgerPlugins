@@ -3,6 +3,34 @@
 Open work, roughly in priority order. Session-by-session detail lives in
 `docs/progress.md`; this file is just the list.
 
+## Revert and crash safety (built 2026-10-21 on main; README "Revert and crash safety")
+
+Startup snapshot of every writable device, a `-mini` Revert button, Keep/Revert
+on close, and `pixi run mini`: a launcher that restores automatically if Badger
+exits undecided. Offline tests pass (`settings_snapshot_test.py`,
+`settings_snapshot_gui_test.py`, FakeBackend).
+
+- [ ] **Hand over the new operator launch line** for the external shortcut,
+  once machine-tested: `cd <repo> && pixi run mini -t 01_Linac_RIL_tuning.yaml`
+  (replaces `pixi run badger -mini -cf config.local.yaml -t ...`).
+- [ ] **Machine tests** with `development/ZZ_PacsysTesting.yaml` (role `testing`):
+  close → Revert; close → Keep; Revert button mid-session; `kill -9` Badger
+  idle and mid-run (run subprocess must die before the restore); Ctrl-C in the
+  launcher's terminal; closing the terminal (SIGHUP); a crash after `kdestroy`
+  (expect the loud warning at start and the manual `pixi run restore` line).
+  Then RIL Acsys: the snapshot should record role `ril_tuning`.
+- [ ] Decide: a maximum snapshot age for the *automatic* restore. After a long
+  session it reverts hours of possibly intended changes; today the log and
+  dialogs only show the age.
+- Not covered, by design for now: supply-limit group sums aren't rechecked on
+  restore (it writes back a previously live state); an environment switched
+  without loading a template isn't snapshotted; if the launcher itself is
+  SIGKILLed or the host dies, the next launch flags the snapshot `*.stale`
+  rather than restoring it.
+- Note: the dev Mac reaches ACNET (VPN + Kerberos), so a real `pixi run mini`
+  / `restore` there writes to real devices. 2026-10-21 a smoke test wrote
+  Z:CUBE_X 1.0 → 5.0; restored to 1.0 straight away.
+
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
 Decided 2026-10-20, order swapped same day: pixi first (fully landed),

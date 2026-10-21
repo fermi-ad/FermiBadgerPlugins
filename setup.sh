@@ -197,6 +197,7 @@ print(h.hexdigest())" "$REPO/patches")"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-spinbox-wheel-guard.patch"
         # must come after the -mini and device-list patches: diffed against that tree
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mini-simpler-ui.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mini-revert-settings.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
 

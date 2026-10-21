@@ -1938,3 +1938,20 @@ observable lists already keep plugin order.
 - New patch: `badger-1.6.0-mini-parameters-row.patch`. Verified: headless
   integration test, visual screenshot, full offline suite, from-scratch
   check (8 patches). Committed to `simpler_mini`.
+
+## 2026-10-21: startup snapshot, Revert button, restore on interruption (main, merged into `simpler_mini`)
+
+- Built on main (`e749517`, worktree `../FermiBadgerPlugins-main`), not pushed.
+  `plugins/settings_snapshot.py`, `badger-1.6.0-mini-revert-settings.patch`,
+  pixi tasks `mini` / `restore` / `diff`. Details: README "Revert and crash
+  safety"; open items and machine tests: TODO.md.
+- Merged into `simpler_mini`: only the setup scripts' apply lists, the patches
+  README and the log conflicted. The new patch applies after
+  `mini-simpler-ui` (no file overlap).
+- Verified on both branches: new offline tests (FakeBackend), full offline
+  suite, from-scratch bootstrap byte-identical to the local env.
+- Incident: a launcher smoke test on the dev Mac really wrote Z:CUBE_X
+  1.0 → 5.0 (VPN + valid ticket; pixi's `klist` falsely said no ticket).
+  Restored to 1.0 at once; the Kerberos check now asks `pacsys.KerberosAuth()`.
+- Next: machine tests with ZZ_PacsysTesting, then hand over
+  `pixi run mini -t 01_Linac_RIL_tuning.yaml` as the operator launch line.
