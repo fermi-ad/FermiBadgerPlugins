@@ -1874,9 +1874,11 @@ observable lists already keep plugin order.
   macOS), not from `-cf config.local.yaml`, and that file had stale paths
   from a defunct old clone. Synced its paths to match `config.local.yaml`
   as a pragmatic fix (not the root-cause code fix — didn't chase why `-cf`
-  doesn't thread through to the subprocess). **The production host has its
-  own separate per-user config file (Linux XDG path) that needs the same
-  check** before trusting a live Go there.
+  doesn't thread through to the subprocess). **Automated afterward**: both
+  `pixi_setup.sh` and `setup.sh` now sync these same five path keys into
+  Badger's per-user file (via `init_settings()` + `write_value()`) as a
+  normal step of every setup run, on either path, on any host — no
+  manual per-host check needed anymore (closed in TODO.md).
 - Bug 2: `AttributeError: 'Picker' object has no attribute 'setText'` on
   stop — our own `badger-1.6.0-device-list-gui.patch` swapped the old
   filter `QLineEdit` for `Picker` (a `QComboBox`) but never gave it

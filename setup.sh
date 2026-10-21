@@ -7,6 +7,8 @@
 #   1. create (or reuse) the conda environment from environment.yml
 #   2. apply the Badger patches this plugin set needs
 #   3. write config.local.yaml with this clone's paths
+#   3b. sync those same paths into Badger's own per-user settings file,
+#       which some code paths (e.g. the "Go" run subprocess) read instead
 #   4. check that Badger can actually see the plugins
 #
 # Safe to re-run: patches already applied are detected and skipped.
@@ -235,6 +237,36 @@ for key in paths:
 PYEOF
     echo "   wrote $CONFIG_OUT"
 fi
+
+# --------------------------------------------------------------------------
+# 3b. Sync Badger's own per-user config
+# --------------------------------------------------------------------------
+# Badger keeps a separate, per-OS-user settings file outside this repo
+# (get_user_config_folder(), e.g. ~/.config/config.yaml on Linux,
+# ~/Library/Application Support/Badger/config.yaml on macOS). Some code
+# paths (notably the run subprocess started by "Go") read path settings
+# from THAT file instead of -cf config.local.yaml, so a stale per-user
+# file (e.g. from an old clone that's since moved or been deleted)
+# silently breaks live runs. Keep it in sync on every setup so it can
+# never drift out from under this clone's actual paths.
+echo
+echo "3b. Syncing Badger's per-user config"
+REPO="$REPO" "$PY" - <<'PYEOF'
+import os
+from pathlib import Path
+import yaml
+from badger.settings import init_settings
+
+repo = Path(os.environ['REPO'])
+local = yaml.safe_load((repo / 'config.local.yaml').read_text())
+
+config_singleton = init_settings()  # no args: targets the per-user file
+for key in ('BADGER_PLUGIN_ROOT', 'BADGER_TEMPLATE_ROOT', 'BADGER_LOG_DIRECTORY',
+            'BADGER_ARCHIVE_ROOT', 'BADGER_LOGBOOK_ROOT'):
+    value = local[key]['value']
+    config_singleton.write_value(key, value)
+    print(f'   {key}: {value}')
+PYEOF
 
 # --------------------------------------------------------------------------
 # 4. Verify

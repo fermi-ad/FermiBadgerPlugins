@@ -68,13 +68,15 @@ it to paste in.
 
 ### Pacsys interface (needs the machine) — after pixi lands
 
-- [ ] **Before any live "Go" on the production host**: check its per-user
-  Badger config file (`~/.config/Badger/config.yaml` or wherever
-  `get_user_config_folder()` resolves on Linux) for stale paths — Badger's
-  run-subprocess path falls back to that file instead of `-cf
-  config.local.yaml` in some cases, and it caused a same-machine "file not
-  found" failure here (unrelated to Pacsys/pixi; see docs/log.md
-  2026-10-20).
+- [x] **Per-user Badger config staleness fixed at the root**: `pixi_setup.sh`
+  and `setup.sh` now sync `config.local.yaml`'s paths into Badger's own
+  per-user settings file too (`~/.config/config.yaml` on Linux,
+  `~/Library/Application Support/Badger/config.yaml` on macOS) every time
+  setup runs — some code paths (the "Go" run subprocess) read that file
+  instead of `-cf config.local.yaml`, and a stale one caused a same-machine
+  "file not found" failure here. No manual per-host check needed anymore:
+  running setup (which the MCR host does anyway on a fresh clone/rebuild)
+  keeps it in sync automatically. See docs/log.md 2026-10-20.
 - [x] Live check with `development/ZZ_PacsysTesting.yaml`: ran to
   completion (dev machine, VPN); no readback warning reported. Hit and
   fixed two unrelated pre-existing bugs along the way (stale per-user

@@ -42,6 +42,13 @@
 > `./setup.sh --yes --env-name X` (drop the `acsys` lines from the copy's
 > `environment.yml` first if off-site). Expect `applied` for every patch and a
 > `badger/` + `xopt/` tree identical to the working env.
+>
+> Both setup scripts also sync their resolved paths into Badger's own
+> per-user settings file (outside this repo, not per-clone — see
+> "Syncing Badger's per-user config" in `setup.sh`/`pixi_setup.sh`), so a
+> from-scratch check against `/tmp/X` temporarily points it at `/tmp/X`
+> too. Harmless, but re-run setup against your real clone afterward before
+> trusting a live "Go" there.
 
 ### Finding Badger Installation
 

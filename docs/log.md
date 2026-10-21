@@ -919,3 +919,25 @@ reported "already applied" and would have hidden it. Recomputed the true
 count precisely with `awk`/`grep -c '^+'` (90, including the new 4 lines)
 and reran the from-scratch check clean: all six patches apply, `picker.py`
 comes out complete, and all three `tests/picker_test.py` cases pass.
+
+## 2026-10-20 — automated the per-user-config fix so no host needs a manual check
+
+User asked how to keep the production host from hitting the same stale
+per-user-config issue (bug 1 above). Rather than a one-off manual sync
+per host, added a step to both `pixi_setup.sh` and `setup.sh` (right
+after writing `config.local.yaml`) that calls `init_settings()` (no
+args, targets Badger's per-user file via `get_user_config_folder()` —
+confirmed from `badger/settings.py`: `~/.config` directly on Linux, no
+`Badger` subfolder, unlike macOS/Windows) and `write_value()`s the same
+five path keys into it. Uses Badger's own sanctioned API
+(`ConfigSingleton.write_value` → `update_and_save_config`) rather than
+hand-editing the YAML, so it's the two scripts' own first-class step now,
+not a side-channel fix — every `./bootstrap.sh`/`pixi run setup` (or
+`./setup.sh`) run keeps the per-user file in sync, on any host, forever.
+Verified both: re-staled the local per-user file's `BADGER_ARCHIVE_ROOT`
+to the old defunct-clone path, reran setup under both pixi and conda,
+confirmed the sync step corrects it back and the file on disk reflects
+the write. Noted in `patches/README.md`: a from-scratch `/tmp/X` check
+now also points the per-user file at `/tmp/X` temporarily (harmless,
+just re-run setup against the real clone afterward). Closed the TODO.md
+item that asked for a manual per-host check — no longer needed.
