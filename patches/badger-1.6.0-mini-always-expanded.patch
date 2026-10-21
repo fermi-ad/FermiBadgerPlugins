@@ -1,0 +1,81 @@
+diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-21 12:14:10
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 12:14:10
+@@ -467,22 +467,19 @@
+         hbox_action_var.addStretch()
+         hbox_action_var.addWidget(check_only_var)
+ 
+-        # var table
++        # var table -- always visible, no collapse bar (the row above
++        # already has a "Variables" label; a second one just to toggle
++        # visibility was redundant, and operators want this open always).
+         self.var_table = VariableTable()
+         self.var_table.checked_only = True
+         self.var_table.verticalHeader().setVisible(False)
+-        cbox_var = CollapsibleBox(self, " Variables")
+-        vbox_var_edit.addWidget(cbox_var)
+-        vbox_var_tbl = QVBoxLayout()
+-        vbox_var_tbl.setContentsMargins(0, 0, 0, 0)
+-        vbox_var_tbl.addWidget(self.var_table)
+-        cbox_var.setContentLayout(vbox_var_tbl)
+-        cbox_var.expand()
+-        self.cbox_var = cbox_var
++        vbox_var_edit.addWidget(self.var_table)
+ 
+         self.var_table.verticalHeader().setDefaultSectionSize(27)
+ 
+-        # Initial Points
++        # Initial Points: keeps its collapsible-looking bar (it's a
++        # secondary, less-often-needed table, worth the visual separation),
++        # but locked open -- clicking the bar does nothing.
+         collapsiblebox_init = CollapsibleBox(
+             self,
+             " Initial Points",
+@@ -512,7 +509,11 @@
+         self.init_table.set_uneditable()
+         vbox_init.addWidget(self.init_table)
+         collapsiblebox_init.setContentLayout(vbox_init)
+-        # cbox_init.expand()
++        collapsiblebox_init.expand()
++        collapsiblebox_init.toggle_button.clicked.disconnect(
++            collapsiblebox_init.start_animation
++        )
++        collapsiblebox_init.toggle_button.setCheckable(False)
+ 
+         vbox_var_panel.addWidget(edit_var_col)
+ 
+@@ -552,9 +553,13 @@
+         vbox_obj_edit.addWidget(self.obj_table)
+         vbox_obj_panel.addWidget(edit_obj_col)
+ 
+-        cbox_more = CollapsibleBox(self, " Constraints + Observables")
+-        vbox.addWidget(cbox_more)
+-        vbox_more = QVBoxLayout()
++        # Constraints and Observables: always visible, no collapse bar that
++        # could hide both sections entirely -- each already has its own
++        # label leading its action row.
++        more_panel = QWidget()
++        vbox.addWidget(more_panel)
++        vbox_more = QVBoxLayout(more_panel)
++        vbox_more.setContentsMargins(0, 0, 0, 0)
+ 
+         # Constraints config. Label leads the action row, same as above.
+         con_panel = QWidget()
+@@ -627,14 +632,11 @@
+         vbox_sta_edit.addWidget(self.sta_table)
+         vbox_sta_panel.addWidget(edit_sta_col)
+ 
+-        cbox_more.setContentLayout(vbox_more)
+-        cbox_more.expand()
+-
+         self._fit_targets = []
+-        self._watch_table_rows(self.var_table, cbox_var)
++        self._watch_table_rows(self.var_table, None)
+         self._watch_table_rows(self.obj_table, None)
+-        self._watch_table_rows(self.con_table, cbox_more)
+-        self._watch_table_rows(self.sta_table, cbox_more)
++        self._watch_table_rows(self.con_table, None)
++        self._watch_table_rows(self.sta_table, None)
+ 
+     def config_logic(self):
+         self.edit_var.picked.connect(self.pick_var)

@@ -1106,3 +1106,37 @@ verifying (same lesson as last time: iterative hand-edits drift from what
 a clean patch-apply produces; the from-scratch `/tmp` check is the
 authoritative one). Full offline test suite and from-scratch check (all 9
 patches) clean.
+
+## 2026-10-21 — `simpler_mini`: drop the Variables/Constraints+Observables collapse bars
+
+User flagged two collapse bars as odd: `cbox_var = CollapsibleBox(" Variables")`
+wrapping just the var_table — redundant now that the row above it already
+says "Variables" — and `cbox_more = CollapsibleBox(" Constraints + Observables")`
+wrapping BOTH sections in one shared toggle, able to hide both with one
+click. Asked to remove both entirely (table/sections always visible, no
+toggle), but keep "Initial Points"'s bar for visual separation while
+locking it open (can't collapse).
+
+Removed `cbox_var`: `var_table` now added directly to `vbox_var_edit`, no
+wrapper. Removed `cbox_more`: replaced with a plain `QWidget`/`QVBoxLayout`
+(`more_panel`) holding `con_panel`/`sta_panel` directly, no collapsible
+behavior. Updated `_watch_table_rows` calls for all four tables to pass
+`None` instead of a box reference (matching the pattern `obj_table`
+already used, since Objectives never had a wrapper). For "Initial Points":
+called `.expand()` once (it previously defaulted to collapsed — the
+`# cbox_init.expand()` call was commented out), then
+`toggle_button.clicked.disconnect(collapsiblebox_init.start_animation)`
+and `toggle_button.setCheckable(False)` so the bar still renders (and
+still shows as a normal-looking button, not grayed out) but clicking it
+does nothing.
+
+Verified three ways: a full-page screenshot (template loaded, real data)
+confirmed Variables/Constraints/Observables render with no bars and
+"Initial Points" renders expanded with its table visible; a bare
+`BadgerEnvBox` construction check turned out uninformative (maxHeight 0
+before *and* after clicking, because an empty, unshown init_table reports
+near-zero content height regardless of expand state — not a sign of a
+bug, just the wrong test); the real check was programmatically clicking
+the toggle button in the loaded page and confirming the content area's
+height is identical (238px) before and after the click. Full offline test
+suite and from-scratch check (all 10 patches) clean.

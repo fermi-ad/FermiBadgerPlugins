@@ -135,5 +135,11 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
   line as its "Add …" dropdown, Refresh too for Variables) rather than a
   separate heading line (`badger-1.6.0-mini-vocs-full-width.patch`). See
   docs/log.md 2026-10-21.
+- [x] Removed the "▼ Variables" and "▼ Constraints + Observables" collapse
+  bars (both redundant/risky — the latter could hide two whole sections
+  with one click); both always visible now, no toggle. "▶ Initial Points"
+  keeps its bar for visual separation but is locked expanded — clicking it
+  does nothing (`badger-1.6.0-mini-always-expanded.patch`). See docs/log.md
+  2026-10-21.
 - [ ] More `simpler_mini` streamlining changes to come; this file should
   track each one as it lands, same as this entry.
