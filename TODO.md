@@ -121,7 +121,7 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
 
 - [x] Collapsed the "Badger Environment" and "Algorithm" rows into one
   "Parameters" row with "Machine Interface"/"Optimization Algo" buttons
-  (`badger-1.6.0-mini-parameters-row.patch`). `env_cb`/`algo_cb` stay
+  (now in `badger-1.6.0-mini-simpler-ui.patch`). `env_cb`/`algo_cb` stay
   functional, just not shown — see docs/log.md 2026-10-21.
 - [ ] **Open: where should "Open Docs" live, and what should it show?**
   Currently a provisional button inside each new collapsible panel. User
@@ -133,24 +133,24 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
   where the label used to start, instead of a fixed 96px label column with
   a tall empty strip below it. Each label leads its own action row (same
   line as its "Add …" dropdown, Refresh too for Variables) rather than a
-  separate heading line (`badger-1.6.0-mini-vocs-full-width.patch`). See
+  separate heading line (now in `badger-1.6.0-mini-simpler-ui.patch`). See
   docs/log.md 2026-10-21.
 - [x] Removed the "▼ Variables" and "▼ Constraints + Observables" collapse
   bars (both redundant/risky — the latter could hide two whole sections
   with one click); both always visible now, no toggle. "▶ Initial Points"
   keeps its bar for visual separation but is locked expanded — clicking it
-  does nothing (`badger-1.6.0-mini-always-expanded.patch`). See docs/log.md
+  does nothing (now in `badger-1.6.0-mini-simpler-ui.patch`). See docs/log.md
   2026-10-21.
 - [x] Renamed "Template" to "Tuning Task", and moved the Parameters row
   (Machine Interface/Optimization Algo) into that same styled box as a
   second line, instead of its own separate row below it
-  (`badger-1.6.0-mini-tuning-task-box.patch`). Noted, not fixed: the
+  (now in `badger-1.6.0-mini-simpler-ui.patch`). Noted, not fixed: the
   buttons' checked/expanded state isn't visually distinct from unchecked
   against the box's dark background. See docs/log.md 2026-10-21.
 - [x] Fixed the Tuning Task box's right edge being clipped by the tab's
   vertical scrollbar (hardcoded 5px margin → actual scrollbar width via
   `QStyle.PM_ScrollBarExtent`), and renamed the "Environment + VOCS" tab
-  to "Tuning" (`badger-1.6.0-mini-tuning-tab.patch`). See docs/log.md
+  to "Tuning" (now in `badger-1.6.0-mini-simpler-ui.patch`). See docs/log.md
   2026-10-21.
 - [ ] More `simpler_mini` streamlining changes to come; this file should
   track each one as it lands, same as this entry.

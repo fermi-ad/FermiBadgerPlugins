@@ -1199,3 +1199,40 @@ Re-ran the same forced-scrollbar screenshot: border and buttons now clear
 of the scrollbar, tab reads "Tuning". New patch
 `badger-1.6.0-mini-tuning-tab.patch`. Full offline test suite and
 from-scratch check (all 12 patches) clean.
+
+## 2026-10-21 — `simpler_mini`: merge the five UI patches; make setup re-runnable
+
+Merged the five `simpler_mini` patches (`mini-parameters-row`,
+`mini-vocs-full-width`, `mini-always-expanded`, `mini-tuning-task-box`,
+`mini-tuning-tab`) into one, `badger-1.6.0-mini-simpler-ui.patch`, diffed
+from a baseline with only the non-`simpler_mini` patches applied. A
+from-scratch apply of the merged patch produced a `badger/` tree
+byte-identical (`diff -rq`) to the old five-patch chain's; offline suite
+green. `patches/README.md` table and manual-apply list now show the one
+patch; the Design Changes narrative keeps the five steps, with a note that
+they were merged.
+
+Correction to two earlier entries today: the `FAILED
+badger-1.6.0-device-list-gui.patch` seen when re-running `pixi run setup`
+on the local env was **not** drift from hand edits. Once the `simpler_mini`
+changes rewrote lines in `env_cbox.py` that `device-list-gui` also touches,
+that patch's reverse dry-run (the "already applied?" check) can no longer
+match on a fully patched tree, so every re-run reported it FAILED and
+exited non-zero. Rebuilding the env, which I did twice, only hid it. On
+`main` the patches don't overlap, so it never showed there. Fix in both
+`pixi_setup.sh` and `setup.sh`: after a clean apply, write a SHA-256 of
+all `patches/*.patch` to `site-packages/.fermibadger-patches`, and skip
+patching when that stamp matches. Any patch-file change invalidates it.
+An env patched before stamps existed (or by a different patch set) still
+fails per-patch, now with a one-line "rebuild the env first" hint.
+Verified: fresh bootstrap applies all and writes the stamp; re-running
+setup prints "skipped (this patch set is already applied)" and
+completes clean.
+
+On "slow to start": measured the mini GUI import. In a freshly built env
+the first import took 23 s and 36 s in two runs; every later import took
+2.4–4.6 s, with or without the `simpler_mini` patch. The first-launch cost
+is `.pyc` compilation plus a cold disk cache (torch etc.), paid once per
+env rebuild, and I'd rebuilt the local env several times today. Patch
+count doesn't affect launch time at all: patches are applied once at
+setup, not at launch.

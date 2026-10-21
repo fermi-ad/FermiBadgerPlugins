@@ -1,0 +1,532 @@
+diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-21 13:38:23
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 13:38:23
+@@ -48,6 +48,10 @@
+ import logging
+ 
+ LABEL_WIDTH = 96
++# A bit wider than LABEL_WIDTH: these labels are bold ("Observables" at
++# font-weight 600 just clips at 96px), and they lead a row rather than
++# sitting in a dedicated column, so there's no other alignment to match.
++VOCS_LABEL_WIDTH = LABEL_WIDTH + 14
+ 
+ 
+ CONS_RELATION_DICT = {
+@@ -185,11 +189,19 @@
+ 
+         self.setStyleSheet(self.unselected_stylesheet)
+ 
+-        layout = QHBoxLayout(self)
+-        layout.setContentsMargins(0, 6, 0, 6)
++        # Outer vbox: the template-selector line, plus any further rows
++        # (e.g. the Parameters row) added via add_row() so they share this
++        # same styled box instead of floating below it.
++        outer = QVBoxLayout(self)
++        outer.setContentsMargins(0, 6, 0, 6)
++        outer.setSpacing(6)
++        self._outer_layout = outer
++
++        layout = QHBoxLayout()
++        layout.setContentsMargins(0, 0, 0, 0)
+         layout.setSpacing(0)
+ 
+-        self.label = QLabel("Template")
++        self.label = QLabel("Tuning Task")
+         self.label.setObjectName("TemplateSelectorLabel")
+         self.label.setFixedWidth(label_width)
+ 
+@@ -213,10 +225,16 @@
+         layout.addSpacing(14)
+         layout.addWidget(self.load_template_button)
+         layout.addStretch()
++        outer.addLayout(layout)
+ 
+         self.template_cb.currentIndexChanged.connect(self.sync_selection_state)
+         self.sync_selection_state()
+ 
++    def add_row(self, widget: QWidget) -> None:
++        """Add another row (e.g. the Parameters row) below the template
++        line, inside this same styled box."""
++        self._outer_layout.addWidget(widget)
++
+     def sync_selection_state(self):
+         has_selection = self.template_cb.currentIndex() != -1
+         self.setStyleSheet(
+@@ -295,8 +313,15 @@
+         separator.setStyleSheet("background-color: #61748c;")
+         vbox.addWidget(separator)
+ 
+-        # Environment
+-        env = QWidget()
++        # Environment selection. The template sets the environment, so this
++        # row is not shown to the operator; env_cb stays fully functional
++        # (not added to any visible layout) since its signals are what
++        # actually drive environment selection when a template loads --
++        # see routine_page.py's env_cb.currentIndexChanged -> select_env.
++        # Parented to self explicitly: never added to a layout, so without
++        # an explicit parent Qt would free it (and env_cb with it) as soon
++        # as this local variable goes out of scope.
++        env = QWidget(self)
+         vbox_env = QVBoxLayout(env)
+         vbox_env.setContentsMargins(0, 0, 0, 0)
+         select_env = QWidget()
+@@ -312,34 +337,38 @@
+         env_cb.addItems(self.envs)
+         env_cb.setCurrentIndex(-1)
+         env_cb.setPlaceholderText("")
+-
+-        self.btn_env_params = QPushButton("Parameters")  # params btn
+-        self.btn_env_params.setFixedSize(96, 24)
+-        self.btn_env_params.setCheckable(True)
+         self.set_selected_env_name(None)
+ 
+-        self.btn_env_docs = QPushButton("Open Docs")
+-        self.btn_env_docs.setFixedSize(96, 24)
+-        self.btn_env_docs.setToolTip("Open environment docs")
+-
+         hbox_select_env.addWidget(env_lbl)
+         hbox_select_env.addWidget(env_cb)
+-        hbox_select_env.addSpacing(8)
+-        hbox_select_env.addWidget(self.btn_env_params)
+-        hbox_select_env.addWidget(self.btn_env_docs)
+         hbox_select_env.addStretch()
++        vbox_env.addWidget(select_env)
++        # Not added to the visible vbox (see comment above), but a
++        # same-parent widget outside any layout still renders at a stray
++        # default position unless told otherwise -- hide it explicitly.
++        env.hide()
+ 
+-        # Environment params editor (hidden)
++        # Environment params editor, with its docs button directly above --
++        # shown/hidden as a unit by the "Machine Interface" button below.
++        self.btn_env_docs = QPushButton("Open Docs")
++        self.btn_env_docs.setFixedSize(96, 24)
++        self.btn_env_docs.setToolTip("Open environment docs")
++        self.env_params_panel = env_params_panel = QWidget()
++        vbox_env_params = QVBoxLayout(env_params_panel)
++        vbox_env_params.setContentsMargins(0, 0, 0, 0)
++        vbox_env_params.setSpacing(4)
++        hbox_env_docs = QHBoxLayout()
++        hbox_env_docs.addStretch()
++        hbox_env_docs.addWidget(self.btn_env_docs)
++        vbox_env_params.addLayout(hbox_env_docs)
+         self.edit_env_params = BadgerPydanticEditor()
+-        self.edit_env_params.hide()
++        vbox_env_params.addWidget(self.edit_env_params)
++        env_params_panel.hide()
+ 
+-        vbox_env.addWidget(select_env)
+-        vbox_env.addWidget(self.edit_env_params)
+-
+-        vbox.addWidget(env)
+-
+-        # Algorithm
+-        algo_widget = QWidget()
++        # Algorithm selection. Same hidden-but-functional pattern as the
++        # environment combo above: the template sets the algorithm too.
++        # Parented to self explicitly; see the env widget's comment above.
++        algo_widget = QWidget(self)
+         hbox_algo = QHBoxLayout(algo_widget)
+         hbox_algo.setContentsMargins(0, 0, 0, 0)
+         hbox_algo.setSpacing(6)
+@@ -351,53 +380,80 @@
+         algo_cb.addItems(self.generators)
+         algo_cb.setCurrentIndex(-1)
+         algo_cb.installEventFilter(MouseWheelWidgetAdjustmentGuard(algo_cb))
+-        self.btn_algo_parans = QPushButton("Parameters")
+-        self.btn_algo_parans.setFixedSize(96, 24)
+-        self.btn_algo_parans.setCheckable(True)
+ 
+-        self.btn_algo_docs = QPushButton("Open Docs")
+-        self.btn_algo_docs.setFixedSize(96, 24)
+-        self.btn_algo_docs.setToolTip("Open algorithm docs")
+-
+         hbox_algo.addWidget(algo_lbl)
+         hbox_algo.addWidget(algo_cb)
+-        hbox_algo.addSpacing(8)
+-        hbox_algo.addWidget(self.btn_algo_parans)
+-        hbox_algo.addWidget(self.btn_algo_docs)
+         hbox_algo.addStretch()
++        # Not added to the visible vbox; hidden explicitly for the same
++        # reason as env above.
++        algo_widget.hide()
+ 
++        self.btn_algo_docs = QPushButton("Open Docs")
++        self.btn_algo_docs.setFixedSize(96, 24)
++        self.btn_algo_docs.setToolTip("Open algorithm docs")
++        self.algo_params_panel = algo_params_panel = QWidget()
++        vbox_algo_params = QVBoxLayout(algo_params_panel)
++        vbox_algo_params.setContentsMargins(0, 0, 0, 0)
++        vbox_algo_params.setSpacing(4)
++        hbox_algo_docs = QHBoxLayout()
++        hbox_algo_docs.addStretch()
++        hbox_algo_docs.addWidget(self.btn_algo_docs)
++        vbox_algo_params.addLayout(hbox_algo_docs)
+         self.edit_algo_params = BadgerPydanticEditor()
+-        self.edit_algo_params.hide()
++        vbox_algo_params.addWidget(self.edit_algo_params)
++        algo_params_panel.hide()
+ 
+-        vbox.addWidget(algo_widget)
+-        vbox.addWidget(self.edit_algo_params)
++        # Parameters row: the operator-facing summary of the two selections
++        # above. The template already picked the machine and the algorithm;
++        # most users only need to glance at their parameters, not change
++        # which one is selected -- that's what env_cb/algo_cb are still
++        # for, just not shown here. Lives in the template box itself (see
++        # add_row() below), not as its own separate row -- the template is
++        # what picked both, so this is a second line of the same box, not
++        # a new section.
++        params_row = QWidget()
++        hbox_params = QHBoxLayout(params_row)
++        hbox_params.setContentsMargins(0, 0, 0, 0)
++        hbox_params.setSpacing(6)
++        params_lbl = QLabel("Parameters")
++        params_lbl.setObjectName("TemplateSelectorLabel")
++        params_lbl.setFixedWidth(LABEL_WIDTH)
++        params_button_style = "QPushButton { padding: 6px 14px; }"
++        self.btn_env_params = QPushButton("Machine Interface")
++        self.btn_env_params.setObjectName("TemplateSelectorButton")
++        self.btn_env_params.setFixedHeight(32)
++        self.btn_env_params.setStyleSheet(params_button_style)
++        self.btn_env_params.setCheckable(True)
++        self.btn_algo_parans = QPushButton("Optimization Algo")
++        self.btn_algo_parans.setObjectName("TemplateSelectorButton")
++        self.btn_algo_parans.setFixedHeight(32)
++        self.btn_algo_parans.setStyleSheet(params_button_style)
++        self.btn_algo_parans.setCheckable(True)
++        hbox_params.addWidget(params_lbl)
++        hbox_params.addWidget(self.btn_env_params)
++        hbox_params.addWidget(self.btn_algo_parans)
++        hbox_params.addStretch()
+ 
++        self.template_row.add_row(params_row)
++        vbox.addWidget(env_params_panel)
++        vbox.addWidget(algo_params_panel)
++
+         self.relative_to_curr = QCheckBox("Automatic")
+         self.relative_to_curr.setChecked(True)
+         self.relative_to_curr.hide()
+         vbox.addWidget(self.relative_to_curr)
+ 
+-        # Variables
++        # Variables. The label leads the action row (same line as the
++        # Picker/Refresh), not a heading of its own -- a separate heading
++        # line wastes vertical space a row doesn't need.
+         var_panel_origin = QWidget()
++        vbox_var_panel = QVBoxLayout(var_panel_origin)
++        vbox_var_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_var_panel.setSpacing(4)
+ 
+-        # construct variables as an hbox, with label, stretch, then table on the right
+-        hbox_var = QHBoxLayout(var_panel_origin)
+-        hbox_var.setContentsMargins(0, 0, 0, 0)
+-        hbox_var.setSpacing(6)
+-
+-        lbl_var_col = QWidget()  # column with stretch under
+-        lbl_var_col.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_var = QVBoxLayout(lbl_var_col)
+-        vbox_lbl_var.setContentsMargins(0, 0, 0, 0)
+-        lbl_var = QLabel("Variables")
+-        lbl_var.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_var.addWidget(lbl_var)
+-        vbox_lbl_var.addStretch(1)
+-        hbox_var.addWidget(lbl_var_col)
+-
+         vbox.addWidget(var_panel_origin, 1)
+ 
+-        # Edit variables (right side of hbox_var)
++        # Edit variables (below the heading, full width)
+         edit_var_col = QWidget()
+         vbox_var_edit = QVBoxLayout(edit_var_col)
+         vbox_var_edit.setContentsMargins(0, 2, 0, 2)
+@@ -409,6 +465,9 @@
+         hbox_action_var.setContentsMargins(0, 0, 0, 0)
+         hbox_action_var.setSpacing(0)
+         vbox_var_edit.addWidget(action_var)
++        lbl_var = QLabel("Variables")
++        lbl_var.setStyleSheet("font-weight: 600;")
++        lbl_var.setFixedWidth(VOCS_LABEL_WIDTH)
+         # filter variables
+         self.edit_var = edit_var = Picker(self.list_vars, "Add variable...")
+         edit_var.setFixedWidth(192)
+@@ -421,28 +480,26 @@
+         self.check_only_var = check_only_var = QCheckBox("Show Checked Only")
+         check_only_var.setChecked(True)
+         check_only_var.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_var.addWidget(lbl_var)
+         hbox_action_var.addWidget(edit_var)
+         hbox_action_var.addSpacing(14)
+         hbox_action_var.addWidget(self.refresh_current_btn)
+         hbox_action_var.addStretch()
+         hbox_action_var.addWidget(check_only_var)
+ 
+-        # var table
++        # var table -- always visible, no collapse bar (the row above
++        # already has a "Variables" label; a second one just to toggle
++        # visibility was redundant, and operators want this open always).
+         self.var_table = VariableTable()
+         self.var_table.checked_only = True
+         self.var_table.verticalHeader().setVisible(False)
+-        cbox_var = CollapsibleBox(self, " Variables")
+-        vbox_var_edit.addWidget(cbox_var)
+-        vbox_var_tbl = QVBoxLayout()
+-        vbox_var_tbl.setContentsMargins(0, 0, 0, 0)
+-        vbox_var_tbl.addWidget(self.var_table)
+-        cbox_var.setContentLayout(vbox_var_tbl)
+-        cbox_var.expand()
+-        self.cbox_var = cbox_var
++        vbox_var_edit.addWidget(self.var_table)
+ 
+         self.var_table.verticalHeader().setDefaultSectionSize(27)
+ 
+-        # Initial Points
++        # Initial Points: keeps its collapsible-looking bar (it's a
++        # secondary, less-often-needed table, worth the visual separation),
++        # but locked open -- clicking the bar does nothing.
+         collapsiblebox_init = CollapsibleBox(
+             self,
+             " Initial Points",
+@@ -472,25 +529,21 @@
+         self.init_table.set_uneditable()
+         vbox_init.addWidget(self.init_table)
+         collapsiblebox_init.setContentLayout(vbox_init)
+-        # cbox_init.expand()
++        collapsiblebox_init.expand()
++        collapsiblebox_init.toggle_button.clicked.disconnect(
++            collapsiblebox_init.start_animation
++        )
++        collapsiblebox_init.toggle_button.setCheckable(False)
+ 
+-        hbox_var.addWidget(edit_var_col)
++        vbox_var_panel.addWidget(edit_var_col)
+ 
+-        # Objectives config (table style)
++        # Objectives config (table style). Label leads the action row,
++        # same as Variables.
+         obj_panel = QWidget()
+         vbox.addWidget(obj_panel)
+-        hbox_obj = QHBoxLayout(obj_panel)
+-        hbox_obj.setContentsMargins(0, 0, 0, 0)
+-        hbox_obj.setSpacing(6)
+-        lbl_obj_col = QWidget()
+-        lbl_obj_col.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_obj = QVBoxLayout(lbl_obj_col)
+-        vbox_lbl_obj.setContentsMargins(0, 0, 0, 0)
+-        lbl_obj = QLabel("Objectives")
+-        lbl_obj.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_obj.addWidget(lbl_obj)
+-        vbox_lbl_obj.addStretch(1)
+-        hbox_obj.addWidget(lbl_obj_col)
++        vbox_obj_panel = QVBoxLayout(obj_panel)
++        vbox_obj_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_obj_panel.setSpacing(4)
+ 
+         edit_obj_col = QWidget()
+         vbox_obj_edit = QVBoxLayout(edit_obj_col)
+@@ -500,6 +553,9 @@
+         hbox_action_obj = QHBoxLayout(action_obj)
+         hbox_action_obj.setContentsMargins(0, 0, 0, 0)
+         vbox_obj_edit.addWidget(action_obj)
++        lbl_obj = QLabel("Objectives")
++        lbl_obj.setStyleSheet("font-weight: 600;")
++        lbl_obj.setFixedWidth(VOCS_LABEL_WIDTH)
+         self.edit_obj = edit_obj = Picker(
+             lambda: self.list_items(self.obj_table), "Add objective..."
+         )
+@@ -507,6 +563,7 @@
+         self.check_only_obj = check_only_obj = QCheckBox("Show Checked Only")
+         check_only_obj.setChecked(True)
+         check_only_obj.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_obj.addWidget(lbl_obj)
+         hbox_action_obj.addWidget(edit_obj)
+         hbox_action_obj.addStretch()
+         hbox_action_obj.addWidget(check_only_obj)
+@@ -514,27 +571,22 @@
+         self.obj_table = ObjectiveTable()
+         self.obj_table.show_selected_only = True
+         vbox_obj_edit.addWidget(self.obj_table)
+-        hbox_obj.addWidget(edit_obj_col)
++        vbox_obj_panel.addWidget(edit_obj_col)
+ 
+-        cbox_more = CollapsibleBox(self, " Constraints + Observables")
+-        vbox.addWidget(cbox_more)
+-        vbox_more = QVBoxLayout()
++        # Constraints and Observables: always visible, no collapse bar that
++        # could hide both sections entirely -- each already has its own
++        # label leading its action row.
++        more_panel = QWidget()
++        vbox.addWidget(more_panel)
++        vbox_more = QVBoxLayout(more_panel)
++        vbox_more.setContentsMargins(0, 0, 0, 0)
+ 
+-        # Constraints config
++        # Constraints config. Label leads the action row, same as above.
+         con_panel = QWidget()
+         vbox_more.addWidget(con_panel)
+-        hbox_con = QHBoxLayout(con_panel)
+-        hbox_con.setContentsMargins(0, 0, 0, 0)
+-        hbox_con.setSpacing(6)
+-        lbl_con_col = QWidget()
+-        lbl_con_col.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_con = QVBoxLayout(lbl_con_col)
+-        vbox_lbl_con.setContentsMargins(0, 0, 0, 0)
+-        lbl_con = QLabel("Constraints")
+-        lbl_con.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_con.addWidget(lbl_con)
+-        vbox_lbl_con.addStretch(1)
+-        hbox_con.addWidget(lbl_con_col)
++        vbox_con_panel = QVBoxLayout(con_panel)
++        vbox_con_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_con_panel.setSpacing(4)
+ 
+         edit_con_col = QWidget()
+         vbox_con_edit = QVBoxLayout(edit_con_col)
+@@ -544,6 +596,9 @@
+         hbox_action_con = QHBoxLayout(action_con)
+         hbox_action_con.setContentsMargins(0, 0, 0, 0)
+         vbox_con_edit.addWidget(action_con)
++        lbl_con = QLabel("Constraints")
++        lbl_con.setStyleSheet("font-weight: 600;")
++        lbl_con.setFixedWidth(VOCS_LABEL_WIDTH)
+         self.edit_con = edit_con = Picker(
+             lambda: self.list_items(self.con_table), "Add constraint..."
+         )
+@@ -551,6 +606,7 @@
+         self.check_only_con = check_only_con = QCheckBox("Show Checked Only")
+         check_only_con.setChecked(True)
+         check_only_con.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_con.addWidget(lbl_con)
+         hbox_action_con.addWidget(edit_con)
+         hbox_action_con.addStretch()
+         hbox_action_con.addWidget(check_only_con)
+@@ -558,23 +614,15 @@
+         self.con_table = ConstraintTable()
+         self.con_table.show_selected_only = True
+         vbox_con_edit.addWidget(self.con_table)
+-        hbox_con.addWidget(edit_con_col)
++        vbox_con_panel.addWidget(edit_con_col)
+ 
+-        # States config
++        # States (Observables) config. Label leads the action row, same
++        # as above.
+         sta_panel = QWidget()
+         vbox_more.addWidget(sta_panel)
+-        hbox_sta = QHBoxLayout(sta_panel)
+-        hbox_sta.setContentsMargins(0, 0, 0, 0)
+-        hbox_sta.setSpacing(6)
+-        lbl_sta_col = QWidget()
+-        lbl_sta_col.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_sta = QVBoxLayout(lbl_sta_col)
+-        vbox_lbl_sta.setContentsMargins(0, 0, 0, 0)
+-        lbl_sta = QLabel("Observables")
+-        lbl_sta.setFixedWidth(LABEL_WIDTH)
+-        vbox_lbl_sta.addWidget(lbl_sta)
+-        vbox_lbl_sta.addStretch(1)
+-        hbox_sta.addWidget(lbl_sta_col)
++        vbox_sta_panel = QVBoxLayout(sta_panel)
++        vbox_sta_panel.setContentsMargins(0, 0, 0, 0)
++        vbox_sta_panel.setSpacing(4)
+ 
+         edit_sta_col = QWidget()
+         vbox_sta_edit = QVBoxLayout(edit_sta_col)
+@@ -584,6 +632,9 @@
+         hbox_action_sta = QHBoxLayout(action_sta)
+         hbox_action_sta.setContentsMargins(0, 0, 0, 0)
+         vbox_sta_edit.addWidget(action_sta)
++        lbl_sta = QLabel("Observables")
++        lbl_sta.setStyleSheet("font-weight: 600;")
++        lbl_sta.setFixedWidth(VOCS_LABEL_WIDTH)
+         self.edit_sta = edit_sta = Picker(
+             lambda: self.list_items(self.sta_table), "Add observable..."
+         )
+@@ -591,6 +642,7 @@
+         self.check_only_sta = check_only_sta = QCheckBox("Show Checked Only")
+         check_only_sta.setChecked(True)
+         check_only_sta.hide()  # lists always show checked items; the picker holds the rest
++        hbox_action_sta.addWidget(lbl_sta)
+         hbox_action_sta.addWidget(edit_sta)
+         hbox_action_sta.addStretch()
+         hbox_action_sta.addWidget(check_only_sta)
+@@ -598,16 +650,13 @@
+         self.sta_table = ObservableTable()
+         self.sta_table.show_selected_only = True
+         vbox_sta_edit.addWidget(self.sta_table)
+-        hbox_sta.addWidget(edit_sta_col)
++        vbox_sta_panel.addWidget(edit_sta_col)
+ 
+-        cbox_more.setContentLayout(vbox_more)
+-        cbox_more.expand()
+-
+         self._fit_targets = []
+-        self._watch_table_rows(self.var_table, cbox_var)
++        self._watch_table_rows(self.var_table, None)
+         self._watch_table_rows(self.obj_table, None)
+-        self._watch_table_rows(self.con_table, cbox_more)
+-        self._watch_table_rows(self.sta_table, cbox_more)
++        self._watch_table_rows(self.con_table, None)
++        self._watch_table_rows(self.sta_table, None)
+ 
+     def config_logic(self):
+         self.edit_var.picked.connect(self.pick_var)
+@@ -640,21 +689,21 @@
+ 
+     def toggle_env_params(self, checked: bool):
+         if not checked:
+-            self.edit_env_params.hide()
++            self.env_params_panel.hide()
+         else:
+             self.edit_env_params.setMinimumHeight(
+                 self._qtree_height_hint(self.edit_env_params)
+             )
+-            self.edit_env_params.show()
++            self.env_params_panel.show()
+ 
+     def toggle_algorithm_params(self, checked: bool):
+         if not checked:
+-            self.edit_algo_params.hide()
++            self.algo_params_panel.hide()
+         else:
+             self.edit_algo_params.setMinimumHeight(
+                 self._qtree_height_hint(self.edit_algo_params)
+             )
+-            self.edit_algo_params.show()
++            self.algo_params_panel.show()
+ 
+     def _qtree_height_hint(self, widget: QTreeWidget) -> int:
+         # set height based on number of rows * row size
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-21 13:38:23
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-21 13:38:23
+@@ -22,6 +22,7 @@
+ from PyQt5.QtWidgets import QLineEdit, QPushButton, QFileDialog
+ from PyQt5.QtWidgets import QMessageBox, QWidget, QTabWidget
+ from PyQt5.QtWidgets import QVBoxLayout, QScrollArea
++from PyQt5.QtWidgets import QApplication, QStyle
+ from PyQt5.QtWidgets import QTableWidgetItem, QPlainTextEdit
+ from badger.gui.components.navigators import HistoryNavigator
+ from coolname import generate_slug
+@@ -214,14 +215,20 @@
+         )
+         scroll_content_env = QWidget()
+         scroll_layout_env = QVBoxLayout(scroll_content_env)
+-        # add extra right margin for macOS to prevent scrollbar overlap
+-        scroll_layout_env.setContentsMargins(0, 0, 5, 0)
++        # Right margin to clear the vertical scrollbar -- styled, full-width
++        # content (like the Tuning Task box) is otherwise clipped by it. A
++        # hardcoded guess (previously 5px, tuned for one platform) is the
++        # wrong fix: ask the actual style for the real scrollbar width.
++        scrollbar_extent = QApplication.style().pixelMetric(
++            QStyle.PM_ScrollBarExtent
++        )
++        scroll_layout_env.setContentsMargins(0, 0, scrollbar_extent + 4, 0)
+         self.env_box.var_table.setColumnWidth(5, 44)
+ 
+         scroll_layout_env.addWidget(self.env_box)
+         scroll_area.setWidgetResizable(True)
+         scroll_area.setWidget(scroll_content_env)
+-        tabs.addTab(scroll_area, "Environment + VOCS")
++        tabs.addTab(scroll_area, "Tuning")
+ 
+         # Data panel
+         self.data_panel = BadgerDataPanel(self)
