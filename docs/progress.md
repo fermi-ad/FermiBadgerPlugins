@@ -1915,3 +1915,36 @@ observable lists already keep plugin order.
   `BadgerResolvedType.resolve_qt(float/int, ...)` directly and confirmed
   wheel-protected widgets come out. Full from-scratch check (all 7 patches,
   offline test suite, `picker_test.py`) clean.
+
+## 2026-10-21: safe-badger — startup snapshot, Revert, automatic restore (pushed to main)
+
+Status: built, offline-verified, **pushed** (`e749517`, `db7f34a`, `fe49f38`);
+not yet machine-tested or enabled on production. Full description:
+`docs/safe-badger.md`; README section "safe-badger: revert and crash safety".
+
+- Pieces: `plugins/settings_snapshot.py` (snapshot/diff/restore via pacsys,
+  no Badger imports), `safe_badger.py` (launcher + CLI, pixi task
+  `safe-badger mini|diff|restore`), `patches/badger-1.6.0-mini-revert-settings.patch`
+  (Revert button, capture on template load, Keep/Revert/Cancel on close,
+  status-bar reminder, fixed-width change table).
+- Decisions: first-seen values per device; all declared variables, checked or
+  not; raw `.SETTING` writes per settings role (never `env.set_variables`);
+  launcher, not an in-GUI handler, does the automatic restore; automatic
+  restore only within 2 h of the first template load (`MAX_AUTO_RESTORE_HOURS`),
+  older snapshots become `*.expired`; snapshots left by a dead launcher
+  become `*.stale`; neither is ever restored automatically.
+- Verified offline: `tests/settings_snapshot_test.py` (incl. launcher process
+  group kills, expiry), `tests/settings_snapshot_gui_test.py` (offscreen
+  `-mini` with FakeBackend), full suite, from-scratch bootstrap byte-identical.
+  User checked by hand: quitting mid-run and closing after a stopped run
+  both reach the Keep/Revert question as intended.
+- Verified facts: pixi's MIT `klist` can't see the macOS ticket cache (use
+  `pacsys.KerberosAuth()`); Qt's fixed-font lookups return proportional fonts
+  (name the font); Badger's status label elides long text (tooltip has it all);
+  macOS `killpg(pg, 0)` on a zombie-only group gives EPERM.
+- Pulling main does not change either GUI until setup is re-run there
+  (`pixi run setup`, or `./setup.sh` for conda, which needs pacsys in that env).
+- Next: on production `git pull && pixi run setup -- --yes`; machine tests in
+  TODO.md with `development/ZZ_PacsysTesting.yaml`; then hand over
+  `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml` for
+  the operator shortcut.
