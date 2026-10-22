@@ -1309,3 +1309,14 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - Earlier this session: the new GUI assertion first failed (`<pre>` now carries
   a style); the failure skipped cleanup and Badger's worker held the pipe open,
   so it looked like a hang. The test now terminates workers in `finally`.
+
+## 2026-10-21 — main pushed; safe-badger work wrapped up
+
+- Pushed main `8c7b557..fe49f38` at the user's request (the three safe-badger
+  commits). Checked first that a pull changes no environment/interface plugin
+  and no installed site-packages: both the pixi and the old conda invocation
+  keep running unchanged until setup is re-run there.
+- User tried the GUI flow by hand: quitting mid-run and closing after a stopped
+  run both behave well.
+- Removed the `../FermiBadgerPlugins-main` worktree; `simpler_mini` has main
+  merged in.
