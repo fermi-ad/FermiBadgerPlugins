@@ -1,6 +1,6 @@
 """Offline checks of plugins/settings_snapshot.py, no control network needed.
 
-Covers: which devices an environment snapshots (mults, -SETPOINT observables and
+Covers (settings_snapshot.py and safe_badger.py): which devices an environment snapshots (mults, -SETPOINT observables and
 'nosettings' dropped, read/set pairs give the setting device); first-seen merge;
 diff; restore writes only what moved, grouped by role, retries, reports failures;
 the launcher ends Badger's whole process group and restores unless resolved.
@@ -19,8 +19,10 @@ import time
 from pathlib import Path
 
 sys.path.insert(0, 'plugins')
+sys.path.insert(0, '.')
 
 from pacsys.testing import FakeBackend
+import safe_badger as sb
 import settings_snapshot as ss
 
 
@@ -84,6 +86,10 @@ assert ss.restore(path, backend=fb, open_writer=writer_for, pause=0) == []
 assert sorted(roles) == ['r1', 'r2']
 assert sorted(drf for drf, _ in fb.writes) == ['L:A.SETTING', 'L:C.SETTING'], fb.writes
 assert ss.diff(path, backend=fb) == []
+assert ss.format_changes([('L:A', 1.0, 5.0), ('L:LONGNAME', 359.5, -0.5)]).splitlines() == [
+    'Device                 Now         Startup',
+    'L:A                      5               1',
+    'L:LONGNAME            -0.5           359.5']
 
 # --- restore: retry, then report what still differs ---------------------------------
 fb2 = FakeBackend()
@@ -125,25 +131,25 @@ def launch(kill, resolved=None):
             os.kill(os.getpid(), signal.SIGTERM)  # the launcher is told to stop
 
     child_pid = []
-    real_popen = ss.subprocess.Popen
+    real_popen = sb.subprocess.Popen
 
     def popen(*a, **kw):
         p = real_popen(*a, **kw)
         child_pid.append(p.pid)
         return p
 
-    ss.subprocess.Popen = popen
+    sb.subprocess.Popen = popen
     threading.Thread(target=killer, daemon=True).start()
     try:
-        ss.supervise([sys.executable, '-c', CHILD, str(pidfile)], snap, restore_fn=fake_restore)
+        sb.supervise([sys.executable, '-c', CHILD, str(pidfile)], snap, restore_fn=fake_restore)
     finally:
-        ss.subprocess.Popen = real_popen
+        sb.subprocess.Popen = real_popen
     grandchild = int(pidfile.read_text())
     for _ in range(50):  # orphaned, so init reaps it; give that a moment
-        if not ss._alive(grandchild):
+        if not sb._alive(grandchild):
             break
         time.sleep(0.1)
-    assert not ss._alive(grandchild), 'run subprocess survived'
+    assert not sb._alive(grandchild), 'run subprocess survived'
     return called, ss.load(snap)
 
 

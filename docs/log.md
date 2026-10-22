@@ -1019,3 +1019,21 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   capture on `sig_load_template`, Keep/Revert/Cancel in `closeEvent`.
 - pixi tasks `mini`, `restore`, `diff`. Offline suite + both new tests pass;
   from-scratch bootstrap check run.
+
+## 2026-10-21 — safe-badger: own launcher file, fixed-width revert table, docs
+
+- User: fine about the Z:CUBE_X write; what mattered most was being told
+  promptly.
+- Launcher and CLI moved out of `plugins/settings_snapshot.py` into
+  `safe_badger.py` at the repo root; pixi task `safe-badger` with subcommands
+  `mini [badger args]`, `diff <file>`, `restore <file>` (replaces the `mini` /
+  `restore` / `diff` tasks). Log renamed `logs/safe-badger.log`.
+- Revert and close dialogs show the changed devices as a `Device / Now /
+  Startup` table (`settings_snapshot.format_changes`) in a `<pre>` block.
+  Qt's own fixed-font lookups returned proportional fonts here
+  (`systemFont(FixedFont)` → `.AppleSystemUIFont`, `TypeWriter` hint →
+  American Typewriter), so the patch names the first installed of DejaVu Sans
+  Mono / Liberation Mono / Menlo / Courier New. Checked with an offscreen
+  screenshot.
+- Docs: new `docs/safe-badger.md` (processes, file format, every ending,
+  tests); README gets a top-level "safe-badger" section and tree entries.

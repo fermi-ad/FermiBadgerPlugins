@@ -60,16 +60,26 @@ diff -ruN a/badger/gui/components/action_bar.py b/badger/gui/components/action_b
  
 diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
 --- a/badger/gui/mini/pages/home_page.py	2026-10-21 15:17:37
-+++ b/badger/gui/mini/pages/home_page.py	2026-10-21 15:18:43
-@@ -15,6 +15,7 @@
++++ b/badger/gui/mini/pages/home_page.py	2026-10-21 17:07:35
+@@ -7,14 +7,16 @@
+ """
+ 
+ import gc
++import html
+ import os
+ import traceback
+ from importlib import resources
+ 
+ from pandas import DataFrame
  from PyQt5.QtCore import pyqtSignal, Qt, QModelIndex
- from PyQt5.QtGui import QIcon
+-from PyQt5.QtGui import QIcon
++from PyQt5.QtGui import QFontDatabase, QIcon
  from PyQt5.QtWidgets import (
 +    QApplication,
      QMessageBox,
      QSplitter,
      QVBoxLayout,
-@@ -41,7 +42,7 @@
+@@ -41,7 +43,7 @@
  from badger.gui.components.run_monitor import BadgerOptMonitor
  from badger.gui.components.status_bar import BadgerStatusBar
  from badger.gui.components.action_bar import BadgerActionBar
@@ -78,7 +88,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
  from badger.settings import init_settings
  
  # from PyQt5.QtGui import QBrush, QColor
-@@ -169,6 +170,7 @@
+@@ -169,6 +171,7 @@
          # Add action bar
          self.run_action_bar = run_action_bar = BadgerActionBar()
          run_action_bar.docs_name = "minimode"
@@ -86,7 +96,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
  
          # Run panel (routine editor + run monitor + data table + action bar)
          panel_run = QWidget()
-@@ -228,6 +230,8 @@
+@@ -228,6 +231,8 @@
          self.template_browser.template_tree_view.clicked.connect(self.go_template)
  
          self.routine_editor.sig_load_template.connect(self.update_status)
@@ -95,7 +105,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
          self.routine_editor.sig_save_template.connect(self.update_status)
          self.routine_editor.sig_go_run.connect(self.go_run)
  
-@@ -507,6 +511,152 @@
+@@ -507,6 +512,163 @@
      def update_status(self, info):
          logger.info(f"Updating status: {info}")
          self.status_bar.set_summary(info)
@@ -153,12 +163,25 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
 +        finally:
 +            QApplication.restoreOverrideCursor()
 +
-+    def _describe_changes(self, snap, path, changes):
-+        lines = [f"{d}:  now {now:.6g}  →  {startup:.6g}" for d, startup, now in changes]
-+        return (
-+            f"{len(changes)} device(s) differ from their settings when the template "
-+            f"was loaded ({snap.age(snap.load(path))} ago):\n\n" + "\n".join(lines)
++    def _changes_box(self, title, snap, path, changes):
++        """A question box listing the changed devices as a fixed-width table, so
++        the columns of numbers line up."""
++        box = QMessageBox(QMessageBox.Question, title, "", parent=self)
++        box.setTextFormat(Qt.RichText)
++        # Named, not left to Qt: its fixed-font lookups can return proportional fonts.
++        installed = QFontDatabase().families()
++        mono = next(
++            (f for f in ("DejaVu Sans Mono", "Liberation Mono", "Menlo", "Courier New")
++             if f in installed),
++            QFontDatabase.systemFont(QFontDatabase.FixedFont).family(),
 +        )
++        box.setText(
++            f"{len(changes)} device(s) differ from their settings when the template "
++            f"was loaded ({snap.age(snap.load(path))} ago):"
++            f"<pre style=\"font-family: '{mono}'\">"
++            f"{html.escape(snap.format_changes(changes))}</pre>"
++        )
++        return box
 +
 +    def _restore_settings(self, snap, path):
 +        """Write the snapshot back; True if every device now matches it."""
@@ -179,7 +202,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
 +                "Revert incomplete",
 +                "These devices still differ from their startup settings:\n\n"
 +                + "\n".join(failed)
-+                + f"\n\nTo retry from a terminal: pixi run restore {path}",
++                + f"\n\nTo retry from a terminal: pixi run safe-badger restore {path}",
 +            )
 +        return not failed
 +
@@ -199,14 +222,12 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
 +                self, "Revert", "Every device is already at its startup setting."
 +            )
 +            return
-+        reply = QMessageBox.question(
-+            self,
-+            "Revert all devices",
-+            self._describe_changes(snap, path, changes) + "\n\nRevert them all?",
-+            QMessageBox.Yes | QMessageBox.No,
-+            QMessageBox.No,
-+        )
-+        if reply == QMessageBox.Yes:
++        box = self._changes_box("Revert all devices", snap, path, changes)
++        box.setInformativeText("Revert them all to their startup settings?")
++        box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
++        box.setDefaultButton(QMessageBox.No)
++        box.exec_()
++        if box.clickedButton() is box.button(QMessageBox.Yes):
 +            self._restore_settings(snap, path)
 +
 +    def settle_settings(self) -> bool:
@@ -219,8 +240,8 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
 +                self,
 +                "Close Badger",
 +                f"Could not read device settings to compare with startup:\n\n{e}"
-+                "\n\nClose anyway? If Badger was started with 'pixi run mini', "
-+                "the launcher will try to restore every device.",
++                "\n\nClose anyway? If Badger was started with 'pixi run safe-badger "
++                "mini', it will try to restore every device.",
 +                QMessageBox.Yes | QMessageBox.No,
 +                QMessageBox.No,
 +            )
@@ -231,8 +252,8 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
 +        if not changes:
 +            snap.resolve(path, "keep")
 +            return True
-+        box = QMessageBox(QMessageBox.Question, "Close Badger", "", parent=self)
-+        box.setText(self._describe_changes(snap, path, changes))
++        box = self._changes_box("Close Badger", snap, path, changes)
++        box.setInformativeText("Keep the new settings, or revert to the startup ones?")
 +        btn_keep = box.addButton("Keep", QMessageBox.AcceptRole)
 +        btn_revert = box.addButton("Revert", QMessageBox.DestructiveRole)
 +        box.addButton(QMessageBox.Cancel)

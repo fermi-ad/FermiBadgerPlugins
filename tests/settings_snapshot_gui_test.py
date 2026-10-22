@@ -33,6 +33,7 @@ def main():
     import settings_snapshot  # noqa: E402  (plugin root is on the path once badger.factory loads)
 
     writer_roles = []
+    shown = []
 
 
     class Writer:  # restore() closes each role's session; keep the shared fake open
@@ -47,6 +48,7 @@ def main():
     def answer(text):
         """Make every QMessageBox pick the button labelled `text` (no dialogs offscreen)."""
         def pick(self):
+            shown.append(self.text())
             [b for b in self.buttons() if b.text().replace("&", "") == text][0].click()
         QMessageBox.exec_ = pick
         QMessageBox.question = staticmethod(lambda *a, **k: QMessageBox.Yes)
@@ -82,6 +84,7 @@ def main():
     window.home_page.revert_settings()
     assert fb.get_written_value("Z:CUBE_X.SETTING") == 2.0 and len(fb.writes) == 1
     assert writer_roles == ["testing"]
+    assert "<pre style=" in shown[-1] and "Device" in shown[-1], shown[-1]  # fixed-width table
     assert settings_snapshot.load(snap_file)["resolved"] is None  # session goes on
 
     # Close with changes: Cancel stays open, Keep records the decision.
@@ -115,4 +118,9 @@ def main():
 
 
 if __name__ == "__main__":  # Badger spawns workers that re-import this file
-    main()
+    try:
+        main()
+    finally:  # a failed assert must not leave Badger's run worker holding the pipe
+        import multiprocessing
+        for child in multiprocessing.active_children():
+            child.terminate()
