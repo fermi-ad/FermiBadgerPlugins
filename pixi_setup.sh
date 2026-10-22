@@ -82,7 +82,7 @@ else
     apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-device-list-gui.patch"
     apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-full-gui-template-option.patch"
     apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-spinbox-wheel-guard.patch"
-    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mini-revert-settings.patch"
+    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-revert-settings.patch"
 
     apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
 fi

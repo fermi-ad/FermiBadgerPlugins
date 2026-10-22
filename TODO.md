@@ -5,8 +5,9 @@ Open work, roughly in priority order. Session-by-session detail lives in
 
 ## safe-badger: revert and crash safety (built 2026-10-21 on main; `docs/safe-badger.md`)
 
-Startup snapshot of every writable device, a `-mini` Revert button, Keep/Revert
-on close, and `pixi run safe-badger mini`: a launcher that restores automatically if Badger
+Startup snapshot of every writable device (at template load and at Go), a
+Revert button and Keep/Revert on close in both GUIs, and `pixi run safe-badger
+mini|g`: a launcher that restores automatically if Badger
 exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 `settings_snapshot_gui_test.py`, FakeBackend).
 

@@ -1063,3 +1063,24 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   run both behave well.
 - Removed the `../FermiBadgerPlugins-main` worktree; `simpler_mini` has main
   merged in.
+
+## 2026-10-21 — safe-badger for the full GUI too; snapshot at Go
+
+- User's plan, in order: (1) safe-badger for `-g`, (2) trial simpler_mini on
+  production then merge into main, (3) pixi the norm. Decisions: snapshot
+  also at Go; conda path kept frozen (not deleted); commands
+  `safe-badger mini|g`.
+- The GUI logic moved out of the mini home page into one mixin,
+  `badger/gui/components/settings_guard.py` (`SettingsGuard`), inherited by
+  both home pages; both main windows call `settle_settings()` in `closeEvent`.
+  Differences handled: params editor `edit_env_params` (mini) vs `edit` (-g);
+  only mini's var table has `refresh_current_values`. The Revert button is
+  no longer hidden by default.
+- `start_run` (both GUIs) calls `snapshot_at_go()` first: covers an
+  environment picked without a template. If the read fails it asks; No cancels
+  the run and resets the action bar.
+- Patch renamed `badger-1.6.0-mini-revert-settings.patch` →
+  `badger-1.6.0-revert-settings.patch` (setup scripts updated).
+- `safe_badger.py`: `g` subcommand (`GUIS = {'mini': '-mini', 'g': '-g'}`).
+- GUI test now runs every check on both windows, plus Go capture and the
+  cancelled-run case.

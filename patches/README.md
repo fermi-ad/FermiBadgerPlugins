@@ -12,7 +12,7 @@
 | `badger-mini-config.patch` | Initializes the settings singleton before template loading in `-mini` | Badger 1.6.0 |
 | `badger-mini-var-table-env-configs.patch` | Rebuilds the `-mini` variable table's env configs *and* its rows from the template, so the table lists and queries the template's machine rather than the plugin defaults | Badger 1.6.0 |
 | `badger-1.6.0-device-list-gui.patch` | Lists variables in environment (beam) order instead of alphabetical when a template/routine loads; replaces each "Filter…" box and "Show Checked Only" checkbox in `-g` and `-mini` with a search dropdown that opens on focus, lists every item in beam order with a check icon on selected ones, and adds an item when picked; lists always show checked rows; the "Enter new … here" placeholder rows are hidden and all four tables size to their visible rows (zero rows when nothing is checked); variable table sits in a collapsible box. Apply **after** the two `-mini` patches. | Badger 1.6.0 |
-| `badger-1.6.0-mini-revert-settings.patch` | `-mini` only: snapshots every writable device's setting on each template load, adds a **Revert** button to the action bar (hidden in `-g`), and asks Keep / Revert / Cancel on close when devices differ, listing them in a fixed-width table. The pacsys work lives in `plugins/settings_snapshot.py`, the launcher in `safe_badger.py`; see `docs/safe-badger.md`. | Badger 1.6.0 |
+| `badger-1.6.0-revert-settings.patch` | Both GUIs (`-mini` and `-g`): snapshots every writable device's setting on each template load and at Go, adds a **Revert** button to the action bar, and asks Keep / Revert / Cancel on close when devices differ, listing them in a fixed-width table. All the GUI logic is one new mixin, `gui/components/settings_guard.py`; the pacsys work lives in `plugins/settings_snapshot.py`, the launcher in `safe_badger.py`; see `docs/safe-badger.md`. | Badger 1.6.0 |
 | `badger-1.6.0-spinbox-wheel-guard.patch` | Stops the mouse wheel from changing numeric field values in the Environment/Algorithm Parameters editor and the range-limit dialogs — a frequent source of accidental edits. Reuses Badger's own existing `MouseWheelWidgetAdjustmentGuard` (already used for the variable table's spin boxes) everywhere else it was missing. | Badger 1.6.0 |
 
 ## Issues Fixed
@@ -98,7 +98,7 @@ patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-mini-var-table-env-config
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-device-list-gui.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-full-gui-template-option.patch
 patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-spinbox-wheel-guard.patch
-patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-mini-revert-settings.patch
+patch -p1 < /path/to/FermiBadgerPlugins/patches/badger-1.6.0-revert-settings.patch
 ```
 
 ## Applying the Xopt Patch
