@@ -21,13 +21,17 @@ import math
 import os
 import re
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
 SNAP_DIR = REPO / 'logs' / 'snapshots'
 TIMEOUT = 15.0
 REL_TOL = 1e-3
+# safe-badger restores automatically only within this long of the session's first
+# template load. Sessions normally last under 30 min; past this, someone may have
+# retuned by hand since, so the snapshot is kept for a manual restore instead.
+MAX_AUTO_RESTORE_HOURS = 2
 ABS_TOL = 1e-6
 
 # Same rule as BasicPacsysInterface.extract_setting_devices: in 'READ,SET[,tol...]'
@@ -98,8 +102,16 @@ def format_changes(changes) -> str:
     return '\n'.join(rows)
 
 
+def age_seconds(data) -> float:
+    return (datetime.now() - datetime.fromisoformat(data['created'])).total_seconds()
+
+
+def auto_restore_until(data) -> datetime:
+    return datetime.fromisoformat(data['created']) + timedelta(hours=MAX_AUTO_RESTORE_HOURS)
+
+
 def age(data) -> str:
-    seconds = (datetime.now() - datetime.fromisoformat(data['created'])).total_seconds()
+    seconds = age_seconds(data)
     hours, rem = divmod(int(seconds), 3600)
     return f'{hours} h {rem // 60} min' if hours else f'{rem // 60} min'
 

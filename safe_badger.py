@@ -11,10 +11,13 @@ logs/snapshots/. The patched -mini GUI fills that file each time it loads a
 template, and records the operator's Keep/Revert answer in it on close. When
 Badger exits for any reason, or safe-badger itself gets SIGINT/SIGTERM/SIGHUP,
 safe-badger ends Badger's whole process group and, if the file holds no answer,
-restores every device in it. Everything is logged to logs/safe-badger.log.
+restores every device in it, provided the session's first template load was
+less than MAX_AUTO_RESTORE_HOURS (settings_snapshot.py) ago; an older snapshot
+is renamed *.expired and left for a manual restore. Everything is logged to
+logs/safe-badger.log.
 
-The snapshot, diff and restore logic is plugins/settings_snapshot.py. See the
-README's "Revert and crash safety" for the full description.
+The snapshot, diff and restore logic is plugins/settings_snapshot.py. The full
+description is docs/safe-badger.md.
 """
 import logging
 import os
@@ -138,8 +141,16 @@ def supervise(cmd, path, restore_fn=snapshot.restore) -> int:
             log.info('Badger exited (%s); operator chose "%s".', child.returncode,
                      data['resolved'])
         else:
-            log.warning('Badger exited (%s) without a Keep/Revert decision: restoring '
-                        '%d devices to their values from %s ago.', child.returncode,
+            log.warning('Badger exited (%s) without a Keep/Revert decision.', child.returncode)
+            if snapshot.age_seconds(data) > snapshot.MAX_AUTO_RESTORE_HOURS * 3600:
+                expired = path.with_suffix('.expired')
+                path.rename(expired)
+                log.error('Snapshot is %s old, over the %d h limit for automatic restore: '
+                          'NOT restored. To restore it anyway: '
+                          'pixi run safe-badger restore %s', snapshot.age(data),
+                          snapshot.MAX_AUTO_RESTORE_HOURS, expired)
+                return _exit_code(child)
+            log.warning('Restoring %d devices to their values from %s ago.',
                         len(data['devices']), snapshot.age(data))
             try:
                 failed = restore_fn(path)
@@ -151,6 +162,10 @@ def supervise(cmd, path, restore_fn=snapshot.restore) -> int:
             else:
                 snapshot.resolve(path, 'restored-by-launcher')
                 log.info('Restore complete.')
+    return _exit_code(child)
+
+
+def _exit_code(child) -> int:
     rc = child.returncode
     return rc if rc >= 0 else 128 - rc
 
@@ -167,6 +182,10 @@ def main(argv) -> int:
         _flag_stale()
         path = snapshot.SNAP_DIR / f'{datetime.now():%Y%m%d-%H%M%S}-{os.getpid()}.json'
         log.info('Starting Badger; snapshot file %s', path)
+        log.info('If Badger is interrupted within %d h of loading the first template, '
+                 'every device it changed is restored automatically. After that, use '
+                 'Revert, or answer Keep/Revert when closing.',
+                 snapshot.MAX_AUTO_RESTORE_HOURS)
         return supervise(BADGER_MINI + argv[1:], path)
 
     path = Path(argv[1])

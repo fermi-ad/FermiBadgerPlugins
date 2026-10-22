@@ -77,6 +77,18 @@ def main():
     assert sorted(data["devices"]) == ["G:AMANDA", "Z:CUBE_X", "Z:CUBE_Y", "Z:CUBE_Z"], data
     assert {d["role"] for d in data["devices"].values()} == {"testing"}
     assert bar.btn_revert.isEnabled()
+    status = window.home_page.status_bar  # the label elides; its tooltip has the full text
+    assert "NO automatic restore" in status.toolTip(), status.toolTip()  # no safe-badger here
+    os.environ["FERMIBADGER_LAUNCHER_PID"] = str(os.getpid())
+    window.home_page.routine_editor.load_template_yaml(
+        template_path="tuning_templates/development/ZZ_PacsysTesting.yaml")
+    until = settings_snapshot.auto_restore_until(settings_snapshot.load(snap_file))
+    assert f"automatic restore if interrupted until {until:%H:%M}" in status.toolTip()
+    window.resize(1250, 790)
+    window.show()
+    for _ in range(50):
+        QApplication.processEvents()
+    window.grab().save(os.environ.get("SHOT_DIR", tempfile.gettempdir()) + "/status_bar.png")
 
     # Revert button: confirm, write back only what moved.
     fb.set_reading("Z:CUBE_X.SETTING", 9.0)
