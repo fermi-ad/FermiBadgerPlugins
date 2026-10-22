@@ -14,7 +14,10 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 - [ ] **Hand over the new operator launch line** for the external shortcut,
   once machine-tested: `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml`
   (replaces `pixi run badger -mini -cf config.local.yaml -t ...`).
-- [ ] **Machine tests** with `development/ZZ_PacsysTesting.yaml` (role `testing`):
+- [ ] **Machine tests — next, planned for 2026-10-22 on the MCR host** (steps in
+  `docs/progress.md`), with `development/ZZ_PacsysTesting.yaml` (role `testing`),
+  both `safe-badger mini` and `safe-badger g`, including Go in `-g` with an
+  environment chosen without a template:
   close → Revert; close → Keep; Revert button mid-session; `kill -9` Badger
   idle and mid-run (run subprocess must die before the restore); Ctrl-C in the
   launcher's terminal (check pixi passes Ctrl-C through and safe-badger still
