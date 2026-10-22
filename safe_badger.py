@@ -2,13 +2,15 @@
 wherever the optimizer put it.
 
     pixi run safe-badger mini [badger args ...]   e.g.  mini -t 01_Linac_RIL_tuning.yaml
+    pixi run safe-badger g [badger args ...]      the full GUI, same protection
     pixi run safe-badger diff <snapshot.json>      what differs from the snapshot now
     pixi run safe-badger restore <snapshot.json>   write the snapshot back
 
-`mini` starts `badger -mini -cf config.local.yaml <args>` as a child in its own
-process session, with FERMIBADGER_SNAPSHOT naming a new file under
-logs/snapshots/. The patched -mini GUI fills that file each time it loads a
-template, and records the operator's Keep/Revert answer in it on close. When
+`mini` / `g` start `badger -mini|-g -cf config.local.yaml <args>` as a child in
+its own process session, with FERMIBADGER_SNAPSHOT naming a new file under
+logs/snapshots/. The patched GUI fills that file each time it loads a template
+and when a run starts, and records the operator's Keep/Revert answer in it on
+close. When
 Badger exits for any reason, or safe-badger itself gets SIGINT/SIGTERM/SIGHUP,
 safe-badger ends Badger's whole process group and, if the file holds no answer,
 restores every device in it, provided the session's first template load was
@@ -33,7 +35,7 @@ sys.path.insert(0, str(REPO / 'plugins'))
 import settings_snapshot as snapshot  # noqa: E402
 
 LOG_FILE = REPO / 'logs' / 'safe-badger.log'
-BADGER_MINI = ['badger', '-mini', '-cf', str(REPO / 'config.local.yaml')]
+GUIS = {'mini': '-mini', 'g': '-g'}  # safe-badger subcommand: badger flag
 
 log = logging.getLogger('safe_badger')
 
@@ -171,12 +173,12 @@ def _exit_code(child) -> int:
 
 
 def main(argv) -> int:
-    if not argv or argv[0] not in ('mini', 'restore', 'diff') \
-            or (argv[0] != 'mini' and len(argv) != 2):
+    if not argv or argv[0] not in (*GUIS, 'restore', 'diff') \
+            or (argv[0] not in GUIS and len(argv) != 2):
         print(__doc__)
         return 2
     _setup_logging()
-    if argv[0] == 'mini':
+    if argv[0] in GUIS:
         _check_kerberos()
         snapshot.SNAP_DIR.mkdir(parents=True, exist_ok=True)
         _flag_stale()
@@ -186,7 +188,8 @@ def main(argv) -> int:
                  'every device it changed is restored automatically. After that, use '
                  'Revert, or answer Keep/Revert when closing.',
                  snapshot.MAX_AUTO_RESTORE_HOURS)
-        return supervise(BADGER_MINI + argv[1:], path)
+        badger = ['badger', GUIS[argv[0]], '-cf', str(REPO / 'config.local.yaml')]
+        return supervise(badger + argv[1:], path)
 
     path = Path(argv[1])
     data = snapshot.load(path)

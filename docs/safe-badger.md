@@ -16,10 +16,11 @@ so it could keep writing settings after the GUI was gone.
 
 safe-badger adds three things:
 
-1. A **snapshot**: every device the loaded template's environment can write,
-   checked or not, with its live setting at the moment the template was loaded.
+1. A **snapshot**: every device the session's environment can write, checked
+   or not, with its live setting when the template was loaded or, at the
+   latest, when a run starts (Go).
 2. A **Revert** button and a **Keep / Revert / Cancel** question on close, in
-   the `-mini` GUI.
+   both GUIs (`-mini` and `-g`).
 3. A **launcher** that restores the snapshot automatically when Badger ends
    without the operator answering that question.
 
@@ -28,9 +29,9 @@ safe-badger adds three things:
 | Piece | File | Role |
 |---|---|---|
 | Snapshot library | `plugins/settings_snapshot.py` | Which devices, read, save, diff, restore, table formatting. Imports only the standard library and pacsys, never Badger. |
-| Launcher and CLI | `safe_badger.py` (repo root) | `mini`, `diff` and `restore` subcommands; process supervision; automatic restore; stale-snapshot handling; Kerberos check. |
-| GUI hooks | `patches/badger-1.6.0-mini-revert-settings.patch` | Patches three Badger files (below). Applied by `pixi_setup.sh` / `setup.sh`. |
-| pixi task | `pixi.toml`: `safe-badger = "python safe_badger.py"` | `pixi run safe-badger <subcommand> [args]` |
+| Launcher and CLI | `safe_badger.py` (repo root) | `mini`, `g`, `diff` and `restore` subcommands; process supervision; automatic restore; stale-snapshot handling; Kerberos check. |
+| GUI hooks | `patches/badger-1.6.0-revert-settings.patch` | Adds one Badger file and patches five (below). Applied by `pixi_setup.sh` / `setup.sh`. |
+| pixi task | `pixi.toml`: `safe-badger = "python safe_badger.py"` | `pixi run safe-badger mini|g|diff|restore [args]` |
 | Tests | `tests/settings_snapshot_test.py`, `tests/settings_snapshot_gui_test.py` | Offline, against `pacsys.testing.FakeBackend`. |
 | Output | `logs/snapshots/*.json`, `logs/safe-badger.log` | `logs/` is gitignored. |
 
@@ -39,15 +40,25 @@ Badger's `BADGER_PLUGIN_ROOT`, which Badger puts on `sys.path` when it starts
 (`badger/factory.py`). The patched GUI can therefore `import settings_snapshot`
 without any path set-up. `safe_badger.py` adds `plugins/` to its own path.
 
-The patch touches:
+The patch:
 
-- `badger/gui/components/action_bar.py`: a `btn_revert` button, hidden by
-  default so the full GUI (`-g`) is unchanged; disabled by `lock()` while a run
-  is active and re-enabled by `unlock()` / `routine_finished()` only if
-  `revert_ready` is set.
-- `badger/gui/mini/pages/home_page.py`: shows the button, and adds
-  `snapshot_settings`, `revert_settings`, `settle_settings` and helpers.
-- `badger/gui/mini/windows/main_window.py`: `closeEvent` calls
+- adds `badger/gui/components/settings_guard.py`: the `SettingsGuard` mixin
+  holding all the GUI logic (`snapshot_settings`, `snapshot_at_go`,
+  `revert_settings`, `settle_settings` and helpers). Both home pages inherit
+  it, so `-mini` and `-g` behave identically. It allows for the two small
+  differences between them: the environment-parameter editor is
+  `env_box.edit_env_params` in `-mini` and `env_box.edit` in `-g`, and only
+  the `-mini` variable table has live values to refresh after a restore.
+- `badger/gui/components/action_bar.py` (shared by both GUIs): a `btn_revert`
+  button, disabled by `lock()` while a run is active and re-enabled by
+  `unlock()` / `routine_finished()` only if `revert_ready` is set.
+- `badger/gui/mini/pages/home_page.py` and `badger/gui/pages/home_page.py`:
+  inherit `SettingsGuard`; connect `sig_load_template` to
+  `snapshot_settings` and the button to `revert_settings`; `start_run` calls
+  `snapshot_at_go()` first and returns (resetting the action bar) if it says
+  no.
+- `badger/gui/mini/windows/main_window.py` and
+  `badger/gui/windows/main_window.py`: `closeEvent` calls
   `settle_settings()` before closing; if that returns False the window stays
   open.
 
@@ -56,11 +67,11 @@ The patch touches:
 ```
 terminal / operator shortcut
 └─ pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml
-   └─ python safe_badger.py mini ...                 the launcher
+   └─ python safe_badger.py mini ...                 the launcher (or `g`)
       │   catches SIGINT, SIGTERM, SIGHUP
       │   env: FERMIBADGER_SNAPSHOT=logs/snapshots/<time>-<pid>.json
       │        FERMIBADGER_LAUNCHER_PID=<its pid>
-      └─ badger -mini -cf config.local.yaml -t ...   new session = new process group
+      └─ badger -mini|-g -cf config.local.yaml -t ... new session = new process group
          └─ multiprocessing run worker(s)            same process group as Badger
 ```
 
@@ -97,7 +108,8 @@ still work. Only the automatic restore is missing then.
 }
 ```
 
-- The file is only created once a template has at least one writable device.
+- The file is only created once a template load or a Go finds at least one
+  writable device.
 - **First-seen wins.** A later template load adds devices that aren't in the
   file yet, and never overwrites one that is. A device that the optimizer has
   already moved is therefore still restored to its value from the start of the
@@ -171,6 +183,12 @@ settle loops, periodic-phase unwrapping or supply-limit clipping.
   if interrupted until 15:05`. If Badger wasn't started by safe-badger (no
   `FERMIBADGER_LAUNCHER_PID`), it says `NO automatic restore` instead. The full
   text is also the status bar's tooltip, in case a narrow window elides it.
+- **Capture at Go:** `start_run` (Run and Run until, both GUIs) first calls
+  `snapshot_at_go()`, which snapshots the environment as it is set up now,
+  first-seen as always. This covers an environment chosen from the dropdown
+  without a template, common in `-g`, and variables added after the template
+  load. If the settings can't be read, it asks whether to start the run
+  without a safety net; the default, No, cancels the run.
 - **Revert button:** enabled once the snapshot holds devices, and disabled
   while a run is active.
   1. It reads the live settings and shows the devices that moved, as a
@@ -257,8 +275,7 @@ work on `*.stale` files too.
 | `kill -9` on the launcher, host down | nothing at the time; the next `safe-badger mini` renames the snapshot `*.stale` and logs the restore command |
 | Any of the three above, more than 2 h after the first template load | stops Badger, does **not** restore; snapshot renamed `*.expired`, restore command logged |
 | No Kerberos ticket | warning at start; a restore fails and logs the manual command |
-| Plain `badger -mini` (no launcher) | Revert and the close question work; no automatic restore |
-| `badger -g` | unchanged; no snapshot |
+| Plain `badger -mini` / `badger -g` (no launcher) | Revert and the close question work; no automatic restore |
 
 ## Limits
 
@@ -269,8 +286,10 @@ work on `*.stale` files too.
   application needs longer.
 - **Supply limits:** group sums are not rechecked on restore. It writes back a
   state that was live at the start of the session.
-- **Environment switched without a template:** not snapshotted. Capture runs
-  only on template load.
+- **Changes made outside a run before the first Go**, in a session without a
+  template (e.g. Dial in solution from an archived run): they happen before
+  any snapshot, so the snapshot taken at Go records them as the starting
+  point.
 
 ## Testing
 
@@ -286,14 +305,17 @@ work on `*.stale` files too.
     2 h limit. In each case the grandchild must be gone and the restore called
     (or, for the resolved and expired snapshots, not called; the expired one
     renamed `*.expired`).
-- **`tests/settings_snapshot_gui_test.py`** runs the real `-mini` window
-  offscreen with pacsys's `get_many` replaced by FakeBackend:
+- **`tests/settings_snapshot_gui_test.py`** runs the real `-mini` and `-g`
+  windows offscreen, one after the other, with pacsys's `get_many` replaced by
+  FakeBackend. For each:
   - a simulation template leaves the button disabled;
   - `ZZ_PacsysTesting` is captured with role `testing`;
   - Revert writes only the moved device, and its table is in a `<pre>` block;
   - Cancel, Keep and Revert on close each behave as described above;
   - the status bar reminder says `NO automatic restore` without safe-badger,
-    and gives the right "until" time with it.
+    and gives the right "until" time with it;
+  - Go snapshots an environment with no prior snapshot, and when the read
+    fails it asks, and No cancels the run (`run_monitor.start` never called).
 
-Never run `safe-badger mini` / `restore` from a development machine that has
+Never run `safe-badger mini` / `g` / `restore` from a development machine that has
 VPN and a Kerberos ticket unless you mean it. Those really write to ACNET.

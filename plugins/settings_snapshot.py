@@ -8,8 +8,9 @@ on either side, so mult knobs, read/set pairs and periodic unwrapping can't skew
 what gets restored, and Acsys environments are covered too (same devices).
 
 Imported by:
-- the -mini GUI (badger-1.6.0-mini-revert-settings.patch): capture after each
-  template load, the Revert button, the Keep/Revert question on close;
+- both GUIs, via the SettingsGuard mixin (badger-1.6.0-revert-settings.patch):
+  capture at each template load and at Go, the Revert button, the Keep/Revert
+  question on close;
 - safe_badger.py (repo root), the launcher that restores automatically when
   Badger exits without that question answered, and the restore/diff commands.
 
