@@ -1948,3 +1948,41 @@ not yet machine-tested or enabled on production. Full description:
   TODO.md with `development/ZZ_PacsysTesting.yaml`; then hand over
   `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml` for
   the operator shortcut.
+
+## 2026-10-21 (later): safe-badger for the full GUI, snapshot at Go — production testing next
+
+Status: built, offline-verified, pushed (main `c960a5a`, simpler_mini
+`262025c`). **Not yet tested on the production machine — that is the next
+step** (user, 2026-10-22, MCR host).
+
+- Plan agreed with the user, in order: (1) safe-badger for `-g` [done],
+  (2) trial simpler_mini on production, then merge it into main,
+  (3) pixi the norm, conda path kept frozen, one final operator-shortcut
+  handover.
+- GUI logic is one mixin, `badger/gui/components/settings_guard.py`
+  (`SettingsGuard`), inherited by both home pages; both main windows ask
+  Keep/Revert/Cancel in `closeEvent`. Patch renamed
+  `badger-1.6.0-revert-settings.patch`.
+- Snapshot also at Go (`start_run` → `snapshot_at_go()`, both GUIs): covers
+  an environment picked without a template; a failed read asks, No cancels.
+- `pixi run safe-badger g -t <template>` launches the full GUI protected.
+- Verified offline: full suite (GUI test runs every check on both windows,
+  plus Go capture and the cancelled run), from-scratch bootstrap identical on
+  both branches, screenshot of the -g action bar.
+
+### Next: production testing (MCR host, as lcape)
+
+1. `/home/lcape/FermiBadgerPlugins`: `git pull && pixi run setup -- --yes`
+   (operators' plain `badger -mini` then also shows Revert and the close
+   question).
+2. Trial checkout of simpler_mini: `git fetch origin && git worktree add
+   ../FermiBadgerPlugins-mini-trial simpler_mini`, `./bootstrap.sh --yes` there,
+   then `pixi run setup -- --yes` back in the production checkout (per-user
+   config).
+3. With `development/ZZ_PacsysTesting.yaml` (role `testing`), via
+   `pixi run safe-badger mini|g`: Revert; close → Keep / Revert; `-g` env
+   chosen without a template then Go; `kill -9` idle and mid-run; Ctrl-C;
+   closing the terminal; after `kdestroy`; RIL template records role
+   `ril_tuning`. Check `logs/safe-badger.log` and `logs/snapshots/`.
+4. Then: decide on merging simpler_mini into main (step 2), and hand over
+   the final launch line for the operator shortcut after step 3.
