@@ -16,6 +16,7 @@ import sys
 import tempfile
 import threading
 import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 sys.path.insert(0, 'plugins')
@@ -110,11 +111,12 @@ CHILD = ('import subprocess, sys, time; '
          'open(sys.argv[1], "w").write(str(p.pid)); time.sleep(60)')
 
 
-def launch(kill, resolved=None):
-    snap = tmp / f'launch-{kill}-{resolved}.json'
-    snap.write_text(json.dumps({'created': '2026-01-01T00:00:00', 'resolved': resolved,
+def launch(kill, resolved=None, hours_old=0.0):
+    snap = tmp / f'launch-{kill}-{resolved}-{hours_old}.json'
+    created = (datetime.now() - timedelta(hours=hours_old)).isoformat(timespec='seconds')
+    snap.write_text(json.dumps({'created': created, 'resolved': resolved,
                                 'devices': {'L:A': {'value': 1.0, 'role': 'r'}}}))
-    pidfile = tmp / f'grandchild-{kill}-{resolved}'
+    pidfile = tmp / f'grandchild-{kill}-{resolved}-{hours_old}'
     called = []
 
     def fake_restore(p):
@@ -150,7 +152,7 @@ def launch(kill, resolved=None):
             break
         time.sleep(0.1)
     assert not sb._alive(grandchild), 'run subprocess survived'
-    return called, ss.load(snap)
+    return called, ss.load(snap) if snap.exists() else snap
 
 
 called, data = launch('child')
@@ -159,6 +161,8 @@ called, data = launch('launcher')
 assert called and data['resolved'] == 'restored-by-launcher'
 called, data = launch('child', resolved='keep')
 assert not called and data['resolved'] == 'keep'
+called, expired = launch('child', hours_old=ss.MAX_AUTO_RESTORE_HOURS + 0.1)
+assert not called and expired.with_suffix('.expired').exists()  # too old: kept for manual restore
 signal.signal(signal.SIGTERM, signal.SIG_DFL)
 
 print('settings_snapshot_test ok')

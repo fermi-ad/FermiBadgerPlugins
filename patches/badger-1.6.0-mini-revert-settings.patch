@@ -60,7 +60,7 @@ diff -ruN a/badger/gui/components/action_bar.py b/badger/gui/components/action_b
  
 diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
 --- a/badger/gui/mini/pages/home_page.py	2026-10-21 15:17:37
-+++ b/badger/gui/mini/pages/home_page.py	2026-10-21 17:07:35
++++ b/badger/gui/mini/pages/home_page.py	2026-10-21 20:18:47
 @@ -7,14 +7,16 @@
  """
  
@@ -105,7 +105,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
          self.routine_editor.sig_save_template.connect(self.update_status)
          self.routine_editor.sig_go_run.connect(self.go_run)
  
-@@ -507,6 +512,163 @@
+@@ -507,6 +512,173 @@
      def update_status(self, info):
          logger.info(f"Updating status: {info}")
          self.status_bar.set_summary(info)
@@ -144,6 +144,16 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
 +            return
 +        QApplication.restoreOverrideCursor()
 +        self.run_action_bar.revert_ready = count > 0
++        if count:  # say up front how long the automatic restore covers
++            if os.environ.get("FERMIBADGER_LAUNCHER_PID"):
++                data = settings_snapshot.load(settings_snapshot.session_path())
++                until = settings_snapshot.auto_restore_until(data)
++                note = f"automatic restore if interrupted until {until:%H:%M}"
++            else:
++                note = "NO automatic restore (not started with safe-badger)"
++            self.status_bar.set_summary(
++                f"{template}: startup settings of {count} devices saved; {note}"
++            )
 +        if not self.run_monitor.running:
 +            self.run_action_bar.btn_revert.setEnabled(count > 0)
 +

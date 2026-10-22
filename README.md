@@ -111,7 +111,7 @@ pixi run safe-badger restore logs/snapshots/<file>.json  # write a snapshot back
 
 - **Revert** (action bar, next to Reset environment) shows the devices that moved, in a fixed-width `Device / Now / Startup` table with the snapshot's age, and writes the startup values back. The session continues.
 - **Closing the window** asks **Keep / Revert / Cancel** when anything differs.
-- If Badger ends **without that answer** (a crash, `kill -9`, Ctrl-C, closing the terminal), safe-badger stops Badger and any run process it left behind, then restores every device automatically.
+- If Badger ends **without that answer** (a crash, `kill -9`, Ctrl-C, closing the terminal) **within 2 hours** of the first template load, safe-badger stops Badger and any run process it left behind, then restores every device automatically. The status bar shows the cut-off time after each template load, e.g. `...devices saved; automatic restore if interrupted until 15:05`.
 
 **How it is built.** Three pieces:
 
@@ -126,7 +126,7 @@ pixi run safe-badger restore logs/snapshots/<file>.json  # write a snapshot back
 - Restores need a **valid Kerberos ticket**. safe-badger warns at start if there isn't one, and on any failed restore logs the exact `pixi run safe-badger restore <file>` command.
 - If safe-badger itself is killed or the host goes down, the next `safe-badger mini` does **not** restore the old snapshot, since the machine may have been retuned since. It renames the file `*.stale` and logs the restore command.
 - Plain `badger -mini` still has Revert and the close question, but no automatic restore. The full GUI (`-g`) is unchanged.
-- An automatic restore after a long session also reverts hours of possibly intended changes; the age is shown, not limited.
+- After 2 hours the automatic restore stops: someone may have retuned by hand since. An undecided snapshot past that point is renamed `*.expired` and the restore command is logged. Revert and the close question still work at any age. The limit is `MAX_AUTO_RESTORE_HOURS` in `plugins/settings_snapshot.py`.
 
 Full technical description (processes, snapshot file format, every ending, tests): **[docs/safe-badger.md](docs/safe-badger.md)**.
 

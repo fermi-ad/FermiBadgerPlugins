@@ -106,7 +106,7 @@ still work. Only the automatic restore is missing then.
   DPM roles, and each device is written back under the role its own template
   used.
 - `resolved` records how the session ended:
-  - `null`: undecided, so the launcher will restore.
+  - `null`: undecided, so the launcher will restore (within 2 h; see below).
   - `keep`: the operator chose Keep, or nothing differed at close.
   - `reverted`: the operator chose Revert at close.
   - `restored-by-launcher`: the launcher restored it automatically.
@@ -165,7 +165,12 @@ settle loops, periodic-phase unwrapping or supply-limit clipping.
   successful template load (`-t` at start-up, the template dropdown, and
   loading from a file). It is connected to `home_page.snapshot_settings`. If
   the capture fails, a warning dialog says the safety net doesn't cover this
-  template's devices.
+  template's devices. On success the status bar says so, and when the
+  automatic restore stops covering the session, e.g.
+  `ZZ_PacsysTesting.yaml: startup settings of 4 devices saved; automatic restore
+  if interrupted until 15:05`. If Badger wasn't started by safe-badger (no
+  `FERMIBADGER_LAUNCHER_PID`), it says `NO automatic restore` instead. The full
+  text is also the status bar's tooltip, in case a narrow window elides it.
 - **Revert button:** enabled once the snapshot holds devices, and disabled
   while a run is active.
   1. It reads the live settings and shows the devices that moved, as a
@@ -197,6 +202,8 @@ settle loops, periodic-phase unwrapping or supply-limit clipping.
    `logging.raiseExceptions = False` keeps it going if stderr disappears (a
    closed terminal).
 2. Kerberos check: a loud warning if there is no valid ticket. It does not stop.
+   A reminder follows: the automatic restore covers the first
+   `MAX_AUTO_RESTORE_HOURS` (2 h) after the first template load.
 3. Stale snapshots: any `logs/snapshots/*.json` that is unresolved, has
    devices, and whose `launcher_pid` and `gui_pid` are both dead was left by a
    launcher that was itself killed, or by a host that went down. These are
@@ -219,9 +226,14 @@ settle loops, periodic-phase unwrapping or supply-limit clipping.
 2. **Read the snapshot:**
    - No file: nothing was captured, nothing to do.
    - `resolved` set: the operator decided; log it.
-   - `resolved` null: restore. On success it records `restored-by-launcher`.
-     On failure it logs `RESTORE INCOMPLETE` and the exact
-     `pixi run safe-badger restore <file>` command.
+   - `resolved` null and the snapshot is older than `MAX_AUTO_RESTORE_HOURS`
+     (2 h, in `settings_snapshot.py`, counted from `created`, the session's
+     first template load): **not restored**. The file is renamed `*.expired`
+     and the restore command is logged. Past that point someone may have
+     retuned by hand, and an automatic restore would undo their work.
+   - `resolved` null, within the limit: restore. On success it records
+     `restored-by-launcher`. On failure it logs `RESTORE INCOMPLETE` and the
+     exact `pixi run safe-badger restore <file>` command.
 3. The exit code is Badger's, or 128 + the signal number if Badger was killed
    by a signal.
 
@@ -243,15 +255,18 @@ work on `*.stale` files too.
 | Terminal window closed (SIGHUP) | same as Ctrl-C; output goes only to `logs/safe-badger.log` |
 | `kill` (SIGTERM) on the launcher | same as Ctrl-C |
 | `kill -9` on the launcher, host down | nothing at the time; the next `safe-badger mini` renames the snapshot `*.stale` and logs the restore command |
+| Any of the three above, more than 2 h after the first template load | stops Badger, does **not** restore; snapshot renamed `*.expired`, restore command logged |
 | No Kerberos ticket | warning at start; a restore fails and logs the manual command |
 | Plain `badger -mini` (no launcher) | Revert and the close question work; no automatic restore |
 | `badger -g` | unchanged; no snapshot |
 
 ## Limits
 
-- **Snapshot age:** an automatic restore after a long session also reverts
-  hours of possibly intended changes. Today the age is shown in dialogs and
-  logs, but nothing enforces a limit (TODO.md).
+- **Two-hour window:** sessions normally last under 30 min. After 2 h the
+  automatic restore stops; Revert and the close question still work at any
+  age, and so does `safe-badger restore` on the `*.expired` file. Change
+  `MAX_AUTO_RESTORE_HOURS` in `plugins/settings_snapshot.py` if a slow
+  application needs longer.
 - **Supply limits:** group sums are not rechecked on restore. It writes back a
   state that was live at the start of the session.
 - **Environment switched without a template:** not snapshotted. Capture runs
@@ -267,15 +282,18 @@ work on `*.stale` files too.
   - retries and failure reporting;
   - the table format;
   - the launcher against a dummy child that starts a grandchild: SIGKILL to
-    the child, SIGTERM to the launcher, and a resolved snapshot. In each case
-    the grandchild must be gone and the restore called (or, for the resolved
-    snapshot, not called).
+    the child, SIGTERM to the launcher, a resolved snapshot, and one past the
+    2 h limit. In each case the grandchild must be gone and the restore called
+    (or, for the resolved and expired snapshots, not called; the expired one
+    renamed `*.expired`).
 - **`tests/settings_snapshot_gui_test.py`** runs the real `-mini` window
   offscreen with pacsys's `get_many` replaced by FakeBackend:
   - a simulation template leaves the button disabled;
   - `ZZ_PacsysTesting` is captured with role `testing`;
   - Revert writes only the moved device, and its table is in a `<pre>` block;
-  - Cancel, Keep and Revert on close each behave as described above.
+  - Cancel, Keep and Revert on close each behave as described above;
+  - the status bar reminder says `NO automatic restore` without safe-badger,
+    and gives the right "until" time with it.
 
 Never run `safe-badger mini` / `restore` from a development machine that has
 VPN and a Kerberos ticket unless you mean it. Those really write to ACNET.

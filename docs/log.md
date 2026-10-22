@@ -1294,3 +1294,18 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   screenshot.
 - Docs: new `docs/safe-badger.md` (processes, file format, every ending,
   tests); README gets a top-level "safe-badger" section and tree entries.
+
+## 2026-10-21 — 2 h limit on the automatic restore, with an up-front reminder
+
+- User decided: sessions almost never exceed 30 min, so the automatic restore
+  covers 2 h from the session's first template load (`MAX_AUTO_RESTORE_HOURS`
+  in `settings_snapshot.py`). An undecided snapshot past that is renamed
+  `*.expired`, not restored, and the manual command logged. Manual restore,
+  Revert and the close question are unaffected.
+- Reminder: safe-badger logs the 2 h rule at start; the `-mini` status bar shows
+  "...devices saved; automatic restore if interrupted until HH:MM", or "NO
+  automatic restore" without safe-badger. The status label elides long text,
+  so the message was shortened; a screenshot at 1250 px shows it whole.
+- Earlier this session: the new GUI assertion first failed (`<pre>` now carries
+  a style); the failure skipped cleanup and Badger's worker held the pipe open,
+  so it looked like a hang. The test now terminates workers in `finally`.

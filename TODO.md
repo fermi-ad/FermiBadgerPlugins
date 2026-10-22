@@ -20,9 +20,11 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
   restores); closing the terminal (SIGHUP); a crash after `kdestroy`
   (expect the loud warning at start and the manual `pixi run safe-badger restore` line).
   Then RIL Acsys: the snapshot should record role `ril_tuning`.
-- [ ] Decide: a maximum snapshot age for the *automatic* restore. After a long
-  session it reverts hours of possibly intended changes; today the log and
-  dialogs only show the age.
+- [x] Maximum age for the *automatic* restore: 2 h from the first template load
+  (decided 2026-10-21; sessions normally last under 30 min, 2 h leaves room
+  for slow applications). Past it the snapshot becomes `*.expired`, not
+  restored. Reminder up front: status bar after each template load, and
+  safe-badger's start-up message.
 - Not covered, by design for now: supply-limit group sums aren't rechecked on
   restore (it writes back a previously live state); an environment switched
   without loading a template isn't snapshotted; if the launcher itself is
