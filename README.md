@@ -13,6 +13,7 @@ This repository contains plugins and configurations for using [Badger](https://g
 ## Contents
 
 - [Quick Start](#quick-start)
+- [safe-badger: revert and crash safety](#safe-badger-revert-and-crash-safety)
 - [Environment Setup Details](#environment-setup-details)
 - [First-Time GUI Setup](#first-time-gui-setup)
 - [Using the VirtualAccelerator Environment Plugins](#using-the-virtualaccelerator-environment-plugins)
@@ -82,10 +83,10 @@ pixi run badger -g -cf config.local.yaml -t 01_Linac_RIL_tuning.yaml
 pixi run badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
 ```
 
-On the machine, operators launch `-mini` through the settings launcher, which restores every device the session changed if Badger is interrupted (see [Revert and crash safety](#revert-and-crash-safety)):
+On the machine, operators launch `-mini` through **safe-badger**, which puts back every device the session changed if Badger is interrupted (see [safe-badger](#safe-badger-revert-and-crash-safety)):
 
 ```bash
-pixi run mini -t 01_Linac_RIL_tuning.yaml
+pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml
 ```
 
 Off-site, on the `offsite` environment, add `-e offsite`: `pixi run -e offsite badger -g -cf config.local.yaml`.
@@ -93,6 +94,41 @@ Off-site, on the `offsite` environment, add `-e offsite`: `pixi run -e offsite b
 Legacy conda path: `conda activate FermiBadger_env` then the same `badger ...` commands without the `pixi run` prefix.
 
 `config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
+
+---
+
+## safe-badger: revert and crash safety
+
+[↑ Back to top](#contents)
+
+```bash
+pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml   # launch -mini, protected
+pixi run safe-badger diff logs/snapshots/<file>.json     # what differs from a snapshot now
+pixi run safe-badger restore logs/snapshots/<file>.json  # write a snapshot back
+```
+
+**What it does.** Each time `-mini` loads a template, it records the live setting of every device that template's environment can write, checked in the variable table or not. A device keeps the value it had the first time any template in the session listed it. From then on:
+
+- **Revert** (action bar, next to Reset environment) shows the devices that moved, in a fixed-width `Device / Now / Startup` table with the snapshot's age, and writes the startup values back. The session continues.
+- **Closing the window** asks **Keep / Revert / Cancel** when anything differs.
+- If Badger ends **without that answer** (a crash, `kill -9`, Ctrl-C, closing the terminal), safe-badger stops Badger and any run process it left behind, then restores every device automatically.
+
+**How it is built.** Three pieces:
+
+| Piece | Where | What it does |
+|---|---|---|
+| Snapshot library | `plugins/settings_snapshot.py` | Chooses the devices (skips `mult:*` knobs and `-SETPOINT` observables; a `READ,SET` pair records `SET`; `nosettings` / simulation environments record nothing). Reads `<dev>.SETTING@I` with `pacsys.get_many`, saves `logs/snapshots/<time>-<pid>.json` atomically, and restores by `pacsys.dpm(role=...).write_many` of the raw `.SETTING` values, one session per settings role, verifying with up to 3 passes. Standard library + pacsys only; Badger's environment code is never involved. |
+| GUI hooks | `patches/badger-1.6.0-mini-revert-settings.patch` | Captures on every template load, adds the Revert button (hidden in `-g`), and asks Keep / Revert / Cancel in `closeEvent`. Records the answer in the snapshot file. |
+| Launcher | `safe_badger.py` (pixi task `safe-badger`) | Starts `badger -mini -cf config.local.yaml ...` in a **new process session**, so one `killpg` stops the GUI and its run worker together. Catches SIGINT/SIGTERM/SIGHUP. When Badger exits or a signal arrives, it terminates the group (TERM, then KILL after 5 s) and, if the snapshot holds no Keep/Revert answer, restores it. Logs to `logs/safe-badger.log`. |
+
+**Things to know.**
+
+- Restores need a **valid Kerberos ticket**. safe-badger warns at start if there isn't one, and on any failed restore logs the exact `pixi run safe-badger restore <file>` command.
+- If safe-badger itself is killed or the host goes down, the next `safe-badger mini` does **not** restore the old snapshot, since the machine may have been retuned since. It renames the file `*.stale` and logs the restore command.
+- Plain `badger -mini` still has Revert and the close question, but no automatic restore. The full GUI (`-g`) is unchanged.
+- An automatic restore after a long session also reverts hours of possibly intended changes; the age is shown, not limited.
+
+Full technical description (processes, snapshot file format, every ending, tests): **[docs/safe-badger.md](docs/safe-badger.md)**.
 
 ---
 
@@ -274,6 +310,7 @@ FermiBadgerPlugins/
 ├── docs/                       # Development documentation
 │   ├── log.md
 │   ├── progress.md
+│   ├── safe-badger.md          # How the snapshot, Revert and automatic restore are built
 │   └── ...
 ├── environment.yml             # Legacy conda environment definition
 ├── patches/                    # Badger bug fixes, applied by bootstrap.sh/setup.sh in the order patches/README.md lists
@@ -283,19 +320,22 @@ FermiBadgerPlugins/
 │   ├── badger-1.6.0-device-list-gui.patch
 │   ├── badger-1.6.0-full-gui-template-option.patch
 │   ├── badger-1.6.0-spinbox-wheel-guard.patch
+│   ├── badger-1.6.0-mini-revert-settings.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
 ├── pixi.toml                   # Pixi environment definition (default includes acsys; offsite drops it)
 ├── pixi.lock                   # Pinned resolution for osx-arm64 and linux-64
 ├── pixi_setup.sh               # Patch/config/verify logic behind `pixi run setup`
+├── safe_badger.py              # `pixi run safe-badger`: launcher that restores settings if Badger is interrupted
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)
 │   │   ├── 01_Linac_RIL_tuning_Acsys/
 │   │   ├── 09_DeliveryRing_Muon_PID_tune_Acsys/
 │   │   ├── 99_Sim_VirtualAccelerator_MADXSuite/
 │   │   └── ...
-│   └── interfaces/             # Badger Interface plugins
-│       └── VirtualAccelerator_MADXSuiteInterface/
+│   ├── interfaces/             # Badger Interface plugins
+│   │   └── VirtualAccelerator_MADXSuiteInterface/
+│   └── settings_snapshot.py    # Snapshot/diff/restore of device settings (used by -mini and safe-badger)
 ├── setup.sh                    # Legacy conda install/patch/config script
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
@@ -399,20 +439,6 @@ Offline check: `python tests/mults_test.py`.
 ### Settings verification (Pacsys interface)
 
 `BasicPacsysInterface.set_values` raises if DPM rejects any setting (Badger then stops the run rather than continuing with the machine in an unknown state), reads back a bare device's stored `SETTING` and warns on a mismatch, and gives the read/set-pair settle loop (`tolN@T`) a deadline. A pair such as `L:CDPHAS,L:LDPADJ` is verified by its *reading* device settling, never by comparing the reading to the value sent: they are different physical quantities. `python tests/pacsys_drf_lint_test.py` checks every `*_Pacsys` environment's DRFs offline; `python tests/pacsys_interface_test.py` covers all of the above against `pacsys.testing.FakeBackend`.
-
-### Revert and crash safety
-
-Each time `-mini` loads a template, it reads the live `SETTING` of every device that template's environment can write, checked in the variable table or not, and saves them to `logs/snapshots/<time>-<pid>.json` (`plugins/settings_snapshot.py`). A device keeps the value it had the **first** time any template in the session listed it. Mult knobs and `-SETPOINT` observables are skipped; a read/set pair records its setting device. Environments with no `settings_role`, or with `nosettings`, record nothing: simulations, and EnergyStabilization unless the template gives it a role.
-
-- **Revert** (action bar): lists each device that moved (`now → startup`) and the snapshot's age, then writes the raw values back with pacsys, one DPM session per settings role, and re-reads to confirm. The session continues.
-- **Closing the window** asks **Keep / Revert / Cancel** when anything differs, and records the answer in the snapshot.
-- **`pixi run mini`** runs Badger under a launcher. If Badger exits without that answer (crash, `kill`, Ctrl-C, closed terminal), the launcher stops Badger's whole process group (including an orphaned run subprocess), then restores every device from the snapshot. Its log is `logs/launcher.log`.
-- If the launcher itself dies, the next `pixi run mini` does **not** restore the old snapshot (the machine may have moved on). It renames the file `*.stale` and prints the command to restore it by hand.
-- By hand: `pixi run diff logs/snapshots/<file>` shows what differs; `pixi run restore logs/snapshots/<file>` writes it back.
-
-Restores need a valid Kerberos ticket; the launcher warns at start if there is none, and prints the manual `pixi run restore` command if a restore fails. Plain `badger -mini` has the Revert button and the close question, but no automatic restore. The full GUI (`-g`) is unchanged.
-
-`python tests/settings_snapshot_test.py` and `python tests/settings_snapshot_gui_test.py` check all of this offline against `pacsys.testing.FakeBackend`.
 
 ## Related Documentation
 
