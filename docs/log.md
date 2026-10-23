@@ -1105,3 +1105,23 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - `tests/plugin_docs_test.py`: every env/algorithm has a page, every declared
   env parameter appears in its README (mutation-checked), no `---`/tables.
 - Found four env bugs (TODO.md); documented as "Known issue", not fixed.
+
+## 2026-10-23 — Badger's own guides fetched at setup
+
+- Upstream Badger has `documentation/docs/guides/` (one guide per algorithm,
+  algorithms-overview, gui-usage, minimode, templates...) at the v1.6.0 tag;
+  the pip/conda package doesn't ship it. Badger is GPL-3.0, so rather than
+  vendoring, setup step 2c (3c in legacy setup.sh) downloads the tag's tarball
+  with the env's Python (urllib/tarfile: this Mac's anaconda curl is broken)
+  and extracts `docs/guides/` and `static/img/{gui,guides}/` (52 files, 7.6 MB)
+  into `<env>/lib/python3.12/documentation/`, where `factory.py` looks.
+  Stamp `.badger-version`; offline it only warns.
+- Algorithm pages: ours, then "From the Badger documentation: <title>" (front
+  matter stripped, H1 demoted), then Xopt's docstring. The action bar's "?"
+  (minimode guide) now works, images included; it shows the stock -mini.
+- Checked against Xopt 3.2.2: the upstream EI guide's `max_travel_distances`
+  example (absolute units, "+-1.0 kG") is wrong -- Xopt multiplies by the
+  range width, so it is a fraction of the range, as our page says. And our
+  page was wrong about SafetyTurboController: it centres on the mean of the
+  feasible points (upstream is right); fixed in 1b7981e.
+- Parameter-editor hover tooltips already show Xopt's Field descriptions.

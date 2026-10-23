@@ -4,6 +4,8 @@ Machine Interface -> plugins/environments/<env>/README.md: every environment has
 one, and it mentions every parameter its class declares.
 Optimization Algo -> docs/algorithms/<generator>.md: every algorithm Badger
 offers has one. Both load through Badger (badger-1.6.0-plugin-docs.patch).
+Once setup has fetched Badger's own guides, each algorithm page also carries
+Badger's guide for it, and the action bar's "?" page (minimode) loads.
 
 Badger's docs window drops a leading '---' block and breaks tables, so neither
 may appear.
@@ -62,6 +64,19 @@ for name in list_generators():
     shown = load_badger_docs(name, "generator")
     if page.read_text().splitlines()[0] not in shown:
         failures.append(f"{name}: Badger does not load {page}")
+
+import badger  # noqa: E402
+
+guides = Path(badger.__file__).resolve().parents[2] / "documentation" / "docs" / "guides"
+if guides.is_dir():
+    for name in list_generators():
+        if (guides / "generators" / f"{name}.md").exists() and \
+                "From the Badger documentation" not in load_badger_docs(name, "generator"):
+            failures.append(f"{name}: Badger's own guide is not appended")
+    if "# Mini Mode" not in load_badger_docs("minimode"):
+        failures.append("the action bar's '?' page (minimode) does not load")
+else:
+    print(f"note: Badger's guides not fetched ({guides}); run setup online to check them")
 
 for f in failures:
     print("FAIL", f)

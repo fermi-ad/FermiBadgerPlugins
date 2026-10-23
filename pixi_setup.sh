@@ -171,6 +171,50 @@ for key in ('BADGER_PLUGIN_ROOT', 'BADGER_TEMPLATE_ROOT', 'BADGER_LOG_DIRECTORY'
 PYEOF
 
 # --------------------------------------------------------------------------
+# 2c. Badger's own guides (the "Open Docs" and "?" buttons)
+# --------------------------------------------------------------------------
+# Badger's docs window reads documentation/docs/guides/ beside its own
+# source, but the installed package does not ship that folder. Fetch it
+# from GitHub for the installed version, once; without it those buttons
+# fall back to this repo's own pages only. Python, not curl, so it works
+# wherever the environment does.
+echo
+echo "2c. Badger documentation"
+"$PY" - <<'PYEOF'
+import io, tarfile, urllib.request
+from importlib.metadata import version
+from pathlib import Path
+import badger
+
+ver = version("badger-opt")
+# Where badger/factory.py looks: Path(factory.py).parent.parent.parent
+documentation = Path(badger.__file__).resolve().parents[2] / "documentation"
+stamp = documentation / ".badger-version"
+# The guides, and the screenshots they show (/img/... -> static/img/...).
+wanted = ("docs/guides/", "static/img/gui/", "static/img/guides/")
+if stamp.exists() and stamp.read_text().strip() == ver:
+    print(f"   skipped (guides for Badger {ver} already present)")
+else:
+    url = f"https://codeload.github.com/xopt-org/Badger/tar.gz/refs/tags/v{ver}"
+    prefix = f"Badger-{ver}/documentation/"
+    try:
+        data = urllib.request.urlopen(url, timeout=60).read()
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as tar:
+            members = []
+            for m in tar.getmembers():
+                rel = m.name[len(prefix):]
+                if m.name.startswith(prefix) and rel.startswith(wanted):
+                    m.name = rel
+                    members.append(m)
+            tar.extractall(documentation, members=members, filter="data")
+        stamp.write_text(ver)
+        print(f"   fetched {len(members)} files for Badger {ver} into {documentation}")
+    except Exception as e:
+        print(f"   WARNING: could not fetch Badger's guides ({e}).")
+        print("   Open Docs will show this repo's pages only; re-run setup when online.")
+PYEOF
+
+# --------------------------------------------------------------------------
 # 3. Verify
 # --------------------------------------------------------------------------
 echo
