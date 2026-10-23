@@ -1,7 +1,18 @@
 diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
 --- a/badger/gui/mini/components/env_cbox.py	2026-10-23 14:00:54
-+++ b/badger/gui/mini/components/env_cbox.py	2026-10-23 14:01:14
-@@ -48,6 +48,11 @@
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-23 15:17:10
+@@ -24,8 +24,9 @@
+     QCheckBox,
+     QStyledItemDelegate,
+     QLabel,
++    QSizePolicy,
+ )
+-from PyQt5.QtCore import QTimer, pyqtSignal
++from PyQt5.QtCore import Qt, QTimer, pyqtSignal
+ from badger.gui.components.obs_table import ObservableTable
+ from badger.settings import init_settings
+ from pydantic_core import ValidationError
+@@ -48,6 +49,11 @@
  import logging
  
  LABEL_WIDTH = 96
@@ -13,7 +24,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
  
  CONS_RELATION_DICT = {
-@@ -185,11 +190,19 @@
+@@ -185,11 +191,19 @@
  
          self.setStyleSheet(self.unselected_stylesheet)
  
@@ -36,7 +47,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.label.setObjectName("TemplateSelectorLabel")
          self.label.setFixedWidth(label_width)
  
-@@ -207,16 +220,30 @@
+@@ -207,16 +221,30 @@
          self.load_template_button.setFixedSize(96, 24)
          self.load_template_button.setFixedHeight(24)
  
@@ -67,7 +78,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
      def sync_selection_state(self):
          has_selection = self.template_cb.currentIndex() != -1
          self.setStyleSheet(
-@@ -275,6 +302,7 @@
+@@ -275,6 +303,7 @@
          self.template_row = TemplateSelectorRow(LABEL_WIDTH, self)
          self.template_cb = self.template_row.template_cb
          self.load_template_button = self.template_row.load_template_button
@@ -75,7 +86,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          config_singleton = init_settings()
          BADGER_PLUGIN_ROOT = config_singleton.read_value("BADGER_PLUGIN_ROOT")
-@@ -284,6 +312,8 @@
+@@ -284,6 +313,8 @@
              template_dir = Path(BADGER_PLUGIN_ROOT) / "templates"
          yaml_files = list(template_dir.glob("*.y*ml"))
          self.template_cb.addItems([file.stem for file in sorted(yaml_files)])
@@ -84,7 +95,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.template_cb.setCurrentIndex(-1)
  
          vbox.addWidget(self.template_row)
-@@ -295,8 +325,15 @@
+@@ -295,8 +326,15 @@
          separator.setStyleSheet("background-color: #61748c;")
          vbox.addWidget(separator)
  
@@ -102,7 +113,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          vbox_env = QVBoxLayout(env)
          vbox_env.setContentsMargins(0, 0, 0, 0)
          select_env = QWidget()
-@@ -312,34 +349,38 @@
+@@ -312,34 +350,39 @@
          env_cb.addItems(self.envs)
          env_cb.setCurrentIndex(-1)
          env_cb.setPlaceholderText("")
@@ -139,7 +150,8 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 +        vbox_env_params.setContentsMargins(0, 0, 0, 0)
 +        vbox_env_params.setSpacing(4)
 +        hbox_env_docs = QHBoxLayout()
-+        hbox_env_docs.addStretch()
++        self.lbl_env_params = self._panel_heading("Machine Interface Parameters")
++        hbox_env_docs.addWidget(self.lbl_env_params, 1)  # takes the spare width
 +        hbox_env_docs.addWidget(self.btn_env_docs)
 +        vbox_env_params.addLayout(hbox_env_docs)
          self.edit_env_params = BadgerPydanticEditor()
@@ -161,7 +173,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_algo = QHBoxLayout(algo_widget)
          hbox_algo.setContentsMargins(0, 0, 0, 0)
          hbox_algo.setSpacing(6)
-@@ -351,53 +392,80 @@
+@@ -351,53 +394,81 @@
          algo_cb.addItems(self.generators)
          algo_cb.setCurrentIndex(-1)
          algo_cb.installEventFilter(MouseWheelWidgetAdjustmentGuard(algo_cb))
@@ -191,7 +203,8 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 +        vbox_algo_params.setContentsMargins(0, 0, 0, 0)
 +        vbox_algo_params.setSpacing(4)
 +        hbox_algo_docs = QHBoxLayout()
-+        hbox_algo_docs.addStretch()
++        self.lbl_algo_params = self._panel_heading("Optimization Algo Parameters")
++        hbox_algo_docs.addWidget(self.lbl_algo_params, 1)  # takes the spare width
 +        hbox_algo_docs.addWidget(self.btn_algo_docs)
 +        vbox_algo_params.addLayout(hbox_algo_docs)
          self.edit_algo_params = BadgerPydanticEditor()
@@ -272,7 +285,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          edit_var_col = QWidget()
          vbox_var_edit = QVBoxLayout(edit_var_col)
          vbox_var_edit.setContentsMargins(0, 2, 0, 2)
-@@ -409,6 +477,9 @@
+@@ -409,6 +480,9 @@
          hbox_action_var.setContentsMargins(0, 0, 0, 0)
          hbox_action_var.setSpacing(0)
          vbox_var_edit.addWidget(action_var)
@@ -282,7 +295,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          # filter variables
          self.edit_var = edit_var = Picker(self.list_vars, "Add variable...")
          edit_var.setFixedWidth(192)
-@@ -421,28 +492,26 @@
+@@ -421,28 +495,26 @@
          self.check_only_var = check_only_var = QCheckBox("Show Checked Only")
          check_only_var.setChecked(True)
          check_only_var.hide()  # lists always show checked items; the picker holds the rest
@@ -319,7 +332,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          collapsiblebox_init = CollapsibleBox(
              self,
              " Initial Points",
-@@ -472,25 +541,21 @@
+@@ -472,25 +544,21 @@
          self.init_table.set_uneditable()
          vbox_init.addWidget(self.init_table)
          collapsiblebox_init.setContentLayout(vbox_init)
@@ -356,7 +369,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_obj_col = QWidget()
          vbox_obj_edit = QVBoxLayout(edit_obj_col)
-@@ -500,6 +565,9 @@
+@@ -500,6 +568,9 @@
          hbox_action_obj = QHBoxLayout(action_obj)
          hbox_action_obj.setContentsMargins(0, 0, 0, 0)
          vbox_obj_edit.addWidget(action_obj)
@@ -366,7 +379,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.edit_obj = edit_obj = Picker(
              lambda: self.list_items(self.obj_table), "Add objective..."
          )
-@@ -507,6 +575,7 @@
+@@ -507,6 +578,7 @@
          self.check_only_obj = check_only_obj = QCheckBox("Show Checked Only")
          check_only_obj.setChecked(True)
          check_only_obj.hide()  # lists always show checked items; the picker holds the rest
@@ -374,7 +387,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_obj.addWidget(edit_obj)
          hbox_action_obj.addStretch()
          hbox_action_obj.addWidget(check_only_obj)
-@@ -514,27 +583,22 @@
+@@ -514,27 +586,22 @@
          self.obj_table = ObjectiveTable()
          self.obj_table.show_selected_only = True
          vbox_obj_edit.addWidget(self.obj_table)
@@ -414,7 +427,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_con_col = QWidget()
          vbox_con_edit = QVBoxLayout(edit_con_col)
-@@ -544,6 +608,9 @@
+@@ -544,6 +611,9 @@
          hbox_action_con = QHBoxLayout(action_con)
          hbox_action_con.setContentsMargins(0, 0, 0, 0)
          vbox_con_edit.addWidget(action_con)
@@ -424,7 +437,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.edit_con = edit_con = Picker(
              lambda: self.list_items(self.con_table), "Add constraint..."
          )
-@@ -551,6 +618,7 @@
+@@ -551,6 +621,7 @@
          self.check_only_con = check_only_con = QCheckBox("Show Checked Only")
          check_only_con.setChecked(True)
          check_only_con.hide()  # lists always show checked items; the picker holds the rest
@@ -432,7 +445,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_con.addWidget(edit_con)
          hbox_action_con.addStretch()
          hbox_action_con.addWidget(check_only_con)
-@@ -558,23 +626,15 @@
+@@ -558,23 +629,15 @@
          self.con_table = ConstraintTable()
          self.con_table.show_selected_only = True
          vbox_con_edit.addWidget(self.con_table)
@@ -462,7 +475,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_sta_col = QWidget()
          vbox_sta_edit = QVBoxLayout(edit_sta_col)
-@@ -584,6 +644,9 @@
+@@ -584,6 +647,9 @@
          hbox_action_sta = QHBoxLayout(action_sta)
          hbox_action_sta.setContentsMargins(0, 0, 0, 0)
          vbox_sta_edit.addWidget(action_sta)
@@ -472,7 +485,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.edit_sta = edit_sta = Picker(
              lambda: self.list_items(self.sta_table), "Add observable..."
          )
-@@ -591,6 +654,7 @@
+@@ -591,6 +657,7 @@
          self.check_only_sta = check_only_sta = QCheckBox("Show Checked Only")
          check_only_sta.setChecked(True)
          check_only_sta.hide()  # lists always show checked items; the picker holds the rest
@@ -480,7 +493,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_sta.addWidget(edit_sta)
          hbox_action_sta.addStretch()
          hbox_action_sta.addWidget(check_only_sta)
-@@ -598,16 +662,13 @@
+@@ -598,18 +665,43 @@
          self.sta_table = ObservableTable()
          self.sta_table.show_selected_only = True
          vbox_sta_edit.addWidget(self.sta_table)
@@ -499,9 +512,39 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
 +        self._watch_table_rows(self.con_table, None)
 +        self._watch_table_rows(self.sta_table, None)
  
++    @staticmethod
++    def _panel_heading(title: str) -> QLabel:
++        """Heading on a parameters panel's docs row. Never widens the panel:
++        a long environment name is clipped, with the full text in the tooltip."""
++        label = QLabel()
++        label.setTextFormat(Qt.RichText)
++        label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
++        BadgerEnvBox._set_panel_heading(label, title, "")
++        return label
++
++    @staticmethod
++    def _set_panel_heading(label: QLabel, title: str, name: str) -> None:
++        text = f'<span style="{VOCS_LABEL_STYLE}">{title}</span>'
++        if name:
++            text += f"&nbsp;&nbsp;{name}"
++        label.setText(text)
++        label.setToolTip(f"{title}: {name}" if name else title)
++
      def config_logic(self):
++        self.env_cb.currentTextChanged.connect(
++            lambda name: self._set_panel_heading(
++                self.lbl_env_params, "Machine Interface Parameters", name
++            )
++        )
++        self.algo_cb.currentTextChanged.connect(
++            lambda name: self._set_panel_heading(
++                self.lbl_algo_params, "Optimization Algo Parameters", name
++            )
++        )
          self.edit_var.picked.connect(self.pick_var)
-@@ -640,21 +701,21 @@
+         self.check_only_var.stateChanged.connect(self.toggle_var_show_mode)
+         self.edit_obj.picked.connect(lambda n: self.pick_item(self.obj_table, n))
+@@ -640,21 +732,21 @@
  
      def toggle_env_params(self, checked: bool):
          if not checked:
