@@ -1125,3 +1125,20 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   page was wrong about SafetyTurboController: it centres on the mean of the
   feasible points (upstream is right); fixed in 1b7981e.
 - Parameter-editor hover tooltips already show Xopt's Field descriptions.
+
+## 2026-10-23 — check mapping parameters as they are typed
+
+- Plan for parameter editing agreed (TODO.md): user picked the Edit... table
+  as the eventual style, and "check as you type" for the first version.
+- Today a typo surfaces only at Go, as a raw ParserError or pydantic error
+  ("{bpvq17.y 0.0}" reads as a missing number, not a missing ':').
+- `badger-1.6.0-param-validation.patch` (pydantic_editor + both home pages):
+  `check_text_fields()` at the top of `validate()` (which runs on every
+  change) parses each mapping-looking text field; the example of allowed
+  value kinds is the field's default (dict params) or its text at load
+  (string params like MADX `setpoints`, declared Union[Dict, str]). Bad ->
+  `update_error_styles` + tooltip; `start_run` lists `parameter_problems()`
+  and refuses. Fixed Badger's `remove_style` leaving `error` set.
+- Ported simpler_mini's patch-set stamp to main's setup scripts first: the new
+  patch's start_run hunk sits beside revert-settings', which per-patch reverse
+  dry-runs can't tell apart on a re-run.

@@ -3,6 +3,24 @@
 Open work, roughly in priority order. Session-by-session detail lives in
 `docs/progress.md`; this file is just the list.
 
+## Editing parameters without braces and commas (plan agreed 2026-10-23)
+
+Environment parameters holding a mapping arrive in the editor as a plain dict,
+without the class's type hints, so each is one line of YAML text.
+
+- [x] **v1: check as you type** (`badger-1.6.0-param-validation.patch`, main):
+  red mark + reason, Go refused while any is bad.
+- [ ] **Next: table editor.** Pass the environment class to the editor so each
+  field gets its declared type (`Dict[str, float]`, ...). A dict field shows a
+  one-line summary ("6 entries") and an **Edit...** button opening a key/value
+  table: Add/Remove rows, number-only values where the type says so, `hold`
+  allowed in `setpoints`, key completion from the environment's own devices
+  (readings for `setpoints`, loss monitors for `w_sumsq`). A dialog, not
+  inline rows, so a 44-entry `w_sumsq` stays compact. Same YAML out, so
+  templates are unchanged.
+- [ ] **Later: structured value editors**: a checklist of trims per
+  `supply_groups` entry, a device x coefficient table for `mults`.
+
 ## Docs
 
 - [ ] The action bar's "?" button opens Badger's own `minimode` guide, which

@@ -173,18 +173,42 @@ else
         fi
     }
 
-    apply_patch "$SP/badger/gui/components" 1 \
-        "$REPO/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
-    apply_patch "$SP" 1 "$REPO/patches/badger-mini-config.patch"
-    apply_patch "$SP" 1 "$REPO/patches/badger-mini-var-table-env-configs.patch"
-    # must come after the two -mini patches: it was diffed against that tree
-    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-device-list-gui.patch"
-    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-full-gui-template-option.patch"
-    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-spinbox-wheel-guard.patch"
-    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-revert-settings.patch"
-    apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-plugin-docs.patch"
+    # Per-patch "already applied?" (reverse dry-run) can't see a patch whose
+    # lines a later patch rewrote, so a re-run would report it FAILED. A
+    # stamp of the whole patch set, written after a clean apply, is what
+    # makes re-running safe.
+    STAMP="$SP/.fermibadger-patches"
+    WANT="$("$PY" -c "import hashlib, glob, sys
+h = hashlib.sha256()
+for p in sorted(glob.glob(sys.argv[1] + '/*.patch')):
+    h.update(open(p, 'rb').read())
+print(h.hexdigest())" "$REPO/patches")"
 
-    apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
+    if [[ -f "$STAMP" && "$(cat "$STAMP")" == "$WANT" ]]; then
+        echo "   skipped (this patch set is already applied)"
+    else
+        apply_patch "$SP/badger/gui/components" 1 \
+            "$REPO/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-mini-config.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-mini-var-table-env-configs.patch"
+        # must come after the two -mini patches: it was diffed against that tree
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-device-list-gui.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-full-gui-template-option.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-spinbox-wheel-guard.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-revert-settings.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-plugin-docs.patch"
+        # must come after revert-settings: diffed against that tree
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-param-validation.patch"
+
+        apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
+
+        if [[ $FAILED -eq 0 ]]; then
+            echo "$WANT" > "$STAMP"
+        else
+            echo "   If this environment was patched by a different patch set,"
+            echo "   rebuild it first: rm -rf .pixi/envs/<env> && pixi install"
+        fi
+    fi
 fi
 
 # --------------------------------------------------------------------------
