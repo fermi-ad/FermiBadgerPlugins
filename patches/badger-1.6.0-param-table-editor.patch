@@ -1,0 +1,237 @@
+diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pydantic_editor.py
+--- a/badger/gui/components/pydantic_editor.py	2026-10-23 15:54:25
++++ b/badger/gui/components/pydantic_editor.py	2026-10-23 15:55:05
+@@ -30,8 +30,18 @@
+ from pydantic import BaseModel, Field, ValidationError, create_model
+ from pydantic.fields import FieldInfo
+ from pydantic_core import PydanticUndefined
+-from PyQt5.QtCore import Qt, pyqtSignal
++from PyQt5.QtCore import QEvent, QObject, Qt, pyqtSignal
+ from PyQt5.QtWidgets import (
++    QAbstractItemView,
++    QCompleter,
++    QDialog,
++    QDialogButtonBox,
++    QHeaderView,
++    QMessageBox,
++    QStyledItemDelegate,
++    QTableWidget,
++    QTableWidgetItem,
++    QToolButton,
+     QCheckBox,
+     QComboBox,
+     QDoubleSpinBox,
+@@ -683,6 +693,167 @@
+     return None
+ 
+ 
++def _parse_cell(text: str) -> Any:
++    """A table cell as YAML would read it: 1.2 -> 1.2, hold -> 'hold', '' -> None."""
++    text = text.strip()
++    if text == "" or text in ("None", "null"):
++        return None
++    try:
++        return yaml.load(text, Loader=CustomSafeLoader)
++    except yaml.YAMLError:
++        return text
++
++
++def _mapping_to_text(mapping: dict[str, Any]) -> str:
++    """One line of YAML, in the given order, quoting whatever needs it."""
++    return yaml.dump(mapping, default_flow_style=True, sort_keys=False, width=10**6).strip()
++
++
++class _CompleterDelegate(QStyledItemDelegate):
++    """Name cells complete from the environment's own device names."""
++
++    def __init__(self, names: list[str], parent: QWidget | None = None):
++        super().__init__(parent)
++        self.names = names
++
++    def createEditor(self, parent, option, index):  # noqa: N802 (Qt API)
++        editor = super().createEditor(parent, option, index)
++        if isinstance(editor, QLineEdit) and self.names:
++            completer = QCompleter(self.names, editor)
++            completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
++            completer.setFilterMode(Qt.MatchFlag.MatchContains)
++            editor.setCompleter(completer)
++        return editor
++
++
++class MappingTableDialog(QDialog):
++    """Edit a {name: value, ...} parameter as a two-column table: no braces,
++    colons or commas to get right. Values are checked against the kinds the
++    template gave the field (check_dict_text); OK writes the mapping back."""
++
++    def __init__(self, title: str, mapping: dict[str, Any], example: dict[str, Any],
++                 names: list[str], note: str = "", parent: QWidget | None = None):
++        super().__init__(parent)
++        self.example = example
++        self.result_mapping: dict[str, Any] | None = None
++        self.setWindowTitle(f"Edit {title}")
++        self.resize(520, 420)
++        layout = QVBoxLayout(self)
++        if note:
++            label = QLabel(note)
++            label.setWordWrap(True)
++            layout.addWidget(label)
++        self.table = QTableWidget(0, 2, self)
++        self.table.setHorizontalHeaderLabels(["Name", "Value"])
++        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
++        self.table.horizontalHeader().setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
++        self.table.verticalHeader().setVisible(False)
++        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
++        self.table.setItemDelegateForColumn(0, _CompleterDelegate(names, self.table))
++        layout.addWidget(self.table)
++        for key, value in mapping.items():
++            self.add_row(str(key), "" if value is None else str(value))
++
++        buttons = QHBoxLayout()
++        add = QPushButton("Add row")
++        add.clicked.connect(lambda: self.add_row("", "", edit=True))
++        remove = QPushButton("Remove row")
++        remove.clicked.connect(self.remove_rows)
++        buttons.addWidget(add)
++        buttons.addWidget(remove)
++        buttons.addStretch()
++        layout.addLayout(buttons)
++        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
++        box.accepted.connect(self.accept)
++        box.rejected.connect(self.reject)
++        layout.addWidget(box)
++
++    def add_row(self, key: str, value: str, edit: bool = False) -> None:
++        row = self.table.rowCount()
++        self.table.insertRow(row)
++        self.table.setItem(row, 0, QTableWidgetItem(key))
++        self.table.setItem(row, 1, QTableWidgetItem(value))
++        if edit:
++            self.table.setCurrentCell(row, 0)
++            self.table.editItem(self.table.item(row, 0))
++
++    def remove_rows(self) -> None:
++        for row in sorted({i.row() for i in self.table.selectedIndexes()}, reverse=True):
++            self.table.removeRow(row)
++
++    def mapping(self) -> tuple[dict[str, Any], list[str]]:
++        """The table as a mapping, and the reasons it can't be used."""
++        out: dict[str, Any] = {}
++        problems: list[str] = []
++        for row in range(self.table.rowCount()):
++            key_item, value_item = self.table.item(row, 0), self.table.item(row, 1)
++            key = (key_item.text() if key_item else "").strip()
++            value_text = value_item.text() if value_item else ""
++            for item in (key_item, value_item):
++                if item is not None:
++                    item.setBackground(Qt.GlobalColor.transparent)
++            if not key and not value_text.strip():
++                continue  # an empty row: ignore
++            if not key:
++                problems.append(f"Row {row + 1}: the name is empty.")
++                if key_item is not None:
++                    key_item.setBackground(Qt.GlobalColor.darkRed)
++                continue
++            if key in out:
++                problems.append(f"'{key}' appears twice.")
++                key_item.setBackground(Qt.GlobalColor.darkRed)
++                continue
++            value = _parse_cell(value_text)
++            reason = check_dict_text(_mapping_to_text({key: value}), self.example)
++            if reason:
++                problems.append(reason)
++                if value_item is not None:
++                    value_item.setBackground(Qt.GlobalColor.darkRed)
++            out[key] = value
++        return out, problems
++
++    def accept(self) -> None:
++        mapping, problems = self.mapping()
++        if problems:
++            QMessageBox.warning(self, self.windowTitle(),
++                                "Please fix the marked cells:\n\n" + "\n".join(problems))
++            return
++        self.result_mapping = mapping
++        super().accept()
++
++
++class _EditButtonPlacer(QObject):
++    """Keeps an Edit... button at the right edge inside its line edit."""
++
++    def __init__(self, line: QLineEdit, button: QToolButton):
++        super().__init__(line)
++        self.line, self.button = line, button
++
++    def eventFilter(self, obj, event):  # noqa: N802 (Qt API)
++        if event.type() in (QEvent.Type.Resize, QEvent.Type.Show):
++            h = self.line.height() - 4
++            self.button.setFixedHeight(max(h, 16))
++            self.button.move(self.line.width() - self.button.width() - 2, 2)
++        return False
++
++
++def _environment_names(widget: QWidget) -> list[str]:
++    """Device names the environment declares, for completing table keys:
++    variables, observables, and the readings behind '-SETPOINT' observables.
++    Found on the routine page that holds this editor (both GUIs keep the
++    environment class as `env`)."""
++    while widget is not None:
++        env = getattr(widget, "env", None)
++        if env is not None and hasattr(env, "observables"):
++            names = list(getattr(env, "variables", {}) or {})
++            observables = list(getattr(env, "observables", []) or [])
++            names += observables
++            names += [o[: -len("-SETPOINT")] for o in observables if o.endswith("-SETPOINT")]
++            return sorted(set(names))
++        widget = widget.parent()
++    return []
++
++
+ def parameter_problems(widget: QWidget) -> list[str]:
+     """Problems in every parameter editor inside `widget` (both GUIs' routine
+     pages), as 'name: why' lines; empty when all can be used."""
+@@ -1267,6 +1438,36 @@
+                     continue
+                 self._inject_computed_fields(sub, sub_class)
+ 
++    def _add_table_button(self, name: str, line: QLineEdit, example: dict[str, Any]) -> None:
++        """An Edit... button inside the field's right edge opens it as a table.
++        The line keeps holding the YAML text, which is what gets saved."""
++        button = QToolButton(line)
++        button.setText("Edit...")
++        button.setToolTip(f"Edit {name} as a table")
++        button.setCursor(Qt.CursorShape.PointingHandCursor)
++        button.adjustSize()
++        line.setTextMargins(0, 0, button.width() + 4, 0)
++        line.installEventFilter(_EditButtonPlacer(line, button))
++        button.clicked.connect(lambda: self.edit_as_table(name, line, example))
++        line.edit_button = button  # for tests
++
++    def edit_as_table(self, name: str, line: QLineEdit, example: dict[str, Any]) -> None:
++        note = ""
++        if check_dict_text(line.text(), example) is None:
++            current = yaml.load(
++                line.text().replace(": None", ": null").replace(", None", ", null"),
++                Loader=CustomSafeLoader,
++            ) or {}
++        else:
++            current = dict(example)
++            note = ("The text in this field has an error, so the table starts from "
++                    "the template's values. OK replaces the text.")
++        dialog = MappingTableDialog(name, current, example, _environment_names(self),
++                                    note, self)
++        self.table_dialog = dialog  # for tests
++        if dialog.exec_() == QDialog.Accepted and dialog.result_mapping is not None:
++            line.setText(_mapping_to_text(dialog.result_mapping))
++
+     def check_text_fields(self) -> list[str]:
+         """Check each dict-valued field edited as text (environment parameters
+         arrive as a plain dict, so a dict value, or a string holding one, is
+@@ -1296,6 +1497,8 @@
+                     if not isinstance(example, dict):
+                         example = {}
+                 self._examples[name] = example
++                if example is not None:
++                    self._add_table_button(name, widget, example)
+             example = self._examples[name]
+             if example is None:  # not a mapping: plain text
+                 continue

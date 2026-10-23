@@ -1142,3 +1142,23 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - Ported simpler_mini's patch-set stamp to main's setup scripts first: the new
   patch's start_run hunk sits beside revert-settings', which per-patch reverse
   dry-runs can't tell apart on a re-run.
+
+## 2026-10-23 — Edit... table for mapping parameters
+
+- User ran safe-badger/badger after the validation patch and saw no change:
+  correct, v1 only marks bad values. Said so plainly, then built the table.
+- `badger-1.6.0-param-table-editor.patch` (pydantic_editor.py only, after
+  param-validation): when `check_text_fields` first identifies a mapping
+  field it attaches a QToolButton "Edit..." inside the QLineEdit (text
+  margin + an event filter keeps it at the right edge). The QLineEdit stays
+  the widget, so serialization and validation are untouched.
+  `MappingTableDialog`: Name/Value QTableWidget, Add/Remove row, per-row
+  check via `check_dict_text` (bad cells dark red, OK refuses), name
+  completion via a QCompleter delegate from the routine page's `env` class
+  (variables, observables, -SETPOINT readings). Writes back with
+  `yaml.dump(..., default_flow_style=True, sort_keys=False)`, which quotes
+  comma-containing values (supply_groups, mults) correctly.
+- If the field text is broken, the table starts from the template's values
+  with a note; OK replaces the text.
+- Test `tests/param_table_editor_gui_test.py` (both GUIs, scripted dialog);
+  screenshots of the field and of RIL's 44-row w_sumsq in the dialog.

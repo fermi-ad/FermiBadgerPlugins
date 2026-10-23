@@ -326,6 +326,7 @@ FermiBadgerPlugins/
 │   ├── badger-1.6.0-revert-settings.patch
 │   ├── badger-1.6.0-plugin-docs.patch
 │   ├── badger-1.6.0-param-validation.patch
+│   ├── badger-1.6.0-param-table-editor.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
 ├── pixi.toml                   # Pixi environment definition (default includes acsys; offsite drops it)
@@ -445,9 +446,9 @@ Offline check: `python tests/mults_test.py`.
 
 The environment's **Open Docs** (Machine Interface in `-mini`) shows the plugin's own `plugins/environments/<env>/README.md`: what it tunes and reads, every parameter in the editor, safety notes and known issues. The algorithm's **Open Docs** (Optimization Algo) shows `docs/algorithms/<generator>.md`, then Badger's own guide for that algorithm, then Xopt's docstring for that generator (`badger-1.6.0-plugin-docs.patch`). Badger's guides (and the screenshots they show) live in Badger's GitHub repo, not in its installed package; setup step 2c downloads them for the installed version into `<env>/lib/python3.12/documentation/`, where Badger looks, once per environment (`.badger-version` stamp). That also makes the action bar's **?** button work (it opens Badger's `minimode` guide, which shows the stock `-mini` layout). Offline, setup only warns, and the pages show this repo's text alone. Badger's docs window drops a leading `---` block and breaks Markdown tables, so these pages use headings, paragraphs and bullet lists only. `python tests/plugin_docs_test.py` fails if an environment or algorithm has no page, if a parameter the code declares is missing from its README, or if a page uses `---` or a table.
 
-### Checking parameters as they are typed
+### Editing mapping parameters
 
-Environment parameters that hold a mapping (`setpoints`, `w_sumsq`, `sample_events`, ...) are edited as one line of `{name: value, ...}` text. Each is checked on every keystroke against the kind of values the template gave it (`badger-1.6.0-param-validation.patch`): a bad one turns red with the reason in its tooltip, and Go refuses to start until it is fixed. `python tests/param_validation_gui_test.py` covers both GUIs.
+Environment parameters that hold a mapping (`setpoints`, `w_sumsq`, `sample_events`, ...) show as one line of `{name: value, ...}` text with an **Edit...** button inside the field. The button opens a two-column table (Name, Value) with Add row / Remove row, so nothing needs braces, colons or commas; names complete from the environment's own devices, values are checked against the kinds the template used, and OK writes the line back (`badger-1.6.0-param-table-editor.patch`). The line can still be typed into: every keystroke is checked, a bad value turns red with the reason in its tooltip, and Go refuses to start until it is fixed (`badger-1.6.0-param-validation.patch`). `python tests/param_validation_gui_test.py` and `python tests/param_table_editor_gui_test.py` cover both GUIs.
 
 ### Settings verification (Pacsys interface)
 

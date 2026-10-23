@@ -10,14 +10,16 @@ without the class's type hints, so each is one line of YAML text.
 
 - [x] **v1: check as you type** (`badger-1.6.0-param-validation.patch`, main):
   red mark + reason, Go refused while any is bad.
-- [ ] **Next: table editor.** Pass the environment class to the editor so each
-  field gets its declared type (`Dict[str, float]`, ...). A dict field shows a
-  one-line summary ("6 entries") and an **Edit...** button opening a key/value
-  table: Add/Remove rows, number-only values where the type says so, `hold`
-  allowed in `setpoints`, key completion from the environment's own devices
-  (readings for `setpoints`, loss monitors for `w_sumsq`). A dialog, not
-  inline rows, so a 44-entry `w_sumsq` stays compact. Same YAML out, so
-  templates are unchanged.
+- [x] **Table editor** (`badger-1.6.0-param-table-editor.patch`, main,
+  2026-10-23): an **Edit...** button inside each mapping field opens a
+  Name/Value table (Add/Remove rows, values checked against the kinds the
+  template used, names completing from the environment's variables,
+  observables and `-SETPOINT` readings). Value kinds come from the template's
+  own values, not the class's declared types: the editor still gets a plain
+  dict. The line keeps the YAML text (what is saved), so templates are
+  unchanged and it can still be typed into.
+  - [ ] Try on the MCR host with the RIL template (`w_sumsq`, `setpoints`,
+    `supply_groups`, `mults`).
 - [ ] **Later: structured value editors**: a checklist of trims per
   `supply_groups` entry, a device x coefficient table for `mults`.
 
