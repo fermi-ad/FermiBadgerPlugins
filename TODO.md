@@ -3,6 +3,15 @@
 Open work, roughly in priority order. Session-by-session detail lives in
 `docs/progress.md`; this file is just the list.
 
+## Docs
+
+- [ ] The action bar's "?" button opens Badger's own `minimode` guide, which
+  shows the stock `-mini` layout. Once simpler_mini is the norm, give it our
+  own page (e.g. `docs/guides/minimode.md` and a loader tweak).
+- [ ] Upstream Badger's expected-improvement guide gives `max_travel_distances`
+  in absolute units; Xopt 3.2.2 treats it as a fraction of each range. Our page
+  says so; worth reporting upstream.
+
 ## Environment bugs found while writing their docs (2026-10-23)
 
 Each README says so under "Known issue"; none affects the RIL, EnergyStabilization,
