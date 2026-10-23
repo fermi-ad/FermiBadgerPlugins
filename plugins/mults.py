@@ -5,14 +5,18 @@ in the knob's range (±10). Each member device is written as
 
     setting = as_found + coefficient * step_size * steps
 
-``mults`` is {name: 'DEV1*c1,DEV2*c2,...'} and ``mult_step_size`` is {name: size};
-both are pydantic fields on the environment, so a tuning template can override them
-and operators can adjust a step size in the GUI's environment parameters.
+``mults`` is one pydantic field on the environment, {name: {step: size, members:
+{DEV: coefficient, ...}}}, so a tuning template can override it and operators can
+adjust a step size, a member or a coefficient in the GUI's environment parameters.
 
 A member that would leave its own hard bounds is clipped, never refused; how much of
 the requested step was lost is reported as the observable ``MultOOB_<Name>`` (0 good,
 1 = that member could not move at all) so a template can constrain on it.
 """
+from typing import Dict
+
+from typing_extensions import TypedDict
+
 from badger.errors import BadgerEnvVarError
 
 MULT_PREFIX = 'mult:'      # variable name  mult:<Name>
@@ -27,30 +31,23 @@ def mult_name(variable: str) -> str:
     return variable[len(MULT_PREFIX):]
 
 
-def parse_mult(spec: str) -> dict[str, float]:
-    """'L:MUQ1*20,L:MUQ2*20' -> {'L:MUQ1': 20.0, 'L:MUQ2': 20.0}. A missing '*c' means 1.0."""
-    members = {}
-    for item in spec.split(','):
-        item = item.strip()
-        if not item:
-            continue
-        dev, _, coeff = item.partition('*')
-        members[dev.strip()] = float(coeff) if coeff else 1.0
-    return members
+class Mult(TypedDict):
+    """One mult: its step size, and each member device's coefficient."""
+    step: float
+    members: Dict[str, float]
 
 
 def mult_members(mults: dict) -> list[str]:
     """Every member device of every mult, in declaration order, no duplicates."""
     out = []
-    for spec in mults.values():
-        for dev in parse_mult(spec):
+    for mult in mults.values():
+        for dev in mult['members']:
             if dev not in out:
                 out.append(dev)
     return out
 
 
-def expand_mults(requested: dict, mults: dict, step_sizes: dict, as_found: dict,
-                 hard_bounds: dict, warn=print):
+def expand_mults(requested: dict, mults: dict, as_found: dict, hard_bounds: dict, warn=print):
     """Replace every mult:<Name> in `requested` by its member settings.
 
     Returns (settings, steps, oob):
@@ -72,13 +69,13 @@ def expand_mults(requested: dict, mults: dict, step_sizes: dict, as_found: dict,
         n = int(round(float(value)))
         steps[name] = n
         lost = 0.0
-        for dev, coeff in parse_mult(mults[name]).items():
+        for dev, coeff in mults[name]['members'].items():
             if dev in settings:
                 raise BadgerEnvVarError(
                     f'{dev} is set directly and through {var} in the same step; uncheck one of them')
             if dev not in as_found:
                 raise BadgerEnvVarError(f'{var}: no as-found setting captured for {dev}')
-            offset = coeff * step_sizes[name] * n
+            offset = coeff * mults[name]['step'] * n
             target = as_found[dev] + offset
             if dev in hard_bounds:
                 lo, hi = hard_bounds[dev]

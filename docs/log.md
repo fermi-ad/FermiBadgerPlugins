@@ -1162,3 +1162,27 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   with a note; OK replaces the text.
 - Test `tests/param_table_editor_gui_test.py` (both GUIs, scripted dialog);
   screenshots of the field and of RIL's 44-row w_sumsq in the dialog.
+
+## 2026-10-23 — mults and bulk supplies become one nested parameter each
+
+- User asked for device pulldowns in the mults editor with the step size in
+  the same place, then the same for bulk supplies; first built as dialogs over
+  the old parameter pairs, then the user chose to collapse the definitions:
+  `mults: {MUQ: {step: 0.05, members: {L:MUQ1: 20.0, L:MUQ2: 20.0}}}` and
+  `supplies: {SourceATrims: {limit: 7.0, devices: [L:ATRMHU, ...]}}`
+  (old form dropped, our two RIL templates migrated).
+- `plugins/mults.py` (`Mult` TypedDict; `expand_mults` drops the step-size
+  argument; `parse_mult` gone) and `plugins/supply_limits.py` (`Supply`
+  TypedDict; `clip_to_supply_limits(requested, supplies, read, warn)`;
+  `group_devices` gone). Both RIL environments, both RIL templates, the two
+  helper tests, the RIL READMEs and the main README updated. The old form
+  now fails pydantic validation naming the field (checked).
+- `DeviceGroupsDialog` edits one parameter (`DEVICE_GROUP_FIELDS`: mults ->
+  step/members with scale; supplies -> limit/devices). The live text check
+  treats a nested {...} group and a [...] list as their own kinds, so
+  flattening a mult by hand ("{MUQ: 0.05}") is flagged as you type.
+- First supply-dialog screenshot showed four tables squeezed to one row each:
+  groups now scroll and each table fits its rows (+1 empty).
+- End-to-end probe: development RIL Pacsys template through the -mini editor
+  and `_compose_routine` (FakeBackend seeded, nothing on ACNET): nested
+  `supplies` reaches the environment intact.

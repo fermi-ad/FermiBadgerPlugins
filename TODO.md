@@ -19,9 +19,15 @@ without the class's type hints, so each is one line of YAML text.
   dict. The line keeps the YAML text (what is saved), so templates are
   unchanged and it can still be typed into.
   - [ ] Try on the MCR host with the RIL template (`w_sumsq`, `setpoints`,
-    `supply_groups`, `mults`).
-- [ ] **Later: structured value editors**: a checklist of trims per
-  `supply_groups` entry, a device x coefficient table for `mults`.
+    `supplies`, `mults`).
+- [x] **Mults and bulk supplies** (2026-10-23, user's design): each is now ONE
+  nested parameter, `mults: {name: {step, members: {device: scale}}}` and
+  `supplies: {group: {limit, devices: [...]}}` (replacing `mults` +
+  `mult_step_size` and `supply_groups` + `supply_limits`; both RIL
+  templates migrated, old form rejected by validation). Edit... opens one
+  dialog per parameter: step size or limit plus members from device
+  pulldowns. Existing mults/supplies only: a new one also needs a
+  `mult:<name>` variable or `SumAbs_<group>` observable in the class.
 
 ## Docs
 

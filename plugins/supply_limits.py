@@ -1,18 +1,24 @@
 """Hard limit on sum |I| over trim magnets that share one bulk power supply.
 
-Groups are {name: 'DEV1,DEV2,...'} of plain setting-device names and limits are
-{name: amps}. Both are pydantic fields on the environment, so a tuning template
-can override them under environment.params.
+``supplies`` is one pydantic field on the environment, {group: {limit: amps,
+devices: [DEV, ...]}} of plain setting-device names, so a tuning template can
+override it under environment.params.
 """
+from typing import List
+
+from typing_extensions import TypedDict
+
 from badger.errors import BadgerEnvVarError
 
 
-def group_devices(spec: str) -> list[str]:
-    # ponytail: plain setting names only, no "read,set,tolN@X" pair syntax -- the trims don't use it.
-    return [d.strip() for d in spec.split(',') if d.strip()]
+class Supply(TypedDict):
+    """One bulk supply: its limit on the summed |I| (amps), and the trims it feeds.
+    Plain setting names only, no "read,set,tolN@X" pair syntax: the trims don't use it."""
+    limit: float
+    devices: List[str]
 
 
-def clip_to_supply_limits(requested: dict, groups: dict, limits: dict, read_settings, warn=print) -> dict:
+def clip_to_supply_limits(requested: dict, supplies: dict, read_settings, warn=print) -> dict:
     """Return a copy of `requested` with each supply group's sum |I| at or under its limit.
 
     Group members not in `requested` keep their live setting (read via `read_settings`)
@@ -22,12 +28,12 @@ def clip_to_supply_limits(requested: dict, groups: dict, limits: dict, read_sett
     BadgerEnvVarError is raised.
     """
     out = dict(requested)
-    for group, spec in groups.items():
-        devs = group_devices(spec)
+    for group, supply in supplies.items():
+        devs = supply['devices']
         settable = [d for d in devs if d in out]
         if not settable:
             continue
-        limit = limits[group]
+        limit = supply['limit']
         missing = [d for d in devs if d not in out]
         vals = {d: out[d] for d in settable}
         if missing:

@@ -8,13 +8,13 @@ description: |
   Variables: source trims L:ATRMHU, L:ATRMVU, L:ATRMHD, L:ATRMVD; solenoids L:ASOL, L:LSOL;
     LEBT trims L:LTRMH, L:LTRMV; MEBT quads as mults mult:MUQ (L:MUQ1, L:MUQ2) and mult:MDQ
     (L:MDQ1, L:MDQ2): the variable is the knob's integer step count, each quad moves by
-    coefficient x mult_step_size x steps from its as-found setting (the four quads stay
+    coefficient x step x steps from its as-found setting (the four quads stay
     available to tick individually instead, but not together with their mult);
     MEBT trims L:MDQ1H, L:MDQ1V, L:MDQ2H, L:MDQ2V; RF phases L:RFQPAH, L:RFBPAH.
   Constraints: L:D7LMSM < 18, L:TK4RAD < 50, L:TUNRAD < 150.
     SumAbs_SourceATrims < 7 (sum |I| of the source A trims, one bulk supply; 7 A is a stand-in
     pending expert confirmation). The environment also clips the largest trim to keep each
-    supply group's sum under its limit before any setting.
+    supply's sum under its limit before any setting.
     MultOOB_MUQ, MultOOB_MDQ < 0.5: fraction of the last mult step lost to a quad's own bounds
     (0 good; nonzero means the optimum wants to go past a quad's bounds, the quad was clipped).
   Observables: G:LINEFF, L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
@@ -31,12 +31,13 @@ environment:
   name: 01_Linac_RIL_tuning_Acsys
   params:
     debug: false
-    mult_step_size:
-      MDQ: 0.05
-      MUQ: 0.05
     mults:
-      MDQ: L:MDQ1*20.0,L:MDQ2*20.0
-      MUQ: L:MUQ1*20.0,L:MUQ2*20.0
+      MDQ:
+        step: 0.05
+        members: {L:MDQ1: 20.0, L:MDQ2: 20.0}
+      MUQ:
+        step: 0.05
+        members: {L:MUQ1: 20.0, L:MUQ2: 20.0}
     periods:
       L:RFBPAH: 360.0
       L:RFQPAH: 360.0
@@ -45,16 +46,19 @@ environment:
       B:BOOEFF: '@e,1f,e,0'
       default: '@e,52,e,0'
     settings_role: ril_tuning
-    supply_groups:
-      MEBTQ1trims: L:MUQ1H,L:MUQ1V,L:MDQ1H,L:MDQ1V
-      MEBTQ2trims: L:MUQ2H,L:MUQ2V,L:MDQ2H,L:MDQ2V
-      SourceATrims: L:ATRMHU,L:ATRMVU,L:ATRMHD,L:ATRMVD
-      SourceBTrims: L:BTRMHU,L:BTRMVU,L:BTRMHD,L:BTRMVD
-    supply_limits:
-      MEBTQ1trims: 7.0
-      MEBTQ2trims: 7.0
-      SourceATrims: 7.0
-      SourceBTrims: 7.0
+    supplies:
+      MEBTQ1trims:
+        limit: 7.0
+        devices: [L:MUQ1H, L:MUQ1V, L:MDQ1H, L:MDQ1V]
+      MEBTQ2trims:
+        limit: 7.0
+        devices: [L:MUQ2H, L:MUQ2V, L:MDQ2H, L:MDQ2V]
+      SourceATrims:
+        limit: 7.0
+        devices: [L:ATRMHU, L:ATRMVU, L:ATRMHD, L:ATRMVD]
+      SourceBTrims:
+        limit: 7.0
+        devices: [L:BTRMHU, L:BTRMVU, L:BTRMHD, L:BTRMVD]
 formulas: {}
 generator:
   max_travel_distances: null
