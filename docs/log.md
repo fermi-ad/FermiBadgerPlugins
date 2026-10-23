@@ -1201,3 +1201,13 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   the whole set; if the reinstall fails, fall back to patching in place.
   Tested: old stamp -> "reset Badger and Xopt", all 11 applied, stamp written,
   re-run skipped. The legacy conda setup.sh is unchanged (frozen).
+
+## 2026-10-23 — simpler_mini merged into main
+
+- Clean upgrade simulation before merging: fresh main install, then the merged
+  simpler_mini files, then setup: "reset Badger and Xopt", all 13 applied,
+  re-run skipped, Badger identical to a fresh simpler_mini install. (A first
+  attempt was invalid: an earlier experiment had left a stamp hashing the
+  folder's patches while a different script's list had been applied.)
+- main fast-forwarded to simpler_mini `bc6b9b7` and both pushed, at the
+  user's request; the MCR trial was skipped.

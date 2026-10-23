@@ -2025,3 +2025,30 @@ step** (user, 2026-10-22, MCR host).
    `ril_tuning`. Check `logs/safe-badger.log` and `logs/snapshots/`.
 4. Then: decide on merging simpler_mini into main (step 2), and hand over
    the final launch line for the operator shortcut after step 3.
+
+## 2026-10-23: simpler_mini merged into main — the simplified -mini is the norm
+
+Status: main fast-forwarded to `bc6b9b7` (= simpler_mini) and pushed; both
+branches identical. User tried it locally ("gorgeous") and chose to merge
+without the planned MCR trial; they will update the operators' setup
+themselves.
+
+- Since the last entry: panel headings; validation as you type and the
+  Edit... table for {name: value} parameters; mults and bulk supplies as one
+  nested parameter each (`mults`, `supplies`) with their own dialog; Badger's
+  own guides fetched at setup; docs for both Parameters buttons; full GUI got
+  the -mini VOCS layout; -mini Save as... into tuning_templates/saved/.
+- Upgrade path verified: a main-patched env that pulls the merge and runs
+  `pixi run setup -- --yes` now resets Badger/Xopt (`pixi reinstall`) and
+  re-applies all 13 patches; result byte-identical to a fresh install; a
+  re-run skips. (Before that fix, the pull reported false FAILEDs.)
+
+### Next
+
+- On the MCR host: `git pull && pixi run setup -- --yes` in
+  `/home/lcape/FermiBadgerPlugins` (a trial worktree, if one was made, can
+  be removed: `git worktree remove ../FermiBadgerPlugins-mini-trial`).
+- Machine tests (TODO.md): safe-badger with ZZ_PacsysTesting (mini and g),
+  the Edit... dialogs with the RIL template, then hand over the operator
+  launch line `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml`.
+- Step 3 of the plan: pixi as the norm (conda path frozen).

@@ -204,7 +204,9 @@ it to paste in.
 
 ## `simpler_mini` branch — UI redesign for typical operators, not developers
 
-Branch off `main` at `8c7b557` (2026-10-21), not merged. Goal: streamline
+Branch off `main` at `8c7b557` (2026-10-21); **merged into main 2026-10-23**
+(fast-forward to `bc6b9b7`, user's decision after trying it locally; the MCR
+trial was skipped). The simplified `-mini` is now the norm. Goal: streamline
 `-mini` for the typical user, who thinks "machine"/"accelerator section"
 and doesn't need Badger-developer concepts surfaced as main-window rows.
 
