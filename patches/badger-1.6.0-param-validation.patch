@@ -1,0 +1,186 @@
+diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pydantic_editor.py
+--- a/badger/gui/components/pydantic_editor.py	2026-10-23 15:30:35
++++ b/badger/gui/components/pydantic_editor.py	2026-10-23 15:33:53
+@@ -637,6 +637,61 @@
+             return {k: v for k, v in zip(child_values, child_values2)}
+ 
+ 
++def _value_kind(value: Any) -> str:
++    if value is None:
++        return "nothing"
++    if isinstance(value, bool):
++        return "true/false"
++    if isinstance(value, (int, float)):
++        return "a number"
++    return "text"
++
++
++def check_dict_text(text: str, example: dict[str, Any]) -> str | None:
++    """Why `text` is not a usable `{name: value, ...}` mapping like `example`
++    (the template's own value for the field), or None if it is.
++
++    The values may be of the kinds `example` holds; text also admits numbers
++    (e.g. a setpoint that is either a number or 'hold')."""
++    try:
++        value = yaml.load(
++            text.replace(": None", ": null").replace(", None", ", null"),
++            Loader=CustomSafeLoader,
++        )
++    except yaml.YAMLError as e:
++        where = ""
++        mark = getattr(e, "problem_mark", None)
++        if mark is not None:
++            where = f" (near character {mark.column + 1})"
++        problem = getattr(e, "problem", None) or "cannot be read"
++        return (
++            f"Not a valid {{name: value, ...}} list: {problem}{where}. "
++            "Check the braces, colons and commas."
++        )
++    if not isinstance(value, dict):
++        return "Must be a {name: value, ...} list in braces."
++    allowed = {_value_kind(v) for v in example.values()}
++    if "text" in allowed:
++        allowed.add("a number")
++    for name, v in value.items():
++        kind = _value_kind(v)
++        if not allowed or kind in allowed:
++            continue
++        if kind == "nothing":
++            return f"'{name}' has no value: is a ':' missing after it?"
++        return f"'{name}': expected {' or '.join(sorted(allowed))}, not {v!r}."
++    return None
++
++
++def parameter_problems(widget: QWidget) -> list[str]:
++    """Problems in every parameter editor inside `widget` (both GUIs' routine
++    pages), as 'name: why' lines; empty when all can be used."""
++    problems: list[str] = []
++    for editor in widget.findChildren(BadgerPydanticEditor):
++        problems += editor.check_text_fields()
++    return problems
++
++
+ class BadgerPydanticEditor(QTreeWidget):
+     vocs: VOCS = VOCS(variables={})
+     defaults: dict[str, Any] = {}
+@@ -1117,6 +1172,7 @@
+         widget = self.itemWidget(item, self.value_col)
+         if widget:
+             widget.setStyleSheet("")
++            widget.setProperty("error", False)  # update_error_styles sets it
+         for j in range(item.childCount()):
+             self.remove_style(item.child(j))
+ 
+@@ -1211,6 +1267,44 @@
+                     continue
+                 self._inject_computed_fields(sub, sub_class)
+ 
++    def check_text_fields(self) -> list[str]:
++        """Check each dict-valued field edited as text (environment parameters
++        arrive as a plain dict, so a dict value, or a string holding one, is
++        shown as one line of YAML). The text at load time, or the field's
++        default, is the example of what the field holds. Marks each bad field
++        red with the reason as its tooltip; returns 'name: reason' lines."""
++        problems: list[str] = []
++        if self.model_class is None:
++            return problems
++        if getattr(self, "_examples_for", None) is not self.model_class:
++            self._examples_for, self._examples = self.model_class, {}
++        for name, field in self.model_class.model_fields.items():
++            if field.annotation is not str:
++                continue
++            items = self.findItems(name, Qt.MatchFlag.MatchExactly, 0)
++            widget = self.itemWidget(items[0], self.value_col) if items else None
++            if not isinstance(widget, QLineEdit):
++                continue
++            if name not in self._examples:  # first look: the loaded value
++                source = field.default if isinstance(field.default, str) else widget.text()
++                example = None
++                if source.lstrip().startswith("{"):
++                    try:
++                        example = yaml.load(source, Loader=CustomSafeLoader)
++                    except yaml.YAMLError:
++                        pass
++                    if not isinstance(example, dict):
++                        example = {}
++                self._examples[name] = example
++            example = self._examples[name]
++            if example is None:  # not a mapping: plain text
++                continue
++            reason = check_dict_text(widget.text(), example)
++            if reason:
++                self.update_error_styles((name,), reason)
++                problems.append(f"{name}: {reason}")
++        return problems
++
+     def validate(self) -> None:
+         if self.model_class is None:
+             raise ValueError("Model class is not set.")
+@@ -1218,6 +1312,11 @@
+         self.setStyleSheet("")
+         for i in range(self.topLevelItemCount()):
+             self.remove_style(self.topLevelItem(i))
++
++        # Text that is not a usable mapping is flagged on its own field; the
++        # whole-model check below would only fail to parse it.
++        if self.check_text_fields():
++            return
+ 
+         try:
+             parameters = self.get_parameters_yaml()
+diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
+--- a/badger/gui/mini/pages/home_page.py	2026-10-23 15:30:35
++++ b/badger/gui/mini/pages/home_page.py	2026-10-23 15:31:00
+@@ -42,6 +42,7 @@
+ from badger.gui.components.status_bar import BadgerStatusBar
+ from badger.gui.components.action_bar import BadgerActionBar
+ from badger.gui.components.settings_guard import SettingsGuard
++from badger.gui.components.pydantic_editor import parameter_problems
+ from badger.utils import get_header
+ from badger.settings import init_settings
+ 
+@@ -467,6 +468,16 @@
+             Removed data loading implementation and data_panel from mini GUI
+         """
+         logger.info("Starting run.")
++        problems = parameter_problems(self.routine_editor)
++        if problems:
++            QMessageBox.warning(
++                self,
++                "Check the parameters",
++                "These parameters (marked in red) cannot be used yet:\n\n"
++                + "\n".join(problems),
++            )
++            self.run_action_bar.routine_finished()  # reset the action bar
++            return
+         if not self.snapshot_at_go():
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
+diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
+--- a/badger/gui/pages/home_page.py	2026-10-23 15:30:35
++++ b/badger/gui/pages/home_page.py	2026-10-23 15:31:00
+@@ -40,6 +40,7 @@
+ from badger.errors import BadgerRoutineError
+ from badger.gui.components.action_bar import BadgerActionBar
+ from badger.gui.components.settings_guard import SettingsGuard
++from badger.gui.components.pydantic_editor import parameter_problems
+ from badger.gui.components.data_panel import filter_metadata
+ from badger.gui.components.data_table import (
+     add_row,
+@@ -540,6 +541,16 @@
+ 
+         """
+         logger.info("Starting run.")
++        problems = parameter_problems(self.routine_editor)
++        if problems:
++            QMessageBox.warning(
++                self,
++                "Check the parameters",
++                "These parameters (marked in red) cannot be used yet:\n\n"
++                + "\n".join(problems),
++            )
++            self.run_action_bar.routine_finished()  # reset the action bar
++            return
+         if not self.snapshot_at_go():
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
