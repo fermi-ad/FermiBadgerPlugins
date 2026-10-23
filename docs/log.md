@@ -1186,3 +1186,18 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - End-to-end probe: development RIL Pacsys template through the -mini editor
   and `_compose_routine` (FakeBackend seeded, nothing on ACNET): nested
   `supplies` reaches the environment intact.
+
+## 2026-10-23 — setup resets Badger/Xopt when the patch set changes
+
+- Before merging simpler_mini into main, simulated production's upgrade: a
+  main-patched env pulls simpler_mini and re-runs setup. The per-patch
+  "already applied?" probe reported revert-settings and param-validation
+  FAILED (later patches edit lines near theirs), the stamp was not written,
+  and every later run would repeat it -- although the resulting Badger was
+  byte-identical to a fresh simpler_mini install.
+- Fix in pixi_setup.sh: when the stamp differs, `pixi reinstall -e
+  $PIXI_ENVIRONMENT_NAME badger-opt xopt` (from pixi's cache) and remove the
+  files our patches create (found by their epoch "from" date), then apply
+  the whole set; if the reinstall fails, fall back to patching in place.
+  Tested: old stamp -> "reset Badger and Xopt", all 11 applied, stamp written,
+  re-run skipped. The legacy conda setup.sh is unchanged (frozen).

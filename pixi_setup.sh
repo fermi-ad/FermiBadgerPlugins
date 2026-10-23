@@ -77,7 +77,8 @@ else
     # Per-patch "already applied?" (reverse dry-run) can't see a patch whose
     # lines a later patch rewrote, so a re-run would report it FAILED. A
     # stamp of the whole patch set, written after a clean apply, is what
-    # makes re-running safe.
+    # makes re-running safe; when the set changes (a pull brought new or
+    # edited patches), Badger and Xopt are first put back as installed.
     STAMP="$SP/.fermibadger-patches"
     WANT="$("$PY" -c "import hashlib, glob, sys
 h = hashlib.sha256()
@@ -88,6 +89,20 @@ print(h.hexdigest())" "$REPO/patches")"
     if [[ -f "$STAMP" && "$(cat "$STAMP")" == "$WANT" ]]; then
         echo "   skipped (this patch set is already applied)"
     else
+        # Start from pristine Badger and Xopt: reinstall them from pixi's
+        # package cache and remove the files our patches create (a new file's
+        # "from" date is the epoch: 1969-12-31 or 1970-01-01 by time zone),
+        # then apply the whole set.
+        if [[ -n "${PIXI_ENVIRONMENT_NAME:-}" ]] && pixi reinstall \
+                --manifest-path "$REPO/pixi.toml" -e "$PIXI_ENVIRONMENT_NAME" \
+                badger-opt xopt >/dev/null 2>&1; then
+            for f in $(sed -nE 's#^--- a/([^[:space:]]+)[[:space:]]+(1969-12-31|1970-01-01).*#\1#p' "$REPO"/patches/*.patch); do
+                rm -f "$SP/$f"
+            done
+            echo "   reset Badger and Xopt to their installed state"
+        else
+            echo "   (could not reset Badger/Xopt with pixi reinstall; patching what is there)"
+        fi
         apply_patch "$SP/badger/gui/components" 1 \
             "$REPO/patches/pydantic_editor-badger-1.6.0-dict-subtypes.patch"
         apply_patch "$SP" 1 "$REPO/patches/badger-mini-config.patch"
