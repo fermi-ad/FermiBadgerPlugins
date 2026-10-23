@@ -1,5 +1,5 @@
 #!/bin/bash
-# LEGACY (conda path). See test-quick-start.sh for the pixi equivalent.
+# LEGACY (conda path), FROZEN 2026-10-23. See test-quick-start.sh for the pixi equivalent.
 #
 # Test script for Quick Start instructions
 # Creates a fresh clone of FermiBadgerPlugins and verifies setup with a test conda environment

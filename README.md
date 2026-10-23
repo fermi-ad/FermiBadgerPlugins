@@ -68,8 +68,6 @@ It is safe to re-run: patches already applied are detected and skipped.
 ./bootstrap.sh --offsite  # skip acsys; no FNAL network needed, for off-site dev work
 ```
 
-**Legacy conda path**: `./setup.sh` still works the same way, using the `FermiBadger_env` conda environment instead of pixi (`./setup.sh --help` for its options). Kept during the pixi cutover; see `TODO.md`.
-
 ### 3. Launch
 
 ```bash
@@ -91,8 +89,6 @@ pixi run safe-badger g -t 01_Linac_RIL_tuning.yaml
 ```
 
 Off-site, on the `offsite` environment, add `-e offsite`: `pixi run -e offsite badger -g -cf config.local.yaml`.
-
-Legacy conda path: `conda activate FermiBadger_env` then the same `badger ...` commands without the `pixi run` prefix.
 
 `config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
 
@@ -151,7 +147,7 @@ Full technical description (processes, snapshot file format, every ending, tests
 
 `acsys` (also FNAL Accelerator Control System, but requiring the FNAL network to install) is part of the default environment, matching the MCR host. Off-site dev work uses the `offsite` environment instead, which skips it. `pixi.lock` pins exact versions for `osx-arm64` and `linux-64`; regenerate it with `pixi install` (or `pixi install -e offsite`) after editing `pixi.toml`, and commit the updated lock file.
 
-**Legacy conda path**: `environment.yml` defines the equivalent `FermiBadger_env` conda environment, with `acsys` as an unconditional dependency (so it always needs the FNAL network). Kept during the pixi cutover.
+**Legacy conda path (frozen 2026-10-23).** pixi is the only maintained way to install. `environment.yml` (the `FermiBadger_env` conda environment, `acsys` unconditional) and `./setup.sh` stay in the repo, unmaintained: they get no new patches, so a conda install lags behind pixi from here on. Use them only to keep an existing conda install running until it is retired; `tests/test-quick-start-conda.sh` checks that path.
 
 ### Why Patches Are Required
 
@@ -183,7 +179,7 @@ This script:
 - Runs `./bootstrap.sh --yes` there, in its own `.pixi/` environment
 - Verifies the plugin is discoverable by Badger
 
-**Note:** The test uses a separate clone to avoid touching your own `config.local.yaml` or `.pixi/` environment. The legacy conda equivalent is `tests/test-quick-start-conda.sh`.
+**Note:** The test uses a separate clone to avoid touching your own `config.local.yaml` or `.pixi/` environment.
 
 ---
 
@@ -197,7 +193,7 @@ Point Badger at a different `plugins`/`tuning_templates`/archive/logbook locatio
 pixi run setup -- --config
 ```
 
-This only rewrites `config.local.yaml`; it asks the same archive/logbook questions as a full setup but skips patching. (Legacy conda path: `./setup.sh --config`.)
+This only rewrites `config.local.yaml`; it asks the same archive/logbook questions as a full setup but skips patching.
 
 ### Loading a tuning template
 
@@ -245,7 +241,7 @@ This simulation-tuning environment accepts these parameters in its tuning templa
 
 [↑ Back to top](#contents)
 
-### FNAL Network Required (default pixi environment, or the legacy conda path)
+### FNAL Network Required (default pixi environment)
 
 The `acsys` package is hosted on FNAL's internal pip repository (`https://www-bd.fnal.gov/pip3`). You must be on the FNAL network (on-site or VPN) to install it. The `offsite` pixi environment (`pixi install -e offsite` / `./bootstrap.sh --offsite`) doesn't need it.
 
@@ -278,13 +274,7 @@ to prevent slow performance from thread contention.
 
 ### Environment Not Found
 
-If `pixi run badger` fails with no environment built, re-run `pixi install` (or `pixi install -e offsite`) from the repo root; `pixi.toml` defines it, so there's no separate "does it exist" check like conda's.
-
-Legacy conda path: if `conda activate FermiBadger_env` fails:
-```bash
-conda env list  # Verify the environment exists
-conda create -n FermiBadger_env -f environment.yml  # Recreate if missing
-```
+If `pixi run badger` fails with no environment built, re-run `pixi install` (or `pixi install -e offsite`) from the repo root; `pixi.toml` defines it, so there's no separate "does it exist" check.
 
 ### Dict type must have subtypes Error
 
@@ -316,7 +306,7 @@ FermiBadgerPlugins/
 │   ├── safe-badger.md          # How the snapshot, Revert and automatic restore are built
 │   ├── algorithms/             # One page per optimization algorithm, shown by its Open Docs button
 │   └── ...
-├── environment.yml             # Legacy conda environment definition
+├── environment.yml             # Legacy conda environment (frozen 2026-10-23, unmaintained)
 ├── patches/                    # Badger bug fixes, applied by bootstrap.sh/setup.sh in the order patches/README.md lists
 │   ├── pydantic_editor-badger-1.6.0-dict-subtypes.patch
 │   ├── badger-mini-config.patch
@@ -345,14 +335,14 @@ FermiBadgerPlugins/
 │   ├── interfaces/             # Badger Interface plugins
 │   │   └── VirtualAccelerator_MADXSuiteInterface/
 │   └── settings_snapshot.py    # Snapshot/diff/restore of device settings (used by -mini and safe-badger)
-├── setup.sh                    # Legacy conda install/patch/config script
+├── setup.sh                    # Legacy conda install/patch/config script (frozen, unmaintained)
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
 ├── tests/                      # Diagnostic and verification scripts
 │   ├── check_RIL_tuning_live_bounds.py  # Read-only live-bounds diagnostic
 │   ├── template_lint_test.py   # Headless check that every tuning template loads
 │   ├── test-quick-start.sh     # Fresh-clone verification script (pixi)
-│   └── test-quick-start-conda.sh  # Fresh-clone verification script (legacy conda)
+│   └── test-quick-start-conda.sh  # Fresh-clone verification script (legacy conda, frozen)
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
     ├── 01_Linac_RIL_tuning.yaml            # operations-ready physical-machine templates live at the top level
     ├── development/                        # physical-machine templates still being worked on

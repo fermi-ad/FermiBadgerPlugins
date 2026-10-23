@@ -1211,3 +1211,17 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   folder's patches while a different script's list had been applied.)
 - main fast-forwarded to simpler_mini `bc6b9b7` and both pushed, at the
   user's request; the MCR trial was skipped.
+
+## 2026-10-23 — pixi is the norm; conda path frozen
+
+- Removed the `../FermiBadgerPlugins-main` worktree (clean; main ==
+  simpler_mini at e19dfa4); this checkout switched to main. The
+  simpler_mini branch is kept (identical to main).
+- pixi made the norm, per the earlier "keep frozen" decision: README drops the
+  scattered "Legacy conda path" asides (Quick Start, Launch, config-only,
+  test, Troubleshooting) in favour of one frozen-path paragraph; `setup.sh`,
+  `environment.yml`, `tests/test-quick-start-conda.sh` headers say FROZEN
+  2026-10-23; CLAUDE.md and HANDOFF.md say pixi is the norm. New patches go
+  into pixi_setup.sh only.
+- Left open (TODO.md): the operator shortcut (the user updates it) and
+  removing FermiBadger_env on the MCR host.

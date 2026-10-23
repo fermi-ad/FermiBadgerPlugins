@@ -13,7 +13,6 @@
    ```bash
    pixi run badger -g -cf config.local.yaml
    ```
-   Legacy conda path: `conda activate FermiBadger_env` then drop the `pixi run` prefix.
 
 3. **Load a template**:
    - Open `tuning_templates/simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml`
@@ -23,9 +22,10 @@
 
 - **Badger**: 1.6.0 (see `patches/README.md` for the current patch set)
 - **Xopt**: 3.2.2
-- **Environment**: pixi (`pixi.toml`/`pixi.lock`) is now the default; the
-  `FermiBadger_env` conda environment is kept as a legacy fallback during
-  the cutover — see TODO.md.
+- **Environment**: pixi (`pixi.toml`/`pixi.lock`) is the norm. The
+  `FermiBadger_env` conda environment and `./setup.sh` are frozen as of
+  2026-10-23 (unmaintained, no new patches); the conda instructions further
+  down this file are historical.
 
 For detailed information on versions and fixes, see `HANDOFF.md` section "Badger 1.6.0 Fixes and Gotchas".
 

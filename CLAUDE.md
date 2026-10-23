@@ -4,9 +4,10 @@ When working with this codebase, prioritize readability over cleverness. Ask cla
 
 ## About This Project
 
-Environment: pixi (`./bootstrap.sh`, `pixi run ...`) is now the default; the
-conda environment (`FermiBadger_env`, `./setup.sh`) is kept as a legacy
-fallback during the dual-run cutover — see TODO.md.
+Environment: pixi is the norm (`./bootstrap.sh`, `pixi run setup`, `pixi run
+safe-badger mini|g`). The conda path (`FermiBadger_env`, `environment.yml`,
+`./setup.sh`) is frozen as of 2026-10-23: kept in the repo, unmaintained, and
+gets no new patches. New patches go into `pixi_setup.sh` only.
 
 Developing a new, working functionality for Badger, the GUI frontend to Xopt, the Bayesian optimization package for particle accelerators.  
 We are developing the Badger Environment in plugins/environments/99_Sim_VirtualAccelerator_MADXSuite and its Badger Interface in plugins/interfaces/VirtualAccelerator_MADXSuiteInterface.  The user of Badger opens a tuning template such as tuning_templates/simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml where the 99_Sim_VirtualAccelerator_MADXSuite Environment is selected, and the ```lattice_filename``` parameter is used to load the lattice file into MAD by way of XSuite, which allows rapid re-simulation of the accelerator under different parameter value combinations.  These Badger plugins automatically infer from the lattice the elements which can be varied (variables) and those which can be read out (objectives). Objectives can be combined in mathematical functions to make more sophisticated objectives. 

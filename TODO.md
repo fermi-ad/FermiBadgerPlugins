@@ -141,14 +141,17 @@ it to paste in.
     files also differ between the two installs (conda-forge can rebuild a
     noarch package's source without a version bump) — no evidence yet
     that matters; an exact-build pin is the fallback if it ever does.
-  - [ ] Dual-run on the MCR host: run the (still Acsys, at this point)
-    production template through both conda and pixi, compare, then hand
-    over the pixi-based launch line (`pixi run badger -g -cf config.local.yaml
-    -t <template>`, no `-e` flag needed now) for the external shortcut —
-    don't edit it ourselves.
-  - [ ] Cutover: once validated for several sessions, retire the conda env
-    on that host, update README's Quick Start to drop the legacy conda
-    callouts.
+  - [x] **pixi is the norm** (2026-10-23, user's decision): README's
+    Quick Start and Troubleshooting no longer mention conda; one
+    "Legacy conda path (frozen 2026-10-23)" paragraph remains. `setup.sh`,
+    `environment.yml` and `tests/test-quick-start-conda.sh` are marked
+    frozen: kept, unmaintained, no new patches. The planned conda-vs-pixi
+    dual run was skipped.
+  - [ ] Operator shortcut on the MCR host -> `cd <repo> && pixi run
+    safe-badger mini -t 01_Linac_RIL_tuning.yaml` (the user updates it).
+  - [ ] Then retire `FermiBadger_env` on the MCR host by hand
+    (`conda env remove -n FermiBadger_env`), and later decide whether to
+    delete the frozen conda files from the repo.
 - [ ] Offer the three-line turbo.py fix in `patches/xopt-3.2.2-turbo-serialization.patch`
   upstream to xopt-org/Xopt.
 

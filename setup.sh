@@ -1,7 +1,7 @@
 #!/bin/bash
-# LEGACY (conda path). pixi + ./bootstrap.sh is now the default; this stays
-# as a fallback during the dual-run cutover, see TODO.md. Both are kept
-# working in the meantime, as one does not replace the other yet.
+# FROZEN 2026-10-23 (legacy conda path): no longer maintained and gets no new
+# patches; pixi + ./bootstrap.sh is the norm. Kept only so an existing conda
+# install can keep running until it is retired.
 #
 # One-command setup for a fresh clone of FermiBadgerPlugins:
 #   1. create (or reuse) the conda environment from environment.yml
