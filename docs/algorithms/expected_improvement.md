@@ -22,12 +22,15 @@ feedback loops.
 
 ## Parameters (Optimization Algo)
 
-- `turbo_controller`: keeps each new point inside a trust region around the best point so far. `SafetyTurboController` (used by the operations template) grows the region when recent points satisfy the constraints and shrinks it when they do not.
-  - `length`: region size, as a fraction of each variable's range. Start small for cautious steps.
-  - `length_min`, `length_max`: limits on that size.
-  - `scale_factor`: how much it grows or shrinks at a time.
-  - `success_tolerance`, `failure_tolerance`: how many good or bad points in a row before it changes.
-  - `restrict_model_data`: fit the model only to points inside the region.
+- `turbo_controller`: keeps each new point inside a trust region.
+  - `SafetyTurboController` (used by the operations template) centres the region on the average of the points that met all constraints. It grows the region when recent points meet them and shrinks it when they do not. It needs at least one constraint.
+  - `OptimizeTurboController` centres the region on the best point so far. It grows the region when recent points improve on it and shrinks it when they do not.
+  - Their settings:
+    - `length`: region size, as a fraction of each variable's range. Start small for cautious steps.
+    - `length_min`, `length_max`: limits on that size.
+    - `scale_factor`: how much it grows or shrinks at a time.
+    - `success_tolerance`, `failure_tolerance`: how many good or bad points in a row before it changes.
+    - `restrict_model_data`: fit the model only to points inside the region.
 - `max_travel_distances`: the largest step from the last point for each variable, as a fraction of its range, e.g. `[0.1, 0.1, ...]`. Another way to keep steps small.
 - `numerical_optimizer`: how hard it searches the model for the next point. `n_restarts` is how many tries; `max_time` caps the seconds per step.
 - `n_monte_carlo_samples`: samples used to evaluate the model; the default is fine.
