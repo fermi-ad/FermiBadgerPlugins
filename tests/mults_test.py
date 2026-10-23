@@ -17,7 +17,7 @@ sys.path.insert(0, 'plugins')
 from badger.errors import BadgerEnvVarError
 from pacsys.testing import FakeBackend
 from interfaces.BasicPacsysInterface import Interface
-from mults import expand_mults, parse_mult, mult_members
+from mults import expand_mults, mult_members
 
 
 def quiet(fn, *a, **kw):
@@ -26,33 +26,31 @@ def quiet(fn, *a, **kw):
 
 
 # --- helper --------------------------------------------------------------------------
-assert parse_mult('L:MUQ1*20,L:MUQ2*20') == {'L:MUQ1': 20.0, 'L:MUQ2': 20.0}
-assert parse_mult('L:A*-2, L:B') == {'L:A': -2.0, 'L:B': 1.0}
-MULTS = {'MUQ': 'L:MUQ1*20,L:MUQ2*20', 'MDQ': 'L:MDQ1*20,L:MDQ2*20'}
-STEP = {'MUQ': 0.1, 'MDQ': 0.1}
+MULTS = {'MUQ': {'step': 0.1, 'members': {'L:MUQ1': 20.0, 'L:MUQ2': 20.0}},
+         'MDQ': {'step': 0.1, 'members': {'L:MDQ1': 20.0, 'L:MDQ2': 20.0}}}
 FOUND = {'L:MUQ1': 272.0, 'L:MUQ2': 246.0, 'L:MDQ1': 226.0, 'L:MDQ2': 172.0}
 BOUNDS = {'L:MUQ1': [250, 300], 'L:MUQ2': [225, 275], 'L:MDQ1': [200, 250], 'L:MDQ2': [150, 180]}
 
-settings, steps, oob = quiet(expand_mults, {'mult:MUQ': 2.4, 'L:ASOL': 400.0}, MULTS, STEP, FOUND, BOUNDS)
+settings, steps, oob = quiet(expand_mults, {'mult:MUQ': 2.4, 'L:ASOL': 400.0}, MULTS, FOUND, BOUNDS)
 assert steps == {'MUQ': 2} and oob == {'MUQ': 0.0}, (steps, oob)
 assert settings == {'L:ASOL': 400.0, 'L:MUQ1': 276.0, 'L:MUQ2': 250.0}, settings   # 20 * 0.1 * 2 = 4
-settings, steps, _ = quiet(expand_mults, {'mult:MUQ': -2.6}, MULTS, STEP, FOUND, BOUNDS)
+settings, steps, _ = quiet(expand_mults, {'mult:MUQ': -2.6}, MULTS, FOUND, BOUNDS)
 assert steps == {'MUQ': -3} and settings['L:MUQ1'] == 266.0
 # clipping: MDQ2 wants 192 but its bound is 180 -> 12 of the 20 requested is lost
-settings, steps, oob = quiet(expand_mults, {'mult:MDQ': 10}, MULTS, STEP, FOUND, BOUNDS)
+settings, steps, oob = quiet(expand_mults, {'mult:MDQ': 10}, MULTS, FOUND, BOUNDS)
 assert settings['L:MDQ1'] == 246.0 and settings['L:MDQ2'] == 180.0, settings
 assert abs(oob['MDQ'] - 0.6) < 1e-12, oob
 # step 0 moves nothing and reports nothing lost
-settings, steps, oob = quiet(expand_mults, {'mult:MDQ': 0.2}, MULTS, STEP, FOUND, BOUNDS)
+settings, steps, oob = quiet(expand_mults, {'mult:MDQ': 0.2}, MULTS, FOUND, BOUNDS)
 assert settings['L:MDQ2'] == 172.0 and oob['MDQ'] == 0.0
 for bad in ({'mult:MUQ': 1, 'L:MUQ1': 270.0}, {'mult:NOPE': 1}):
     try:
-        quiet(expand_mults, bad, MULTS, STEP, FOUND, BOUNDS)
+        quiet(expand_mults, bad, MULTS, FOUND, BOUNDS)
         raise AssertionError(f'expected BadgerEnvVarError for {bad}')
     except BadgerEnvVarError:
         pass
 try:
-    quiet(expand_mults, {'mult:MUQ': 1}, MULTS, STEP, {}, BOUNDS)
+    quiet(expand_mults, {'mult:MUQ': 1}, MULTS, {}, BOUNDS)
     raise AssertionError('expected BadgerEnvVarError without as-found values')
 except BadgerEnvVarError:
     pass
@@ -93,7 +91,7 @@ oob = quiet(env.get_observables, ['MultOOB_MDQ', 'MultOOB_MUQ'])
 assert abs(oob['MultOOB_MDQ'] - 0.2) < 1e-12 and oob['MultOOB_MUQ'] == 0.0, oob          # 2 of 10 lost
 
 # operators can change the step size (template param / GUI env params)
-env.mult_step_size['MUQ'] = 0.5
+env.mults['MUQ']['step'] = 0.5
 quiet(env.set_variables, {'mult:MUQ': 1})
 assert fb.writes[-2] == ('L:MUQ1.SETTING', 282.0), fb.writes[-2]          # 20 * 0.5 * 1
 

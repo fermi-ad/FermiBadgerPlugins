@@ -1,7 +1,7 @@
 diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pydantic_editor.py
 --- a/badger/gui/components/pydantic_editor.py	2026-10-23 15:54:25
-+++ b/badger/gui/components/pydantic_editor.py	2026-10-23 15:55:05
-@@ -30,8 +30,18 @@
++++ b/badger/gui/components/pydantic_editor.py	2026-10-23 16:20:32
+@@ -30,11 +30,22 @@
  from pydantic import BaseModel, Field, ValidationError, create_model
  from pydantic.fields import FieldInfo
  from pydantic_core import PydanticUndefined
@@ -21,7 +21,22 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
      QCheckBox,
      QComboBox,
      QDoubleSpinBox,
-@@ -683,6 +693,167 @@
++    QGroupBox,
+     QHBoxLayout,
+     QLabel,
+     QLineEdit,
+@@ -644,6 +655,10 @@
+         return "true/false"
+     if isinstance(value, (int, float)):
+         return "a number"
++    if isinstance(value, dict):
++        return "a {...} group"
++    if isinstance(value, list):
++        return "a [...] list"
+     return "text"
+ 
+ 
+@@ -683,6 +698,371 @@
      return None
  
  
@@ -41,21 +56,50 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +    return yaml.dump(mapping, default_flow_style=True, sort_keys=False, width=10**6).strip()
 +
 +
++def _device_combo(names: list[str], current: str = "", editable: bool = True) -> QComboBox:
++    """A pulldown of device names; editable ones also take typing, completing
++    from the same list."""
++    combo = QComboBox()
++    combo.setEditable(editable)
++    combo.addItems(names)
++    combo.installEventFilter(MouseWheelWidgetAdjustmentGuard(combo))
++    if editable:
++        completer = QCompleter(names, combo)
++        completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
++        completer.setFilterMode(Qt.MatchFlag.MatchContains)
++        combo.setCompleter(completer)
++    if current and combo.findText(current) < 0:
++        combo.addItem(current)  # not one the environment declares: keep it visible
++    combo.setCurrentText(current) if editable else combo.setCurrentIndex(combo.findText(current))
++    return combo
++
++
 +class _CompleterDelegate(QStyledItemDelegate):
-+    """Name cells complete from the environment's own device names."""
++    """Name cells: a pulldown of the environment's own device names, which also
++    accepts any other name typed in (e.g. 'default' in sample_events)."""
 +
 +    def __init__(self, names: list[str], parent: QWidget | None = None):
 +        super().__init__(parent)
 +        self.names = names
 +
 +    def createEditor(self, parent, option, index):  # noqa: N802 (Qt API)
-+        editor = super().createEditor(parent, option, index)
-+        if isinstance(editor, QLineEdit) and self.names:
-+            completer = QCompleter(self.names, editor)
-+            completer.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-+            completer.setFilterMode(Qt.MatchFlag.MatchContains)
-+            editor.setCompleter(completer)
-+        return editor
++        if not self.names:
++            return super().createEditor(parent, option, index)
++        combo = _device_combo(self.names)
++        combo.setParent(parent)
++        return combo
++
++    def setEditorData(self, editor, index):  # noqa: N802 (Qt API)
++        if isinstance(editor, QComboBox):
++            editor.setCurrentText(index.data() or "")
++        else:
++            super().setEditorData(editor, index)
++
++    def setModelData(self, editor, model, index):  # noqa: N802 (Qt API)
++        if isinstance(editor, QComboBox):
++            model.setData(index, editor.currentText().strip())
++        else:
++            super().setModelData(editor, model, index)
 +
 +
 +class MappingTableDialog(QDialog):
@@ -154,6 +198,181 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +        super().accept()
 +
 +
++class DeviceGroupsDialog(QDialog):
++    """Edit a parameter made of device groups, each with one number: mults
++    ({name: {step, members: {device: scale}}}) or bulk supplies ({group:
++    {limit, devices: [...]}}). Members are picked from the environment's
++    settable devices. Groups can't be added or renamed here: the environment
++    class declares a variable or observable for each."""
++
++    def __init__(self, title: str, note: str, groups: dict[str, dict[str, float]],
++                 numbers: dict[str, float], number_label: str, devices: list[str],
++                 with_scale: bool, group_label=lambda name: name,
++                 parent: QWidget | None = None):
++        super().__init__(parent)
++        self.devices = devices
++        self.with_scale = with_scale
++        self.result: tuple[dict[str, dict[str, float]], dict[str, float]] | None = None
++        self.setWindowTitle(title)
++        self.resize(560, 520)
++        layout = QVBoxLayout(self)
++        label = QLabel(note)
++        label.setWordWrap(True)
++        layout.addWidget(label)
++        # Several groups (four bulk supplies in RIL) scroll; each table is
++        # sized to its own rows rather than squeezed to share the height.
++        scroll = QScrollArea()
++        scroll.setWidgetResizable(True)
++        inner = QWidget()
++        groups_layout = QVBoxLayout(inner)
++        scroll.setWidget(inner)
++        layout.addWidget(scroll, 1)
++        self.sections: dict[str, tuple[QDoubleSpinBox, QTableWidget]] = {}
++        for name, members in groups.items():
++            box = QGroupBox(group_label(name))
++            vbox = QVBoxLayout(box)
++            row = QHBoxLayout()
++            row.addWidget(QLabel(number_label))
++            number = QDoubleSpinBox()
++            number.setDecimals(4)
++            number.setRange(0.0001, 1e6)
++            number.setValue(float(numbers.get(name, 1.0)))
++            number.installEventFilter(MouseWheelWidgetAdjustmentGuard(number))
++            row.addWidget(number)
++            row.addStretch()
++            vbox.addLayout(row)
++            headers = ["Device", "Scale", "Per step"] if with_scale else ["Device"]
++            table = QTableWidget(0, len(headers))
++            table.setHorizontalHeaderLabels(headers)
++            table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
++            table.verticalHeader().setVisible(False)
++            vbox.addWidget(table)
++            buttons = QHBoxLayout()
++            add = QPushButton("Add member")
++            add.clicked.connect(lambda _=False, n=name: self.add_member(n, "", 1.0))
++            remove = QPushButton("Remove member")
++            remove.clicked.connect(lambda _=False, t=table: self._remove_selected(t))
++            buttons.addWidget(add)
++            buttons.addWidget(remove)
++            buttons.addStretch()
++            vbox.addLayout(buttons)
++            groups_layout.addWidget(box)
++            self.sections[name] = (number, table)
++            number.valueChanged.connect(lambda _=0.0, n=name: self._update_per_step(n))
++            for device, scale in members.items():
++                self.add_member(name, device, scale)
++            self._fit(table)
++        groups_layout.addStretch()
++        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
++        box.accepted.connect(self.accept)
++        box.rejected.connect(self.reject)
++        layout.addWidget(box)
++
++    def add_member(self, name: str, device: str, scale: float = 1.0) -> None:
++        number, table = self.sections[name]
++        row = table.rowCount()
++        table.insertRow(row)
++        table.setCellWidget(row, 0, _device_combo(self.devices, device, editable=not self.devices))
++        if self.with_scale:
++            spin = QDoubleSpinBox()
++            spin.setDecimals(4)
++            spin.setRange(-1e6, 1e6)
++            spin.setValue(float(scale))
++            spin.installEventFilter(MouseWheelWidgetAdjustmentGuard(spin))
++            spin.valueChanged.connect(lambda _=0.0, n=name: self._update_per_step(n))
++            table.setCellWidget(row, 1, spin)
++            item = QTableWidgetItem()
++            item.setFlags(Qt.ItemFlag.ItemIsEnabled)
++            table.setItem(row, 2, item)
++            self._update_per_step(name)
++        self._fit(table)
++
++    @staticmethod
++    def _fit(table: QTableWidget) -> None:
++        """Show every member row, plus room for one more."""
++        rows = table.verticalHeader().defaultSectionSize() * (table.rowCount() + 1)
++        table.setFixedHeight(table.horizontalHeader().sizeHint().height() + rows
++                             + 2 * table.frameWidth())
++
++    def _remove_selected(self, table: QTableWidget) -> None:
++        rows = {i.row() for i in table.selectedIndexes()} or {table.currentRow()}
++        for row in sorted((r for r in rows if r >= 0), reverse=True):
++            table.removeRow(row)
++        self._fit(table)
++
++    def _update_per_step(self, name: str) -> None:
++        if not self.with_scale:
++            return
++        number, table = self.sections[name]
++        for row in range(table.rowCount()):
++            scale = table.cellWidget(row, 1).value()
++            table.item(row, 2).setText(f"{scale * number.value():g}")
++
++    def values(self) -> tuple[dict[str, dict[str, float]], dict[str, float], list[str]]:
++        """({group: {device: scale}}, {group: number}, problems)."""
++        groups: dict[str, dict[str, float]] = {}
++        numbers: dict[str, float] = {}
++        problems: list[str] = []
++        for name, (number, table) in self.sections.items():
++            members: dict[str, float] = {}
++            for row in range(table.rowCount()):
++                device = table.cellWidget(row, 0).currentText().strip()
++                if not device:
++                    problems.append(f"{name}: member {row + 1} has no device.")
++                    continue
++                if device in members:
++                    problems.append(f"{name}: {device} is listed twice.")
++                    continue
++                members[device] = table.cellWidget(row, 1).value() if self.with_scale else 1.0
++            if not members:
++                problems.append(f"{name}: needs at least one member.")
++            groups[name] = members
++            numbers[name] = number.value()
++        return groups, numbers, problems
++
++    def accept(self) -> None:
++        groups, numbers, problems = self.values()
++        if problems:
++            QMessageBox.warning(self, self.windowTitle(),
++                                "Please fix these first:\n\n" + "\n".join(problems))
++            return
++        self.result = (groups, numbers)
++        super().accept()
++
++
++# Parameters edited with DeviceGroupsDialog: field -> (number key, members key,
++# members have a scale, title, number label, note, group label)
++DEVICE_GROUP_FIELDS = {
++    "mults": (
++        "step", "members", True, "Edit mults", "Step size",
++        "Each step of a mult moves every member by scale x step size from its "
++        "setting when the run starts. Mults are declared by the environment "
++        "(variable mult:<name>), so they can't be added or renamed here.",
++        lambda name: f"{name}   (variable mult:{name})",
++    ),
++    "supplies": (
++        "limit", "devices", False, "Edit bulk supplies", "Limit (A, sum of |I|)",
++        "Trims that share one bulk power supply, and that supply's limit on "
++        "their summed |current|; a write that would exceed it is reduced, "
++        "largest current first. Supplies are declared by the environment "
++        "(observable SumAbs_<group>), so they can't be added or renamed here.",
++        lambda name: f"{name}   (observable SumAbs_{name})",
++    ),
++}
++
++
++def _environment_settings(widget: QWidget) -> list[str]:
++    """The environment's settable devices (its variables, minus the mult:
++    knobs and read/set pairs), for picking mult members."""
++    while widget is not None:
++        env = getattr(widget, "env", None)
++        if env is not None and hasattr(env, "observables"):
++            return [n for n in (getattr(env, "variables", {}) or {})
++                    if not n.startswith("mult:") and "," not in n]
++        widget = widget.parent()
++    return []
++
++
 +class _EditButtonPlacer(QObject):
 +    """Keeps an Edit... button at the right edge inside its line edit."""
 +
@@ -189,7 +408,7 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
  def parameter_problems(widget: QWidget) -> list[str]:
      """Problems in every parameter editor inside `widget` (both GUIs' routine
      pages), as 'name: why' lines; empty when all can be used."""
-@@ -1267,6 +1438,36 @@
+@@ -1267,6 +1647,64 @@
                      continue
                  self._inject_computed_fields(sub, sub_class)
  
@@ -203,8 +422,36 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +        button.adjustSize()
 +        line.setTextMargins(0, 0, button.width() + 4, 0)
 +        line.installEventFilter(_EditButtonPlacer(line, button))
-+        button.clicked.connect(lambda: self.edit_as_table(name, line, example))
++        if name in DEVICE_GROUP_FIELDS:
++            button.clicked.connect(lambda: self.edit_device_groups(name, line))
++            button.setToolTip(DEVICE_GROUP_FIELDS[name][3])
++        else:
++            button.clicked.connect(lambda: self.edit_as_table(name, line, example))
 +        line.edit_button = button  # for tests
++
++    def edit_device_groups(self, name: str, line: QLineEdit) -> None:
++        number_key, members_key, with_scale, title, number_label, note, group_label = (
++            DEVICE_GROUP_FIELDS[name])
++        try:
++            value = yaml.load(line.text(), Loader=CustomSafeLoader) or {}
++            numbers = {g: float(spec[number_key]) for g, spec in value.items()}
++            members = {g: dict(spec[members_key]) if with_scale
++                       else {d: 1.0 for d in spec[members_key]}
++                       for g, spec in value.items()}
++        except Exception as e:
++            QMessageBox.warning(self, title,
++                                f"The text can't be read ({e}). Fix it, or undo the edit, first.")
++            return
++        dialog = DeviceGroupsDialog(title, note, members, numbers, number_label,
++                                    _environment_settings(self), with_scale, group_label, self)
++        self.table_dialog = dialog  # for tests
++        if dialog.exec_() == QDialog.Accepted and dialog.result is not None:
++            new_members, new_numbers = dialog.result
++            line.setText(_mapping_to_text({
++                g: {number_key: new_numbers[g],
++                    members_key: new_members[g] if with_scale else list(new_members[g])}
++                for g in new_members
++            }))
 +
 +    def edit_as_table(self, name: str, line: QLineEdit, example: dict[str, Any]) -> None:
 +        note = ""
@@ -226,7 +473,7 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
      def check_text_fields(self) -> list[str]:
          """Check each dict-valued field edited as text (environment parameters
          arrive as a plain dict, so a dict value, or a string holding one, is
-@@ -1296,6 +1497,8 @@
+@@ -1296,6 +1734,8 @@
                      if not isinstance(example, dict):
                          example = {}
                  self._examples[name] = example

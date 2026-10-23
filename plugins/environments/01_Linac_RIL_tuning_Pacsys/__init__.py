@@ -2,8 +2,8 @@ from badger import environment
 from badger.errors import BadgerNoInterfaceError
 from typing import Dict
 from periodic import unwrap
-from supply_limits import clip_to_supply_limits, group_devices
-from mults import expand_mults, is_mult, mult_name, mult_members, OOB_PREFIX
+from supply_limits import Supply, clip_to_supply_limits
+from mults import Mult, expand_mults, is_mult, mult_name, mult_members, OOB_PREFIX
 from pydantic import PrivateAttr
 
 class Environment(environment.Environment):
@@ -31,7 +31,7 @@ class Environment(environment.Environment):
         "L:MDQ1" : [ 200.0, 250.0],
         "L:MDQ2" : [ 150.0, 180.0],
         # Mults (console-style knobs): integer step count in the knob's range; each member quad is
-        # written as as_found + coefficient * mult_step_size * steps (see mults / mult_step_size).
+        # written as as_found + coefficient * step * steps (see mults).
         "mult:MUQ": [-10, 10],
         "mult:MDQ": [-10, 10],
 
@@ -87,7 +87,7 @@ class Environment(environment.Environment):
         "VTrajError_SumSqBPM_calc", 
         "W_SumLosses", 
         "DummySumSq",
-        # sum |I| per bulk supply group; a new entry in supply_groups needs a SumAbs_<group> line here.
+        # sum |I| per bulk supply; a new entry in supplies needs a SumAbs_<group> line here.
         "SumAbs_SourceATrims", "SumAbs_SourceBTrims", "SumAbs_MEBTQ1trims", "SumAbs_MEBTQ2trims",
         # fraction of the last mult step lost to a member's hard bounds (0 good, 1 = member could not move)
         "MultOOB_MUQ", "MultOOB_MDQ",
@@ -101,23 +101,22 @@ class Environment(environment.Environment):
     debug:         bool= False
     # {reading device: period} for phase-like devices, in the device's own units.
     periods:       Dict[str, float] = {'L:RFQPAH': 360.0, 'L:RFBPAH': 360.0, 'L:V5QSET': 360.0}
-    # {group: comma-separated trims that share one bulk power supply} and {group: max sum |I| in amps}.
+    # Bulk power supplies: {group: {limit: max sum |I| in amps, devices: [trims it feeds]}}.
     # set_variables clips the largest |I| in a group to stay under its limit; SumAbs_<group> is observable.
     # Sources A and B and MEBT Q1 and Q2 each have their own bulk supply; the two sources must not interfere.
-    supply_groups: Dict[str, str] = {
-        'SourceATrims': 'L:ATRMHU,L:ATRMVU,L:ATRMHD,L:ATRMVD',
-        'SourceBTrims': 'L:BTRMHU,L:BTRMVU,L:BTRMHD,L:BTRMVD',
-        'MEBTQ1trims':  'L:MUQ1H,L:MUQ1V,L:MDQ1H,L:MDQ1V',
-        'MEBTQ2trims':  'L:MUQ2H,L:MUQ2V,L:MDQ2H,L:MDQ2V'}
     # TODO: 7.0 A is a stand-in pending expert confirmation of each bulk supply's rating.
-    supply_limits: Dict[str, float] = {'SourceATrims': 7.0, 'SourceBTrims': 7.0,
-                                       'MEBTQ1trims': 7.0, 'MEBTQ2trims': 7.0}
-    # Mults: {name: 'DEV*coeff,DEV*coeff,...'} and {name: step size}. Variable mult:<name> is the
-    # integer step count; member = as_found + coeff * step_size * steps, clipped to the member's
-    # bounds with the lost fraction reported as MultOOB_<name>. Operators adjust the step size here.
+    supplies: Dict[str, Supply] = {
+        'SourceATrims': {'limit': 7.0, 'devices': ['L:ATRMHU', 'L:ATRMVU', 'L:ATRMHD', 'L:ATRMVD']},
+        'SourceBTrims': {'limit': 7.0, 'devices': ['L:BTRMHU', 'L:BTRMVU', 'L:BTRMHD', 'L:BTRMVD']},
+        'MEBTQ1trims':  {'limit': 7.0, 'devices': ['L:MUQ1H', 'L:MUQ1V', 'L:MDQ1H', 'L:MDQ1V']},
+        'MEBTQ2trims':  {'limit': 7.0, 'devices': ['L:MUQ2H', 'L:MUQ2V', 'L:MDQ2H', 'L:MDQ2V']}}
+    # Mults: {name: {step: size, members: {DEV: coefficient}}}. Variable mult:<name> is the integer
+    # step count; member = as_found + coefficient * step * steps, clipped to the member's bounds with
+    # the lost fraction reported as MultOOB_<name>. Operators adjust steps and members here.
     # Coefficients 20.0 and step size 0.05 confirmed by the user on 2026-10-08.
-    mults:          Dict[str, str] = {'MUQ': 'L:MUQ1*20.0,L:MUQ2*20.0', 'MDQ': 'L:MDQ1*20.0,L:MDQ2*20.0'}
-    mult_step_size: Dict[str, float] = {'MUQ': 0.05, 'MDQ': 0.05}
+    mults: Dict[str, Mult] = {
+        'MUQ': {'step': 0.05, 'members': {'L:MUQ1': 20.0, 'L:MUQ2': 20.0}},
+        'MDQ': {'step': 0.05, 'members': {'L:MDQ1': 20.0, 'L:MDQ2': 20.0}}}
     _as_found:   dict = PrivateAttr(default_factory=dict)   # member settings at first touch of a mult (run start)
     _mult_steps: dict = PrivateAttr(default_factory=dict)   # {name: int} last step count applied
     _mult_oob:   dict = PrivateAttr(default_factory=dict)   # {name: lost fraction} from the last step
@@ -172,12 +171,11 @@ class Environment(environment.Environment):
         mult_vars = [n for n in settable_devices if is_mult(n)]
         if mult_vars:
             self._capture_as_found(mult_vars)
-            settable_devices, steps, oob = expand_mults(settable_devices, self.mults, self.mult_step_size,
+            settable_devices, steps, oob = expand_mults(settable_devices, self.mults,
                                                         self._as_found, self.variables)
             self._mult_steps.update(steps)
             self._mult_oob.update(oob)
-        settable_devices = clip_to_supply_limits(settable_devices, self.supply_groups,
-                                                 self.supply_limits,
+        settable_devices = clip_to_supply_limits(settable_devices, self.supplies,
                                                  lambda devs: self.interface.get_settings(devs, debug=self.debug))
         # Interface BasicPacsysInterface handles (read,set) pairs and optional tolerances.
         self.interface.set_values(settable_devices, settings_role=self.settings_role,
@@ -227,7 +225,7 @@ class Environment(environment.Environment):
                 sumsq += pow(weight * (1.0+result[dev_read]), 2.0) # Add unity, then scale by the weight, then square and add to the sum.
             result['W_SumLosses'] = sumsq
         for name in sumabs_names:
-            devs = group_devices(self.supply_groups[name[len('SumAbs_'):]])
+            devs = self.supplies[name[len('SumAbs_'):]]['devices']
             result[name] = sum(abs(v) for v in self.interface.get_settings(devs, debug=self.debug).values())
         for name in oob_names:
             result[name] = self._mult_oob.get(name[len(OOB_PREFIX):], 0.0)
