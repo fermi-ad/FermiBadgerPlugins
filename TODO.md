@@ -3,6 +3,22 @@
 Open work, roughly in priority order. Session-by-session detail lives in
 `docs/progress.md`; this file is just the list.
 
+## Environment bugs found while writing their docs (2026-10-23)
+
+Each README says so under "Known issue"; none affects the RIL, EnergyStabilization,
+QuadTuning or ZZ_PacsysTesting environments.
+
+- [ ] `09_DeliveryRing_Muon_PID_tune_Acsys` does not import: line 69 is
+  `= result[...]`, missing `itgsig_spill` on the left (the Pacsys twin has it).
+- [ ] `09_DeliveryRing_Muon_PID_tune_*`: `get_observables` checks for
+  `'DR_SDF'`, not `'DR_SDF_calc'`, so the spill arrays are never read and
+  `DR_SDF_calc` fails.
+- [ ] `01_Linac_AutoSteerRestore_*`: asking for `VTrajError_SumSqBPM_calc`
+  appends an undefined `input_dev`; its `setpoints` dict also repeats keys.
+- [ ] `01_Linac_MinD7LMSM_using_Tank5Phase_*`: calls `interface.get_value`
+  and passes `sample_event` positionally, and adds `.SETTING` itself; out of
+  date with the interfaces.
+
 ## safe-badger: revert and crash safety (built 2026-10-21 on main; `docs/safe-badger.md`)
 
 Startup snapshot of every writable device (at template load and at Go), a

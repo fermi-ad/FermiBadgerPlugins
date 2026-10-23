@@ -101,6 +101,7 @@ print(h.hexdigest())" "$REPO/patches")"
         # must come after device-list-gui: diffed against that tree
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-full-gui-vocs-layout.patch"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-revert-settings.patch"
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-plugin-docs.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
 

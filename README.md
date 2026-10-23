@@ -314,6 +314,7 @@ FermiBadgerPlugins/
 │   ├── log.md
 │   ├── progress.md
 │   ├── safe-badger.md          # How the snapshot, Revert and automatic restore are built
+│   ├── algorithms/             # One page per optimization algorithm, shown by its Open Docs button
 │   └── ...
 ├── environment.yml             # Legacy conda environment definition
 ├── patches/                    # Badger bug fixes, applied by bootstrap.sh/setup.sh in the order patches/README.md lists
@@ -326,6 +327,7 @@ FermiBadgerPlugins/
 │   ├── badger-1.6.0-mini-simpler-ui.patch
 │   ├── badger-1.6.0-full-gui-vocs-layout.patch
 │   ├── badger-1.6.0-revert-settings.patch
+│   ├── badger-1.6.0-plugin-docs.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
 ├── pixi.toml                   # Pixi environment definition (default includes acsys; offsite drops it)
@@ -440,6 +442,10 @@ setting = as_found + coefficient × mult_step_size × steps
 As-found settings are read once per run, on the first touch of any mult. A member that would leave its own hard bounds is clipped, not refused, and the fraction of the requested step lost to clipping is the observable `MultOOB_<name>` (0 good, 1 = that member could not move at all); the production template constrains both to `< 0.5` so a clipped step counts as infeasible and the plots show when the optimum wants to go past a quad's bounds. Ticking a member quad and its mult in the same run is a configuration error. Operators adjust a step size in the GUI's environment parameters before a run. The MEBT quad mults use coefficient 20.0 and step size 0.05, so one step moves each quad of a pair by 1.0 A.
 
 Offline check: `python tests/mults_test.py`.
+
+### Docs behind the Parameters buttons
+
+The environment's **Open Docs** (Machine Interface in `-mini`) shows the plugin's own `plugins/environments/<env>/README.md`: what it tunes and reads, every parameter in the editor, safety notes and known issues. The algorithm's **Open Docs** (Optimization Algo) shows `docs/algorithms/<generator>.md`, then Xopt's own docstring for that generator (`badger-1.6.0-plugin-docs.patch`). Badger's docs window drops a leading `---` block and breaks Markdown tables, so these pages use headings, paragraphs and bullet lists only. `python tests/plugin_docs_test.py` fails if an environment or algorithm has no page, if a parameter the code declares is missing from its README, or if a page uses `---` or a table.
 
 ### Settings verification (Pacsys interface)
 
