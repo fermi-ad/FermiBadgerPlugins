@@ -1,0 +1,33 @@
+diff -ruN a/badger/factory.py b/badger/factory.py
+--- a/badger/factory.py	2026-10-23 14:30:37
++++ b/badger/factory.py	2026-10-23 14:32:30
+@@ -214,6 +214,19 @@
+         Formatted markdown string containing both the README content
+         and the plugin class docstring if applicable in a code block.
+     """
++    # FermiBadgerPlugins: Badger's own guides are not installed with the package,
++    # so algorithm docs come from the plugin repo's docs/algorithms/<name>.md,
++    # followed by Xopt's docstring for the generator class.
++    if ptype == "generator":
++        page = Path(BADGER_PLUGIN_ROOT).parent / "docs" / "algorithms" / f"{name}.md"
++        if page.is_file():
++            readme = page.read_text()
++        else:
++            readme = f"# {name}\nNo FermiBadgerPlugins page for this algorithm yet.\n"
++        from xopt.generators import get_generator
++
++        return _format_docs_str(readme, get_generator(name).__doc__, ptype)
++
+     # .../Badger/src/badger/factory.py
+     PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+     BADGER_GUIDES_DIR = PROJECT_ROOT / "documentation" / "docs" / "guides"
+@@ -308,6 +321,9 @@
+     """
+ 
+     readme = _format_md_docs(readme)
++
++    if not docstring:  # FermiBadgerPlugins: no empty "Docstrings ... None" block
++        return readme
+ 
+     if ptype is None or ptype == "":
+         if docstring is None:

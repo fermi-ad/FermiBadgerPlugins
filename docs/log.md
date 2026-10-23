@@ -1084,3 +1084,24 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - `safe_badger.py`: `g` subcommand (`GUIS = {'mini': '-mini', 'g': '-g'}`).
 - GUI test now runs every check on both windows, plus Go capture and the
   cancelled-run case.
+
+## 2026-10-23 — docs for the two Parameters buttons
+
+- Both "Open Docs" pages were empty for different reasons. Machine Interface:
+  Badger shows the env plugin's README.md + class docstring; none of our
+  machine envs had either ("No readme found" / "None"). Optimization Algo:
+  `load_badger_docs` reads `documentation/docs/guides/` beside Badger's
+  source, which the pip/conda package doesn't ship -> FileNotFoundError as
+  the whole page. Its fallback `generators[name]` is also a KeyError here;
+  `xopt.generators.get_generator(name)` works.
+- `badger-1.6.0-plugin-docs.patch` (factory.py): algorithms read
+  `<repo>/docs/algorithms/<name>.md` + Xopt docstring; no "Docstrings None"
+  block when a class has no docstring.
+- Wrote READMEs for all 17 environments (Acsys twins derived from Pacsys) and
+  8 algorithm pages, operator-first. Badger's docs window drops a leading
+  `---` block and turns blank lines into <br />, which breaks tables: pages
+  use headings/paragraphs/bullets only. Checked by rendering in the real
+  docs window offscreen.
+- `tests/plugin_docs_test.py`: every env/algorithm has a page, every declared
+  env parameter appears in its README (mutation-checked), no `---`/tables.
+- Found four env bugs (TODO.md); documented as "Known issue", not fixed.
