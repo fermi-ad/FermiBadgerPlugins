@@ -1,6 +1,6 @@
 diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
---- a/badger/gui/mini/components/env_cbox.py	2026-10-21 14:28:22
-+++ b/badger/gui/mini/components/env_cbox.py	2026-10-21 14:28:22
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-23 14:00:54
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-23 14:01:14
 @@ -48,6 +48,11 @@
  import logging
  
@@ -36,9 +36,23 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.label.setObjectName("TemplateSelectorLabel")
          self.label.setFixedWidth(label_width)
  
-@@ -213,10 +226,16 @@
+@@ -207,16 +220,30 @@
+         self.load_template_button.setFixedSize(96, 24)
+         self.load_template_button.setFixedHeight(24)
+ 
++        # Saves the current setup as a template under tuning_templates/saved/
++        # (gitignored), which the dropdown lists as "saved/<name>".
++        self.save_template_button = QPushButton("Save as...")
++        self.save_template_button.setObjectName("TemplateSelectorButton")
++        self.save_template_button.setFixedSize(96, 24)
++
+         layout.addWidget(self.label)
+         layout.addSpacing(6)
+         layout.addWidget(self.template_cb)
          layout.addSpacing(14)
          layout.addWidget(self.load_template_button)
++        layout.addSpacing(6)
++        layout.addWidget(self.save_template_button)
          layout.addStretch()
 +        outer.addLayout(layout)
  
@@ -53,7 +67,24 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
      def sync_selection_state(self):
          has_selection = self.template_cb.currentIndex() != -1
          self.setStyleSheet(
-@@ -295,8 +314,15 @@
+@@ -275,6 +302,7 @@
+         self.template_row = TemplateSelectorRow(LABEL_WIDTH, self)
+         self.template_cb = self.template_row.template_cb
+         self.load_template_button = self.template_row.load_template_button
++        self.save_template_button = self.template_row.save_template_button
+ 
+         config_singleton = init_settings()
+         BADGER_PLUGIN_ROOT = config_singleton.read_value("BADGER_PLUGIN_ROOT")
+@@ -284,6 +312,8 @@
+             template_dir = Path(BADGER_PLUGIN_ROOT) / "templates"
+         yaml_files = list(template_dir.glob("*.y*ml"))
+         self.template_cb.addItems([file.stem for file in sorted(yaml_files)])
++        saved = sorted((template_dir / "saved").glob("*.y*ml"))
++        self.template_cb.addItems([f"saved/{file.stem}" for file in saved])
+         self.template_cb.setCurrentIndex(-1)
+ 
+         vbox.addWidget(self.template_row)
+@@ -295,8 +325,15 @@
          separator.setStyleSheet("background-color: #61748c;")
          vbox.addWidget(separator)
  
@@ -71,7 +102,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          vbox_env = QVBoxLayout(env)
          vbox_env.setContentsMargins(0, 0, 0, 0)
          select_env = QWidget()
-@@ -312,34 +338,38 @@
+@@ -312,34 +349,38 @@
          env_cb.addItems(self.envs)
          env_cb.setCurrentIndex(-1)
          env_cb.setPlaceholderText("")
@@ -130,7 +161,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_algo = QHBoxLayout(algo_widget)
          hbox_algo.setContentsMargins(0, 0, 0, 0)
          hbox_algo.setSpacing(6)
-@@ -351,53 +381,80 @@
+@@ -351,53 +392,80 @@
          algo_cb.addItems(self.generators)
          algo_cb.setCurrentIndex(-1)
          algo_cb.installEventFilter(MouseWheelWidgetAdjustmentGuard(algo_cb))
@@ -241,7 +272,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          edit_var_col = QWidget()
          vbox_var_edit = QVBoxLayout(edit_var_col)
          vbox_var_edit.setContentsMargins(0, 2, 0, 2)
-@@ -409,6 +466,9 @@
+@@ -409,6 +477,9 @@
          hbox_action_var.setContentsMargins(0, 0, 0, 0)
          hbox_action_var.setSpacing(0)
          vbox_var_edit.addWidget(action_var)
@@ -251,7 +282,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          # filter variables
          self.edit_var = edit_var = Picker(self.list_vars, "Add variable...")
          edit_var.setFixedWidth(192)
-@@ -421,28 +481,26 @@
+@@ -421,28 +492,26 @@
          self.check_only_var = check_only_var = QCheckBox("Show Checked Only")
          check_only_var.setChecked(True)
          check_only_var.hide()  # lists always show checked items; the picker holds the rest
@@ -288,7 +319,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          collapsiblebox_init = CollapsibleBox(
              self,
              " Initial Points",
-@@ -472,25 +530,21 @@
+@@ -472,25 +541,21 @@
          self.init_table.set_uneditable()
          vbox_init.addWidget(self.init_table)
          collapsiblebox_init.setContentLayout(vbox_init)
@@ -325,7 +356,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_obj_col = QWidget()
          vbox_obj_edit = QVBoxLayout(edit_obj_col)
-@@ -500,6 +554,9 @@
+@@ -500,6 +565,9 @@
          hbox_action_obj = QHBoxLayout(action_obj)
          hbox_action_obj.setContentsMargins(0, 0, 0, 0)
          vbox_obj_edit.addWidget(action_obj)
@@ -335,7 +366,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.edit_obj = edit_obj = Picker(
              lambda: self.list_items(self.obj_table), "Add objective..."
          )
-@@ -507,6 +564,7 @@
+@@ -507,6 +575,7 @@
          self.check_only_obj = check_only_obj = QCheckBox("Show Checked Only")
          check_only_obj.setChecked(True)
          check_only_obj.hide()  # lists always show checked items; the picker holds the rest
@@ -343,7 +374,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_obj.addWidget(edit_obj)
          hbox_action_obj.addStretch()
          hbox_action_obj.addWidget(check_only_obj)
-@@ -514,27 +572,22 @@
+@@ -514,27 +583,22 @@
          self.obj_table = ObjectiveTable()
          self.obj_table.show_selected_only = True
          vbox_obj_edit.addWidget(self.obj_table)
@@ -383,7 +414,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_con_col = QWidget()
          vbox_con_edit = QVBoxLayout(edit_con_col)
-@@ -544,6 +597,9 @@
+@@ -544,6 +608,9 @@
          hbox_action_con = QHBoxLayout(action_con)
          hbox_action_con.setContentsMargins(0, 0, 0, 0)
          vbox_con_edit.addWidget(action_con)
@@ -393,7 +424,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.edit_con = edit_con = Picker(
              lambda: self.list_items(self.con_table), "Add constraint..."
          )
-@@ -551,6 +607,7 @@
+@@ -551,6 +618,7 @@
          self.check_only_con = check_only_con = QCheckBox("Show Checked Only")
          check_only_con.setChecked(True)
          check_only_con.hide()  # lists always show checked items; the picker holds the rest
@@ -401,7 +432,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_con.addWidget(edit_con)
          hbox_action_con.addStretch()
          hbox_action_con.addWidget(check_only_con)
-@@ -558,23 +615,15 @@
+@@ -558,23 +626,15 @@
          self.con_table = ConstraintTable()
          self.con_table.show_selected_only = True
          vbox_con_edit.addWidget(self.con_table)
@@ -431,7 +462,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
          edit_sta_col = QWidget()
          vbox_sta_edit = QVBoxLayout(edit_sta_col)
-@@ -584,6 +633,9 @@
+@@ -584,6 +644,9 @@
          hbox_action_sta = QHBoxLayout(action_sta)
          hbox_action_sta.setContentsMargins(0, 0, 0, 0)
          vbox_sta_edit.addWidget(action_sta)
@@ -441,7 +472,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          self.edit_sta = edit_sta = Picker(
              lambda: self.list_items(self.sta_table), "Add observable..."
          )
-@@ -591,6 +643,7 @@
+@@ -591,6 +654,7 @@
          self.check_only_sta = check_only_sta = QCheckBox("Show Checked Only")
          check_only_sta.setChecked(True)
          check_only_sta.hide()  # lists always show checked items; the picker holds the rest
@@ -449,7 +480,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
          hbox_action_sta.addWidget(edit_sta)
          hbox_action_sta.addStretch()
          hbox_action_sta.addWidget(check_only_sta)
-@@ -598,16 +651,13 @@
+@@ -598,16 +662,13 @@
          self.sta_table = ObservableTable()
          self.sta_table.show_selected_only = True
          vbox_sta_edit.addWidget(self.sta_table)
@@ -470,7 +501,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
  
      def config_logic(self):
          self.edit_var.picked.connect(self.pick_var)
-@@ -640,21 +690,21 @@
+@@ -640,21 +701,21 @@
  
      def toggle_env_params(self, checked: bool):
          if not checked:
@@ -497,8 +528,8 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
      def _qtree_height_hint(self, widget: QTreeWidget) -> int:
          # set height based on number of rows * row size
 diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
---- a/badger/gui/mini/pages/routine_page.py	2026-10-21 14:28:22
-+++ b/badger/gui/mini/pages/routine_page.py	2026-10-21 14:28:22
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-23 14:00:54
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-23 14:01:30
 @@ -22,6 +22,7 @@
  from PyQt5.QtWidgets import QLineEdit, QPushButton, QFileDialog
  from PyQt5.QtWidgets import QMessageBox, QWidget, QTabWidget
@@ -531,3 +562,112 @@ diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routin
  
          # Data panel
          self.data_panel = BadgerDataPanel(self)
+@@ -245,6 +252,7 @@
+         logger.info("Configuring logic for BadgerRoutinePage.")
+         # self.btn_descr_update.clicked.connect(self.update_description)
+         self.env_box.load_template_button.clicked.connect(self.load_template_yaml)
++        self.env_box.save_template_button.clicked.connect(self.save_template_yaml)
+         self.env_box.template_cb.currentTextChanged.connect(
+             lambda: (
+                 self.load_template_yaml(
+@@ -321,7 +329,11 @@
+         if not template_path:
+             return
+ 
+-        if os.path.basename(template_path) == template_path:
++        # Names from the dropdown ("x.yaml", "saved/x.yaml") are relative to the
++        # template directory; anything else is used as given.
++        if not os.path.isabs(template_path) and os.path.exists(
++            os.path.join(self.template_dir, template_path)
++        ):
+             template_path = os.path.join(self.template_dir, template_path)
+ 
+         # Load template file
+@@ -333,8 +345,7 @@
+                     f"Options loaded from template: {os.path.basename(template_path)}"
+                 )
+ 
+-                template_name = os.path.basename(template_path)
+-                self.env_box.update_template_cb(template_name)
++                self.env_box.update_template_cb(self._template_cb_name(template_path))
+         except (FileNotFoundError, yaml.YAMLError) as e:
+             print(f"Error loading template: {e}")
+             return
+@@ -688,40 +699,64 @@
+ 
+         return generator_config
+ 
++    def _template_cb_name(self, template_path: str) -> str:
++        """The dropdown's name for a template file: "x" or "saved/x" inside the
++        template directory, the bare file name elsewhere."""
++        rel = os.path.relpath(os.path.abspath(template_path), os.path.abspath(self.template_dir))
++        name = os.path.basename(template_path) if rel.startswith("..") else rel
++        return os.path.splitext(name)[0]
++
+     def save_template_yaml(self):
+         logger.info("Saving routine as template YAML.")
+         """
+-        Save the current routine as a template .yaml file
++        Save the current setup as a template .yaml file, by default in
++        tuning_templates/saved/ (gitignored). Overwriting anything else in the
++        template directory -- the operations templates, managed in git -- is
++        refused.
+         """
+ 
+         template_dict = self.generate_template_dict_from_gui()
+ 
+-        options = QFileDialog.Options()
+-        # Suggest a filename based on the routine name or placeholder
+-        routine_name = self.edit_save.text() or self.edit_save.placeholderText()
+-        if not routine_name:
+-            routine_name = "template_" + datetime.now().strftime("%y%m%d_%H%M%S")
+-        suggested_filename = f"{routine_name}.yaml"
++        saved_dir = os.path.join(self.template_dir, "saved")
++        os.makedirs(saved_dir, exist_ok=True)
++        base = self.env_box.template_cb.currentText().split("/")[-1] or "template"
++        suggested_filename = f"{base}_{datetime.now():%Y%m%d_%H%M}.yaml"
+         template_path, _ = QFileDialog.getSaveFileName(
+             self,
+             "Save Template",
+-            os.path.join(self.template_dir, suggested_filename),
++            os.path.join(saved_dir, suggested_filename),
+             "YAML Files (*.yaml);;All Files (*)",
+-            options=options,
+         )
+ 
+         if not template_path:
+             return
+ 
++        in_templates = not os.path.relpath(
++            os.path.abspath(template_path), os.path.abspath(self.template_dir)
++        ).startswith("..")
++        in_saved = not os.path.relpath(
++            os.path.abspath(template_path), os.path.abspath(saved_dir)
++        ).startswith("..")
++        if in_templates and not in_saved:
++            QMessageBox.warning(
++                self,
++                "Save Template",
++                "Templates inside tuning_templates/ are managed in git. "
++                f"Save into {saved_dir} instead.",
++            )
++            return
++
+         try:
+             with open(template_path, "w") as stream:
+                 yaml.dump(template_dict, stream)
+-                self.sig_save_template.emit(
+-                    f"Current routine options saved to template: {os.path.basename(template_path)}"
+-                )
+-        except (FileNotFoundError, yaml.YAMLError) as e:
++        except (OSError, yaml.YAMLError) as e:
+             logger.error(f"Error saving template: {e}")
++            QMessageBox.critical(self, "Save Template", f"Could not save the template:\n\n{e}")
+             return
++        self.env_box.update_template_cb(self._template_cb_name(template_path))
++        self.sig_save_template.emit(
++            f"Current routine options saved to template: {os.path.basename(template_path)}"
++        )
+ 
+     def refresh_ui(self, routine: Routine | None = None, silent: bool = False):
+         logger.info(

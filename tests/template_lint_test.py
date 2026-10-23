@@ -23,6 +23,8 @@ REQUIRED = ['name', 'description', 'relative_to_current', 'generator',
 
 failures = []
 for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '**', '*.yaml'), recursive=True)):
+    if os.sep + 'saved' + os.sep in path:
+        continue  # operators' own saves from -mini (gitignored), not repo templates
     fname = os.path.basename(path)
     try:
         t = yaml.safe_load(open(path))

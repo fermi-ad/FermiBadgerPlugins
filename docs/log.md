@@ -1341,3 +1341,27 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - `safe_badger.py`: `g` subcommand (`GUIS = {'mini': '-mini', 'g': '-g'}`).
 - GUI test now runs every check on both windows, plus Go capture and the
   cancelled-run case.
+
+## 2026-10-23 — full GUI gets the VOCS layout; -mini "Save as..."
+
+- Checked for the user: Badger's Reset environment DOES write to devices
+  (`run_monitor.reset_env` → `routine.environment.set_variables` in the GUI
+  process → our env → `interface.set_values` via DPM), for the checked
+  variables only, back to their values at the start of the latest run, in
+  memory only. Dial in solution and Load Checkpoint write the same way.
+- User chose for the full GUI: VOCS layout + no collapse bars only (tabs,
+  sidebar, Load Template bar, Automatic mode stay). New patch
+  `badger-1.6.0-full-gui-vocs-layout.patch` on simpler_mini (full
+  `gui/components/env_cbox.py`); Variables' picker row now first, label-led,
+  Automatic/Refresh row indented beneath; "More" box → plain panel.
+- `-mini` "Save as..." (folded into `badger-1.6.0-mini-simpler-ui.patch`):
+  default `tuning_templates/saved/` (gitignored, user's choice), name
+  `<template>_<YYYYmmdd_HHMM>.yaml`; saving elsewhere inside the template dir
+  refused; dropdown lists `saved/<name>`; dropdown names are now paths
+  relative to the template dir. New `tests/save_template_gui_test.py`;
+  `template_lint_test.py` skips `saved/`.
+- The simpler-ui patch was regenerated from its own base, rebuilt by reversing
+  it out of a copy of the env files (checked to reproduce the old patch
+  exactly before editing).
+- Gotcha: the system `python3` here is 3.5 (no f-strings); edit scripts run
+  with the pixi env's Python.

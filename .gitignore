@@ -23,5 +23,7 @@ sim_outputs/
 .patch_work/
 # pixi-managed environments; pixi.toml/pixi.lock are the tracked source of truth.
 .pixi/
+# Templates operators save from the -mini GUI ("Save as..."); local to each clone.
+tuning_templates/saved/
 # Build products (e.g. the shareable Badger patch zip); sources live in patches/.
 dist/

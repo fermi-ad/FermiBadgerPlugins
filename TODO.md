@@ -137,8 +137,11 @@ it to paste in.
 
 - [ ] Ramps as variables (Booster skew quads via pacsys `BoosterSQRamp`) once a
   Booster environment exists; `sim_configs/Booster/` lattice bundle is still untracked.
-- [ ] `-mini` has no "Save as Template" button (upstream removed it; the handler
-  `save_template_yaml` still exists). One button in the mini env box if wanted.
+- [x] `-mini` "Save as..." button (simpler_mini, 2026-10-23): saves to the
+  gitignored `tuning_templates/saved/`, listed in the dropdown as `saved/<name>`;
+  overwriting operations templates refused. Full GUI also got the -mini VOCS
+  layout (`badger-1.6.0-full-gui-vocs-layout.patch`). Both still to be tried
+  on the production host along with the simpler mini.
 - [ ] Bulk-supply ratings in the RIL environments are 7.0 A stand-ins pending expert
   confirmation. (Mult coefficients 20.0 and step size 0.05 were confirmed 2026-10-08.)
 - [ ] **Deferred design decision**: the `-mini` "Refresh" button next to Variables
