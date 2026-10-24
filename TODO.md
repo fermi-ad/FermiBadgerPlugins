@@ -266,9 +266,22 @@ exists and what it would touch.
     entry (`patches/badger-1.6.0-continue-run.patch`,
     `tests/continue_run_gui_test.py`). Tried live on the sim 2026-10-24: runs
     well.
-  - [ ] 2. Seed from several runs: multi-select in History, merged rows
-    tagged by source run (seeded points marked in plots); optional filters:
-    outside the new ranges, older than an age (drift).
+  - [ ] 2. Seed from several runs (plan agreed 2026-10-24):
+    - Pick: with Continue armed, History right-click "Add its points" appends
+      a run without changing the displayed one (History stays single-select);
+      status bar shows "Seeding from K runs, N points".
+    - Merge: rows stacked oldest first, renumbered, `live = 0`, a `seed_run`
+      column naming each row's source (drop it if tables/archive choke on
+      text). Plots already draw `live = 0` points as a separate curve.
+    - Per run: variables + objectives must match by name, else skipped; a run
+      missing a constraint of the new run is skipped (Xopt would count its
+      points infeasible); missing observables fine; another environment with
+      matching names allowed, with a warning.
+    - Go summary dialog, only when seeding from several runs: each source
+      with its points or why skipped, filters "older than N hours" and
+      "outside the new ranges" (both off by default), "Seed with N of M".
+    - Fresh trust region; description lists every source. Both GUIs (`-g`
+      keeps its Data-tab dialog too). Extend `tests/continue_run_gui_test.py`.
   - [ ] 3. History signposting: labels with routine name, template,
     algorithm, number of points, best value; description as tooltip; a search
     box; the template name recorded at Go; the safe-badger snapshot records
