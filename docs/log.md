@@ -1301,4 +1301,4 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   "Continue from this run" (History menu), shared `continue_run.py`
   (seed_data, fresh_trust_region, note_source); `-mini` gains seeding, `-g`
   reuses its Data-tab path. `tests/continue_run_gui_test.py`; full suite passes.
-- Not yet: a live try in both GUIs on the sim.
+- Live try on the sim by the user: runs well.

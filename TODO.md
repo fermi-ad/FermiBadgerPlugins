@@ -264,8 +264,8 @@ exists and what it would touch.
   **both GUIs**, with a **fresh trust region**. Phases:
   - [x] 1. Continue + widen: action-bar Continue button and History menu
     entry (`patches/badger-1.6.0-continue-run.patch`,
-    `tests/continue_run_gui_test.py`). Still to do: try it live in both GUIs
-    on the sim (widen a range, Go, check the plots and archive file).
+    `tests/continue_run_gui_test.py`). Tried live on the sim 2026-10-24: runs
+    well.
   - [ ] 2. Seed from several runs: multi-select in History, merged rows
     tagged by source run (seeded points marked in plots); optional filters:
     outside the new ranges, older than an age (drift).
