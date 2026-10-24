@@ -266,13 +266,19 @@ exists and what it would touch.
     entry (`patches/badger-1.6.0-continue-run.patch`,
     `tests/continue_run_gui_test.py`). Tried live on the sim 2026-10-24: runs
     well.
-  - [ ] 2. Seed from several runs (plan agreed 2026-10-24):
+  - [x] 2. Seed from several runs (plan agreed and built 2026-10-24; not yet
+    tried live):
     - Pick: with Continue armed, History right-click "Add its points" appends
       a run without changing the displayed one (History stays single-select);
       status bar shows "Seeding from K runs, N points".
-    - Merge: rows stacked oldest first, renumbered, `live = 0`, a `seed_run`
-      column naming each row's source (drop it if tables/archive choke on
-      text). Plots already draw `live = 0` points as a separate curve.
+    - Merge: rows stacked oldest first, renumbered, `live = 0`. Plots already
+      draw `live = 0` points as a separate curve. (No per-row `seed_run`
+      column after all: nothing reads it, and the description lists the
+      sources.)
+    - Changed meaning (added 2026-10-24): environment parameters, formulas or
+      environment differing from a source run's are reported (question for
+      one run, notes in the summary); constraint thresholds are always the
+      new run's, since only raw readings are archived.
     - Per run: variables + objectives must match by name, else skipped; a run
       missing a constraint of the new run is skipped (Xopt would count its
       points infeasible); missing observables fine; another environment with

@@ -1302,3 +1302,17 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   (seed_data, fresh_trust_region, note_source); `-mini` gains seeding, `-g`
   reuses its Data-tab path. `tests/continue_run_gui_test.py`; full suite passes.
 - Live try on the sim by the user: runs well.
+
+## 2026-10-24 — phase 2: seed from several runs
+
+- Question from the user: an old run with other constraint thresholds? Fine:
+  archives hold raw readings only, and Xopt recomputes feasibility from the
+  new run's VOCS on every fit. The real risk is an objective/observable whose
+  meaning changed under the same name (env params such as weights, formulas):
+  now reported at Go, for one run as a question, for several in the summary.
+- Built: "Add its points" (History menu), `SeedSummaryDialog` (per-run points
+  or skip reason, filters older-than-N-h and outside-new-ranges), merge oldest
+  first; runs missing a new constraint are skipped. Home-page logic moved
+  into a `ContinueRun` mixin in `continue_run.py`. Dropped the planned
+  per-row `seed_run` column (no reader). Test extended, incl. an archive
+  round trip giving no false "changed" notes.
