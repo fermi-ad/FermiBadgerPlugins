@@ -1285,3 +1285,20 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   W-DBO/BOLT/APS adaptive BO, budgeted informative subsets, region pruning,
   sparse GPs, faster exact GPs), the Xopt `get_training_data` hook as the plug-in
   point, a suggested prototype, and open questions. TODO entry now links it.
+
+## 2026-10-24 — "Continue from run" (wish list: widen ranges, seed from history)
+
+- Plan agreed (TODO.md wish list): one action for widening a range and for
+  seeding from history; a new linked run, both GUIs, fresh trust region;
+  phases 2 (several runs) and 3 (history signposting) to follow.
+- Findings that shaped it: Xopt trains on every point whatever the current
+  bounds (Normalize uses the VOCS bounds, so widened ranges keep old points
+  inside [0,1]); TuRBO keeps its own VOCS, so a controller rebuilt by
+  reassignment is the clean reset (its `reset()` restores the old VOCS);
+  pausing and editing ranges mid-run is silently ignored today (args go to the
+  subprocess once).
+- New `badger-1.6.0-continue-run.patch`: Continue button (action bar) +
+  "Continue from this run" (History menu), shared `continue_run.py`
+  (seed_data, fresh_trust_region, note_source); `-mini` gains seeding, `-g`
+  reuses its Data-tab path. `tests/continue_run_gui_test.py`; full suite passes.
+- Not yet: a live try in both GUIs on the sim.

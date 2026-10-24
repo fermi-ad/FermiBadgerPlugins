@@ -1,0 +1,420 @@
+diff -ruN a/badger/gui/components/action_bar.py b/badger/gui/components/action_bar.py
+--- a/badger/gui/components/action_bar.py	2026-10-24 09:34:58
++++ b/badger/gui/components/action_bar.py	2026-10-24 09:36:56
+@@ -151,6 +151,17 @@
+             size=(88, 32),
+         )
+         self.btn_revert.setText("Revert")
++        # Checked: the next Go starts a new run seeded with the displayed
++        # run's points (edit the ranges first to widen them).
++        self.btn_continue = create_button(
++            "next.png",
++            "Continue from the displayed run: the next Go starts a new run"
++            " seeded with its points.\nWiden ranges first if needed.",
++            size=(104, 32),
++        )
++        self.btn_continue.setText("Continue")
++        self.btn_continue.setCheckable(True)
++        self.btn_continue.setDisabled(True)
+         self.revert_ready = False  # set by the mini home page once a snapshot exists
+         self.btn_checkpoint = create_button(
+             "flag.png", "Checkpoint", size=(48, 32), tool_button=True
+@@ -231,6 +242,7 @@
+         hbox_bg.addWidget(self.btn_help)
+         hbox_bg.addStretch(1)
+         hbox_bg.addWidget(self.btn_revert)
++        hbox_bg.addWidget(self.btn_continue)
+         hbox_bg.addWidget(self.btn_reset)
+         hbox_bg.addWidget(self.btn_ctrl)
+         hbox_bg.addWidget(self.btn_stop)
+@@ -273,6 +285,7 @@
+         self.btn_log.setDisabled(True)
+         self.btn_reset.setDisabled(True)
+         self.btn_revert.setDisabled(True)
++        self.set_continue_enabled(False)
+         self.btn_checkpoint.setDisabled(True)
+         self.btn_ctrl.setDisabled(True)
+         self.btn_stop.setDisabled(True)
+@@ -284,6 +297,7 @@
+         self.btn_log.setDisabled(False)
+         self.btn_reset.setDisabled(False)
+         self.btn_revert.setEnabled(self.revert_ready)
++        self.set_continue_enabled(True)
+         self.btn_checkpoint.setDisabled(False)
+         self.btn_ctrl.setDisabled(False)
+         self.btn_stop.setDisabled(False)
+@@ -313,7 +327,14 @@
+         self.btn_revert.setEnabled(self.revert_ready)
+         self.btn_set.setDisabled(False)
+         self.btn_del.setDisabled(False)
++        self.set_continue_enabled(True)
+ 
++    def set_continue_enabled(self, enabled):
++        """Continue needs a displayed run with points; unchecked when not."""
++        if not enabled:
++            self.btn_continue.setChecked(False)
++        self.btn_continue.setEnabled(enabled)
++
+     def toggle_reset(self, locked):
+         self.btn_reset.setDisabled(locked)
+ 
+@@ -321,6 +342,7 @@
+         self.btn_stop.setDisabled(locked)
+ 
+     def toggle_other(self, locked):
++        self.set_continue_enabled(not locked)
+         self.btn_del.setDisabled(locked)
+         self.btn_log.setDisabled(locked)
+         self.btn_opt.setDisabled(locked)
+@@ -337,6 +359,7 @@
+         self.btn_checkpoint.setDisabled(False)
+         self.btn_ctrl.setDisabled(False)
+         self.btn_set.setDisabled(True)
++        self.set_continue_enabled(False)  # one Go per Continue
+ 
+     def set_run_action(self):
+         if self.btn_stop.defaultAction() is not self.run_action:
+diff -ruN a/badger/gui/components/continue_run.py b/badger/gui/components/continue_run.py
+--- a/badger/gui/components/continue_run.py	1969-12-31 18:00:00
++++ b/badger/gui/components/continue_run.py	2026-10-24 09:36:24
+@@ -0,0 +1,76 @@
++"""Continue from a run: start a new run seeded with an earlier run's points.
++
++Shared by both home pages (the action bar's Continue button and the History
++menu's "Continue from this run"). The new run is a run of its own, with its
++own archive file; its description names the run it continued from. Ranges
++can be edited (widened) before Go: the model trains on every earlier point,
++inside the new ranges or not.
++"""
++
++import numpy as np
++
++from badger.errors import BadgerRoutineError
++
++
++def seed_data(routine, source, init_points_flag=False):
++    """The source run's points, ready to seed `routine` (a composed routine).
++
++    Variables and objectives must match the source run's by name; new
++    constraints or observables start as empty (NaN) columns, which need
++    initial points to fill them.
++    """
++    if routine.generator.name in ["neldermead"]:
++        raise BadgerRoutineError(
++            "The neldermead algorithm cannot continue from earlier data.\n"
++            "Pick another algorithm, or start a fresh run."
++        )
++    if source.data is None or source.data.empty:
++        raise BadgerRoutineError("The run to continue from has no points.")
++
++    was = source.vocs.variable_names + source.vocs.objective_names
++    now = routine.vocs.variable_names + routine.vocs.objective_names
++    if set(was) != set(now):
++        raise BadgerRoutineError(
++            "Can only continue with the same variables and objectives.\n\n"
++            f"The earlier run has:\n {was}\n\nThis run has:\n {now}"
++        )
++
++    data = source.data.copy()
++    data["live"] = 0  # 0 = an earlier run's point, 1 = measured in this run
++    for name in routine.vocs.output_names:
++        if name not in data.columns:
++            data[name] = np.nan
++    if data.isna().all().any() and not init_points_flag:
++        raise BadgerRoutineError(
++            "This run adds constraints or observables the earlier run did not"
++            " measure.\nAdd at least one initial point, or remove them."
++        )
++    return data
++
++
++def fresh_trust_region(routine):
++    """Give a seeded run a new trust region: full size, centred anew.
++
++    Keeps the controller's settings (tolerances, limits, ...) but not its
++    state, so a region the earlier run had shrunk does not carry over; the
++    reassignment rebuilds the controller on the run's own (new) ranges.
++    """
++    # ponytail: `length` goes back to the controller's default, not to a
++    # template's own starting length; keep it here if templates start to set one.
++    tc = getattr(routine.generator, "turbo_controller", None)
++    if tc is None:
++        return
++    routine.generator.turbo_controller = {
++        k: v
++        for k, v in tc.model_dump().items()
++        if k not in ("vocs", "length", "center_x", "best_value")
++    }
++
++
++def note_source(routine, n_points, source_name=None):
++    """Record in the run's description where its first points came from."""
++    line = f"Seeded with {n_points} points"
++    line += f" from {source_name}." if source_name else " from earlier runs."
++    routine.description = (
++        f"{routine.description.rstrip()}\n{line}" if routine.description else line
++    )
+diff -ruN a/badger/gui/components/navigators.py b/badger/gui/components/navigators.py
+--- a/badger/gui/components/navigators.py	2026-10-24 09:34:58
++++ b/badger/gui/components/navigators.py	2026-10-24 09:37:14
+@@ -17,7 +17,7 @@
+     QFileSystemModel,
+ )
+ from PyQt5.QtGui import QFont, QDesktopServices, QCursor
+-from PyQt5.QtCore import Qt, QUrl, QTimer, QDir
++from PyQt5.QtCore import Qt, QUrl, QTimer, QDir, pyqtSignal
+ from badger.archive import get_base_run_filename, get_runs
+ from badger.utils import run_names_to_dict
+ from badger.settings import init_settings
+@@ -32,7 +32,8 @@
+       - Copy full file path to clipboard
+     """
+ 
+-    def show_context_menu(self, widget, fullpath):
++    def show_context_menu(self, widget, fullpath, extra_actions=()):
++        """extra_actions: (label, callback) pairs listed first."""
+         menu = QMenu(widget)
+         menu.setStyleSheet("""
+         QMenu {
+@@ -60,6 +61,11 @@
+         def open_file_location():
+             QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(fullpath)))
+ 
++        for label, callback in extra_actions:
++            menu.addAction(label).triggered.connect(callback)
++        if extra_actions:
++            menu.addSeparator()
++
+         # Add actions to the context menu
+         menu.addAction("Open File").triggered.connect(open_file)
+         menu.addAction("Open File Directory").triggered.connect(open_file_location)
+@@ -80,6 +86,9 @@
+     Navigate through the history files.
+     """
+ 
++    # "Continue from this run" picked: the run is now the selected one
++    sig_continue = pyqtSignal()
++
+     def __init__(self):
+         super().__init__()
+ 
+@@ -232,7 +241,15 @@
+         ):  # To avoid showing context-menu for directories in the tree
+             return
+ 
+-        self.show_context_menu(self.history_tree_widget, fullpath)
++        def continue_from_run():
++            self.history_tree_widget.setCurrentItem(selected_item)  # loads it
++            self.sig_continue.emit()
++
++        self.show_context_menu(
++            self.history_tree_widget,
++            fullpath,
++            [("Continue from this run", continue_from_run)],
++        )
+ 
+     def find_run_by_name(self, runs, filename):
+         """
+diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
+--- a/badger/gui/mini/pages/home_page.py	2026-10-24 09:34:58
++++ b/badger/gui/mini/pages/home_page.py	2026-10-24 09:37:49
+@@ -43,6 +43,12 @@
+ from badger.gui.components.action_bar import BadgerActionBar
+ from badger.gui.components.settings_guard import SettingsGuard
+ from badger.gui.components.pydantic_editor import parameter_problems
++from badger.gui.components.continue_run import (
++    fresh_trust_region,
++    note_source,
++    seed_data,
++)
++from badger.errors import BadgerRoutineError
+ from badger.utils import get_header
+ from badger.settings import init_settings
+ 
+@@ -256,6 +262,8 @@
+         self.run_monitor.sig_env_ready.connect(self.update_saved_values_from_monitor)
+ 
+         self.run_action_bar.sig_start.connect(self.start_run)
++        self.run_action_bar.btn_continue.toggled.connect(self.continue_toggled)
++        self.history_browser.sig_continue.connect(self.arm_continue)
+         self.run_action_bar.sig_start_until.connect(self.start_run_until)
+         self.run_action_bar.sig_stop.connect(self.run_monitor.stop)
+         self.run_action_bar.sig_delete_run.connect(self.run_monitor.delete_run)
+@@ -311,9 +319,22 @@
+         self.routine_editor.env_box.algo_cb.setCurrentIndex(idx)
+         self.routine_editor.select_generator(idx)
+ 
++    def arm_continue(self):
++        if self.run_action_bar.btn_continue.isEnabled():
++            self.run_action_bar.btn_continue.setChecked(True)
++
++    def continue_toggled(self, checked):
++        if checked:
++            self.status_bar.set_summary(
++                "Go will continue from "
++                f"{self.history_browser.currentText()}: a new run seeded with"
++                " its points. Widen ranges first if needed."
++            )
++
+     def go_run(self, i: int = None):
+         logger.info(f"Activating run: {i}")
+         gc.collect()
++        self.run_action_bar.btn_continue.setChecked(False)  # another run shown
+ 
+         # if self.cb_history.itemText(0) == "Optimization in progress...":
+         #     return
+@@ -421,7 +442,7 @@
+ 
+             self.uncover_page()
+ 
+-    def prepare_run(self):
++    def prepare_run(self, source=None, source_name=None):
+         """
+         Prepares the run by composing the routine, validating data if present,
+         saving created routine to a yaml file, and passing the routine to
+@@ -436,7 +457,9 @@
+ 
+         Notes
+         _____
+-        Removed data loading implementation from mini GUI,
++        Removed data loading implementation from mini GUI; a run continued
++        from `source` (an archived Routine, see continue_run.py) is seeded
++        with its points instead.
+         """
+         logger.info("Preparing new run.")
+         try:
+@@ -445,6 +468,16 @@
+             self.sig_routine_invalid.emit()
+             raise e
+ 
++        if source is not None:
++            try:
++                data = seed_data(routine, source)
++            except BadgerRoutineError:
++                self.run_action_bar.routine_finished()  # reset the action bar
++                raise
++            routine.data = data
++            fresh_trust_region(routine)
++            note_source(routine, len(data), source_name)
++
+         self.current_routine = routine
+ 
+         # Save routine as a temp file
+@@ -468,6 +501,11 @@
+             Removed data loading implementation and data_panel from mini GUI
+         """
+         logger.info("Starting run.")
++        # Read before anything below can redraw the plots and uncheck it
++        source = source_name = None
++        if self.run_action_bar.btn_continue.isChecked():
++            source = self.current_routine
++            source_name = self.history_browser.currentText()
+         problems = parameter_problems(self.routine_editor)
+         if problems:
+             QMessageBox.warning(
+@@ -482,12 +520,19 @@
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
+ 
+-        self.prepare_run()
++        self.prepare_run(source, source_name)
++        if source is not None:
++            # as the full GUI does after loading data (home_page.start_run)
++            data = self.current_routine.data
++            self.run_monitor.init_plots(self.current_routine)
++            self.current_routine.data = data
++            if self.current_routine.generator.data is None:
++                self.current_routine.generator.data = data
+ 
+         self.run_monitor.start(
+             use_termination_condition=use_termination_condition,
+-            run_data_flag=False,
+-            init_points_flag=True,
++            run_data_flag=source is not None,
++            init_points_flag=source is None,
+         )
+ 
+     def start_run_until(self):
+diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
+--- a/badger/gui/pages/home_page.py	2026-10-24 09:34:58
++++ b/badger/gui/pages/home_page.py	2026-10-24 09:38:11
+@@ -42,6 +42,7 @@
+ from badger.gui.components.settings_guard import SettingsGuard
+ from badger.gui.components.pydantic_editor import parameter_problems
+ from badger.gui.components.data_panel import filter_metadata
++from badger.gui.components.continue_run import fresh_trust_region, note_source
+ from badger.gui.components.data_table import (
+     add_row,
+     data_table,
+@@ -260,6 +261,8 @@
+         self.run_monitor.sig_env_ready.connect(self.run_action_bar.env_ready)
+ 
+         self.run_action_bar.sig_start.connect(self.start_run)
++        self.run_action_bar.btn_continue.toggled.connect(self.continue_toggled)
++        self.history_browser.sig_continue.connect(self.arm_continue)
+         self.run_action_bar.sig_start_until.connect(self.start_run_until)
+         self.run_action_bar.sig_stop.connect(self.run_monitor.stop)
+         self.run_action_bar.sig_delete_run.connect(self.run_monitor.delete_run)
+@@ -303,9 +306,26 @@
+         # Load the default generator
+         self.routine_editor.generator_box.cb.setCurrentIndex(0)
+ 
++    def arm_continue(self):
++        if self.run_action_bar.btn_continue.isEnabled():
++            self.run_action_bar.btn_continue.setChecked(True)
++
++    def continue_toggled(self, checked):
++        """Continue = the Data tab's "Load displayed data" + "Skip initial
++        point sampling", which the displayed run's points already fill."""
++        self.data_panel.run_data_checkbox.setChecked(checked)
++        self.data_panel.init_points_checkbox.setChecked(checked)
++        if checked:
++            self.status_bar.set_summary(
++                "Go will continue from "
++                f"{self.history_browser.currentText()}: a new run seeded with"
++                " its points. Widen ranges first if needed."
++            )
++
+     def go_run(self, i: int = None):
+         logger.info(f"Activating run: {i}")
+         gc.collect()
++        self.run_action_bar.btn_continue.setChecked(False)  # another run shown
+ 
+         # if self.cb_history.itemText(0) == "Optimization in progress...":
+         #     return
+@@ -469,7 +489,7 @@
+             self.run_action_bar.routine_finished()  # Reset action bar
+             raise BadgerRoutineError("Routine initialization cancelled by user.")
+ 
+-    def prepare_run(self, data=None, init_points_flag=True):
++    def prepare_run(self, data=None, init_points_flag=True, source_name=None):
+         """
+         Prepares the run by composing the routine, validating data if present,
+         saving created routine to a yaml file, and passing the routine to
+@@ -517,6 +537,8 @@
+                 )
+ 
+             routine.data = data
++            fresh_trust_region(routine)
++            note_source(routine, len(data), source_name)
+         else:
+             self.data_panel.set_routine(routine)
+ 
+@@ -555,6 +577,9 @@
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
+         # Set data options based on checkbox states from data_panel
++        source_name = None
++        if self.run_action_bar.btn_continue.isChecked():
++            source_name = self.history_browser.currentText()
+         run_data_flag = self.data_panel.use_data
+         init_points_flag = self.data_panel.init_points
+ 
+@@ -563,6 +588,7 @@
+             self.prepare_run(
+                 data=data_to_load,
+                 init_points_flag=init_points_flag,
++                source_name=source_name,
+             )  # Pass data to prepare run, to be saved to tmp file and loaded into plots
+             self.run_monitor.init_plots(self.current_routine)
+ 

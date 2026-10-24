@@ -259,6 +259,23 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
 Ideas to explore; nothing here is built yet. Each entry says what already
 exists and what it would touch.
 
+- Plan (2026-10-24), decided: widening and seeding are one action, "Continue
+  from run": a **new linked run** seeded with an earlier run's points, in
+  **both GUIs**, with a **fresh trust region**. Phases:
+  - [x] 1. Continue + widen: action-bar Continue button and History menu
+    entry (`patches/badger-1.6.0-continue-run.patch`,
+    `tests/continue_run_gui_test.py`). Still to do: try it live in both GUIs
+    on the sim (widen a range, Go, check the plots and archive file).
+  - [ ] 2. Seed from several runs: multi-select in History, merged rows
+    tagged by source run (seeded points marked in plots); optional filters:
+    outside the new ranges, older than an age (drift).
+  - [ ] 3. History signposting: labels with routine name, template,
+    algorithm, number of points, best value; description as tooltip; a search
+    box; the template name recorded at Go; the safe-badger snapshot records
+    the run's archive file. (Not chosen for now: making "update description" save post-run notes;
+    upstream's `update_run` is an empty stub.)
+  - Not doing: live range edits within one run (pause, edit, resume), which
+    needs a new channel into the run subprocess and TuRBO VOCS sync.
 - [ ] **Widen a variable's range mid-run and carry on with the data so far.**
   If a run shows the optimum lies past a variable's range, widen the range and
   resume, keeping every point already measured.
