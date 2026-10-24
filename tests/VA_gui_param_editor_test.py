@@ -17,6 +17,7 @@ from badger.settings import init_settings
 init_settings(os.path.join(REPO_ROOT, 'config.yaml'))
 
 from PyQt5.QtWidgets import QApplication
+import badger.gui.mini  # noqa: F401,E402  sets Badger's Qt high-DPI options, which must come before the QApplication
 app = QApplication([])
 
 from badger.factory import get_env

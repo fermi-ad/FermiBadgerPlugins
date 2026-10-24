@@ -22,6 +22,7 @@ def main():
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     from PyQt5.QtWidgets import QApplication, QMessageBox
 
+    import badger.gui.mini  # noqa: F401,E402  sets Badger's Qt high-DPI options, which must come before the QApplication
     app = QApplication.instance() or QApplication([])
     from badger.settings import init_settings
 

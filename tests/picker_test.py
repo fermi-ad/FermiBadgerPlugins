@@ -13,6 +13,7 @@ from badger.gui.components.obj_table import ObjectiveTable  # noqa: E402
 from badger.gui.components.picker import Picker  # noqa: E402
 from badger.gui.components.env_cbox import BadgerEnvBox  # noqa: E402
 
+import badger.gui.mini  # noqa: F401,E402  sets Badger's Qt high-DPI options, which must come before the QApplication
 app = QApplication.instance() or QApplication([])
 
 

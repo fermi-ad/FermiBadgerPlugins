@@ -1236,3 +1236,9 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   "ignore::FutureWarning:torch.jit._script": only that warning; others still
   show (checked). Inherited by Badger's spawned workers. Remove once
   linear_operator stops using torch.jit.script. pixi.lock unchanged.
+- "Attribute Qt::AA_EnableHighDpiScaling must be set before QCoreApplication
+  is created" (twice): not from the real program -- a 40 s offscreen
+  `badger -mini` startup printed neither it nor the torch warning. It came
+  from our GUI tests creating the QApplication before importing badger.gui /
+  badger.gui.mini, whose module-level setAttribute calls then come too late.
+  The six GUI tests now import badger.gui.mini first; all pass, warning gone.
