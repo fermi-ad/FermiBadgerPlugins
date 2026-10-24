@@ -107,7 +107,7 @@ def main():
 
     # Mults and bulk supplies: one parameter each, edited in one dialog with
     # members from pulldowns of the environment's settable devices. RIL's defaults.
-    params = {f: ril.Environment.model_fields[f].default for f in ("mults", "supplies", "debug")}
+    params = {f: ril.Environment.model_fields[f].default for f in ("mults", "BulkPS_Limit", "debug")}
     page = QWidget()
     page.env = ril.Environment
     editor = pe.BadgerPydanticEditor(page)
@@ -136,7 +136,7 @@ def main():
         assert "L:MUQ1" in items and not any(i.startswith("mult:") for i in items)
         assert not combo.isEditable()  # a pulldown: the environment's devices only
         assert d.sections["MUQ"][1].item(0, 2).text() == "1"  # 20 x 0.05 per step
-        d.sections["MUQ"][0].setValue(0.1)
+        d.sections["MUQ"][0]["step"].setValue(0.1)
         d.sections["MUQ"][1].cellWidget(0, 1).setValue(10.0)
         d.add_member("MUQ", "L:MDQ1", 5.0)
     group_steps(mults_edit)
@@ -152,17 +152,22 @@ def main():
     line_of("mults").edit_button.click()
     assert warned and "L:MDQ1 is listed twice" in warned[-1], warned
 
-    def supplies_edit(d):
-        _, table = d.sections["SourceATrims"]
+    def bulk_ps_edit(d):
+        spins, table = d.sections["SourceATrims"]
+        assert set(spins) == {"positive", "negative"}, set(spins)  # Source A's split limits
+        assert set(d.sections["SourceBTrims"][0]) == {"limit"}     # the others: sum of |I|
         assert table.columnCount() == 1  # members only, no scale
         assert members(d, "SourceATrims") == ["L:ATRMHU", "L:ATRMVU", "L:ATRMHD", "L:ATRMVD"]
-        d.sections["SourceATrims"][0].setValue(6.5)
+        spins["negative"].setValue(7.5)
+        d.sections["SourceBTrims"][0]["limit"].setValue(6.5)
         table.removeRow(3)
-    group_steps(supplies_edit)
-    line_of("supplies").edit_button.click()
-    supplies = yaml.safe_load(line_of("supplies").text())
-    assert supplies["SourceATrims"] == {"limit": 6.5, "devices": ["L:ATRMHU", "L:ATRMVU", "L:ATRMHD"]}
-    ril.Environment(supplies=supplies)
+    group_steps(bulk_ps_edit)
+    line_of("BulkPS_Limit").edit_button.click()
+    bulk_ps = yaml.safe_load(line_of("BulkPS_Limit").text())
+    assert bulk_ps["SourceATrims"] == {"positive": 8.0, "negative": 7.5,
+                                       "devices": ["L:ATRMHU", "L:ATRMVU", "L:ATRMHD"]}, bulk_ps
+    assert bulk_ps["SourceBTrims"]["limit"] == 6.5, bulk_ps
+    ril.Environment(BulkPS_Limit=bulk_ps)  # what the environment validates at Go
     assert pe.parameter_problems(page) == []
 
     # Flattening a mult by hand is caught as you type.

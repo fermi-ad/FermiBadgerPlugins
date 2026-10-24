@@ -1242,3 +1242,26 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   from our GUI tests creating the QApplication before importing badger.gui /
   badger.gui.mini, whose module-level setAttribute calls then come too late.
   The six GUI tests now import badger.gui.mini first; all pass, warning gone.
+
+## 2026-10-23 — bulk power supplies: BulkPS_Limit, and split +/- limits
+
+- User: name the bulk supply mechanism BulkPS; RIL's source A supply limits
+  the sum of the positive currents and, separately, the magnitude of the sum
+  of the negative ones (8 A each), not the sum of magnitudes. Decisions:
+  source A only (others keep sum |I|), `BulkPS_Limit` + `BulkPS_<group>`
+  (`_Pos`/`_Neg`), clip as today.
+- `plugins/supply_limits.py`: `BulkPS` TypedDict (devices + `limit`, or
+  `positive` + `negative`), `BulkPSLimits` (pydantic AfterValidator: one kind
+  per supply, naming the group otherwise); one clipping loop over "budgets"
+  (abs / positive part / negative part), each contribution moved toward zero
+  largest first; `bulk_ps_observables` / `bulk_ps_observable`. Both RIL envs
+  list their observables from a module-level `_BULK_PS` default. Templates
+  migrated (constraints `BulkPS_SourceATrims_Pos/_Neg < 8` replace
+  `SumAbs_SourceATrims < 7`).
+- Dialog: each group shows the limit fields it has (Limit, or Positive sum and
+  |Negative sum|). Tests: 14 clipping/observable/validation checks, dialog
+  test with the split supply, DRF lint skip prefix updated.
+- Gotcha again: the scratch upgrade simulation's bootstrap had repointed the
+  per-user Badger config at the scratch copy, so a test imported the old
+  supply_limits from there. Re-ran setup here (which also exercised the new
+  reset path for real); saved to memory.

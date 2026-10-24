@@ -19,7 +19,7 @@ without the class's type hints, so each is one line of YAML text.
   dict. The line keeps the YAML text (what is saved), so templates are
   unchanged and it can still be typed into.
   - [ ] Try on the MCR host with the RIL template (`w_sumsq`, `setpoints`,
-    `supplies`, `mults`).
+    `BulkPS_Limit`, `mults`).
 - [x] **Mults and bulk supplies** (2026-10-23, user's design): each is now ONE
   nested parameter, `mults: {name: {step, members: {device: scale}}}` and
   `supplies: {group: {limit, devices: [...]}}` (replacing `mults` +
@@ -27,7 +27,12 @@ without the class's type hints, so each is one line of YAML text.
   templates migrated, old form rejected by validation). Edit... opens one
   dialog per parameter: step size or limit plus members from device
   pulldowns. Existing mults/supplies only: a new one also needs a
-  `mult:<name>` variable or `SumAbs_<group>` observable in the class.
+  `mult:<name>` variable or `BulkPS_<group>` observable in the class.
+- [x] **Bulk power supplies renamed and split limits** (2026-10-23): parameter
+  `supplies` -> `BulkPS_Limit`, observables `SumAbs_<group>` -> `BulkPS_<group>`.
+  A supply can instead limit the sum of +I and the magnitude of the sum of -I
+  separately (`positive`/`negative`; observables `_Pos`/`_Neg`); RIL source A
+  uses that at 8 A each, constrained < 8 in both RIL templates.
 
 ## Docs
 
@@ -196,7 +201,7 @@ it to paste in.
   overwriting operations templates refused. Full GUI also got the -mini VOCS
   layout (`badger-1.6.0-full-gui-vocs-layout.patch`). Both still to be tried
   on the production host along with the simpler mini.
-- [ ] Bulk-supply ratings in the RIL environments are 7.0 A stand-ins pending expert
+- [ ] Bulk-supply ratings for source B and the two MEBT trim supplies are 7.0 A stand-ins pending expert
   confirmation. (Mult coefficients 20.0 and step size 0.05 were confirmed 2026-10-08.)
 - [ ] **Deferred design decision**: the `-mini` "Refresh" button next to Variables
   (`refresh_current_btn` in `env_cbox.py`) does an on-demand live read of all

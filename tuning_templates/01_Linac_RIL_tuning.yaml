@@ -12,9 +12,10 @@ description: |
     available to tick individually instead, but not together with their mult);
     MEBT trims L:MDQ1H, L:MDQ1V, L:MDQ2H, L:MDQ2V; RF phases L:RFQPAH, L:RFBPAH.
   Constraints: L:D7LMSM < 18, L:TK4RAD < 50, L:TUNRAD < 150.
-    SumAbs_SourceATrims < 7 (sum |I| of the source A trims, one bulk supply; 7 A is a stand-in
-    pending expert confirmation). The environment also clips the largest trim to keep each
-    supply's sum under its limit before any setting.
+    BulkPS_SourceATrims_Pos < 8 and BulkPS_SourceATrims_Neg < 8: the source A trims' bulk
+    supply limits the sum of the positive currents and, separately, the magnitude of the sum of
+    the negative ones. The environment also clips the largest trim of an over-limit sum toward
+    zero before any setting (the other supplies limit sum |I|, 7 A placeholders).
     MultOOB_MUQ, MultOOB_MDQ < 0.5: fraction of the last mult step lost to a quad's own bounds
     (0 good; nonzero means the optimum wants to go past a quad's bounds, the quad was clipped).
   Observables: G:LINEFF, L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
@@ -46,7 +47,7 @@ environment:
       B:BOOEFF: '@e,1f,e,0'
       default: '@e,52,e,0'
     settings_role: ril_tuning
-    supplies:
+    BulkPS_Limit:
       MEBTQ1trims:
         limit: 7.0
         devices: [L:MUQ1H, L:MUQ1V, L:MDQ1H, L:MDQ1V]
@@ -54,7 +55,8 @@ environment:
         limit: 7.0
         devices: [L:MUQ2H, L:MUQ2V, L:MDQ2H, L:MDQ2V]
       SourceATrims:
-        limit: 7.0
+        positive: 8.0
+        negative: 8.0
         devices: [L:ATRMHU, L:ATRMVU, L:ATRMHD, L:ATRMVD]
       SourceBTrims:
         limit: 7.0
@@ -113,10 +115,14 @@ vocs:
       dtype: null
       type: LessThanConstraint
       value: 0.5
-    SumAbs_SourceATrims:
+    BulkPS_SourceATrims_Neg:
       dtype: null
       type: LessThanConstraint
-      value: 7.0
+      value: 8.0
+    BulkPS_SourceATrims_Pos:
+      dtype: null
+      type: LessThanConstraint
+      value: 8.0
   objectives:
     L:D7TOR:
       dtype: null

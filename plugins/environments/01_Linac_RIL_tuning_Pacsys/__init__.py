@@ -2,9 +2,26 @@ from badger import environment
 from badger.errors import BadgerNoInterfaceError
 from typing import Dict
 from periodic import unwrap
-from supply_limits import Supply, clip_to_supply_limits
+from supply_limits import (BulkPSLimits, OBSERVABLE_PREFIX as BULK_PS_PREFIX, bulk_ps_observable,
+                           bulk_ps_observables, clip_to_bulk_ps_limits)
 from mults import Mult, expand_mults, is_mult, mult_name, mult_members, OOB_PREFIX
 from pydantic import PrivateAttr
+
+# Bulk power supplies: each feeds a few trims and trips off if they draw too much
+# together. Sources A and B and MEBT Q1 and Q2 each have their own bulk supply; the two
+# sources must not interfere. Source A's supply limits the sum of the positive currents
+# and, separately, the magnitude of the sum of the negative ones, to 8 A each; the
+# others limit the sum of |I|. TODO: their 7.0 A is a stand-in pending expert
+# confirmation of each bulk supply's rating. Module level so the observables below
+# can be listed from it.
+_BULK_PS = {
+    'SourceATrims': {'positive': 8.0, 'negative': 8.0,
+                     'devices': ['L:ATRMHU', 'L:ATRMVU', 'L:ATRMHD', 'L:ATRMVD']},
+    'SourceBTrims': {'limit': 7.0, 'devices': ['L:BTRMHU', 'L:BTRMVU', 'L:BTRMHD', 'L:BTRMVD']},
+    'MEBTQ1trims':  {'limit': 7.0, 'devices': ['L:MUQ1H', 'L:MUQ1V', 'L:MDQ1H', 'L:MDQ1V']},
+    'MEBTQ2trims':  {'limit': 7.0, 'devices': ['L:MUQ2H', 'L:MUQ2V', 'L:MDQ2H', 'L:MDQ2V']},
+}
+
 
 class Environment(environment.Environment):
     name = "01_Linac_RIL_tuning_Pacsys"
@@ -87,8 +104,9 @@ class Environment(environment.Environment):
         "VTrajError_SumSqBPM_calc", 
         "W_SumLosses", 
         "DummySumSq",
-        # sum |I| per bulk supply; a new entry in supplies needs a SumAbs_<group> line here.
-        "SumAbs_SourceATrims", "SumAbs_SourceBTrims", "SumAbs_MEBTQ1trims", "SumAbs_MEBTQ2trims",
+        # Each bulk supply's budget(s): BulkPS_<group> (sum |I|), or BulkPS_<group>_Pos and
+        # _Neg for one with separate + and - limits. Listed from the defaults in _BULK_PS.
+        *bulk_ps_observables(_BULK_PS),
         # fraction of the last mult step lost to a member's hard bounds (0 good, 1 = member could not move)
         "MultOOB_MUQ", "MultOOB_MDQ",
     ]
@@ -101,15 +119,9 @@ class Environment(environment.Environment):
     debug:         bool= False
     # {reading device: period} for phase-like devices, in the device's own units.
     periods:       Dict[str, float] = {'L:RFQPAH': 360.0, 'L:RFBPAH': 360.0, 'L:V5QSET': 360.0}
-    # Bulk power supplies: {group: {limit: max sum |I| in amps, devices: [trims it feeds]}}.
-    # set_variables clips the largest |I| in a group to stay under its limit; SumAbs_<group> is observable.
-    # Sources A and B and MEBT Q1 and Q2 each have their own bulk supply; the two sources must not interfere.
-    # TODO: 7.0 A is a stand-in pending expert confirmation of each bulk supply's rating.
-    supplies: Dict[str, Supply] = {
-        'SourceATrims': {'limit': 7.0, 'devices': ['L:ATRMHU', 'L:ATRMVU', 'L:ATRMHD', 'L:ATRMVD']},
-        'SourceBTrims': {'limit': 7.0, 'devices': ['L:BTRMHU', 'L:BTRMVU', 'L:BTRMHD', 'L:BTRMVD']},
-        'MEBTQ1trims':  {'limit': 7.0, 'devices': ['L:MUQ1H', 'L:MUQ1V', 'L:MDQ1H', 'L:MDQ1V']},
-        'MEBTQ2trims':  {'limit': 7.0, 'devices': ['L:MUQ2H', 'L:MUQ2V', 'L:MDQ2H', 'L:MDQ2V']}}
+    # Bulk power supplies (see _BULK_PS above). set_variables clips the largest current in a
+    # budget toward zero to stay under its limit; each budget is also an observable.
+    BulkPS_Limit: BulkPSLimits = _BULK_PS
     # Mults: {name: {step: size, members: {DEV: coefficient}}}. Variable mult:<name> is the integer
     # step count; member = as_found + coefficient * step * steps, clipped to the member's bounds with
     # the lost fraction reported as MultOOB_<name>. Operators adjust steps and members here.
@@ -175,7 +187,7 @@ class Environment(environment.Environment):
                                                         self._as_found, self.variables)
             self._mult_steps.update(steps)
             self._mult_oob.update(oob)
-        settable_devices = clip_to_supply_limits(settable_devices, self.supplies,
+        settable_devices = clip_to_bulk_ps_limits(settable_devices, self.BulkPS_Limit,
                                                  lambda devs: self.interface.get_settings(devs, debug=self.debug))
         # Interface BasicPacsysInterface handles (read,set) pairs and optional tolerances.
         self.interface.set_values(settable_devices, settings_role=self.settings_role,
@@ -194,8 +206,8 @@ class Environment(environment.Environment):
                 if not input_dev in observable_names: observable_names.append(input_dev)
             observable_names.remove('W_SumLosses') # only removes first occurrence. 
 
-        sumabs_names = [n for n in observable_names if n.startswith('SumAbs_')]
-        for n in sumabs_names: observable_names.remove(n)
+        bulk_ps_names = [n for n in observable_names if n.startswith(BULK_PS_PREFIX)]
+        for n in bulk_ps_names: observable_names.remove(n)
         oob_names = [n for n in observable_names if n.startswith(OOB_PREFIX)]
         for n in oob_names: observable_names.remove(n)
 
@@ -224,9 +236,9 @@ class Environment(environment.Environment):
                 if dev_read not in result.keys(): print (f'Unable to find {dev_read} among the read-back results: {list(result.keys())}')
                 sumsq += pow(weight * (1.0+result[dev_read]), 2.0) # Add unity, then scale by the weight, then square and add to the sum.
             result['W_SumLosses'] = sumsq
-        for name in sumabs_names:
-            devs = self.supplies[name[len('SumAbs_'):]]['devices']
-            result[name] = sum(abs(v) for v in self.interface.get_settings(devs, debug=self.debug).values())
+        for name in bulk_ps_names:
+            result[name] = bulk_ps_observable(self.BulkPS_Limit, name,
+                                              lambda devs: self.interface.get_settings(devs, debug=self.debug))
         for name in oob_names:
             result[name] = self._mult_oob.get(name[len(OOB_PREFIX):], 0.0)
 

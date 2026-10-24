@@ -1,6 +1,6 @@
 diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pydantic_editor.py
 --- a/badger/gui/components/pydantic_editor.py	2026-10-23 15:54:25
-+++ b/badger/gui/components/pydantic_editor.py	2026-10-23 16:20:32
++++ b/badger/gui/components/pydantic_editor.py	2026-10-23 20:49:07
 @@ -30,11 +30,22 @@
  from pydantic import BaseModel, Field, ValidationError, create_model
  from pydantic.fields import FieldInfo
@@ -36,7 +36,7 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
      return "text"
  
  
-@@ -683,6 +698,371 @@
+@@ -683,6 +698,385 @@
      return None
  
  
@@ -199,20 +199,21 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +
 +
 +class DeviceGroupsDialog(QDialog):
-+    """Edit a parameter made of device groups, each with one number: mults
-+    ({name: {step, members: {device: scale}}}) or bulk supplies ({group:
-+    {limit, devices: [...]}}). Members are picked from the environment's
++    """Edit a parameter made of device groups, each with its own number(s):
++    mults ({name: {step, members: {device: scale}}}) or bulk power supplies
++    ({group: {limit or positive + negative, devices: [...]}}). Each group shows
++    the number fields it has. Members are picked from the environment's
 +    settable devices. Groups can't be added or renamed here: the environment
 +    class declares a variable or observable for each."""
 +
 +    def __init__(self, title: str, note: str, groups: dict[str, dict[str, float]],
-+                 numbers: dict[str, float], number_label: str, devices: list[str],
-+                 with_scale: bool, group_label=lambda name: name,
++                 numbers: dict[str, dict[str, float]], number_labels: dict[str, str],
++                 devices: list[str], with_scale: bool, group_label=lambda name: name,
 +                 parent: QWidget | None = None):
 +        super().__init__(parent)
 +        self.devices = devices
 +        self.with_scale = with_scale
-+        self.result: tuple[dict[str, dict[str, float]], dict[str, float]] | None = None
++        self.result: tuple[dict[str, dict[str, float]], dict[str, dict[str, float]]] | None = None
 +        self.setWindowTitle(title)
 +        self.resize(560, 520)
 +        layout = QVBoxLayout(self)
@@ -227,20 +228,27 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +        groups_layout = QVBoxLayout(inner)
 +        scroll.setWidget(inner)
 +        layout.addWidget(scroll, 1)
-+        self.sections: dict[str, tuple[QDoubleSpinBox, QTableWidget]] = {}
++        self.sections: dict[str, tuple[dict[str, QDoubleSpinBox], QTableWidget]] = {}
 +        for name, members in groups.items():
 +            box = QGroupBox(group_label(name))
 +            vbox = QVBoxLayout(box)
 +            row = QHBoxLayout()
-+            row.addWidget(QLabel(number_label))
-+            number = QDoubleSpinBox()
-+            number.setDecimals(4)
-+            number.setRange(0.0001, 1e6)
-+            number.setValue(float(numbers.get(name, 1.0)))
-+            number.installEventFilter(MouseWheelWidgetAdjustmentGuard(number))
-+            row.addWidget(number)
++            spins: dict[str, QDoubleSpinBox] = {}
++            for key, label in number_labels.items():  # the fields this group has
++                if key not in numbers[name]:
++                    continue
++                row.addWidget(QLabel(label))
++                spin = QDoubleSpinBox()
++                spin.setDecimals(4)
++                spin.setRange(0.0001, 1e6)
++                spin.setValue(float(numbers[name][key]))
++                spin.installEventFilter(MouseWheelWidgetAdjustmentGuard(spin))
++                row.addWidget(spin)
++                row.addSpacing(12)
++                spins[key] = spin
 +            row.addStretch()
 +            vbox.addLayout(row)
++            number = spins.get("step")
 +            headers = ["Device", "Scale", "Per step"] if with_scale else ["Device"]
 +            table = QTableWidget(0, len(headers))
 +            table.setHorizontalHeaderLabels(headers)
@@ -257,8 +265,9 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +            buttons.addStretch()
 +            vbox.addLayout(buttons)
 +            groups_layout.addWidget(box)
-+            self.sections[name] = (number, table)
-+            number.valueChanged.connect(lambda _=0.0, n=name: self._update_per_step(n))
++            self.sections[name] = (spins, table)
++            if number is not None:
++                number.valueChanged.connect(lambda _=0.0, n=name: self._update_per_step(n))
 +            for device, scale in members.items():
 +                self.add_member(name, device, scale)
 +            self._fit(table)
@@ -269,7 +278,7 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +        layout.addWidget(box)
 +
 +    def add_member(self, name: str, device: str, scale: float = 1.0) -> None:
-+        number, table = self.sections[name]
++        _, table = self.sections[name]
 +        row = table.rowCount()
 +        table.insertRow(row)
 +        table.setCellWidget(row, 0, _device_combo(self.devices, device, editable=not self.devices))
@@ -301,19 +310,19 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +        self._fit(table)
 +
 +    def _update_per_step(self, name: str) -> None:
-+        if not self.with_scale:
++        spins, table = self.sections[name]
++        if not self.with_scale or "step" not in spins:
 +            return
-+        number, table = self.sections[name]
 +        for row in range(table.rowCount()):
 +            scale = table.cellWidget(row, 1).value()
-+            table.item(row, 2).setText(f"{scale * number.value():g}")
++            table.item(row, 2).setText(f"{scale * spins['step'].value():g}")
 +
-+    def values(self) -> tuple[dict[str, dict[str, float]], dict[str, float], list[str]]:
-+        """({group: {device: scale}}, {group: number}, problems)."""
++    def values(self) -> tuple[dict[str, dict[str, float]], dict[str, dict[str, float]], list[str]]:
++        """({group: {device: scale}}, {group: {number key: value}}, problems)."""
 +        groups: dict[str, dict[str, float]] = {}
-+        numbers: dict[str, float] = {}
++        numbers: dict[str, dict[str, float]] = {}
 +        problems: list[str] = []
-+        for name, (number, table) in self.sections.items():
++        for name, (spins, table) in self.sections.items():
 +            members: dict[str, float] = {}
 +            for row in range(table.rowCount()):
 +                device = table.cellWidget(row, 0).currentText().strip()
@@ -327,7 +336,7 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +            if not members:
 +                problems.append(f"{name}: needs at least one member.")
 +            groups[name] = members
-+            numbers[name] = number.value()
++            numbers[name] = {key: spin.value() for key, spin in spins.items()}
 +        return groups, numbers, problems
 +
 +    def accept(self) -> None:
@@ -340,23 +349,28 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +        super().accept()
 +
 +
-+# Parameters edited with DeviceGroupsDialog: field -> (number key, members key,
-+# members have a scale, title, number label, note, group label)
++# Parameters edited with DeviceGroupsDialog: field -> ({number key: label}, members
++# key, members have a scale, title, note, group label). A group shows the number
++# keys it has.
 +DEVICE_GROUP_FIELDS = {
 +    "mults": (
-+        "step", "members", True, "Edit mults", "Step size",
++        {"step": "Step size"}, "members", True, "Edit mults",
 +        "Each step of a mult moves every member by scale x step size from its "
 +        "setting when the run starts. Mults are declared by the environment "
 +        "(variable mult:<name>), so they can't be added or renamed here.",
 +        lambda name: f"{name}   (variable mult:{name})",
 +    ),
-+    "supplies": (
-+        "limit", "devices", False, "Edit bulk supplies", "Limit (A, sum of |I|)",
-+        "Trims that share one bulk power supply, and that supply's limit on "
-+        "their summed |current|; a write that would exceed it is reduced, "
-+        "largest current first. Supplies are declared by the environment "
-+        "(observable SumAbs_<group>), so they can't be added or renamed here.",
-+        lambda name: f"{name}   (observable SumAbs_{name})",
++    "BulkPS_Limit": (
++        {"limit": "Limit on sum of |I| (A)", "positive": "Positive sum <= (A)",
++         "negative": "|Negative sum| <= (A)"},
++        "devices", False, "Edit bulk power supply limits",
++        "Trims that share one bulk power supply, which trips off if they draw too "
++        "much together. Its limit is on the sum of |I|, or separately on the sum "
++        "of the positive currents and the magnitude of the sum of the negative "
++        "ones. A write that would exceed a limit is reduced, largest current "
++        "first. Supplies are declared by the environment (observables "
++        "BulkPS_<group>...), so they can't be added or renamed here.",
++        lambda name: name,
 +    ),
 +}
 +
@@ -408,7 +422,7 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
  def parameter_problems(widget: QWidget) -> list[str]:
      """Problems in every parameter editor inside `widget` (both GUIs' routine
      pages), as 'name: why' lines; empty when all can be used."""
-@@ -1267,6 +1647,64 @@
+@@ -1267,6 +1661,65 @@
                      continue
                  self._inject_computed_fields(sub, sub_class)
  
@@ -430,11 +444,12 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +        line.edit_button = button  # for tests
 +
 +    def edit_device_groups(self, name: str, line: QLineEdit) -> None:
-+        number_key, members_key, with_scale, title, number_label, note, group_label = (
++        number_labels, members_key, with_scale, title, note, group_label = (
 +            DEVICE_GROUP_FIELDS[name])
 +        try:
 +            value = yaml.load(line.text(), Loader=CustomSafeLoader) or {}
-+            numbers = {g: float(spec[number_key]) for g, spec in value.items()}
++            numbers = {g: {k: float(spec[k]) for k in number_labels if k in spec}
++                       for g, spec in value.items()}
 +            members = {g: dict(spec[members_key]) if with_scale
 +                       else {d: 1.0 for d in spec[members_key]}
 +                       for g, spec in value.items()}
@@ -442,13 +457,13 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
 +            QMessageBox.warning(self, title,
 +                                f"The text can't be read ({e}). Fix it, or undo the edit, first.")
 +            return
-+        dialog = DeviceGroupsDialog(title, note, members, numbers, number_label,
++        dialog = DeviceGroupsDialog(title, note, members, numbers, number_labels,
 +                                    _environment_settings(self), with_scale, group_label, self)
 +        self.table_dialog = dialog  # for tests
 +        if dialog.exec_() == QDialog.Accepted and dialog.result is not None:
 +            new_members, new_numbers = dialog.result
 +            line.setText(_mapping_to_text({
-+                g: {number_key: new_numbers[g],
++                g: {**new_numbers[g],
 +                    members_key: new_members[g] if with_scale else list(new_members[g])}
 +                for g in new_members
 +            }))
@@ -473,7 +488,7 @@ diff -ruN a/badger/gui/components/pydantic_editor.py b/badger/gui/components/pyd
      def check_text_fields(self) -> list[str]:
          """Check each dict-valued field edited as text (environment parameters
          arrive as a plain dict, so a dict value, or a string holding one, is
-@@ -1296,6 +1734,8 @@
+@@ -1296,6 +1749,8 @@
                      if not isinstance(example, dict):
                          example = {}
                  self._examples[name] = example

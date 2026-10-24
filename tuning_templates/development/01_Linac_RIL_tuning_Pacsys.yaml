@@ -9,9 +9,10 @@ description: |
     LEBT trims L:LTRMH, L:LTRMV; MEBT quads L:MUQ1, L:MUQ2, L:MDQ1, L:MDQ2 (independently);
     RF phases L:RFQPAH, L:RFBPAH.
   Constraints: L:D7TOR > 25, L:TK1RAD < 18, L:TUNRAD < 80, L:D34LM < 1.1.
-    SumAbs_SourceATrims < 7 (sum |I| of the source A trims, one bulk supply; 7 A is a stand-in
-    pending expert confirmation). The environment also clips the largest trim to keep each
-    supply's sum under its limit before any setting.
+    BulkPS_SourceATrims_Pos < 8 and BulkPS_SourceATrims_Neg < 8: the source A trims' bulk
+    supply limits the sum of the positive currents and, separately, the magnitude of the sum of
+    the negative ones. The environment also clips the largest trim of an over-limit sum toward
+    zero before any setting (the other supplies limit sum |I|, 7 A placeholders).
   Observables: L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
   Windows: +-0.5 source trims, +-0.1 LEBT trims, +-5 solenoids, +-2 MEBT quads, +-10 deg RF phases,
     all around the live readback at load (Automatic).
@@ -33,7 +34,7 @@ environment:
       B:BOOEFF: '@e,1f,e,0'
       default: '@e,52,e,0'
     settings_role: ril_tuning
-    supplies:
+    BulkPS_Limit:
       MEBTQ1trims:
         limit: 7.0
         devices: [L:MUQ1H, L:MUQ1V, L:MDQ1H, L:MDQ1V]
@@ -41,7 +42,8 @@ environment:
         limit: 7.0
         devices: [L:MUQ2H, L:MUQ2V, L:MDQ2H, L:MDQ2V]
       SourceATrims:
-        limit: 7.0
+        positive: 8.0
+        negative: 8.0
         devices: [L:ATRMHU, L:ATRMVU, L:ATRMHD, L:ATRMVD]
       SourceBTrims:
         limit: 7.0
@@ -96,10 +98,14 @@ vocs:
       dtype: null
       type: LessThanConstraint
       value: 80.0
-    SumAbs_SourceATrims:
+    BulkPS_SourceATrims_Neg:
       dtype: null
       type: LessThanConstraint
-      value: 7.0
+      value: 8.0
+    BulkPS_SourceATrims_Pos:
+      dtype: null
+      type: LessThanConstraint
+      value: 8.0
   objectives:
     G:LINEFF:
       dtype: null
