@@ -1225,3 +1225,14 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   into pixi_setup.sh only.
 - Left open (TODO.md): the operator shortcut (the user updates it) and
   removing FermiBadger_env on the MCR host.
+
+## 2026-10-23 — silence the torch.jit.script FutureWarning
+
+- Source: linear_operator 0.6.1 (gpytorch/botorch, imported by every Bayesian
+  generator) decorates two functions in utils/linear_cg.py with
+  @torch.jit.script; PyTorch 2.14 deprecates it, so one FutureWarning per
+  process (GUI and each run worker). Found with `-W error::FutureWarning`.
+- `pixi.toml` [activation.env] PYTHONWARNINGS =
+  "ignore::FutureWarning:torch.jit._script": only that warning; others still
+  show (checked). Inherited by Badger's spawned workers. Remove once
+  linear_operator stops using torch.jit.script. pixi.lock unchanged.

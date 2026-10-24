@@ -17,6 +17,14 @@ setup = "bash pixi_setup.sh"
 # and `safe-badger restore <file>`. See safe_badger.py.
 safe-badger = "python safe_badger.py"
 
+[activation.env]
+# linear_operator 0.6.1 (under gpytorch/botorch, so every Bayesian generator)
+# decorates two functions with @torch.jit.script, which PyTorch 2.14 deprecates:
+# one FutureWarning per process, in the GUI and in each run worker. Only that
+# warning, attributed to torch.jit._script, is silenced; drop this once a
+# linear_operator release stops using torch.jit.script.
+PYTHONWARNINGS = "ignore::FutureWarning:torch.jit._script"
+
 [dependencies]
 python = "3.12.1.*"
 badger-opt = "1.6.0.*"
