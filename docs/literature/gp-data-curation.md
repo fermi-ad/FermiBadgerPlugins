@@ -134,7 +134,9 @@ readily as a redundant one.
   - Signals faster than the upper bandwidth cutoff (typically 0.05 Hz, a
     20 s period) are averaged.
   - In the experiment, 15 minutes of history was subsampled to 100 points.
-    The code (APSopt/pysddsoptimize) is internal to Argonne. The ML4PS
+    The code (APSopt/pysddsoptimize) is internal to Argonne, but Kuklev
+    is now in our group, so the code and the subsampling details are one
+    conversation away. The ML4PS
     paper names O(n³) as the limitation that keeps problems under about 20
     parameters.
 
@@ -292,6 +294,10 @@ The smallest experiment that would tell us whether this is worth more:
    what the wish-list entry anticipated.
 
 ## Open questions
+
+- **Ask Kuklev first** (now in our group). How does the APS subsampling rank
+  points? Can APSopt's code be shared? Did they compare it with a window? How
+  big did N get before it mattered?
 
 - **What "informative" means for us.** Is it near the optimum (FocalBO,
   IMP-DPP), spread out (IVM, DPP diversity), or near constraint
