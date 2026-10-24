@@ -310,3 +310,28 @@ exists and what it would touch.
     controller fix, PR #284).
   - First step: try 1.6.1's and upstream main's visualizers before building
     anything. Moving to 1.6.1 means re-checking all 13 patches against it.
+- [ ] **Smart data curation for long runs** (possibly bigger than Badger: a
+  tool Badger/Xopt could use). Fitting a GP on N points costs O(N^3), so a
+  long run slows down. Between iterations, prune redundant points, older ones
+  first, keeping the most informative, to hold N (and the cost) roughly fixed.
+  Not a new problem: **needs a literature search first.**
+  - Exists (Xopt 3.2.2): `TimeDependentBayesianGenerator`
+    (`generators/bayesian/time_dependent.py`) has `forgetting_time`, which
+    drops data older than a time window (age only, not informativeness); the
+    time-dependent generators aren't among the 8 algorithms Badger offers.
+    The trust region's `restrict_model_data` fits the GP only to points inside
+    the region, which also bounds N, by location.
+  - Starting points for the search (to verify, not yet read): budgeted /
+    sparse online GPs that drop the least informative point when a budget is
+    exceeded (Csato & Opper's sparse online GP); inducing-point sparse GPs
+    (Titsias's variational sparse GP, Hensman's SVGP); time-varying GP bandits
+    with forgetting (Bogunovic, Scarlett & Cevher); dynamic BO (Nyikosa,
+    Osborne & Roberts); and adaptive/time-aware BO work for drifting
+    accelerators (e.g. at Argonne/SLAC). Also data-selection criteria:
+    leverage, posterior-variance reduction, mutual information.
+  - Would touch, if pursued: a pruning step between Xopt's `add_data` and the
+    GP fit (a custom generator or model constructor), a budget parameter, and
+    a record of pruned points so the archive keeps everything.
+  - Open: what "informative" means here (near the optimum? diverse?
+    constraint boundaries?), and how it interacts with drift (old data may be
+    wrong, not just redundant).

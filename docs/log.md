@@ -1271,6 +1271,7 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - Added "Feature wish list (experimental, not scheduled)" to TODO.md: widen a
   range mid-run and continue with the data; seed a run with historical data;
   risk-aware constraints (operator-set acceptable risk); better GP
-  visualizations (check Badger 1.6.1 / main first). Each entry notes what
+  visualizations (check Badger 1.6.1 / main first); smart data curation for
+  long runs (O(N^3) GP fits; literature search first). Each entry notes what
   already exists (full-GUI data panel, Xopt's constraint-weighted EI and
   SafetyTurboController, BO visualizer, 1.6.1's BAX visualizer).
