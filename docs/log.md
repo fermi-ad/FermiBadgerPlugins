@@ -1265,12 +1265,3 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   per-user Badger config at the scratch copy, so a test imported the old
   supply_limits from there. Re-ran setup here (which also exercised the new
   reset path for real); saved to memory.
-
-## 2026-10-23 — feature wish list started
-
-- Added "Feature wish list (experimental, not scheduled)" to TODO.md: widen a
-  range mid-run and continue with the data; seed a run with historical data;
-  risk-aware constraints (operator-set acceptable risk); better GP
-  visualizations (check Badger 1.6.1 / main first). Each entry notes what
-  already exists (full-GUI data panel, Xopt's constraint-weighted EI and
-  SafetyTurboController, BO visualizer, 1.6.1's BAX visualizer).
