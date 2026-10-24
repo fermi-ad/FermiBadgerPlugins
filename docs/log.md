@@ -1275,3 +1275,13 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   long runs (O(N^3) GP fits; literature search first). Each entry notes what
   already exists (full-GUI data panel, Xopt's constraint-weighted EI and
   SafetyTurboController, BO visualizer, 1.6.1's BAX visualizer).
+- Moved the wish list off main onto branch `bells-and-whistles` (reverted the
+  two wish-list commits on main; a later merge back must revert the reverts).
+
+## 2026-10-23 — literature review: GP data curation for long runs
+
+- Wrote docs/literature/gp-data-curation.md (branch `bells-and-whistles`):
+  six method families (age windows, relevance-based stale removal such as
+  W-DBO/BOLT/APS adaptive BO, budgeted informative subsets, region pruning,
+  sparse GPs, faster exact GPs), the Xopt `get_training_data` hook as the plug-in
+  point, a suggested prototype, and open questions. TODO entry now links it.

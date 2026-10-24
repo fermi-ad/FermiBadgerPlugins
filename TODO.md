@@ -321,14 +321,14 @@ exists and what it would touch.
     time-dependent generators aren't among the 8 algorithms Badger offers.
     The trust region's `restrict_model_data` fits the GP only to points inside
     the region, which also bounds N, by location.
-  - Starting points for the search (to verify, not yet read): budgeted /
-    sparse online GPs that drop the least informative point when a budget is
-    exceeded (Csato & Opper's sparse online GP); inducing-point sparse GPs
-    (Titsias's variational sparse GP, Hensman's SVGP); time-varying GP bandits
-    with forgetting (Bogunovic, Scarlett & Cevher); dynamic BO (Nyikosa,
-    Osborne & Roberts); and adaptive/time-aware BO work for drifting
-    accelerators (e.g. at Argonne/SLAC). Also data-selection criteria:
-    leverage, posterior-variance reduction, mutual information.
+  - Literature review done: [docs/literature/gp-data-curation.md](docs/literature/gp-data-curation.md).
+    Closest fits: W-DBO / BOLT (Bardou et al. 2024–25: drop the point whose
+    removal moves the posterior least; BOLT also picks the budget), the APS
+    adaptive-BO subsampling (Kuklev et al. 2022), and greedy budgeted subsets
+    (Csató & Opper, IVM) for static objectives. The review ends with a
+    suggested prototype: a `get_training_data` override with a point budget,
+    benchmarked on the VirtualAccelerator sim. First step: measure fit time
+    vs. N on the operator machine.
   - Would touch, if pursued: a pruning step between Xopt's `add_data` and the
     GP fit (a custom generator or model constructor), a budget parameter, and
     a record of pruned points so the archive keeps everything.
