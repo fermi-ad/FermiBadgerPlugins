@@ -34,6 +34,21 @@ without the class's type hints, so each is one line of YAML text.
   separately (`positive`/`negative`; observables `_Pos`/`_Neg`); RIL source A
   uses that at 8 A each, constrained < 8 in both RIL templates.
 
+## Upstream
+
+- [ ] **Xopt PR: copy DataFrame selections before `torch.tensor`** (our
+  `xopt-3.2.2-negative-strides.patch`, plus a sixth site, `train_Yvar`).
+  Branch `fix-negative-strides` on github.com/jasonstjohn/Xopt (worktree
+  `../Xopt-negative-strides`), cut from upstream main d48ec24b, with a test in
+  `test_turbo.py`. Tested 2026-10-25: fork CI all green (Lint; Tests on
+  ubuntu 3.11-3.14, macOS, Windows; Test Notebooks); full suite locally on
+  upstream main vs branch in one env (botorch 0.17.2): no new failures (4
+  torch-compile tests fail on both, on this Mac). Not opened yet: user wants
+  more testing first. Once released, drop our local patch.
+- [ ] Badger: `_compose_routine` resets TuRBO state only for the short
+  controller names (our `badger-1.6.0-turbo-state-reset.patch`); worth a
+  Badger PR too.
+
 ## Docs
 
 - [ ] The action bar's "?" button opens Badger's own `minimode` guide, which
