@@ -43,8 +43,9 @@ without the class's type hints, so each is one line of YAML text.
   devices restored): heteroskedastic GP median |log10 error| 0.038, log corr
   0.985; standard GP 0.182, -0.53. Proportional and bump live too (log).
   Open: quiet regions overstated ~x2, not by the floor (test by varying
-  n_samples and the number of points). Next: a run from
-  the GUI (archive file) through the same script; a test of the Xopt PR's
+  n_samples and the number of points). GUI run + Continue with a widened
+  range scored from the archive (log): widening raises the model floor.
+  Next: a test of the Xopt PR's
   `train_Yvar` site (several objectives with `_var`).
   Found: Xopt's heteroskedastic GP floors noise at ~1e-4 of the objective's
   variance (README).

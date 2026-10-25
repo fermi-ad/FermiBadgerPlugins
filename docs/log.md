@@ -1383,3 +1383,14 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   the log-noise GP smoothing across a steep rise or a sparsely sampled
   background (untested). The standard GP's single level sits on the floor in
   the proportional run.
+- User ran the template in `-mini` (17:04:52, 40 points), then Continue with
+  Z:CUBE_X widened to [-10.2, 12.0] (17:06:09, 40 seeded + 14 new; description
+  "Seeded with 40 points from ...170452.yaml"). Both archive files score
+  through `scripts/heteroskd_recovery.py` unchanged. Heteroskedastic vs
+  standard GP, points / grid: 0.078 / 0.147 vs 0.120 / 0.925; continued
+  0.313 / 0.079 vs 0.252 / 1.060.
+- Finding: widening raised the model floor (1e-4 x var of the objective; f now
+  reaches ~140) to 0.12, above the quiet cluster's true noise (0.05-0.1): the
+  standard GP sits on it, the heteroskedastic GP's cluster at ~0.19. Wider
+  ranges cost noise resolution near the optimum, and seeded far points keep
+  the floor high in a later narrow Continue.

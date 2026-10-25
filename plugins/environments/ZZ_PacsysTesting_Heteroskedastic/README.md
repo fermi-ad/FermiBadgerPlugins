@@ -52,6 +52,11 @@ Everything `ZZ_PacsysTesting` reads, plus:
   `bump` with `noise_sigma0: 0.05` against an objective spread of ~9), though
   the noisy region is still right. Keep `noise_sigma0` above that to test
   recovery, or below it to test this limit.
+- The floor scales with the objective's spread over **all** the run's points,
+  so widening a range (or seeding from a wide run with Continue) raises it: in
+  a `-mini` run continued with `Z:CUBE_X` widened to about ±11, the floor rose
+  to 0.12, above the quiet noise at the optimum (0.05-0.1), which the model
+  then overstated. Wide sweeps cost noise resolution near the optimum.
 - Far from any measured point the learned noise extrapolates (corners of the
   range in `scripts/heteroskd_recovery.py`'s maps).
 
