@@ -295,8 +295,8 @@ exists and what it would touch.
     entry (`patches/badger-1.6.0-continue-run.patch`,
     `tests/continue_run_gui_test.py`). Tried live on the sim 2026-10-24: runs
     well.
-  - [x] 2. Seed from several runs (plan agreed and built 2026-10-24; not yet
-    tried live):
+  - [x] 2. Seed from several runs (plan agreed and built 2026-10-24; several
+    runs not yet tried live):
     - Pick: with Continue armed, History right-click "Add its points" appends
       a run without changing the displayed one (History stays single-select);
       status bar shows "Seeding from K runs, N points".
@@ -324,7 +324,9 @@ exists and what it would touch.
     upstream's `update_run` is an empty stub.)
   - Not doing: live range edits within one run (pause, edit, resume), which
     needs a new channel into the run subprocess and TuRBO VOCS sync.
-- [ ] **Widen a variable's range mid-run and carry on with the data so far.**
+- [x] **Widen a variable's range mid-run and carry on with the data so far.**
+  Built as Continue, phase 1 above; tried live by the user 2026-10-25 (`-mini`,
+  heteroskedastic template, `Z:CUBE_X` widened).
   If a run shows the optimum lies past a variable's range, widen the range and
   resume, keeping every point already measured.
   - Exists: the full GUI's data panel ("Load displayed data into routine",
@@ -338,7 +340,8 @@ exists and what it would touch.
     the environment still apply. safe-badger's snapshot needs nothing new.
   - Open: same run (append to its archive) or a new run seeded from it? What
     if the template's trust region (turbo) was already shrunk?
-- [ ] **Seed a run with historical data.** Start a run from one or more
+- [x] **Seed a run with historical data.** Built as Continue, phase 2 above
+  ("Add its points"); seeding from several runs still to try live. Start a run from one or more
   archived runs' points as the GP's initial data instead of fresh initial
   points.
   - Exists: the same full-GUI data panel loads the displayed (archived) run;
