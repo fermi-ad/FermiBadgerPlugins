@@ -9,12 +9,12 @@ logs/heteroskd_runs/<time>-<shape>.yaml, then score it:
     pixi run python scripts/heteroskd_live_run.py [proportional|distance|bump]
     pixi run python scripts/heteroskd_recovery.py logs/heteroskd_runs/<file>.yaml
 """
+import argparse
 import importlib
 import sys
 import time
 from pathlib import Path
 
-import pandas as pd
 import yaml
 
 sys.path.insert(0, "plugins")
@@ -22,7 +22,10 @@ from xopt import Evaluator, VOCS, Xopt  # noqa: E402
 from xopt.generators.bayesian import ExpectedImprovementGenerator  # noqa: E402
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
 
-shape = sys.argv[1] if len(sys.argv) > 1 else "distance"
+# Parse (and refuse a bad shape) before anything touches ACNET.
+ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+ap.add_argument("shape", nargs="?", default="distance", choices=["proportional", "distance", "bump"])
+shape = ap.parse_args().shape
 n_random, n_steps = 8, 32
 tmpl = yaml.safe_load(Path("tuning_templates/development/ZZ_PacsysTesting_Heteroskedastic.yaml").read_text())
 params = tmpl["environment"]["params"] | {"seed": 7, "noise_shape": shape}

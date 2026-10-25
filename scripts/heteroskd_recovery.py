@@ -162,7 +162,7 @@ def report(path, out_png):
 
 
 if __name__ == "__main__":
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("run", help="a Badger run file (archive .yaml)")
     ap.add_argument("--out", help="PNG to write (default: <run name>.heteroskd.png here)")
     a = ap.parse_args()
