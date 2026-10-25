@@ -122,6 +122,8 @@ print(h.hexdigest())" "$REPO/patches")"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-param-table-editor.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
+        # must come after turbo-serialization: diffed against that tree
+        apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-negative-strides.patch"
 
         if [[ $FAILED -eq 0 ]]; then
             echo "$WANT" > "$STAMP"

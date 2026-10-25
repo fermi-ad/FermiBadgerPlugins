@@ -1,0 +1,41 @@
+diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bayesian/bayesian_generator.py
+--- a/xopt/generators/bayesian/bayesian_generator.py	2026-10-25 14:31:20
++++ b/xopt/generators/bayesian/bayesian_generator.py	2026-10-25 14:31:32
+@@ -1318,8 +1318,8 @@
+             self.vocs, data, return_raw=True, return_valid=True
+         )
+ 
+-        variable_data = torch.tensor(var_df[self.vocs.variable_names].to_numpy())
+-        objective_data = torch.tensor(obj_df[self.vocs.objective_names].to_numpy())
++        variable_data = torch.tensor(var_df[self.vocs.variable_names].to_numpy().copy())  # copy: pandas may return a reversed view, which torch rejects
++        objective_data = torch.tensor(obj_df[self.vocs.objective_names].to_numpy().copy())
+         weights = set_botorch_weights(self.vocs)[: self.vocs.n_objectives]
+         return variable_data, objective_data * weights, weights
+ 
+diff -ruN a/xopt/generators/bayesian/turbo.py b/xopt/generators/bayesian/turbo.py
+--- a/xopt/generators/bayesian/turbo.py	2026-10-25 14:31:20
++++ b/xopt/generators/bayesian/turbo.py	2026-10-25 14:31:32
+@@ -326,7 +326,7 @@
+             The subset of data within the trust region.
+         """
+         active_variable_names = self._get_trust_region_variable_names(generator)
+-        variable_data = torch.tensor(data[active_variable_names].to_numpy())
++        variable_data = torch.tensor(data[active_variable_names].to_numpy().copy())  # copy: pandas may return a reversed view, which torch rejects
+ 
+         bounds = self.get_trust_region(generator)
+ 
+diff -ruN a/xopt/generators/bayesian/utils.py b/xopt/generators/bayesian/utils.py
+--- a/xopt/generators/bayesian/utils.py	2026-10-25 14:31:20
++++ b/xopt/generators/bayesian/utils.py	2026-10-25 14:31:32
+@@ -109,9 +109,9 @@
+     input_data = input_data[non_nans_all]
+     outcome_data = outcome_data[non_nans_all]
+ 
+-    train_X = torch.tensor(input_data.to_numpy(dtype="double"))
++    train_X = torch.tensor(input_data.to_numpy(dtype="double").copy())  # copy: pandas may return a reversed view, which torch rejects
+ 
+-    train_Y = torch.tensor(outcome_data[outcome_names].to_numpy(dtype="double"))
++    train_Y = torch.tensor(outcome_data[outcome_names].to_numpy(dtype="double").copy())
+ 
+     train_Yvar = None
+     yvar_names = [f"{outcome}_var" for outcome in outcome_names]

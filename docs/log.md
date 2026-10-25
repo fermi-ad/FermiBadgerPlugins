@@ -1265,3 +1265,18 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   per-user Badger config at the scratch copy, so a test imported the old
   supply_limits from there. Re-ran setup here (which also exercised the new
   reset path for real); saved to memory.
+
+## 2026-10-25 — Xopt negative-strides crash
+
+- User report: `TuneQx_SimpleVirtualAccelerator.yaml`
+  took its 4 initial points, then the first BO step failed in TuRBO's
+  `get_data_in_trust_region`: "At least one stride ... is negative". Cause: the
+  live data held `kqf` before `kqd`; selecting `[kqd, kqf]` gives a reversed
+  numpy view, which `torch.tensor` rejects. The archived file reloads in VOCS
+  order, so it did not reproduce from the file; reproduced by reordering.
+- Fix: `xopt-3.2.2-negative-strides.patch`, `.copy()` at the five
+  DataFrame-to-tensor sites (Xopt already does so at four others).
+  `tests/xopt_negative_strides_test.py` fails without it, passes with it.
+- Own slip: a `patch -R -o` meant to write a scratch copy reverted the fix in
+  site-packages; recovered by removing the patch stamp and re-running setup
+  (full reset from pristine).
