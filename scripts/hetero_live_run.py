@@ -2,7 +2,7 @@
 settings: 8 random points, then 32 expected-improvement steps, seed 7.
 
 WRITES TO ACNET (the scratch devices Z:CUBE_X and Z:CUBE_Y; needs the VPN and a
-Kerberos ticket with the  role); their settings are read first and
+Kerberos ticket with the `testing` role); their settings are read first and
 written back at the end, also on failure. Saves
 logs/hetero_runs/<time>-<shape>.yaml, then score it:
 
