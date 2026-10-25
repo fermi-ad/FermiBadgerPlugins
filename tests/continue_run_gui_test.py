@@ -14,6 +14,7 @@ Run from the repo root:
     pixi run python tests/continue_run_gui_test.py
 """
 SIM = "tuning_templates/simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml"
+TUNEQX = "tuning_templates/simulation/TuneQx_SimpleVirtualAccelerator.yaml"  # TuRBO
 N = 6
 
 
@@ -233,6 +234,21 @@ def main():
         assert "other-run.yaml" in run.description, run.description
         btn.setChecked(False)
         assert page.seed_extra == []  # disarming forgets added runs
+
+        # Plain Go right after showing a seeded TuRBO run: the new run gets no
+        # stale trust-region centre (badger-1.6.0-turbo-state-reset.patch; one
+        # left over made every new point fall outside the region), and no
+        # copied "Seeded with" line.
+        page.routine_editor.load_template_yaml(False, template_path=TUNEQX)
+        shown = page.routine_editor._compose_routine()
+        shown.generator.turbo_controller.center_x = {"kqd": -0.7927, "kqf": 0.8008}
+        shown.description = "Regulate Qx.\nSeeded with 1 points from X.yaml."
+        page.routine_editor.set_routine(shown, silent=True)
+        page.start_run()
+        run = page.current_routine
+        assert started[-1]["init_points_flag"] and not started[-1]["run_data_flag"]
+        assert run.generator.turbo_controller.center_x is None, run.generator.turbo_controller
+        assert run.description == "Regulate Qx.", repr(run.description)
         return window
 
     try:

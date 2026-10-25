@@ -76,8 +76,8 @@ diff -ruN a/badger/gui/components/action_bar.py b/badger/gui/components/action_b
          if self.btn_stop.defaultAction() is not self.run_action:
 diff -ruN a/badger/gui/components/continue_run.py b/badger/gui/components/continue_run.py
 --- a/badger/gui/components/continue_run.py	1969-12-31 18:00:00
-+++ b/badger/gui/components/continue_run.py	2026-10-24 15:24:56
-@@ -0,0 +1,317 @@
++++ b/badger/gui/components/continue_run.py	2026-10-25 14:55:54
+@@ -0,0 +1,326 @@
 +"""Continue from a run: start a new run seeded with earlier runs' points.
 +
 +Shared by both home pages (the action bar's Continue button, and the History
@@ -229,8 +229,17 @@ diff -ruN a/badger/gui/components/continue_run.py b/badger/gui/components/contin
 +    }
 +
 +
++def drop_seed_note(routine):
++    """Remove a "Seeded with" line copied from the run shown before Go."""
++    if routine.description:
++        lines = routine.description.splitlines()
++        kept = [s for s in lines if not s.startswith("Seeded with ")]
++        routine.description = "\n".join(kept).rstrip() or None
++
++
 +def note_source(routine, n_points, names=()):
 +    """Record in the run's description where its first points came from."""
++    drop_seed_note(routine)
 +    line = f"Seeded with {n_points} points from "
 +    line += (", ".join(names) if names else "earlier runs") + "."
 +    routine.description = (
@@ -463,14 +472,15 @@ diff -ruN a/badger/gui/components/navigators.py b/badger/gui/components/navigato
          """
 diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
 --- a/badger/gui/mini/pages/home_page.py	2026-10-24 09:34:58
-+++ b/badger/gui/mini/pages/home_page.py	2026-10-24 15:24:56
-@@ -43,6 +43,13 @@
++++ b/badger/gui/mini/pages/home_page.py	2026-10-25 14:55:54
+@@ -43,6 +43,14 @@
  from badger.gui.components.action_bar import BadgerActionBar
  from badger.gui.components.settings_guard import SettingsGuard
  from badger.gui.components.pydantic_editor import parameter_problems
 +from badger.gui.components.continue_run import (
 +    ContinueRun,
 +    confirm_seed,
++    drop_seed_note,
 +    fresh_trust_region,
 +    note_source,
 +)
@@ -478,7 +488,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
  from badger.utils import get_header
  from badger.settings import init_settings
  
-@@ -73,7 +80,7 @@
+@@ -73,7 +81,7 @@
  """
  
  
@@ -487,7 +497,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
      sig_routine_activated = pyqtSignal(bool)
      sig_routine_invalid = pyqtSignal()
  
-@@ -256,6 +263,7 @@
+@@ -256,6 +264,7 @@
          self.run_monitor.sig_env_ready.connect(self.update_saved_values_from_monitor)
  
          self.run_action_bar.sig_start.connect(self.start_run)
@@ -495,7 +505,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
          self.run_action_bar.sig_start_until.connect(self.start_run_until)
          self.run_action_bar.sig_stop.connect(self.run_monitor.stop)
          self.run_action_bar.sig_delete_run.connect(self.run_monitor.delete_run)
-@@ -314,6 +322,7 @@
+@@ -314,6 +323,7 @@
      def go_run(self, i: int = None):
          logger.info(f"Activating run: {i}")
          gc.collect()
@@ -503,7 +513,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
  
          # if self.cb_history.itemText(0) == "Optimization in progress...":
          #     return
-@@ -421,7 +430,7 @@
+@@ -421,7 +431,7 @@
  
              self.uncover_page()
  
@@ -512,7 +522,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
          """
          Prepares the run by composing the routine, validating data if present,
          saving created routine to a yaml file, and passing the routine to
-@@ -436,7 +445,9 @@
+@@ -436,7 +446,9 @@
  
          Notes
          _____
@@ -523,9 +533,11 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
          """
          logger.info("Preparing new run.")
          try:
-@@ -445,6 +456,18 @@
+@@ -444,7 +456,20 @@
+         except Exception as e:
              self.sig_routine_invalid.emit()
              raise e
++        drop_seed_note(routine)  # only a seeded run says it was (note_source)
  
 +        if sources:
 +            try:
@@ -542,7 +554,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
          self.current_routine = routine
  
          # Save routine as a temp file
-@@ -468,6 +491,10 @@
+@@ -468,6 +493,10 @@
              Removed data loading implementation and data_panel from mini GUI
          """
          logger.info("Starting run.")
@@ -553,7 +565,7 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
          problems = parameter_problems(self.routine_editor)
          if problems:
              QMessageBox.warning(
-@@ -482,12 +509,19 @@
+@@ -482,12 +511,19 @@
              self.run_action_bar.routine_finished()  # reset the action bar
              return
  
@@ -578,21 +590,22 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
      def start_run_until(self):
 diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
 --- a/badger/gui/pages/home_page.py	2026-10-24 09:34:58
-+++ b/badger/gui/pages/home_page.py	2026-10-24 15:25:09
-@@ -42,6 +42,12 @@
++++ b/badger/gui/pages/home_page.py	2026-10-25 14:55:54
+@@ -42,6 +42,13 @@
  from badger.gui.components.settings_guard import SettingsGuard
  from badger.gui.components.pydantic_editor import parameter_problems
  from badger.gui.components.data_panel import filter_metadata
 +from badger.gui.components.continue_run import (
 +    ContinueRun,
 +    confirm_seed,
++    drop_seed_note,
 +    fresh_trust_region,
 +    note_source,
 +)
  from badger.gui.components.data_table import (
      add_row,
      data_table,
-@@ -80,7 +86,7 @@
+@@ -80,7 +87,7 @@
  """
  
  
@@ -601,7 +614,7 @@ diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
      sig_routine_activated = pyqtSignal(bool)
      sig_routine_invalid = pyqtSignal()
  
-@@ -260,6 +266,7 @@
+@@ -260,6 +267,7 @@
          self.run_monitor.sig_env_ready.connect(self.run_action_bar.env_ready)
  
          self.run_action_bar.sig_start.connect(self.start_run)
@@ -609,7 +622,7 @@ diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
          self.run_action_bar.sig_start_until.connect(self.start_run_until)
          self.run_action_bar.sig_stop.connect(self.run_monitor.stop)
          self.run_action_bar.sig_delete_run.connect(self.run_monitor.delete_run)
-@@ -303,9 +310,17 @@
+@@ -303,9 +311,17 @@
          # Load the default generator
          self.routine_editor.generator_box.cb.setCurrentIndex(0)
  
@@ -627,7 +640,7 @@ diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
  
          # if self.cb_history.itemText(0) == "Optimization in progress...":
          #     return
-@@ -469,7 +484,7 @@
+@@ -469,7 +485,7 @@
              self.run_action_bar.routine_finished()  # Reset action bar
              raise BadgerRoutineError("Routine initialization cancelled by user.")
  
@@ -636,8 +649,11 @@ diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
          """
          Prepares the run by composing the routine, validating data if present,
          saving created routine to a yaml file, and passing the routine to
-@@ -490,7 +505,19 @@
+@@ -488,9 +504,22 @@
+         except Exception as e:
+             self.sig_routine_invalid.emit()
              raise e
++        drop_seed_note(routine)  # only a seeded run says it was (note_source)
  
          # Add data to routine before saving tmp file
 -        if data is not None:
@@ -657,7 +673,7 @@ diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
              # Make sure selected generator is compatible with prior data
              if routine.generator.name in ["neldermead"]:
                  self.run_action_bar.routine_finished()  # Reset action bar
-@@ -517,6 +544,8 @@
+@@ -517,6 +546,8 @@
                  )
  
              routine.data = data
@@ -666,7 +682,7 @@ diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
          else:
              self.data_panel.set_routine(routine)
  
-@@ -555,10 +584,22 @@
+@@ -555,10 +586,22 @@
              self.run_action_bar.routine_finished()  # reset the action bar
              return
          # Set data options based on checkbox states from data_panel

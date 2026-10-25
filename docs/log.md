@@ -1331,3 +1331,19 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - Own slip: a `patch -R -o` meant to write a scratch copy reverted the fix in
   site-packages; recovered by removing the patch stamp and re-running setup
   (full reset from pristine).
+
+## 2026-10-25 — stale TuRBO centre; inherited "Seeded with" line
+
+- User report: easy to hit `FeasibilityError: no points ... within the TuRBO
+  trust region`. The failing runs (14:53:49, 14:53:59) were plain runs with
+  one point, but their controller carried the shown run's centre and length:
+  upstream `_compose_routine` blanks center/best only for name "optimize",
+  while a run's saved controller is "OptimizeTurboController". Fix:
+  `badger-1.6.0-turbo-state-reset.patch` (both GUIs, both names; same for
+  safety). Test added to `continue_run_gui_test.py`; fails without the patch.
+- Same runs said "Seeded with 1 points from ...": the description is copied
+  from the shown run. Every Go now drops such a line (`drop_seed_note`); only
+  a seeded run adds one.
+- Side finding: the editor composes VOCS as kqf, kqd (not template order),
+  which is how the live data came to hold columns in non-VOCS order (the
+  negative-strides crash).
