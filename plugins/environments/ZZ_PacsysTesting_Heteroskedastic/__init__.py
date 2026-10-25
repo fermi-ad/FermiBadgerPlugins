@@ -4,17 +4,17 @@ position: a testbed for heteroskedastic GP modeling.
 Xopt fits a heteroskedastic GP for an objective whenever the data also has a
 `<objective>_var` column; this environment supplies one.
 
-    Hetero_f           f(x) = sum over hetero_devices of (reading - 0.5)**2,
-                       plus synthetic noise of known sigma(x), averaged over
-                       n_samples draws (as averaging over pulses would be on
-                       the machine)
-    Hetero_f_var       the variance of that mean, estimated from the draws
-                       (sample variance / n_samples): what a model is given
-    Hetero_f_true_var  the true variance of the mean, sigma(x)**2 / n_samples:
-                       logged only, to score how well a model recovers it
-                       (scripts/hetero_recovery.py)
+    Heteroskd_f           f(x) = sum over heteroskd_devices of (reading - 0.5)**2,
+                          plus synthetic noise of known sigma(x), averaged over
+                          n_samples draws (as averaging over pulses would be
+                          on the machine)
+    Heteroskd_f_var       the variance of that mean, estimated from the draws
+                          (sample variance / n_samples): what a model is given
+    Heteroskd_f_true_var  the true variance of the mean, sigma(x)**2 / n_samples:
+                          logged only, to score how well a model recovers it
+                          (scripts/heteroskd_recovery.py)
 
-sigma(x), with r = |x - noise_center| over hetero_devices:
+sigma(x), with r = |x - noise_center| over heteroskd_devices:
 
     proportional  noise_sigma0 + noise_scale * |f|        (multiplicative)
     distance      noise_sigma0 + noise_scale * r          (worse far from nominal)
@@ -30,7 +30,7 @@ from pydantic import PrivateAttr
 from environments.ZZ_PacsysTesting import _SQ_OFFSET
 from environments.ZZ_PacsysTesting import Environment as PacsysTesting
 
-NOISY = ("Hetero_f", "Hetero_f_var", "Hetero_f_true_var")
+NOISY = ("Heteroskd_f", "Heteroskd_f_var", "Heteroskd_f_true_var")
 SHAPES = ("proportional", "distance", "bump")
 
 
@@ -50,11 +50,11 @@ class Environment(PacsysTesting):
     name = "ZZ_PacsysTesting_Heteroskedastic"
     observables = PacsysTesting.observables + list(NOISY)
 
-    hetero_devices: list[str] = ["Z:CUBE_X", "Z:CUBE_Y"]
+    heteroskd_devices: list[str] = ["Z:CUBE_X", "Z:CUBE_Y"]
     noise_shape: str = "proportional"  # proportional, distance or bump
     noise_sigma0: float = 0.1
     noise_scale: float = 0.1
-    noise_center: float = 3.0  # same value on every hetero device
+    noise_center: float = 3.0  # same value on every heteroskd device
     noise_width: float = 2.0
     n_samples: int = 10  # draws averaged per point (>= 2, for a variance)
     seed: int = -1  # -1: a fresh random stream each run
@@ -67,7 +67,7 @@ class Environment(PacsysTesting):
         return self._rng
 
     def noisy_values(self, x):
-        """{Hetero_f, Hetero_f_var, Hetero_f_true_var} at device readings x."""
+        """{Heteroskd_f, Heteroskd_f_var, Heteroskd_f_true_var} at device readings x."""
         if self.n_samples < 2:
             raise ValueError("n_samples must be at least 2 to estimate a variance")
         f = float(np.sum((np.asarray(x, dtype=float) - _SQ_OFFSET) ** 2))
@@ -77,21 +77,21 @@ class Environment(PacsysTesting):
         )
         draws = f + self.rng.normal(0.0, sigma, self.n_samples)
         return {
-            "Hetero_f": float(draws.mean()),
-            "Hetero_f_var": float(draws.var(ddof=1) / self.n_samples),
-            "Hetero_f_true_var": float(sigma**2 / self.n_samples),
+            "Heteroskd_f": float(draws.mean()),
+            "Heteroskd_f_var": float(draws.var(ddof=1) / self.n_samples),
+            "Heteroskd_f_true_var": float(sigma**2 / self.n_samples),
         }
 
     def get_observables(self, observable_names: list[str]) -> dict:
         noisy = [n for n in observable_names if n in NOISY]
         fetch = [n for n in observable_names if n not in NOISY]
         if noisy:
-            fetch += [d for d in self.hetero_devices if d not in fetch]
+            fetch += [d for d in self.heteroskd_devices if d not in fetch]
         result = super().get_observables(fetch) if fetch else {}
         if noisy:
-            values = self.noisy_values([result[d] for d in self.hetero_devices])
+            values = self.noisy_values([result[d] for d in self.heteroskd_devices])
             result |= {n: values[n] for n in noisy}
-            for d in self.hetero_devices:  # fetched only to compute the above
+            for d in self.heteroskd_devices:  # fetched only to compute the above
                 if d not in observable_names:
                     result.pop(d, None)
         return result

@@ -4,10 +4,10 @@ settings: 8 random points, then 32 expected-improvement steps, seed 7.
 WRITES TO ACNET (the scratch devices Z:CUBE_X and Z:CUBE_Y; needs the VPN and a
 Kerberos ticket with the `testing` role); their settings are read first and
 written back at the end, also on failure. Saves
-logs/hetero_runs/<time>-<shape>.yaml, then score it:
+logs/heteroskd_runs/<time>-<shape>.yaml, then score it:
 
-    pixi run python scripts/hetero_live_run.py [proportional|distance|bump]
-    pixi run python scripts/hetero_recovery.py logs/hetero_runs/<file>.yaml
+    pixi run python scripts/heteroskd_live_run.py [proportional|distance|bump]
+    pixi run python scripts/heteroskd_recovery.py logs/heteroskd_runs/<file>.yaml
 """
 import importlib
 import sys
@@ -52,13 +52,13 @@ try:
     for i in range(n_steps):
         X.step()
         row = X.data.iloc[-1]
-        print(f"step {i + 1:2d}: x={row['Z:CUBE_X']:+.3f} y={row['Z:CUBE_Y']:+.3f} f={row['Hetero_f']:.3f} var={row['Hetero_f_var']:.2e} true={row['Hetero_f_true_var']:.2e}", flush=True)
+        print(f"step {i + 1:2d}: x={row['Z:CUBE_X']:+.3f} y={row['Z:CUBE_Y']:+.3f} f={row['Heteroskd_f']:.3f} var={row['Heteroskd_f_var']:.2e} true={row['Heteroskd_f_true_var']:.2e}", flush=True)
 finally:
     env.set_variables(original)
     print("restored:", env.get_variables(devices), flush=True)
 
 data = X.data.drop(columns=[c for c in ("xopt_runtime", "xopt_error") if c in X.data])
-out = Path("logs/hetero_runs")
+out = Path("logs/heteroskd_runs")
 out.mkdir(parents=True, exist_ok=True)
 path = out / f"{time.strftime('%Y-%m-%d-%H%M%S')}-{shape}.yaml"
 path.write_text(yaml.safe_dump({

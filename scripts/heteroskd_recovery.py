@@ -7,7 +7,7 @@ Fits Xopt's heteroskedastic GP (given `<objective>_var`) and its standard GP
 one: at the run's points, and, for a run over two variables, as maps over their
 ranges. Prints a score per model and writes a PNG.
 
-    pixi run python scripts/hetero_recovery.py <run.yaml> [--out report.png]
+    pixi run python scripts/heteroskd_recovery.py <run.yaml> [--out report.png]
 
 Score: median |log10(predicted / true)| (0 = perfect; 1 = off by a factor of 10
 typically), and the correlation of the logs (1 = the model has the right shape,
@@ -30,7 +30,7 @@ import torch
 import yaml
 from xopt.generators.bayesian.models.standard import StandardModelConstructor
 
-OBJECTIVE = "Hetero_f"
+OBJECTIVE = "Heteroskd_f"
 
 
 def fit(data, input_names, input_bounds, objective=OBJECTIVE, heteroskedastic=True):
@@ -62,8 +62,8 @@ def recover(data, input_names, input_bounds, objective=OBJECTIVE):
     X = torch.tensor(data[input_names].to_numpy(dtype="double").copy())
     true = data[f"{objective}_true_var"].to_numpy(dtype="double")
     out = {}
-    for name, hetero in (("heteroskedastic", True), ("standard", False)):
-        model = fit(data, input_names, input_bounds, objective, hetero)
+    for name, heteroskd in (("heteroskedastic", True), ("standard", False)):
+        model = fit(data, input_names, input_bounds, objective, heteroskd)
         predicted = noise_variance(model, X)
         out[name] = (model, predicted, score(predicted, true))
     return out
@@ -87,7 +87,7 @@ def true_map(env_params, names, grid):
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "plugins"))
     env = importlib.import_module("environments.ZZ_PacsysTesting_Heteroskedastic")
     p = {k: f.default for k, f in env.Environment.model_fields.items()} | env_params
-    devices = p["hetero_devices"]
+    devices = p["heteroskd_devices"]
     if not set(devices) <= set(names):
         return None
     out = []
@@ -164,7 +164,7 @@ def report(path, out_png):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("run", help="a Badger run file (archive .yaml)")
-    ap.add_argument("--out", help="PNG to write (default: <run name>.hetero.png here)")
+    ap.add_argument("--out", help="PNG to write (default: <run name>.heteroskd.png here)")
     a = ap.parse_args()
     # not next to the run: keep the archive to run files
-    report(a.run, a.out or f"{Path(a.run).stem}.hetero.png")
+    report(a.run, a.out or f"{Path(a.run).stem}.heteroskd.png")

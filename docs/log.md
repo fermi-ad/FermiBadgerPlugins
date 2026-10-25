@@ -1351,11 +1351,11 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 ## 2026-10-25 — heteroskedastic noise testbed
 
 - New environment `ZZ_PacsysTesting_Heteroskedastic` (subclass of
-  ZZ_PacsysTesting, same test devices): `Hetero_f` with synthetic noise of
+  ZZ_PacsysTesting, same test devices): `Heteroskd_f` with synthetic noise of
   known sigma(x) (shapes proportional / distance / bump), averaged over K
-  draws; `Hetero_f_var` (s²/K) makes Xopt fit its heteroskedastic GP;
-  `Hetero_f_true_var` logged for scoring. Template in development/.
-- `scripts/hetero_recovery.py <run>`: fits heteroskedastic vs standard GP,
+  draws; `Heteroskd_f_var` (s²/K) makes Xopt fit its heteroskedastic GP;
+  `Heteroskd_f_true_var` logged for scoring. Template in development/.
+- `scripts/heteroskd_recovery.py <run>`: fits heteroskedastic vs standard GP,
   scores predicted vs true noise variance (median |log10 ratio|, log corr),
   PNG with true/learned maps for 2-variable runs.
 - Offline results (80 random points, 2 devices): heteroskedastic log corr
@@ -1363,7 +1363,7 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   Found a floor: noise below ~1e-4 of the objective's variance (after
   standardizing; MIN_INFERRED_NOISE_LEVEL) is overstated (x35 in a bump case).
 - Template loads in both GUIs offline (FakeBackend reads, no writes).
-- Live run (VPN + Kerberos, user's go-ahead): `scripts/hetero_live_run.py
+- Live run (VPN + Kerberos, user's go-ahead): `scripts/heteroskd_live_run.py
   distance`, 8 random + 32 EI steps on Z:CUBE_X/Y, seed 7; settings read
   first and restored (0.3777, 8.3995). BO found the minimum (0.5, 0.5) in 2
   steps. Recovery: heteroskedastic GP median |log10 error| 0.038, log corr

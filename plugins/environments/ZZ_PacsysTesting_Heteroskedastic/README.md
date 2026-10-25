@@ -7,7 +7,7 @@ noise is synthetic, with a known size at every setting: a model's estimate can
 be scored against the truth.
 
 Template: `development/ZZ_PacsysTesting_Heteroskedastic.yaml`. After a run,
-score it: `pixi run python scripts/hetero_recovery.py <run file>`.
+score it: `pixi run python scripts/heteroskd_recovery.py <run file>`.
 
 ## What it can tune (variables)
 
@@ -18,23 +18,23 @@ score it: `pixi run python scripts/hetero_recovery.py <run file>`.
 
 Everything `ZZ_PacsysTesting` reads, plus:
 
-- `Hetero_f`: the sum over `hetero_devices` of (reading − 0.5)², minimum 0 at
+- `Heteroskd_f`: the sum over `heteroskd_devices` of (reading − 0.5)², minimum 0 at
   0.5 on each, plus noise of known sigma(x), averaged over `n_samples` draws (as
   averaging over pulses would be on the machine).
-- `Hetero_f_var`: the variance of that average, estimated from the draws
+- `Heteroskd_f_var`: the variance of that average, estimated from the draws
   (sample variance / `n_samples`). **Select it as an observable**: Xopt then
-  models `Hetero_f` with its heteroskedastic GP, which also learns how the noise
+  models `Heteroskd_f` with its heteroskedastic GP, which also learns how the noise
   varies, so it can predict it at untried settings. Without it, Xopt's standard
   GP assumes one noise level everywhere.
-- `Hetero_f_true_var`: the true variance of the average, sigma(x)² /
+- `Heteroskd_f_true_var`: the true variance of the average, sigma(x)² /
   `n_samples`. Logged only, to score the recovery; never give it to a model.
 
 ## Parameters (Machine Interface)
 
 - `settings_role`, `debug`: as in `ZZ_PacsysTesting`.
-- `hetero_devices`: the devices `Hetero_f` and the noise depend on.
+- `heteroskd_devices`: the devices `Heteroskd_f` and the noise depend on.
 - `noise_shape`, with r = distance from `noise_center` (the same value on every
-  hetero device):
+  heteroskd device):
   - `proportional`: sigma = `noise_sigma0` + `noise_scale` × |f|; noise grows
     with the signal (like an intensity reading).
   - `distance`: sigma = `noise_sigma0` + `noise_scale` × r; noisier away from
@@ -53,11 +53,11 @@ Everything `ZZ_PacsysTesting` reads, plus:
   the noisy region is still right. Keep `noise_sigma0` above that to test
   recovery, or below it to test this limit.
 - Far from any measured point the learned noise extrapolates (corners of the
-  range in `scripts/hetero_recovery.py`'s maps).
+  range in `scripts/heteroskd_recovery.py`'s maps).
 
 ## Offline test
 
-`tests/hetero_noise_test.py` (pacsys FakeBackend, no writes): the observables,
+`tests/heteroskd_noise_test.py` (pacsys FakeBackend, no writes): the observables,
 each shape, an unbiased variance estimate, and recovery for each shape
 (heteroskedastic GP beats the standard one; log correlation with the truth >
 0.6, about 0.9 in practice), plus the noise floor above.

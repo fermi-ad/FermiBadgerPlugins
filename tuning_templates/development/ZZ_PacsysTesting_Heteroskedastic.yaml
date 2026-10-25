@@ -1,15 +1,15 @@
 badger_version: 1.6.0
 critical_constraint_names: []
 description: "Heteroskedastic noise testbed on ACNET test/scratch devices: minimize
-  Hetero_f, whose synthetic noise has a known, position-dependent sigma. Its
-  variance estimate (Hetero_f_var) makes Xopt fit a heteroskedastic GP; score the
-  recovery afterwards with scripts/hetero_recovery.py <run file>."
+  Heteroskd_f, whose synthetic noise has a known, position-dependent sigma. Its
+  variance estimate (Heteroskd_f_var) makes Xopt fit a heteroskedastic GP; score the
+  recovery afterwards with scripts/heteroskd_recovery.py <run file>."
 environment:
   name: ZZ_PacsysTesting_Heteroskedastic
   params:
     debug: false
     settings_role: testing
-    hetero_devices:
+    heteroskd_devices:
     - Z:CUBE_X
     - Z:CUBE_Y
     noise_shape: distance
@@ -41,10 +41,10 @@ vocs:
   constants: {}
   constraints: {}
   objectives:
-    Hetero_f: MINIMIZE
+    Heteroskd_f: MINIMIZE
   observables:
-  - Hetero_f_var
-  - Hetero_f_true_var
+  - Heteroskd_f_var
+  - Heteroskd_f_true_var
   variables:
     Z:CUBE_X:
     - -5.0

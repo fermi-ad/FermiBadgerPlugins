@@ -1,4 +1,4 @@
-"""Offline checks of ZZ_PacsysTesting_Heteroskedastic and scripts/hetero_recovery.py,
+"""Offline checks of ZZ_PacsysTesting_Heteroskedastic and scripts/heteroskd_recovery.py,
 no control network needed (pacsys FakeBackend; nothing is written).
 
 Covers: the noisy observables come back without the devices fetched to compute
@@ -7,7 +7,7 @@ synthetic runs, Xopt's heteroskedastic GP recovers the noise better than the
 standard GP for each shape, writing the PNG report.
 
 Run from the repo root:
-    pixi run python tests/hetero_noise_test.py
+    pixi run python tests/heteroskd_noise_test.py
 """
 import importlib
 import sys
@@ -23,7 +23,7 @@ sys.path.insert(0, "scripts")
 
 from pacsys.testing import FakeBackend  # noqa: E402
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
-import hetero_recovery  # noqa: E402
+import heteroskd_recovery  # noqa: E402
 
 env_mod = importlib.import_module("environments.ZZ_PacsysTesting_Heteroskedastic")
 Env, true_sigma = env_mod.Environment, env_mod.true_sigma
@@ -37,12 +37,12 @@ intf = Interface()
 intf._backend_override = fb
 intf._timeout = 1.0
 env = Env(interface=intf, seed=1)
-names = ["Hetero_f", "Hetero_f_var", "Hetero_f_true_var", "CUBE_Z_sq"]
+names = ["Heteroskd_f", "Heteroskd_f_var", "Heteroskd_f_true_var", "CUBE_Z_sq"]
 obs = env.get_observables(names)
 assert sorted(obs) == sorted(names), obs
 f = (2.0 - 0.5) ** 2 + (-1.0 - 0.5) ** 2  # clean value at CUBE_X = 2, CUBE_Y = -1
-assert obs["Hetero_f_true_var"] == (0.1 + 0.1 * f) ** 2 / 10, obs
-assert abs(obs["Hetero_f"] - f) < 6 * np.sqrt(obs["Hetero_f_true_var"]), obs
+assert obs["Heteroskd_f_true_var"] == (0.1 + 0.1 * f) ** 2 / 10, obs
+assert abs(obs["Heteroskd_f"] - f) < 6 * np.sqrt(obs["Heteroskd_f_true_var"]), obs
 assert obs["CUBE_Z_sq"] == 0.25 and not fb.writes
 
 # --- the shapes ------------------------------------------------------------------------
@@ -64,7 +64,7 @@ except ValueError:
 # --- the variance estimate is unbiased -------------------------------------------------
 env = Env(seed=2, noise_shape="distance", noise_scale=0.5)
 v = [env.noisy_values([4.0, 4.0]) for _ in range(4000)]
-ratio = np.mean([e["Hetero_f_var"] for e in v]) / v[0]["Hetero_f_true_var"]
+ratio = np.mean([e["Heteroskd_f_var"] for e in v]) / v[0]["Heteroskd_f_true_var"]
 assert abs(ratio - 1) < 0.05, ratio
 
 
@@ -86,7 +86,7 @@ cases = {
 }
 for shape, params in cases.items():
     data, env = synthetic_run(shape, **params)
-    res = hetero_recovery.recover(data, names, bounds)
+    res = heteroskd_recovery.recover(data, names, bounds)
     (h_err, h_corr), (s_err, _) = res["heteroskedastic"][2], res["standard"][2]
     print(f"{shape:12s} heteroskedastic err {h_err:.2f} corr {h_corr:.2f}   standard err {s_err:.2f}")
     assert h_err < s_err and h_corr > 0.6, (shape, h_err, h_corr, s_err)
@@ -95,9 +95,9 @@ for shape, params in cases.items():
 # objective): a background far quieter than that is overstated, here ~35x, while the
 # noisy region is still right. Documented in the environment's README.
 data, env = synthetic_run("bump", **(cases["bump"] | {"noise_sigma0": 0.05}))
-res = hetero_recovery.recover(data, names, bounds)
-q = np.log10(res["heteroskedastic"][1] / data["Hetero_f_true_var"].to_numpy())
-quiet = data["Hetero_f_true_var"] < data["Hetero_f_true_var"].median()
+res = heteroskd_recovery.recover(data, names, bounds)
+q = np.log10(res["heteroskedastic"][1] / data["Heteroskd_f_true_var"].to_numpy())
+quiet = data["Heteroskd_f_true_var"] < data["Heteroskd_f_true_var"].median()
 assert np.median(q[quiet]) > 1 and abs(np.median(q[~quiet])) < 0.5, q
 
 # --- the report, from a run file as Badger archives it ---------------------------------
@@ -109,7 +109,7 @@ run = {
 }
 tmp = Path(tempfile.mkdtemp())
 (tmp / "run.yaml").write_text(yaml.safe_dump(run))
-hetero_recovery.report(str(tmp / "run.yaml"), str(tmp / "run.png"))
+heteroskd_recovery.report(str(tmp / "run.yaml"), str(tmp / "run.png"))
 assert (tmp / "run.png").stat().st_size > 10_000
 
-print("HETERO NOISE TEST PASSED")
+print("HETEROSKD NOISE TEST PASSED")
