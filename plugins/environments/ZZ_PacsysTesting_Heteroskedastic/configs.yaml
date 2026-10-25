@@ -1,0 +1,7 @@
+name: "ZZ_PacsysTesting_Heteroskedastic"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicPacsysInterface

@@ -36,6 +36,14 @@ without the class's type hints, so each is one line of YAML text.
 
 ## Upstream
 
+- [ ] **Heteroskedastic noise testbed** (2026-10-25, branch bells-and-whistles):
+  `ZZ_PacsysTesting_Heteroskedastic` + `development/ZZ_PacsysTesting_Heteroskedastic.yaml`
+  + `scripts/hetero_recovery.py` + `tests/hetero_noise_test.py` (offline).
+  Next: a live run on the test devices (VPN + Kerberos), then score it; try
+  each shape; then a test of the Xopt PR's `train_Yvar` site through Badger.
+  Found: Xopt's heteroskedastic GP floors noise at ~1e-4 of the objective's
+  variance (README).
+
 - [ ] **Xopt PR: copy DataFrame selections before `torch.tensor`** (our
   `xopt-3.2.2-negative-strides.patch`, plus a sixth site, `train_Yvar`).
   Branch `fix-negative-strides` on github.com/jasonstjohn/Xopt (worktree

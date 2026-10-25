@@ -1347,3 +1347,19 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - Side finding: the editor composes VOCS as kqf, kqd (not template order),
   which is how the live data came to hold columns in non-VOCS order (the
   negative-strides crash).
+
+## 2026-10-25 — heteroskedastic noise testbed
+
+- New environment `ZZ_PacsysTesting_Heteroskedastic` (subclass of
+  ZZ_PacsysTesting, same test devices): `Hetero_f` with synthetic noise of
+  known sigma(x) (shapes proportional / distance / bump), averaged over K
+  draws; `Hetero_f_var` (s²/K) makes Xopt fit its heteroskedastic GP;
+  `Hetero_f_true_var` logged for scoring. Template in development/.
+- `scripts/hetero_recovery.py <run>`: fits heteroskedastic vs standard GP,
+  scores predicted vs true noise variance (median |log10 ratio|, log corr),
+  PNG with true/learned maps for 2-variable runs.
+- Offline results (80 random points, 2 devices): heteroskedastic log corr
+  0.87-0.94 for all shapes, scale within ~x1.35; standard GP has no shape.
+  Found a floor: noise below ~1e-4 of the objective's variance (after
+  standardizing; MIN_INFERRED_NOISE_LEVEL) is overstated (x35 in a bump case).
+- Template loads in both GUIs offline (FakeBackend reads, no writes).
