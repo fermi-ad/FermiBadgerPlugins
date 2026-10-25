@@ -9,9 +9,15 @@ ranges. Prints a score per model and writes a PNG.
 
     pixi run python scripts/hetero_recovery.py <run.yaml> [--out report.png]
 
-Score: median |log10(predicted / true)| at the run's points (0 = perfect; 1 =
-off by a factor of 10 typically), and the correlation of the logs (1 = the
-model has the right shape, whatever the scale; undefined for a constant).
+Score: median |log10(predicted / true)| (0 = perfect; 1 = off by a factor of 10
+typically), and the correlation of the logs (1 = the model has the right shape,
+whatever the scale; undefined for a constant). Given at the run's points, which
+BO crowds near its optimum, and, for a two-variable run, over a uniform grid of
+the whole range (which also counts extrapolation far from any point).
+
+The plot marks the model's noise floor: Xopt's heteroskedastic GP does not
+infer noise below MIN_INFERRED_NOISE_LEVEL (1e-4) after standardizing the
+objective, i.e. 1e-4 x the objective's variance in its own units.
 """
 import argparse
 import importlib
@@ -102,6 +108,8 @@ def report(path, out_png):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
+    from matplotlib.ticker import NullFormatter
+
     data, names, bounds, env_params = load_run(path)
     data = data.dropna(subset=[OBJECTIVE, f"{OBJECTIVE}_var", f"{OBJECTIVE}_true_var"])
     results = recover(data, names, bounds)
@@ -125,6 +133,10 @@ def report(path, out_png):
         ax.loglog(true, predicted, "o", ms=4, label=f"{name} ({err:.2f})")
     lo, hi = true.min() / 2, true.max() * 2
     ax.loglog([lo, hi], [lo, hi], "k--", lw=1, label="perfect")
+    floor = 1e-4 * data[OBJECTIVE].var()
+    ax.axhline(floor, color="gray", ls=":", lw=1, label=f"model floor ({floor:.2g})")
+    for axis in (ax.xaxis, ax.yaxis):
+        axis.set_minor_formatter(NullFormatter())
     ax.set_xlabel("true noise variance of the mean")
     ax.set_ylabel("predicted noise variance")
     ax.set_title("At the run's points (median |log10 error|)")
@@ -132,6 +144,9 @@ def report(path, out_png):
 
     if two_d:
         learned = noise_variance(results["heteroskedastic"][0], torch.tensor(grid))
+        for name, (model, _, _) in results.items():
+            err, corr = score(noise_variance(model, torch.tensor(grid)), truth)
+            print(f"  {name:16s} over the grid:          {err:.3f}   log corr = {corr:.3f}")
         vmin = np.log10(min(learned.min(), truth.min()))
         vmax = np.log10(max(learned.max(), truth.max()))
         for ax, z, title in ((axes[1], truth, "true"), (axes[2], learned, "heteroskedastic GP")):

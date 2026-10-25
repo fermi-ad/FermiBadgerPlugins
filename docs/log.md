@@ -1370,3 +1370,16 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   0.985; standard GP 0.182 (one noise level, set by the quiet cluster at the
   optimum). The learned map matches near the data and extrapolates into a
   valley along CUBE_Y where there are no points.
+- Live runs of the other shapes (devices restored each time). Scores, at the
+  run's points / over a uniform grid of the range (added to the script, since
+  BO crowds its points at the optimum and a median there mostly measures that
+  cluster), heteroskedastic vs standard GP, median |log10 error|:
+  distance 0.04 / 0.13 vs 0.18 / 1.02; proportional 0.22 / 0.13 vs 0.07 /
+  2.47; bump 0.03 / 0.21 vs 0.20 / 0.28. Log correlation 0.96-1.00 at points,
+  0.83-0.97 over the grid; the standard GP has none.
+- The plots now mark the model floor (1e-4 x var of the objective). It does
+  NOT explain the heteroskedastic GP's ~x2 overstatement of quiet regions
+  (proportional cluster, bump surroundings): those sit ~x2 above it. Likely
+  the log-noise GP smoothing across a steep rise or a sparsely sampled
+  background (untested). The standard GP's single level sits on the floor in
+  the proportional run.
