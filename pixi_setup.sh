@@ -120,6 +120,8 @@ print(h.hexdigest())" "$REPO/patches")"
         # must come after revert-settings: diffed against that tree
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-param-validation.patch"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-param-table-editor.patch"
+        # must come last of the Badger patches: diffed against that tree
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-turbo-state-reset.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
         # must come after turbo-serialization: diffed against that tree

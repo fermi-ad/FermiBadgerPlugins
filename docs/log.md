@@ -1280,3 +1280,13 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - Own slip: a `patch -R -o` meant to write a scratch copy reverted the fix in
   site-packages; recovered by removing the patch stamp and re-running setup
   (full reset from pristine).
+
+## 2026-10-25 — stale TuRBO centre at Go
+
+- User report: easy to hit `FeasibilityError: no points ... within the TuRBO
+  trust region` on the first BO step of a plain run. Its controller carried
+  the shown run's centre and length: upstream `_compose_routine` blanks
+  center/best only for name "optimize", while a run's saved controller is
+  "OptimizeTurboController". Fix: `badger-1.6.0-turbo-state-reset.patch` (both
+  GUIs, both names; same for safety). `tests/turbo_state_reset_gui_test.py`.
+  Found and first fixed on bells-and-whistles (73e0967).
