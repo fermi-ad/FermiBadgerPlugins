@@ -1363,3 +1363,10 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   Found a floor: noise below ~1e-4 of the objective's variance (after
   standardizing; MIN_INFERRED_NOISE_LEVEL) is overstated (x35 in a bump case).
 - Template loads in both GUIs offline (FakeBackend reads, no writes).
+- Live run (VPN + Kerberos, user's go-ahead): `scripts/hetero_live_run.py
+  distance`, 8 random + 32 EI steps on Z:CUBE_X/Y, seed 7; settings read
+  first and restored (0.3777, 8.3995). BO found the minimum (0.5, 0.5) in 2
+  steps. Recovery: heteroskedastic GP median |log10 error| 0.038, log corr
+  0.985; standard GP 0.182 (one noise level, set by the quiet cluster at the
+  optimum). The learned map matches near the data and extrapolates into a
+  valley along CUBE_Y where there are no points.

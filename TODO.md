@@ -39,8 +39,11 @@ without the class's type hints, so each is one line of YAML text.
 - [ ] **Heteroskedastic noise testbed** (2026-10-25, branch bells-and-whistles):
   `ZZ_PacsysTesting_Heteroskedastic` + `development/ZZ_PacsysTesting_Heteroskedastic.yaml`
   + `scripts/hetero_recovery.py` + `tests/hetero_noise_test.py` (offline).
-  Next: a live run on the test devices (VPN + Kerberos), then score it; try
-  each shape; then a test of the Xopt PR's `train_Yvar` site through Badger.
+  Live run 2026-10-25 (`scripts/hetero_live_run.py distance`, 40 points,
+  devices restored): heteroskedastic GP median |log10 error| 0.038, log corr
+  0.985; standard GP 0.182, -0.53. Next: the other shapes live; a run from
+  the GUI (archive file) through the same script; a test of the Xopt PR's
+  `train_Yvar` site (several objectives with `_var`).
   Found: Xopt's heteroskedastic GP floors noise at ~1e-4 of the objective's
   variance (README).
 
