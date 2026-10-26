@@ -1394,3 +1394,15 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   standard GP sits on it, the heteroskedastic GP's cluster at ~0.19. Wider
   ranges cost noise resolution near the optimum, and seeded far points keep
   the floor high in a later narrow Continue.
+
+## 2026-10-26 — production host: two tests read the Mac's paths
+
+- On gmpsai2 (as lcape) after `git pull && pixi run setup -- --yes`, all
+  tests passed except VA_gui_param_editor_test and VA_template_integration_test:
+  `BadgerConfigError: The badger plugin root /Users/stjohn/.../plugins does not
+  exist`. They initialized Badger from the tracked `config.yaml`, whose five
+  path values were this Mac's; every other test uses `config.local.yaml`
+  (written per clone by setup). Fix: both tests use `config.local.yaml`;
+  `config.yaml`'s path values are now `SET-BY-SETUP` placeholders (setup
+  overwrites them; checked it writes an identical config.local.yaml);
+  HANDOFF.md and the README tree no longer point at `config.yaml` to launch.

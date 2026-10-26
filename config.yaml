@@ -9,7 +9,7 @@ BADGER_ARCHIVE_ROOT:
     historical optimization runs
   display_name: archive root
   is_path: true
-  value: /Users/stjohn/Development/BadgerArchive
+  value: SET-BY-SETUP  # pixi run setup writes this clone's path into config.local.yaml
 BADGER_DATA_DUMP_PERIOD:
   description: Minimum time interval between data dumps, unit is second
   display_name: data dump period
@@ -25,12 +25,12 @@ BADGER_LOGBOOK_ROOT:
     (GUI mode)
   display_name: logbook root
   is_path: true
-  value: /Users/stjohn/Development/BadgerLogs
+  value: SET-BY-SETUP  # pixi run setup writes this clone's path into config.local.yaml
 BADGER_LOG_DIRECTORY:
   description: Directory where daily log files will be stored
   display_name: log directory
   is_path: true
-  value: /Users/stjohn/Development/BayesOptimization_Xopt/FermiBadgerPlugins/logs
+  value: SET-BY-SETUP  # pixi run setup writes this clone's path into config.local.yaml
 BADGER_LOG_LEVEL:
   description: Logging level for the Badger logger
   display_name: logging level
@@ -41,7 +41,7 @@ BADGER_PLUGIN_ROOT:
     plugins
   display_name: plugin root
   is_path: true
-  value: /Users/stjohn/Development/BayesOptimization_Xopt/FermiBadgerPlugins/plugins
+  value: SET-BY-SETUP  # pixi run setup writes this clone's path into config.local.yaml
 BADGER_PYTORCH_TENSOR_SHARING_STRATEGY:
   description: Setting for which strategy pytorch will use when passing tensors to
     subprocesses. Valid options are 'file_system' (default) or 'file_descriptor'
@@ -53,7 +53,7 @@ BADGER_TEMPLATE_ROOT:
     routine templates
   display_name: template root
   is_path: true
-  value: /Users/stjohn/Development/BayesOptimization_Xopt/FermiBadgerPlugins/tuning_templates
+  value: SET-BY-SETUP  # pixi run setup writes this clone's path into config.local.yaml
 BADGER_THEME:
   description: Theme for the Badger GUI
   display_name: theme

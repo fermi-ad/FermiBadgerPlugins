@@ -52,8 +52,8 @@ For more on patches, see `patches/README.md`.
 **Impact**: If the GUI (system config) and your subprocess (project config) have different `BADGER_ARCHIVE_ROOT` paths, files created by one process won't be found by the other.
 
 **Solution**:
-- Always use `badger -g --config_filepath config.yaml` from the repo root
-- Keep system config (`~/Library/Application Support/Badger/config.yaml`) synchronized with repo `config.yaml`
+- Always use `badger -g --config_filepath config.local.yaml` from the repo root (written by `pixi run setup` with this clone's paths; the tracked `config.yaml` is only its template)
+- `pixi run setup` also syncs the per-user config (`~/Library/Application Support/Badger/config.yaml`, `~/.config/config.yaml` on Linux)
 
 ### 2. Plugin Instantiation Order Trick
 
@@ -188,7 +188,7 @@ See `patches/README.md` for detailed documentation of each fix.
 
 | Command | Purpose |
 |---------|---------|
-| `badger -g --config_filepath config.yaml` | Launch GUI with repo config |
+| `badger -g --config_filepath config.local.yaml` | Launch GUI with this clone's config |
 | `python -c "import importlib; m=importlib.import_module('plugins.environments.99_Sim_VirtualAccelerator_MADXSuite'); print(len(m.Environment.variables), len(m.Environment.observables))"` | Quick sanity check (digit-leading module name needs `importlib`, not `from ... import`) |
 | `grep -n "TODO\|FIXME\|XXX" plugins/` | Find pending work |
 
@@ -380,11 +380,11 @@ in its `configs.yaml`) have their own gotchas, distinct from the
 ### CLI gotcha: template path is relative to `BADGER_TEMPLATE_ROOT`
 
 ```bash
-badger -mini -cf config.yaml -t 01_Linac_RIL_tuning_Acsys_trims_and_sol_LEBT_MEBTquads.yaml
+badger -mini -cf config.local.yaml -t 01_Linac_RIL_tuning_Acsys_trims_and_sol_LEBT_MEBTquads.yaml
 ```
 
 `-t` takes a filename **relative to `BADGER_TEMPLATE_ROOT`**
-(the `tuning_templates/` dir per `config.yaml`), so `-t simulation/X.yaml`
+(the `tuning_templates/` dir per `config.local.yaml`), so `-t simulation/X.yaml`
 or `-t development/Y.yaml` — **not** a path into the repo. Passing a full/relative repo path here fails to find the template.
 
 ### Auto-ranging: `relative_to_current` / `vrange_limit_options`

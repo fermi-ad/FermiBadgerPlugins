@@ -14,7 +14,7 @@ os.environ['QT_QPA_PLATFORM'] = 'offscreen'
 REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 from badger.settings import init_settings
-init_settings(os.path.join(REPO_ROOT, 'config.yaml'))
+init_settings(os.path.join(REPO_ROOT, 'config.local.yaml'))  # this clone's paths, from setup
 
 from PyQt5.QtWidgets import QApplication
 import badger.gui.mini  # noqa: F401,E402  sets Badger's Qt high-DPI options, which must come before the QApplication
