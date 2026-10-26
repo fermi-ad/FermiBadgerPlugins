@@ -299,7 +299,7 @@ See [`patches/README.md`](patches/README.md) for patch instructions.
 FermiBadgerPlugins/
 ├── CLAUDE.md                   # Project context and session history
 ├── bootstrap.sh                # One-command pixi install/patch/config script
-├── config.yaml                 # Badger configuration
+├── config.yaml                 # template for config.local.yaml (written by setup, untracked)
 ├── docs/                       # Development documentation
 │   ├── log.md
 │   ├── progress.md

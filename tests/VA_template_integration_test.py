@@ -1,7 +1,7 @@
 """Template integration test: load plugins and templates like the Badger GUI.
 
-Initializes Badger settings from the repo config.yaml (the headless
-equivalent of `badger --config_filepath config.yaml`), then loads the
+Initializes Badger settings from the repo config.local.yaml (the headless
+equivalent of `badger --config_filepath config.local.yaml`), then loads the
 environment through badger.factory.get_env, which exercises the
 plugin-discovery path and the in-place class-attribute population.
 Also tests template loading and options configuration.
@@ -17,7 +17,7 @@ REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Must run BEFORE importing badger.factory: the settings singleton is
 # first-call-wins, and factory.py reads BADGER_PLUGIN_ROOT at import time.
 from badger.settings import init_settings
-init_settings(os.path.join(REPO_ROOT, 'config.yaml'))
+init_settings(os.path.join(REPO_ROOT, 'config.local.yaml'))  # this clone's paths, from setup
 
 from badger.factory import get_env, get_intf, list_env
 
