@@ -1,6 +1,6 @@
 diff -ruN a/badger/gui/components/outside_limits.py b/badger/gui/components/outside_limits.py
 --- a/badger/gui/components/outside_limits.py	1969-12-31 18:00:00
-+++ b/badger/gui/components/outside_limits.py	2026-10-26 20:33:30
++++ b/badger/gui/components/outside_limits.py	2026-10-26 21:00:28
 @@ -0,0 +1,74 @@
 +"""Variables whose current value lies outside their hard limits, e.g. a supply
 +left at standby during a shutdown (the RIL source solenoids at 50 A, limits
@@ -77,8 +77,8 @@ diff -ruN a/badger/gui/components/outside_limits.py b/badger/gui/components/outs
 +        return True
 +    return not untick_outside_limits(page, values, at_go=True)
 diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
---- a/badger/gui/components/routine_page.py	2026-10-26 20:26:38
-+++ b/badger/gui/components/routine_page.py	2026-10-26 20:27:15
+--- a/badger/gui/components/routine_page.py	2026-10-26 21:00:28
++++ b/badger/gui/components/routine_page.py	2026-10-26 21:00:28
 @@ -67,6 +67,7 @@
      update_init_data_table,
  )
@@ -100,8 +100,8 @@ diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routin
                  limit_option = self.ratio_var_ranges[name]
              except KeyError:
 diff -ruN a/badger/gui/mini/__init__.py b/badger/gui/mini/__init__.py
---- a/badger/gui/mini/__init__.py	2026-10-26 20:26:38
-+++ b/badger/gui/mini/__init__.py	2026-10-26 20:27:15
+--- a/badger/gui/mini/__init__.py	2026-10-26 21:00:28
++++ b/badger/gui/mini/__init__.py	2026-10-26 21:00:28
 @@ -104,18 +104,23 @@
      # Show the main window
      window = BadgerMiniWindow()
@@ -133,17 +133,17 @@ diff -ruN a/badger/gui/mini/__init__.py b/badger/gui/mini/__init__.py
      # Enable Ctrl + C quit
      signal.signal(signal.SIGINT, on_exit)
 diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
---- a/badger/gui/mini/pages/home_page.py	2026-10-26 20:26:38
-+++ b/badger/gui/mini/pages/home_page.py	2026-10-26 20:27:15
+--- a/badger/gui/mini/pages/home_page.py	2026-10-26 21:00:28
++++ b/badger/gui/mini/pages/home_page.py	2026-10-26 21:00:42
 @@ -43,6 +43,7 @@
  from badger.gui.components.action_bar import BadgerActionBar
  from badger.gui.components.settings_guard import SettingsGuard
  from badger.gui.components.pydantic_editor import parameter_problems
 +from badger.gui.components.outside_limits import check_at_go
- from badger.utils import get_header
- from badger.settings import init_settings
- 
-@@ -476,6 +477,9 @@
+ from badger.gui.components.continue_run import (
+     ContinueRun,
+     confirm_seed,
+@@ -505,6 +506,9 @@
                  "These parameters (marked in red) cannot be used yet:\n\n"
                  + "\n".join(problems),
              )
@@ -154,8 +154,8 @@ diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page
              return
          if not self.snapshot_at_go():
 diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
---- a/badger/gui/mini/pages/routine_page.py	2026-10-26 20:26:38
-+++ b/badger/gui/mini/pages/routine_page.py	2026-10-26 20:27:15
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-26 21:00:28
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-26 21:00:28
 @@ -51,6 +51,7 @@
      update_init_data_table,
  )
@@ -179,17 +179,17 @@ diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routin
                  limit_option = self.ratio_var_ranges[name]
              except KeyError:
 diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
---- a/badger/gui/pages/home_page.py	2026-10-26 20:26:38
-+++ b/badger/gui/pages/home_page.py	2026-10-26 20:27:15
+--- a/badger/gui/pages/home_page.py	2026-10-26 21:00:28
++++ b/badger/gui/pages/home_page.py	2026-10-26 21:00:28
 @@ -41,6 +41,7 @@
  from badger.gui.components.action_bar import BadgerActionBar
  from badger.gui.components.settings_guard import SettingsGuard
  from badger.gui.components.pydantic_editor import parameter_problems
 +from badger.gui.components.outside_limits import check_at_go
  from badger.gui.components.data_panel import filter_metadata
- from badger.gui.components.data_table import (
-     add_row,
-@@ -549,6 +550,9 @@
+ from badger.gui.components.continue_run import (
+     ContinueRun,
+@@ -580,6 +581,9 @@
                  "These parameters (marked in red) cannot be used yet:\n\n"
                  + "\n".join(problems),
              )
