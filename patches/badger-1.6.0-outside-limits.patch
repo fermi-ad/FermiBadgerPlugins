@@ -1,0 +1,201 @@
+diff -ruN a/badger/gui/components/outside_limits.py b/badger/gui/components/outside_limits.py
+--- a/badger/gui/components/outside_limits.py	1969-12-31 18:00:00
++++ b/badger/gui/components/outside_limits.py	2026-10-26 20:33:30
+@@ -0,0 +1,74 @@
++"""Variables whose current value lies outside their hard limits, e.g. a supply
++left at standby during a shutdown (the RIL source solenoids at 50 A, limits
++300-500 A, 2026-10-26).
++
++Such a variable cannot be tuned from where it is. A window of "current value
++± delta" clipped to the limits has no width, which Xopt rejects (it used to
++crash the template load); any other window would make BO's first step a jump
++from far outside the limits. Both routine pages therefore untick these
++variables, say which and why, and leave them out of the run until the device
++is back within its limits.
++"""
++
++import logging
++
++from PyQt5.QtWidgets import QMessageBox
++
++logger = logging.getLogger(__name__)
++
++
++def hard_limits(page):
++    """{variable: [lo, hi]}: the environment's limits, or the routine's override."""
++    limits = {}
++    for var in page.env_box.var_table.variables:
++        name = next(iter(var))
++        limits[name] = (page.var_hard_limit or {}).get(name, var[name])
++    return limits
++
++
++def is_outside(value, limits):
++    return not limits[0] <= value <= limits[1]
++
++
++def untick_outside_limits(page, values, at_go=False):
++    """Untick the checked variables whose value in `values` is outside its hard
++    limits, and say so; returns {name: (value, limits)} of those unticked."""
++    table = page.env_box.var_table
++    limits = hard_limits(page)
++    bad = {
++        n: (v, limits[n])
++        for n, v in values.items()
++        if n in limits and table.is_checked(n) and is_outside(v, limits[n])
++    }
++    if not bad:
++        return bad
++    table.set_selected([n for n, on in table.selected.items() if on and n not in bad])
++    lines = "\n".join(
++        f"  {n}: reads {v:g}, limits {lo:g} to {hi:g}" for n, (v, (lo, hi)) in bad.items()
++    )
++    QMessageBox.warning(
++        page,
++        "Variables outside their limits",
++        "These variables read outside their limits, so they cannot be tuned from"
++        f" where they are, and have been unticked:\n\n{lines}\n\n"
++        "Is the machine in its tuning state? Tick them again once they are back"
++        " within their limits."
++        + ("\n\nGo was cancelled: check the variables and press Go again." if at_go else ""),
++    )
++    return bad
++
++
++def check_at_go(page):
++    """Before a run: read the checked variables now; False (Go cancelled) if any
++    is outside its limits, after unticking it."""
++    names = [n for n, on in page.env_box.var_table.selected.items() if on]
++    if not names:
++        return True
++    try:
++        values = page.create_env().get_variables(names)
++    except Exception:
++        # Can't read: not this check's call. The settings snapshot at Go asks
++        # about it, and the run's own reads report it.
++        logger.warning("Limits check at Go skipped: could not read the variables", exc_info=True)
++        return True
++    return not untick_outside_limits(page, values, at_go=True)
+diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
+--- a/badger/gui/components/routine_page.py	2026-10-26 20:26:38
++++ b/badger/gui/components/routine_page.py	2026-10-26 20:27:15
+@@ -67,6 +67,7 @@
+     update_init_data_table,
+ )
+ from badger.gui.components.env_cbox import BadgerEnvBox
++from badger.gui.components.outside_limits import is_outside, untick_outside_limits
+ from badger.gui.components.filter_cbox import BadgerFilterBox
+ from badger.gui.windows.docs_window import BadgerDocsWindow
+ from badger.gui.windows.edit_script_dialog import BadgerEditScriptDialog
+@@ -1621,8 +1622,11 @@
+ 
+         env = self.create_env()
+         var_curr = env.get_variables(vname_selected)
++        untick_outside_limits(self, var_curr)
+ 
+         for name in vname_selected:
++            if is_outside(var_curr[name], vrange[name]):
++                continue  # no window fits: shown at its limits, unticked above if ticked
+             try:
+                 limit_option = self.ratio_var_ranges[name]
+             except KeyError:
+diff -ruN a/badger/gui/mini/__init__.py b/badger/gui/mini/__init__.py
+--- a/badger/gui/mini/__init__.py	2026-10-26 20:26:38
++++ b/badger/gui/mini/__init__.py	2026-10-26 20:27:15
+@@ -104,18 +104,23 @@
+     # Show the main window
+     window = BadgerMiniWindow()
+ 
+-    if template_filename:
+-        # Template path
++    def load_template_at_launch():
++        # Once the event loop runs (as -g does): a failure then shows the usual
++        # error dialog with the window up. Raised before app.exec(), it left the
++        # process hanging on Badger's pre-started run worker instead.
+         try:
+             template_dir = config_singleton.read_value("BADGER_TEMPLATE_ROOT")
+-            template_path = os.path.join(template_dir, template_filename)
+-            window.home_page.routine_editor.load_template_yaml(
+-                template_path=template_path
+-            )
+         except KeyError:
+             logger.warning(
+                 f"Template directory not configured. File {template_filename} was not loaded"
+             )
++            return
++        window.home_page.routine_editor.load_template_yaml(
++            template_path=os.path.join(template_dir, template_filename)
++        )
++
++    if template_filename:
++        QtCore.QTimer.singleShot(0, load_template_at_launch)
+ 
+     # Enable Ctrl + C quit
+     signal.signal(signal.SIGINT, on_exit)
+diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
+--- a/badger/gui/mini/pages/home_page.py	2026-10-26 20:26:38
++++ b/badger/gui/mini/pages/home_page.py	2026-10-26 20:27:15
+@@ -43,6 +43,7 @@
+ from badger.gui.components.action_bar import BadgerActionBar
+ from badger.gui.components.settings_guard import SettingsGuard
+ from badger.gui.components.pydantic_editor import parameter_problems
++from badger.gui.components.outside_limits import check_at_go
+ from badger.utils import get_header
+ from badger.settings import init_settings
+ 
+@@ -476,6 +477,9 @@
+                 "These parameters (marked in red) cannot be used yet:\n\n"
+                 + "\n".join(problems),
+             )
++            self.run_action_bar.routine_finished()  # reset the action bar
++            return
++        if not check_at_go(self.routine_editor):  # a variable outside its limits
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
+         if not self.snapshot_at_go():
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-26 20:26:38
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-26 20:27:15
+@@ -51,6 +51,7 @@
+     update_init_data_table,
+ )
+ from badger.gui.mini.components.env_cbox import BadgerEnvBox
++from badger.gui.components.outside_limits import is_outside, untick_outside_limits
+ from badger.gui.windows.docs_window import BadgerDocsWindow
+ from badger.gui.windows.lim_vrange_dialog import BadgerLimitVariableRangeDialog
+ from badger.gui.windows.ind_lim_vrange_dialog import (
+@@ -1674,8 +1675,13 @@
+         env = self.create_env()
+         var_curr = env.get_variables(vname_selected)
+         clipped = {}
++        untick_outside_limits(self, var_curr)
+ 
+         for name in vname_selected:
++            if is_outside(var_curr[name], vrange[name]):
++                # no window fits: shown at its limits, and unticked above if it was ticked
++                clipped[name] = False
++                continue
+             try:
+                 limit_option = self.ratio_var_ranges[name]
+             except KeyError:
+diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
+--- a/badger/gui/pages/home_page.py	2026-10-26 20:26:38
++++ b/badger/gui/pages/home_page.py	2026-10-26 20:27:15
+@@ -41,6 +41,7 @@
+ from badger.gui.components.action_bar import BadgerActionBar
+ from badger.gui.components.settings_guard import SettingsGuard
+ from badger.gui.components.pydantic_editor import parameter_problems
++from badger.gui.components.outside_limits import check_at_go
+ from badger.gui.components.data_panel import filter_metadata
+ from badger.gui.components.data_table import (
+     add_row,
+@@ -549,6 +550,9 @@
+                 "These parameters (marked in red) cannot be used yet:\n\n"
+                 + "\n".join(problems),
+             )
++            self.run_action_bar.routine_finished()  # reset the action bar
++            return
++        if not check_at_go(self.routine_editor):  # a variable outside its limits
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
+         if not self.snapshot_at_go():
