@@ -5,6 +5,7 @@ wherever the optimizer put it.
     pixi run safe-badger g [badger args ...]      the full GUI, same protection
     pixi run safe-badger diff <snapshot.json>      what differs from the snapshot now
     pixi run safe-badger restore <snapshot.json>   write the snapshot back
+    pixi run safe-badger pids                      which process is which (for kill tests)
 
 `mini` / `g` start `badger -mini|-g -cf config.local.yaml <args>` as a child in
 its own process session, with FERMIBADGER_SNAPSHOT naming a new file under
@@ -23,6 +24,7 @@ description is docs/safe-badger.md.
 """
 import logging
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -167,12 +169,77 @@ def supervise(cmd, path, restore_fn=snapshot.restore) -> int:
     return _exit_code(child)
 
 
+_BADGER_GUI = re.compile(r"bin/badger (-mini|-g)\b")
+
+
+def _seconds(etime: str) -> int:
+    """ps etime, [[dd-]hh:]mm:ss, in seconds."""
+    days, _, rest = etime.rpartition("-")
+    parts = [int(x) for x in rest.split(":")]
+    while len(parts) < 3:
+        parts.insert(0, 0)
+    h, m, sec = parts
+    return (int(days or 0) * 24 + h) * 3600 + m * 60 + sec
+
+
+def find_sessions(ps_lines):
+    """From `ps -eo pid=,ppid=,etime=,command=` lines: one dict per Badger GUI,
+    {gui, launcher (or None), workers (oldest first), command}. A GUI is a
+    `badger -mini|-g` process whose parent is not one: on Linux the run workers
+    are forks with the very same command line, on macOS `multiprocessing` ones."""
+    rows = {}
+    for line in ps_lines:
+        f = line.split(None, 3)
+        if len(f) == 4 and f[0].isdigit():
+            rows[int(f[0])] = (int(f[1]), _seconds(f[2]), f[3])
+    badgers = {p for p, (_, _, cmd) in rows.items() if _BADGER_GUI.search(cmd)}
+    sessions = []
+    for pid in sorted(badgers):
+        ppid, _, cmd = rows[pid]
+        if ppid in badgers:
+            continue  # a forked worker
+        workers = sorted((p for p, (pp, _, _) in rows.items() if pp == pid),
+                         key=lambda p: -rows[p][1])
+        parent = rows.get(ppid, (0, 0, ""))[2]
+        sessions.append({"gui": pid, "command": cmd, "workers": workers,
+                         "launcher": ppid if "safe_badger.py" in parent else None})
+    return sessions
+
+
+def show_pids() -> int:
+    ps = subprocess.run(["ps", "-eo", "pid=,ppid=,etime=,command="],
+                        capture_output=True, text=True).stdout.splitlines()
+    sessions = find_sessions(ps)
+    if not sessions:
+        print("No Badger is running.")
+        return 0
+    for s in sessions:
+        cmd = s["command"]
+        print(f"Badger GUI   {s['gui']}    {cmd[cmd.find('badger '):][:100]}")
+        if s["launcher"]:
+            print(f"  launcher   {s['launcher']}    safe-badger, watching it")
+        else:
+            print("  launcher   NONE: no safe-badger watching this Badger (no automatic restore)")
+        if s["workers"]:
+            print(f"  workers    {' '.join(map(str, s['workers']))}    oldest first: during a run the"
+                  " oldest runs it, the newest is the spare (macOS also lists a helper)")
+        print("  tests:")
+        print(f"    kill -9 {s['gui']}      the GUI dies: safe-badger ends its group and restores")
+        if s["launcher"]:
+            print(f"    kill -HUP {s['launcher']}   the launcher is told to stop: it ends Badger and restores")
+            print(f"    (never kill -9 {s['launcher']}: a SIGKILLed launcher can do nothing; Badger runs on)")
+        print()
+    return 0
+
+
 def _exit_code(child) -> int:
     rc = child.returncode
     return rc if rc >= 0 else 128 - rc
 
 
 def main(argv) -> int:
+    if argv == ['pids']:
+        return show_pids()
     if not argv or argv[0] not in (*GUIS, 'restore', 'diff') \
             or (argv[0] not in GUIS and len(argv) != 2):
         print(__doc__)

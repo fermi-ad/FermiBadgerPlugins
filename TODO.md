@@ -70,6 +70,13 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 - [ ] **Hand over the new operator launch line** for the external shortcut,
   once machine-tested: `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml`
   (replaces `pixi run badger -mini -cf config.local.yaml -t ...`).
+- Machine-test results on gmpsai2 so far: full offline suite passes there
+  (2026-10-26, after the config.local.yaml test fix); **Ctrl-C passes through
+  pixi** and the launcher restores (log, 2026-10-26 12:02); Close → Revert
+  works (2026-10-27 10:28). Still to do with `pixi run safe-badger pids` to
+  pick the PIDs: kill -9 the GUI idle and mid-run (expect the workers gone and
+  a restore), SIGHUP, kdestroy. Never `pkill -f badger`: it also hits the
+  launcher, and a SIGKILLed launcher can't restore.
 - [ ] **Machine tests — next, planned for 2026-10-22 on the MCR host** (steps in
   `docs/progress.md`), with `development/ZZ_PacsysTesting.yaml` (role `testing`),
   both `safe-badger mini` and `safe-badger g`, including Go in `-g` with an

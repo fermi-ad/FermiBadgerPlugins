@@ -85,6 +85,21 @@ A new session also means that terminal signals (Ctrl-C, closing the window)
 reach only the launcher, not Badger. The launcher decides what happens: it
 always stops Badger first, then restores.
 
+**Which process is which:** `pixi run safe-badger pids` lists each running
+Badger GUI with its launcher (or "NONE") and its run workers, oldest first, and
+the `kill` line for each test. On Linux the workers are forks of the GUI and show
+the very same `badger -mini ...` command line, so `ps` alone can't tell them
+apart. Badger starts a spare worker ahead of each run and hands it the run at
+Go, so during a run there are two: the oldest runs it, the newest is the spare.
+
+**Workers stop by themselves when their GUI dies**
+(`badger-1.6.0-worker-stops-without-gui.patch`): a watchdog thread in each
+worker checks every second that its GUI is still there, and the worker also
+checks right before setting devices; if the GUI is gone it exits at once.
+Without it a worker outlived its GUI: the spare waited forever, and a running
+one carried on or blocked forever sending results to the dead GUI. This covers
+plain `badger -mini` too, and a GUI that dies while its launcher is gone.
+
 ## The snapshot file
 
 One file per Badger session, at the path in `FERMIBADGER_SNAPSHOT`. Without
@@ -272,10 +287,10 @@ work on `*.stale` files too.
 | Ctrl-C in the launcher's terminal | launcher stops Badger, then restores (the question is never shown) |
 | Terminal window closed (SIGHUP) | same as Ctrl-C; output goes only to `logs/safe-badger.log` |
 | `kill` (SIGTERM) on the launcher | same as Ctrl-C |
-| `kill -9` on the launcher, host down | nothing at the time; the next `safe-badger mini` renames the snapshot `*.stale` and logs the restore command |
+| `kill -9` on the launcher, host down | nothing at the time: Badger and its run carry on unwatched (seen on the production host, 2026-10-27); the next `safe-badger mini` renames the snapshot `*.stale` and logs the restore command. Use `kill -HUP` on the launcher instead (`safe-badger pids` shows which PID) |
 | Any of the three above, more than 2 h after the first template load | stops Badger, does **not** restore; snapshot renamed `*.expired`, restore command logged |
 | No Kerberos ticket | warning at start; a restore fails and logs the manual command |
-| Plain `badger -mini` / `badger -g` (no launcher) | Revert and the close question work; no automatic restore |
+| Plain `badger -mini` / `badger -g` (no launcher) | Revert and the close question work; no automatic restore. If the GUI crashes or is killed, its run workers stop by themselves within about a second |
 
 ## Limits
 

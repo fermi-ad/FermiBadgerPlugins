@@ -1354,3 +1354,36 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   that point: decoy (~-3.0) by point 20, escape at 30-32, -5.9 by point 41.
 - TwoWells always uses all four devices' readings; an unticked device is held
   at its reading, and the run optimizes over the rest.
+
+## 2026-10-27 — production host: run workers outliving their GUI; `safe-badger pids`
+
+Certain (from gmpsai2's safe-badger.log, snapshots and run archives, read over
+ssh, and local tests):
+- Ctrl-C passes through `pixi run` on the host: 2026-10-26 12:02 the launcher
+  logged SIGINT, stopped Badger and restored. (Same with a dummy locally.)
+- 2026-10-27: in sessions 29476 (10:21) and 30405 (10:32) the launcher died
+  without logging anything (no handler ran: a SIGKILL), and Badger's run went
+  on unwatched (archive points until 10:26:32 and 10:34:31). Their snapshots
+  became `*.stale`, not restored. The user's final `pgrep -f badger | kill -9`
+  also hit the launcher of session 30653: unresolved, devices left at the last
+  run's point (restore left to the user).
+- Badger's run workers outlive a dead GUI. Reproduced locally end to end (GUI
+  SIGKILLed mid-run on the TuneQx sim): both workers kept running. The spare
+  waits forever on its wait_event (the days-old orphans of 2026-10-26); the
+  running one blocked sending results to the dead GUI.
+- On Linux the workers are forks with the GUI's exact command line, so `ps`
+  can't tell them apart (the confusion in the kill tests).
+Likely, not confirmed: the launcher deaths were kill -9 sent to the launcher's
+PID during the kill tests.
+
+Fixes (main):
+- `badger-1.6.0-worker-stops-without-gui.patch`: a watchdog thread in each run
+  worker exits it within ~1 s of its GUI's death, plus a check right before
+  each device write. `tests/worker_stops_without_gui_test.py` (end to end, fails
+  without the patch). Not yet seen on the Linux host.
+- `pixi run safe-badger pids`: each Badger GUI, its launcher (or NONE), its
+  workers oldest first, and the kill line for each test.
+  `tests/safe_badger_pids_test.py` (production ps output). SIGHUP path checked
+  live locally on the sim.
+- My test first archived into ~/BadgerArchive (Badger's run worker reads the
+  per-user settings); removed those 7 files; the test now cleans up after itself.
