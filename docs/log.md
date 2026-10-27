@@ -1394,3 +1394,5 @@ Fixes (main):
   explained: the launcher's own ticket cache may have survived (per-session
   keyring/KCM on Linux), or DPM accepted the write anyway. Next: `kdestroy;
   klist` in the launcher's terminal before starting it, then repeat.
+- Host: kill -9 on the idle GUI and on the idle launcher both went smoothly
+  (user). Left: SIGHUP to the launcher; the kdestroy question.
