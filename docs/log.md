@@ -1432,3 +1432,17 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   (both GUIs) holds VOCS updates while the template is applied and sends one
   at the end. `tests/quiet_template_load_gui_test.py` fails without it with
   the user's exact message.
+
+## 2026-10-26 — TwoWells demonstration objective for the ZZ Pacsys testing template
+
+- User wanted an objective with an interesting optimum in all four test
+  devices, to start off-optimum and show an exemplary run. New observable
+  `TwoWells` in `ZZ_PacsysTesting`: 0.01 dᵀAd (A couples the knobs) minus a
+  deep Gaussian well at (3, -4, 2, 5) (global min -6.0) and a shallower one
+  near (-6, 5, -5, -3) (decoy, -3.06). Template: objective TwoWells, fixed
+  ranges -10..10, current + 3 random initial points.
+- Offline EI runs from all zeros: best 0.1 -> about -5.95 within ~20 points
+  (3 seeds); the decoy is never visited from there.
+- `tests/zz_two_wells_test.py`; `outside_limits_gui_test.py` now loads a
+  relative copy of the template (the template itself no longer uses relative
+  windows).
