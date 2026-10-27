@@ -1302,3 +1302,20 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   `config.yaml`'s path values are now `SET-BY-SETUP` placeholders (setup
   overwrites them; checked it writes an identical config.local.yaml);
   HANDOFF.md and the README tree no longer point at `config.yaml` to launch.
+
+## 2026-10-26 — variables outside their limits (shutdown prep)
+
+- User: `safe-badger mini -t 01_Linac_RIL_tuning.yaml` on the Mac crashed at
+  template load (`VOCS validation failed ... value[1] > value[0]`, domain
+  [300, 300]) and then the process hung. Read-only check: L:ASOL, L:LSOL,
+  L:BSOL and L:MUQ1 all read 50.0 A (limits 300-500, 250-300): the Linac is
+  at standby ahead of a power outage. "current ± delta" clipped to the limits
+  collapses to zero width.
+- Fix, `badger-1.6.0-outside-limits.patch` (main, both GUIs): such ticked
+  variables are unticked with one warning (device, reading, limits) and left
+  out of the range computation; Go re-reads and refuses if one is ticked
+  again. Not widened to the limits: BO could then jump a solenoid from 50 A
+  to 300+. `-mini` now defers its `-t` template load into the event loop like
+  `-g`, so a load error shows a dialog instead of hanging the process on the
+  pre-started run worker. `tests/outside_limits_gui_test.py` (FakeBackend)
+  fails without the patch with the user's exact error.
