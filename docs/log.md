@@ -1491,3 +1491,10 @@ Fixes (main):
   live locally on the sim.
 - My test first archived into ~/BadgerArchive (Badger's run worker reads the
   per-user settings); removed those 7 files; the test now cleans up after itself.
+- Host, after the worker patch (2026-10-27): GUI killed mid-run → workers
+  gone, devices reverted by safe-badger: passed. Kerberos test: after
+  `kdestroy` (in the second terminal) the run kept writing, and the restore
+  after the crash still succeeded, where a loud failure was expected. Not yet
+  explained: the launcher's own ticket cache may have survived (per-session
+  keyring/KCM on Linux), or DPM accepted the write anyway. Next: `kdestroy;
+  klist` in the launcher's terminal before starting it, then repeat.

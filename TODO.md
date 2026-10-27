@@ -102,9 +102,16 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 - Machine-test results on gmpsai2 so far: full offline suite passes there
   (2026-10-26, after the config.local.yaml test fix); **Ctrl-C passes through
   pixi** and the launcher restores (log, 2026-10-26 12:02); Close → Revert
-  works (2026-10-27 10:28). Still to do with `pixi run safe-badger pids` to
-  pick the PIDs: kill -9 the GUI idle and mid-run (expect the workers gone and
-  a restore), SIGHUP, kdestroy. Never `pkill -f badger`: it also hits the
+  works (2026-10-27 10:28). **GUI killed mid-run (after the worker patch):
+  workers gone, devices reverted** (2026-10-27). Still to do: kill -9 the GUI
+  while idle; SIGHUP.
+  - [ ] **Open: restore without a Kerberos ticket succeeded** (2026-10-27,
+    kdestroy in the second terminal, then kill -9 the GUI mid-run: devices
+    reverted; expected a loud failure). Either the launcher's own cache
+    survived (Linux per-session keyring/KCM: run `klist; echo $KRB5CCNAME` in
+    the launcher's terminal), or DPM accepted the write without a valid
+    ticket. Repeat with `kdestroy; klist` in the launcher's terminal before
+    starting it. Never `pkill -f badger`: it also hits the
   launcher, and a SIGKILLed launcher can't restore.
 - [ ] **Machine tests — next, planned for 2026-10-22 on the MCR host** (steps in
   `docs/progress.md`), with `development/ZZ_PacsysTesting.yaml` (role `testing`),
