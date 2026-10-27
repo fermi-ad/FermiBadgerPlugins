@@ -77,7 +77,9 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
   workers gone, devices reverted** (2026-10-27). kill -9 on the idle GUI and
   on the idle launcher: smooth (user, 2026-10-27; the launcher case is the
   documented limit, Badger carries on and the snapshot is flagged `.stale`
-  at the next start). Still to do: `kill -HUP` on the launcher.
+  at the next start). **SIGHUP to the launcher: passed** (2026-10-27 11:37:
+  stopped Badger, restored 4 devices). All the planned kill tests now pass;
+  only the kdestroy question below is open.
   - [ ] **Open: restore without a Kerberos ticket succeeded** (2026-10-27,
     kdestroy in the second terminal, then kill -9 the GUI mid-run: devices
     reverted; expected a loud failure). Either the launcher's own cache
