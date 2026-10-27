@@ -1319,3 +1319,12 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   `-g`, so a load error shows a dialog instead of hanging the process on the
   pre-started run worker. `tests/outside_limits_gui_test.py` (FakeBackend)
   fails without the patch with the user's exact error.
+- Still on stdout: two `ERROR 1 validation error for ExpectedImprovementGenerator
+  ... safety turbo controller can only be used with constraints` per load of a
+  RIL template (safety TuRBO), pre-existing. Traced (offline, FakeBackend):
+  `set_options_from_template` fills the objectives table, whose VOCS update
+  reaches the generator editor before the constraints are filled; its
+  validation fails and is logged. `badger-1.6.0-quiet-template-load.patch`
+  (both GUIs) holds VOCS updates while the template is applied and sends one
+  at the end. `tests/quiet_template_load_gui_test.py` fails without it with
+  the user's exact message.
