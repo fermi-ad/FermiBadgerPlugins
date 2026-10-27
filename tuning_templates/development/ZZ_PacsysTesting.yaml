@@ -1,6 +1,9 @@
 badger_version: 1.6.0
 critical_constraint_names: []
-description: Harmless live exercise of BasicPacsysInterface against ACNET test/scratch devices
+description: 'Harmless live exercise of BasicPacsysInterface against ACNET test/scratch
+  devices. Objective TwoWells: a coupled 4-D landscape with its global minimum -6.0
+  at G:AMANDA=3, Z:CUBE_X=-4, Z:CUBE_Y=2, Z:CUBE_Z=5 and a shallower decoy (-3.06)
+  elsewhere; start the devices anywhere in -10..10 and watch BO find it.'
 environment:
   name: ZZ_PacsysTesting
   params:
@@ -16,15 +19,22 @@ generator:
     n_restarts: 20
     name: LBFGS
   turbo_controller: null
-initial_point_actions: []
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
 name: zz-pacsys-testing
-relative_to_current: true
+relative_to_current: false
 vocs:
   constants: {}
   constraints: {}
   objectives:
-    AbsProduct: MINIMIZE
+    TwoWells: MINIMIZE
   observables:
+  - AbsProduct
   - CombineObjective
   - AMANDA_sq
   - CUBE_X_sq
@@ -32,17 +42,17 @@ vocs:
   - CUBE_Z_sq
   variables:
     G:AMANDA:
-    - -100.0
-    - 100.0
+    - -10.0
+    - 10.0
     Z:CUBE_X:
-    - -100.0
-    - 100.0
+    - -10.0
+    - 10.0
     Z:CUBE_Y:
-    - -100.0
-    - 100.0
+    - -10.0
+    - 10.0
     Z:CUBE_Z:
-    - -100.0
-    - 100.0
+    - -10.0
+    - 10.0
 vrange_limit_options:
   G:AMANDA:
     delta: 10.0

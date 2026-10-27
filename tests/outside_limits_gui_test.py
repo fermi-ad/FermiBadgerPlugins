@@ -5,8 +5,10 @@ warning when the template loads, instead of a zero-width range crashing the load
 the other variables load as usual; re-ticked, Go refuses and unticks it again;
 back within its limits, Go starts.
 
-ZZ_PacsysTesting template (limits -100 to 100) with Z:CUBE_X at 150; pacsys reads
-come from a FakeBackend, and run_monitor.start is stubbed: nothing reaches ACNET.
+ZZ_PacsysTesting template (limits -100 to 100) with Z:CUBE_X at 150, loaded as a
+copy with relative_to_current on (the windows that collapse are the relative ones;
+the template itself now uses fixed ranges); pacsys reads come from a FakeBackend,
+and run_monitor.start is stubbed: nothing reaches ACNET.
 
 Run from the repo root:
     pixi run python tests/outside_limits_gui_test.py
@@ -44,6 +46,12 @@ def main():
     from badger.gui.mini.windows.main_window import BadgerMiniWindow
     from badger.gui.windows.main_window import BadgerMainWindow
 
+    import yaml
+
+    relative = yaml.safe_load(open(TEMPLATE)) | {"relative_to_current": True}
+    template = Path(tempfile.mkdtemp()) / "ZZ_PacsysTesting_relative.yaml"
+    template.write_text(yaml.safe_dump(relative))
+
     fb = FakeBackend()
 
     def set_device(d, v):
@@ -71,7 +79,7 @@ def main():
         warned.clear()
 
         # Load: Z:CUBE_X unticked with a warning, no crash; the rest load as usual.
-        editor.load_template_yaml(False, template_path=TEMPLATE)
+        editor.load_template_yaml(False, template_path=str(template))
         assert len(warned) == 1, warned
         title, text = warned[0]
         assert title == "Variables outside their limits", title
