@@ -103,8 +103,10 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
   (2026-10-26, after the config.local.yaml test fix); **Ctrl-C passes through
   pixi** and the launcher restores (log, 2026-10-26 12:02); Close → Revert
   works (2026-10-27 10:28). **GUI killed mid-run (after the worker patch):
-  workers gone, devices reverted** (2026-10-27). Still to do: kill -9 the GUI
-  while idle; SIGHUP.
+  workers gone, devices reverted** (2026-10-27). kill -9 on the idle GUI and
+  on the idle launcher: smooth (user, 2026-10-27; the launcher case is the
+  documented limit, Badger carries on and the snapshot is flagged `.stale`
+  at the next start). Still to do: `kill -HUP` on the launcher.
   - [ ] **Open: restore without a Kerberos ticket succeeded** (2026-10-27,
     kdestroy in the second terminal, then kill -9 the GUI mid-run: devices
     reverted; expected a loud failure). Either the launcher's own cache
