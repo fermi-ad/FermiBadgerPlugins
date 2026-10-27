@@ -1,0 +1,64 @@
+diff -ruN a/badger/gui/components/env_cbox.py b/badger/gui/components/env_cbox.py
+--- a/badger/gui/components/env_cbox.py	2026-10-26 20:49:48
++++ b/badger/gui/components/env_cbox.py	2026-10-26 20:50:03
+@@ -548,6 +548,8 @@
+ 
+     def update_vocs(self, origin: str) -> None:
+         logger.debug(f"Emitting vocs_updated signal from env_cbox: {origin}")
++        if getattr(self, "hold_vocs", False):
++            return  # a template is being applied: one update once it all is (routine_page)
+         vocs, _ = self.compose_vocs()
+         self.vocs_updated.emit(vocs)
+ 
+diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
+--- a/badger/gui/components/routine_page.py	2026-10-26 20:49:48
++++ b/badger/gui/components/routine_page.py	2026-10-26 20:50:03
+@@ -396,7 +396,15 @@
+         try:
+             with open(template_path, "r") as stream:
+                 template_dict = yaml.safe_load(stream)
+-                self.set_options_from_template(template_dict=template_dict)
++                # Hold VOCS updates until all of it is set: a partial VOCS (objectives,
++                # no constraints yet) failed generator validation, e.g. for a safety
++                # TuRBO controller, and was logged as an ERROR on every such load.
++                self.env_box.hold_vocs = True
++                try:
++                    self.set_options_from_template(template_dict=template_dict)
++                finally:
++                    self.env_box.hold_vocs = False
++                self.env_box.update_vocs("template")
+                 self.sig_load_template.emit(
+                     f"Options loaded from template: {os.path.basename(template_path)}"
+                 )
+diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-26 20:49:48
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-26 20:50:03
+@@ -726,6 +726,8 @@
+ 
+     def update_vocs(self, origin: str):
+         logger.debug(f"Emitting vocs_updated signal from env_cbox: {origin}")
++        if getattr(self, "hold_vocs", False):
++            return  # a template is being applied: one update once it all is (routine_page)
+         vocs, _ = self.compose_vocs()
+         self.vocs_updated.emit(vocs)
+         self.edit_algo_params.update_vocs(vocs)
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-26 20:49:48
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-26 20:50:03
+@@ -341,7 +341,15 @@
+         try:
+             with open(template_path, "r") as stream:
+                 template_dict = yaml.safe_load(stream)
+-                self.set_options_from_template(template_dict=template_dict)
++                # Hold VOCS updates until all of it is set: a partial VOCS (objectives,
++                # no constraints yet) failed generator validation, e.g. for a safety
++                # TuRBO controller, and was logged as an ERROR on every such load.
++                self.env_box.hold_vocs = True
++                try:
++                    self.set_options_from_template(template_dict=template_dict)
++                finally:
++                    self.env_box.hold_vocs = False
++                self.env_box.update_vocs("template")
+                 self.sig_load_template.emit(
+                     f"Options loaded from template: {os.path.basename(template_path)}"
+                 )
