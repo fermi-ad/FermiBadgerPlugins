@@ -1342,3 +1342,15 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - `tests/zz_two_wells_test.py`; `outside_limits_gui_test.py` now loads a
   relative copy of the template (the template itself no longer uses relative
   windows).
+- Template now starts from one point near the decoy, (-4, 4, -4, -2), its
+  only initial point. Templates could not say that: both GUIs filled Initial
+  Points only from `initial_point_actions` (or defaults) and ignored a
+  template's `initial_points`. `badger-1.6.0-template-initial-points.patch`
+  reads them; `tests/template_initial_points_gui_test.py`. First version
+  still ran the default actions (current + random points near it) before
+  replacing the rows: with a test device left outside -10..10 the random
+  step raised `VariableRangeError` (user hit it). Now a template with its own
+  points skips the actions entirely; the test puts G:AMANDA at 50. Offline runs from
+  that point: decoy (~-3.0) by point 20, escape at 30-32, -5.9 by point 41.
+- TwoWells always uses all four devices' readings; an unticked device is held
+  at its reading, and the run optimizes over the rest.

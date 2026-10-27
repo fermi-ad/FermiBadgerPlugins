@@ -126,6 +126,8 @@ print(h.hexdigest())" "$REPO/patches")"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-outside-limits.patch"
         # must come after outside-limits: diffed against that tree
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-quiet-template-load.patch"
+        # must come after quiet-template-load: diffed against that tree
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-template-initial-points.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
         # must come after turbo-serialization: diffed against that tree
