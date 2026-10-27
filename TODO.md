@@ -107,15 +107,13 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
   on the idle launcher: smooth (user, 2026-10-27; the launcher case is the
   documented limit, Badger carries on and the snapshot is flagged `.stale`
   at the next start). **SIGHUP to the launcher: passed** (2026-10-27 11:37:
-  stopped Badger, restored 4 devices). All the planned kill tests now pass;
-  only the kdestroy question below is open.
-  - [ ] **Open: restore without a Kerberos ticket succeeded** (2026-10-27,
-    kdestroy in the second terminal, then kill -9 the GUI mid-run: devices
-    reverted; expected a loud failure). Either the launcher's own cache
-    survived (Linux per-session keyring/KCM: run `klist; echo $KRB5CCNAME` in
-    the launcher's terminal), or DPM accepted the write without a valid
-    ticket. Repeat with `kdestroy; klist` in the launcher's terminal before
-    starting it. Never `pkill -f badger`: it also hits the
+  stopped Badger, restored 4 devices). **All planned machine tests pass**
+  (2026-10-27): next, hand over the operator launch line above.
+  - [x] **Kerberos:** restore after a `kdestroy` in the *second* terminal
+    succeeded (2026-10-27): that terminal's cache only; the launcher's own
+    ticket survived. With `kdestroy` in the launcher's own terminal before
+    starting it, the run could not write at all (0 of 4 devices differed after
+    a mid-run kill; restore had nothing to do). No ticket, no writes. Never `pkill -f badger`: it also hits the
   launcher, and a SIGKILLed launcher can't restore.
 - [ ] **Machine tests — next, planned for 2026-10-22 on the MCR host** (steps in
   `docs/progress.md`), with `development/ZZ_PacsysTesting.yaml` (role `testing`),

@@ -1507,3 +1507,10 @@ Fixes (main):
   multiprocessing's resource tracker, which ignores SIGTERM. Harmless; a
   restore can take up to ~10 s. All planned safe-badger kill tests now pass;
   open: the kdestroy question.
+- Host, kdestroy settled: with the ticket removed in the launcher's own
+  terminal before starting it, the run could not write (after a mid-run kill
+  of the GUI, 0 of 4 devices differed; "Restore complete" had nothing to do).
+  So the earlier restore after `kdestroy` in the second terminal worked
+  because the launcher's own cache was untouched (per-terminal caches). No
+  ticket, no writes. All planned safe-badger machine tests now pass on
+  gmpsai2; next: the operator launch line.
