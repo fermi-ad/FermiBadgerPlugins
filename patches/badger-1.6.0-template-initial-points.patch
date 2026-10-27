@@ -1,0 +1,70 @@
+diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
+--- a/badger/gui/components/routine_page.py	2026-10-26 21:21:39
++++ b/badger/gui/components/routine_page.py	2026-10-26 21:36:21
+@@ -530,7 +530,30 @@
+                 self.env_box.var_table.set_bounds(vocs.variables, signal=False)
+             # Populate the initial table anyways, auto mode or not
+             self.clear_init_table(reset_actions=False)
+-            self.update_init_table(force=True)
++            if template_dict.get("initial_points"):
++                # The template's own initial points ({variable: [values]}) are
++                # the run's. Its actions, or Badger's defaults (current values +
++                # random points near them), must not run: a random point near a
++                # current value outside the ranges raises VariableRangeError.
++                # Badger saves these with a run but never read them from a template.
++                self.init_table_actions = []
++                selected = self.env_box.var_table.selected
++                update_init_data_table(
++                    self.env_box.init_table, [v for v in selected if selected[v]]
++                )
++                try:
++                    set_init_data_table(
++                        self.env_box.init_table,
++                        pd.DataFrame(template_dict["initial_points"]),
++                    )
++                except KeyError as e:
++                    QMessageBox.warning(
++                        self,
++                        "Initial points not used",
++                        f"The template's initial points have no value for {e}.",
++                    )
++            else:
++                self.update_init_table(force=True)
+ 
+         # set objectives
+         try:
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-10-26 21:21:39
++++ b/badger/gui/mini/pages/routine_page.py	2026-10-26 21:36:21
+@@ -521,7 +521,30 @@
+                 )
+             # Populate the initial table anyways, auto mode or not
+             self.clear_init_table(reset_actions=False)
+-            self.update_init_table(force=True)
++            if template_dict.get("initial_points"):
++                # The template's own initial points ({variable: [values]}) are
++                # the run's. Its actions, or Badger's defaults (current values +
++                # random points near them), must not run: a random point near a
++                # current value outside the ranges raises VariableRangeError.
++                # Badger saves these with a run but never read them from a template.
++                self.init_table_actions = []
++                selected = self.env_box.var_table.selected
++                update_init_data_table(
++                    self.env_box.init_table, [v for v in selected if selected[v]]
++                )
++                try:
++                    set_init_data_table(
++                        self.env_box.init_table,
++                        pd.DataFrame(template_dict["initial_points"]),
++                    )
++                except KeyError as e:
++                    QMessageBox.warning(
++                        self,
++                        "Initial points not used",
++                        f"The template's initial points have no value for {e}.",
++                    )
++            else:
++                self.update_init_table(force=True)
+ 
+         # set objectives
+         try:
