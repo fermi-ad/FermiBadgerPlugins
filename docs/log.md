@@ -1500,3 +1500,10 @@ Fixes (main):
   klist` in the launcher's terminal before starting it, then repeat.
 - Host: kill -9 on the idle GUI and on the idle launcher both went smoothly
   (user). Left: SIGHUP to the launcher; the kdestroy question.
+- Host: SIGHUP to the launcher passed (11:37:20 SIGHUP → 11:37:30 "Badger
+  exited (-15) without a Keep/Revert decision" → "Restoring 4 devices" →
+  "Restore complete"). The 10 s is the launcher's two 5 s waits: something in
+  Badger's group outlived SIGTERM until the SIGKILL. Likely, not confirmed:
+  multiprocessing's resource tracker, which ignores SIGTERM. Harmless; a
+  restore can take up to ~10 s. All planned safe-badger kill tests now pass;
+  open: the kdestroy question.
