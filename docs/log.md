@@ -1266,9 +1266,60 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   supply_limits from there. Re-ran setup here (which also exercised the new
   reset path for real); saved to memory.
 
+## 2026-10-23 — feature wish list started
+
+- Added "Feature wish list (experimental, not scheduled)" to TODO.md: widen a
+  range mid-run and continue with the data; seed a run with historical data;
+  risk-aware constraints (operator-set acceptable risk); better GP
+  visualizations (check Badger 1.6.1 / main first); smart data curation for
+  long runs (O(N^3) GP fits; literature search first). Each entry notes what
+  already exists (full-GUI data panel, Xopt's constraint-weighted EI and
+  SafetyTurboController, BO visualizer, 1.6.1's BAX visualizer).
+- Moved the wish list off main onto branch `bells-and-whistles` (reverted the
+  two wish-list commits on main; a later merge back must revert the reverts).
+
+## 2026-10-23 — literature review: GP data curation for long runs
+
+- Wrote docs/literature/gp-data-curation.md (branch `bells-and-whistles`):
+  six method families (age windows, relevance-based stale removal such as
+  W-DBO/BOLT/APS adaptive BO, budgeted informative subsets, region pruning,
+  sparse GPs, faster exact GPs), the Xopt `get_training_data` hook as the plug-in
+  point, a suggested prototype, and open questions. TODO entry now links it.
+
+## 2026-10-24 — "Continue from run" (wish list: widen ranges, seed from history)
+
+- Plan agreed (TODO.md wish list): one action for widening a range and for
+  seeding from history; a new linked run, both GUIs, fresh trust region;
+  phases 2 (several runs) and 3 (history signposting) to follow.
+- Findings that shaped it: Xopt trains on every point whatever the current
+  bounds (Normalize uses the VOCS bounds, so widened ranges keep old points
+  inside [0,1]); TuRBO keeps its own VOCS, so a controller rebuilt by
+  reassignment is the clean reset (its `reset()` restores the old VOCS);
+  pausing and editing ranges mid-run is silently ignored today (args go to the
+  subprocess once).
+- New `badger-1.6.0-continue-run.patch`: Continue button (action bar) +
+  "Continue from this run" (History menu), shared `continue_run.py`
+  (seed_data, fresh_trust_region, note_source); `-mini` gains seeding, `-g`
+  reuses its Data-tab path. `tests/continue_run_gui_test.py`; full suite passes.
+- Live try on the sim by the user: runs well.
+
+## 2026-10-24 — phase 2: seed from several runs
+
+- Question from the user: an old run with other constraint thresholds? Fine:
+  archives hold raw readings only, and Xopt recomputes feasibility from the
+  new run's VOCS on every fit. The real risk is an objective/observable whose
+  meaning changed under the same name (env params such as weights, formulas):
+  now reported at Go, for one run as a question, for several in the summary.
+- Built: "Add its points" (History menu), `SeedSummaryDialog` (per-run points
+  or skip reason, filters older-than-N-h and outside-new-ranges), merge oldest
+  first; runs missing a new constraint are skipped. Home-page logic moved
+  into a `ContinueRun` mixin in `continue_run.py`. Dropped the planned
+  per-row `seed_run` column (no reader). Test extended, incl. an archive
+  round trip giving no false "changed" notes.
+
 ## 2026-10-25 — Xopt negative-strides crash
 
-- User report: `TuneQx_SimpleVirtualAccelerator.yaml`
+- User report: `TuneQx_SimpleVirtualAccelerator.yaml` (plain run, not seeded)
   took its 4 initial points, then the first BO step failed in TuRBO's
   `get_data_in_trust_region`: "At least one stride ... is negative". Cause: the
   live data held `kqf` before `kqd`; selecting `[kqd, kqf]` gives a reversed
@@ -1281,15 +1332,68 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   site-packages; recovered by removing the patch stamp and re-running setup
   (full reset from pristine).
 
-## 2026-10-25 — stale TuRBO centre at Go
+## 2026-10-25 — stale TuRBO centre; inherited "Seeded with" line
 
 - User report: easy to hit `FeasibilityError: no points ... within the TuRBO
-  trust region` on the first BO step of a plain run. Its controller carried
-  the shown run's centre and length: upstream `_compose_routine` blanks
-  center/best only for name "optimize", while a run's saved controller is
-  "OptimizeTurboController". Fix: `badger-1.6.0-turbo-state-reset.patch` (both
-  GUIs, both names; same for safety). `tests/turbo_state_reset_gui_test.py`.
-  Found and first fixed on bells-and-whistles (73e0967).
+  trust region`. The failing runs (14:53:49, 14:53:59) were plain runs with
+  one point, but their controller carried the shown run's centre and length:
+  upstream `_compose_routine` blanks center/best only for name "optimize",
+  while a run's saved controller is "OptimizeTurboController". Fix:
+  `badger-1.6.0-turbo-state-reset.patch` (both GUIs, both names; same for
+  safety). Test added to `continue_run_gui_test.py`; fails without the patch.
+- Same runs said "Seeded with 1 points from ...": the description is copied
+  from the shown run. Every Go now drops such a line (`drop_seed_note`); only
+  a seeded run adds one.
+- Side finding: the editor composes VOCS as kqf, kqd (not template order),
+  which is how the live data came to hold columns in non-VOCS order (the
+  negative-strides crash).
+
+## 2026-10-25 — heteroskedastic noise testbed
+
+- New environment `ZZ_PacsysTesting_Heteroskedastic` (subclass of
+  ZZ_PacsysTesting, same test devices): `Heteroskd_f` with synthetic noise of
+  known sigma(x) (shapes proportional / distance / bump), averaged over K
+  draws; `Heteroskd_f_var` (s²/K) makes Xopt fit its heteroskedastic GP;
+  `Heteroskd_f_true_var` logged for scoring. Template in development/.
+- `scripts/heteroskd_recovery.py <run>`: fits heteroskedastic vs standard GP,
+  scores predicted vs true noise variance (median |log10 ratio|, log corr),
+  PNG with true/learned maps for 2-variable runs.
+- Offline results (80 random points, 2 devices): heteroskedastic log corr
+  0.87-0.94 for all shapes, scale within ~x1.35; standard GP has no shape.
+  Found a floor: noise below ~1e-4 of the objective's variance (after
+  standardizing; MIN_INFERRED_NOISE_LEVEL) is overstated (x35 in a bump case).
+- Template loads in both GUIs offline (FakeBackend reads, no writes).
+- Live run (VPN + Kerberos, user's go-ahead): `scripts/heteroskd_live_run.py
+  distance`, 8 random + 32 EI steps on Z:CUBE_X/Y, seed 7; settings read
+  first and restored (0.3777, 8.3995). BO found the minimum (0.5, 0.5) in 2
+  steps. Recovery: heteroskedastic GP median |log10 error| 0.038, log corr
+  0.985; standard GP 0.182 (one noise level, set by the quiet cluster at the
+  optimum). The learned map matches near the data and extrapolates into a
+  valley along CUBE_Y where there are no points.
+- Live runs of the other shapes (devices restored each time). Scores, at the
+  run's points / over a uniform grid of the range (added to the script, since
+  BO crowds its points at the optimum and a median there mostly measures that
+  cluster), heteroskedastic vs standard GP, median |log10 error|:
+  distance 0.04 / 0.13 vs 0.18 / 1.02; proportional 0.22 / 0.13 vs 0.07 /
+  2.47; bump 0.03 / 0.21 vs 0.20 / 0.28. Log correlation 0.96-1.00 at points,
+  0.83-0.97 over the grid; the standard GP has none.
+- The plots now mark the model floor (1e-4 x var of the objective). It does
+  NOT explain the heteroskedastic GP's ~x2 overstatement of quiet regions
+  (proportional cluster, bump surroundings): those sit ~x2 above it. Likely
+  the log-noise GP smoothing across a steep rise or a sparsely sampled
+  background (untested). The standard GP's single level sits on the floor in
+  the proportional run.
+- User ran the template in `-mini` (17:04:52, 40 points), then Continue with
+  Z:CUBE_X widened to [-10.2, 12.0] (17:06:09, 40 seeded + 14 new; description
+  "Seeded with 40 points from ...170452.yaml"). Both archive files score
+  through `scripts/heteroskd_recovery.py` unchanged. Heteroskedastic vs
+  standard GP, points / grid: 0.078 / 0.147 vs 0.120 / 0.925; continued
+  0.313 / 0.079 vs 0.252 / 1.060.
+- Finding: widening raised the model floor (1e-4 x var of the objective; f now
+  reaches ~140) to 0.12, above the quiet cluster's true noise (0.05-0.1): the
+  standard GP sits on it, the heteroskedastic GP's cluster at ~0.19. Wider
+  ranges cost noise resolution near the optimum, and seeded far points keep
+  the floor high in a later narrow Continue.
 
 ## 2026-10-26 — production host: two tests read the Mac's paths
 
@@ -1410,3 +1514,15 @@ Fixes (main):
   because the launcher's own cache was untouched (per-terminal caches). No
   ticket, no writes. All planned safe-badger machine tests now pass on
   gmpsai2; next: the operator launch line.
+
+## 2026-10-28 — bells-and-whistles merged into main; TODO tidied
+
+- TODO tidied: safe-badger machine tests all pass (condensed), operator launch
+  line requested by the user, Pacsys cutover decided (dual run dropped).
+- Merge (no fast-forward): conflicts in TODO.md, docs/log.md,
+  patches/README.md, pixi_setup.sh and badger-1.6.0-outside-limits.patch, all
+  resolved to the branch side (the superset; main's lines were older wording
+  or the same fixes as cherry-picks). Main's two "revert wish list" commits
+  are undone by taking the branch's TODO.md and log. The outside-limits patch
+  is the branch's (rebuilt on top of the Continue patch); the TuRBO-reset
+  README row names both tests. Patch set = the branch's; 28 tests pass.

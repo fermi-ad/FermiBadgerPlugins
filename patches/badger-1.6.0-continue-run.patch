@@ -1,0 +1,735 @@
+diff -ruN a/badger/gui/components/action_bar.py b/badger/gui/components/action_bar.py
+--- a/badger/gui/components/action_bar.py	2026-10-24 09:34:58
++++ b/badger/gui/components/action_bar.py	2026-10-26 20:15:25
+@@ -87,6 +87,19 @@
+ """
+ 
+ 
++stylesheet_continue_armed = """
++QPushButton:hover
++{
++    background-color: #6EC566;
++}
++QPushButton
++{
++    background-color: #4AB640;
++    color: #000000;
++}
++"""
++
++
+ class BadgerActionBar(QWidget):
+     sig_start = pyqtSignal()
+     sig_start_until = pyqtSignal()
+@@ -151,6 +164,24 @@
+             size=(88, 32),
+         )
+         self.btn_revert.setText("Revert")
++        # Checked: the next Go starts a new run seeded with the displayed
++        # run's points (edit the ranges first to widen them).
++        self.btn_continue = create_button(
++            "next.png",
++            "Continue from the displayed run: the next Go starts a new run"
++            " seeded with its points.\nWiden ranges first if needed.",
++            size=(104, 32),
++        )
++        self.btn_continue.setText("Continue")
++        self.btn_continue.setCheckable(True)
++        # Armed: Go's green, so it shows without reading the status bar. Set
++        # only while checked: any stylesheet replaces the native look.
++        self.btn_continue.toggled.connect(
++            lambda armed: self.btn_continue.setStyleSheet(
++                stylesheet_continue_armed if armed else ""
++            )
++        )
++        self.btn_continue.setDisabled(True)
+         self.revert_ready = False  # set by the mini home page once a snapshot exists
+         self.btn_checkpoint = create_button(
+             "flag.png", "Checkpoint", size=(48, 32), tool_button=True
+@@ -231,6 +262,7 @@
+         hbox_bg.addWidget(self.btn_help)
+         hbox_bg.addStretch(1)
+         hbox_bg.addWidget(self.btn_revert)
++        hbox_bg.addWidget(self.btn_continue)
+         hbox_bg.addWidget(self.btn_reset)
+         hbox_bg.addWidget(self.btn_ctrl)
+         hbox_bg.addWidget(self.btn_stop)
+@@ -273,6 +305,7 @@
+         self.btn_log.setDisabled(True)
+         self.btn_reset.setDisabled(True)
+         self.btn_revert.setDisabled(True)
++        self.set_continue_enabled(False)
+         self.btn_checkpoint.setDisabled(True)
+         self.btn_ctrl.setDisabled(True)
+         self.btn_stop.setDisabled(True)
+@@ -284,6 +317,7 @@
+         self.btn_log.setDisabled(False)
+         self.btn_reset.setDisabled(False)
+         self.btn_revert.setEnabled(self.revert_ready)
++        self.set_continue_enabled(True)
+         self.btn_checkpoint.setDisabled(False)
+         self.btn_ctrl.setDisabled(False)
+         self.btn_stop.setDisabled(False)
+@@ -313,7 +347,14 @@
+         self.btn_revert.setEnabled(self.revert_ready)
+         self.btn_set.setDisabled(False)
+         self.btn_del.setDisabled(False)
++        self.set_continue_enabled(True)
+ 
++    def set_continue_enabled(self, enabled):
++        """Continue needs a displayed run with points; unchecked when not."""
++        if not enabled:
++            self.btn_continue.setChecked(False)
++        self.btn_continue.setEnabled(enabled)
++
+     def toggle_reset(self, locked):
+         self.btn_reset.setDisabled(locked)
+ 
+@@ -321,6 +362,7 @@
+         self.btn_stop.setDisabled(locked)
+ 
+     def toggle_other(self, locked):
++        self.set_continue_enabled(not locked)
+         self.btn_del.setDisabled(locked)
+         self.btn_log.setDisabled(locked)
+         self.btn_opt.setDisabled(locked)
+@@ -337,6 +379,7 @@
+         self.btn_checkpoint.setDisabled(False)
+         self.btn_ctrl.setDisabled(False)
+         self.btn_set.setDisabled(True)
++        self.set_continue_enabled(False)  # one Go per Continue
+ 
+     def set_run_action(self):
+         if self.btn_stop.defaultAction() is not self.run_action:
+diff -ruN a/badger/gui/components/continue_run.py b/badger/gui/components/continue_run.py
+--- a/badger/gui/components/continue_run.py	1969-12-31 18:00:00
++++ b/badger/gui/components/continue_run.py	2026-10-25 14:55:54
+@@ -0,0 +1,326 @@
++"""Continue from a run: start a new run seeded with earlier runs' points.
++
++Shared by both home pages (the action bar's Continue button, and the History
++menu's "Continue from this run" and "Add its points"). The new run is a run of
++its own, with its own archive file; its description names the runs it was
++seeded from. Ranges can be edited (widened) before Go: the model trains on
++every earlier point, inside the new ranges or not.
++
++Only raw readings are archived, so constraint thresholds and directions are
++always those of the new run. What name matching cannot see is an objective or
++observable that kept its name but changed meaning (environment parameters such
++as weights, or formulas); differences there are reported, not refused.
++"""
++
++import json
++import time
++
++import numpy as np
++import pandas as pd
++from PyQt5.QtWidgets import (
++    QCheckBox,
++    QDialog,
++    QDialogButtonBox,
++    QDoubleSpinBox,
++    QHBoxLayout,
++    QLabel,
++    QMessageBox,
++    QTableWidget,
++    QTableWidgetItem,
++    QVBoxLayout,
++)
++
++from badger.errors import BadgerRoutineError
++from badger.gui.utils import MouseWheelWidgetAdjustmentGuard
++
++FORMULA_FIELDS = ("formulas", "constraint_formulas", "observable_formulas")
++
++
++def incompatibility(routine, source):
++    """Why `source`'s points cannot seed `routine` (a composed routine), or None."""
++    if source.data is None or source.data.empty:
++        return "it has no points"
++    was = source.vocs.variable_names + source.vocs.objective_names
++    now = routine.vocs.variable_names + routine.vocs.objective_names
++    if set(was) != set(now):
++        return (
++            "it has other variables or objectives:\n"
++            f" {sorted(was)}\ninstead of\n {sorted(now)}"
++        )
++    missing = [c for c in routine.vocs.constraint_names if c not in source.data]
++    if missing:
++        # Xopt would count its points as violating these: skews TuRBO and EI
++        return f"it did not measure constraint(s) {', '.join(missing)}"
++    return None
++
++
++def _env_params(routine):
++    params = routine.environment.model_dump()
++    params.pop("interface", None)
++    return params
++
++
++def _same(a, b):
++    return json.dumps(a, sort_keys=True, default=str) == json.dumps(
++        b, sort_keys=True, default=str
++    )
++
++
++def differences(routine, source):
++    """What changed that may change what an objective or observable means."""
++    notes = []
++    if source.environment.name != routine.environment.name:
++        notes.append(
++            f"environment {source.environment.name}, not {routine.environment.name}"
++        )
++    else:
++        old, new = _env_params(source), _env_params(routine)
++        for k in sorted(set(old) | set(new)):
++            if not _same(old.get(k), new.get(k)):
++                notes.append(f"{k}: was {old.get(k)!r}, now {new.get(k)!r}")
++    for field in FORMULA_FIELDS:
++        old, new = getattr(source, field) or {}, getattr(routine, field) or {}
++        for k in sorted(set(old) | set(new)):
++            if not _same(old.get(k), new.get(k)):
++                notes.append(f"formula {k} changed")
++    return notes
++
++
++def seed_data(routine, sources, max_age_hours=None, in_ranges=False):
++    """Merged points of `sources` [(name, Routine)] that can seed `routine`.
++
++    Returns (data, report), report being one entry per source:
++    {name, points (kept), skipped (reason or None), notes (differences)}.
++    Points are stacked oldest first and marked as earlier points (live = 0);
++    outputs the new run adds start as NaN columns.
++    """
++    if routine.generator.name in ["neldermead"]:
++        raise BadgerRoutineError(
++            "The neldermead algorithm cannot continue from earlier data.\n"
++            "Pick another algorithm, or start a fresh run."
++        )
++    report, frames = [], []
++    for name, source in sources:
++        entry = {"name": name, "points": 0, "notes": [], "skipped": None}
++        report.append(entry)
++        entry["skipped"] = incompatibility(routine, source)
++        if entry["skipped"]:
++            continue
++        entry["notes"] = differences(routine, source)
++        data = source.data.copy()
++        if max_age_hours is not None and "timestamp" in data:
++            data = data[data["timestamp"] >= time.time() - max_age_hours * 3600]
++        if in_ranges:
++            for var, (lo, hi) in zip(routine.vocs.variable_names, routine.vocs.bounds):
++                data = data[(data[var] >= lo) & (data[var] <= hi)]
++        entry["points"] = len(data)
++        frames.append(data)
++
++    frames = [f for f in frames if not f.empty]
++    if not frames:
++        return None, report
++    data = pd.concat(frames)
++    if "timestamp" in data:
++        data = data.sort_values("timestamp", kind="stable")
++    data = data.reset_index(drop=True)
++    data["live"] = 0  # 0 = an earlier run's point, 1 = measured in this run
++    for name in routine.vocs.output_names:
++        if name not in data.columns:
++            data[name] = np.nan  # observables the new run adds
++    return data, report
++
++
++def fresh_trust_region(routine):
++    """Give a seeded run a new trust region: full size, centred anew.
++
++    Keeps the controller's settings (tolerances, limits, ...) but not its
++    state, so a region the earlier run had shrunk does not carry over; the
++    reassignment rebuilds the controller on the run's own (new) ranges.
++    """
++    # ponytail: `length` goes back to the controller's default, not to a
++    # template's own starting length; keep it here if templates start to set one.
++    tc = getattr(routine.generator, "turbo_controller", None)
++    if tc is None:
++        return
++    routine.generator.turbo_controller = {
++        k: v
++        for k, v in tc.model_dump().items()
++        if k not in ("vocs", "length", "center_x", "best_value")
++    }
++
++
++def drop_seed_note(routine):
++    """Remove a "Seeded with" line copied from the run shown before Go."""
++    if routine.description:
++        lines = routine.description.splitlines()
++        kept = [s for s in lines if not s.startswith("Seeded with ")]
++        routine.description = "\n".join(kept).rstrip() or None
++
++
++def note_source(routine, n_points, names=()):
++    """Record in the run's description where its first points came from."""
++    drop_seed_note(routine)
++    line = f"Seeded with {n_points} points from "
++    line += (", ".join(names) if names else "earlier runs") + "."
++    routine.description = (
++        f"{routine.description.rstrip()}\n{line}" if routine.description else line
++    )
++
++
++class SeedSummaryDialog(QDialog):
++    """Before a run seeded from several runs: what each gives, and filters."""
++
++    def __init__(self, parent, routine, sources):
++        super().__init__(parent)
++        self.setWindowTitle("Seed the run from earlier runs")
++        self.routine, self.sources = routine, sources
++        self.data = None
++
++        vbox = QVBoxLayout(self)
++        self.table = QTableWidget(0, 3)
++        self.table.setHorizontalHeaderLabels(["Run", "Points", "Notes"])
++        self.table.horizontalHeader().setStretchLastSection(True)
++        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
++        vbox.addWidget(self.table)
++
++        row = QHBoxLayout()
++        self.age_check = QCheckBox("Leave out points older than")
++        self.age_hours = QDoubleSpinBox()
++        self.age_hours.setRange(0.1, 24 * 365)
++        self.age_hours.setValue(24)
++        self.age_hours.setSuffix(" h")
++        self.age_hours.installEventFilter(MouseWheelWidgetAdjustmentGuard(self.age_hours))
++        row.addWidget(self.age_check)
++        row.addWidget(self.age_hours)
++        row.addStretch(1)
++        vbox.addLayout(row)
++        self.range_check = QCheckBox("Leave out points outside the new ranges")
++        vbox.addWidget(self.range_check)
++
++        self.total = QLabel()
++        vbox.addWidget(self.total)
++        self.buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
++        self.buttons.accepted.connect(self.accept)
++        self.buttons.rejected.connect(self.reject)
++        vbox.addWidget(self.buttons)
++
++        for w in (self.age_check, self.range_check):
++            w.toggled.connect(self.refresh)
++        self.age_hours.valueChanged.connect(self.refresh)
++        self.resize(720, 360)
++        self.refresh()
++
++    def refresh(self):
++        self.data, report = seed_data(
++            self.routine,
++            self.sources,
++            self.age_hours.value() if self.age_check.isChecked() else None,
++            self.range_check.isChecked(),
++        )
++        self.report = report
++        self.table.setRowCount(len(report))
++        for i, e in enumerate(report):
++            points = "skipped" if e["skipped"] else str(e["points"])
++            notes = e["skipped"] or "; ".join(e["notes"])
++            if e["notes"] and not e["skipped"]:
++                notes = "Values may not be comparable: " + notes
++            for j, text in enumerate([e["name"], points, notes]):
++                item = QTableWidgetItem(text)
++                item.setToolTip(text)
++                self.table.setItem(i, j, item)
++        self.table.resizeColumnsToContents()
++        total = sum(len(s.data) for _, s in self.sources if s.data is not None)
++        kept = 0 if self.data is None else len(self.data)
++        self.total.setText(f"Seed with {kept} of {total} points.")
++        self.buttons.button(QDialogButtonBox.Ok).setEnabled(kept > 0)
++
++
++def confirm_seed(parent, routine, sources):
++    """The points to seed `routine` with, or None if the user cancels.
++
++    One source: refused if incompatible, a question if anything that may
++    change values differs. Several: the summary dialog.
++    """
++    if len(sources) == 1:
++        data, report = seed_data(routine, sources)
++        e = report[0]
++        if e["skipped"]:
++            raise BadgerRoutineError(f"Cannot continue from {e['name']}: {e['skipped']}.")
++        if e["notes"]:
++            reply = QMessageBox.question(
++                parent,
++                "Continue from run",
++                f"Since {e['name']}, these changed:\n\n- "
++                + "\n- ".join(e["notes"])
++                + "\n\nIts objective or observable values may not be comparable"
++                " with this run's. Continue anyway?",
++                QMessageBox.Yes | QMessageBox.No,
++                QMessageBox.No,
++            )
++            if reply != QMessageBox.Yes:
++                return None
++        return data
++
++    dialog = SeedSummaryDialog(parent, routine, sources)
++    if dialog.exec_() != QDialog.Accepted:
++        return None
++    return dialog.data
++
++
++class ContinueRun:
++    """Home-page mixin (both GUIs): the Continue button and the runs it seeds from.
++
++    Needs run_action_bar, history_browser, status_bar and current_routine (the
++    shown run, as go_run leaves it); call config_continue() once wired up.
++    """
++
++    def config_continue(self):
++        self.seed_extra = []  # [(name, Routine)] added with "Add its points"
++        self.run_action_bar.btn_continue.toggled.connect(self.continue_toggled)
++        self.history_browser.sig_continue.connect(self.arm_continue)
++        self.history_browser.sig_add_seed.connect(self.add_seed)
++
++    def arm_continue(self):
++        if self.run_action_bar.btn_continue.isEnabled():
++            self.run_action_bar.btn_continue.setChecked(True)
++
++    def continue_toggled(self, checked):
++        if not checked:
++            self.seed_extra = []
++            return
++        self.show_seed_status()
++
++    def seed_sources(self):
++        """[(name, Routine)]: the shown run, then any added ones."""
++        return [(self.history_browser.currentText(), self.current_routine)] + list(
++            self.seed_extra
++        )
++
++    def add_seed(self, name):
++        if not self.run_action_bar.btn_continue.isChecked():
++            QMessageBox.information(
++                self,
++                "Add its points",
++                "First show the run to continue from and press Continue (or"
++                " right-click it: Continue from this run); then add others.",
++            )
++            return
++        if name in [n for n, _ in self.seed_sources()]:
++            return
++        from badger.archive import get_base_run_filename, load_run
++
++        try:
++            routine = load_run(get_base_run_filename(name))
++        except Exception as e:
++            QMessageBox.warning(self, "Add its points", f"Cannot load {name}:\n{e}")
++            return
++        self.seed_extra.append((name, routine))
++        self.show_seed_status()
++
++    def show_seed_status(self):
++        sources = self.seed_sources()
++        msg = f"Go will continue from {sources[0][0]}: a new run seeded with its points"
++        if len(sources) > 1:
++            n = sum(len(s.data) for _, s in sources if s.data is not None)
++            msg += f", and {len(sources) - 1} more run(s) ({n} points in all)"
++        self.status_bar.set_summary(msg + ". Widen ranges first if needed.")
+diff -ruN a/badger/gui/components/navigators.py b/badger/gui/components/navigators.py
+--- a/badger/gui/components/navigators.py	2026-10-24 09:34:58
++++ b/badger/gui/components/navigators.py	2026-10-24 15:24:10
+@@ -17,7 +17,7 @@
+     QFileSystemModel,
+ )
+ from PyQt5.QtGui import QFont, QDesktopServices, QCursor
+-from PyQt5.QtCore import Qt, QUrl, QTimer, QDir
++from PyQt5.QtCore import Qt, QUrl, QTimer, QDir, pyqtSignal
+ from badger.archive import get_base_run_filename, get_runs
+ from badger.utils import run_names_to_dict
+ from badger.settings import init_settings
+@@ -32,7 +32,8 @@
+       - Copy full file path to clipboard
+     """
+ 
+-    def show_context_menu(self, widget, fullpath):
++    def show_context_menu(self, widget, fullpath, extra_actions=()):
++        """extra_actions: (label, callback) pairs listed first."""
+         menu = QMenu(widget)
+         menu.setStyleSheet("""
+         QMenu {
+@@ -60,6 +61,11 @@
+         def open_file_location():
+             QDesktopServices.openUrl(QUrl.fromLocalFile(os.path.dirname(fullpath)))
+ 
++        for label, callback in extra_actions:
++            menu.addAction(label).triggered.connect(callback)
++        if extra_actions:
++            menu.addSeparator()
++
+         # Add actions to the context menu
+         menu.addAction("Open File").triggered.connect(open_file)
+         menu.addAction("Open File Directory").triggered.connect(open_file_location)
+@@ -80,6 +86,11 @@
+     Navigate through the history files.
+     """
+ 
++    # "Continue from this run" picked: the run is now the selected one
++    sig_continue = pyqtSignal()
++    # "Add its points" picked: the run's file name (the shown run is unchanged)
++    sig_add_seed = pyqtSignal(str)
++
+     def __init__(self):
+         super().__init__()
+ 
+@@ -232,7 +243,18 @@
+         ):  # To avoid showing context-menu for directories in the tree
+             return
+ 
+-        self.show_context_menu(self.history_tree_widget, fullpath)
++        def continue_from_run():
++            self.history_tree_widget.setCurrentItem(selected_item)  # loads it
++            self.sig_continue.emit()
++
++        self.show_context_menu(
++            self.history_tree_widget,
++            fullpath,
++            [
++                ("Continue from this run", continue_from_run),
++                ("Add its points", lambda: self.sig_add_seed.emit(run_filename)),
++            ],
++        )
+ 
+     def find_run_by_name(self, runs, filename):
+         """
+diff -ruN a/badger/gui/mini/pages/home_page.py b/badger/gui/mini/pages/home_page.py
+--- a/badger/gui/mini/pages/home_page.py	2026-10-24 09:34:58
++++ b/badger/gui/mini/pages/home_page.py	2026-10-25 14:55:54
+@@ -43,6 +43,14 @@
+ from badger.gui.components.action_bar import BadgerActionBar
+ from badger.gui.components.settings_guard import SettingsGuard
+ from badger.gui.components.pydantic_editor import parameter_problems
++from badger.gui.components.continue_run import (
++    ContinueRun,
++    confirm_seed,
++    drop_seed_note,
++    fresh_trust_region,
++    note_source,
++)
++from badger.errors import BadgerRoutineError
+ from badger.utils import get_header
+ from badger.settings import init_settings
+ 
+@@ -73,7 +81,7 @@
+ """
+ 
+ 
+-class BadgerHomePage(QWidget, SettingsGuard):
++class BadgerHomePage(QWidget, SettingsGuard, ContinueRun):
+     sig_routine_activated = pyqtSignal(bool)
+     sig_routine_invalid = pyqtSignal()
+ 
+@@ -256,6 +264,7 @@
+         self.run_monitor.sig_env_ready.connect(self.update_saved_values_from_monitor)
+ 
+         self.run_action_bar.sig_start.connect(self.start_run)
++        self.config_continue()
+         self.run_action_bar.sig_start_until.connect(self.start_run_until)
+         self.run_action_bar.sig_stop.connect(self.run_monitor.stop)
+         self.run_action_bar.sig_delete_run.connect(self.run_monitor.delete_run)
+@@ -314,6 +323,7 @@
+     def go_run(self, i: int = None):
+         logger.info(f"Activating run: {i}")
+         gc.collect()
++        self.run_action_bar.btn_continue.setChecked(False)  # another run shown
+ 
+         # if self.cb_history.itemText(0) == "Optimization in progress...":
+         #     return
+@@ -421,7 +431,7 @@
+ 
+             self.uncover_page()
+ 
+-    def prepare_run(self):
++    def prepare_run(self, sources=None):
+         """
+         Prepares the run by composing the routine, validating data if present,
+         saving created routine to a yaml file, and passing the routine to
+@@ -436,7 +446,9 @@
+ 
+         Notes
+         _____
+-        Removed data loading implementation from mini GUI,
++        Removed data loading implementation from mini GUI; a run continued
++        from `sources` ([(name, archived Routine)], see continue_run.py) is
++        seeded with their points instead.
+         """
+         logger.info("Preparing new run.")
+         try:
+@@ -444,7 +456,20 @@
+         except Exception as e:
+             self.sig_routine_invalid.emit()
+             raise e
++        drop_seed_note(routine)  # only a seeded run says it was (note_source)
+ 
++        if sources:
++            try:
++                data = confirm_seed(self, routine, sources)
++                if data is None:
++                    raise BadgerRoutineError("Run cancelled.")
++            except BadgerRoutineError:
++                self.run_action_bar.routine_finished()  # reset the action bar
++                raise
++            routine.data = data
++            fresh_trust_region(routine)
++            note_source(routine, len(data), [n for n, _ in sources])
++
+         self.current_routine = routine
+ 
+         # Save routine as a temp file
+@@ -468,6 +493,10 @@
+             Removed data loading implementation and data_panel from mini GUI
+         """
+         logger.info("Starting run.")
++        # Read before anything below can redraw the plots and uncheck it
++        sources = None
++        if self.run_action_bar.btn_continue.isChecked():
++            sources = self.seed_sources()
+         problems = parameter_problems(self.routine_editor)
+         if problems:
+             QMessageBox.warning(
+@@ -482,12 +511,19 @@
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
+ 
+-        self.prepare_run()
++        self.prepare_run(sources)
++        if sources:
++            # as the full GUI does after loading data (home_page.start_run)
++            data = self.current_routine.data
++            self.run_monitor.init_plots(self.current_routine)
++            self.current_routine.data = data
++            if self.current_routine.generator.data is None:
++                self.current_routine.generator.data = data
+ 
+         self.run_monitor.start(
+             use_termination_condition=use_termination_condition,
+-            run_data_flag=False,
+-            init_points_flag=True,
++            run_data_flag=bool(sources),
++            init_points_flag=not sources,
+         )
+ 
+     def start_run_until(self):
+diff -ruN a/badger/gui/pages/home_page.py b/badger/gui/pages/home_page.py
+--- a/badger/gui/pages/home_page.py	2026-10-24 09:34:58
++++ b/badger/gui/pages/home_page.py	2026-10-25 14:55:54
+@@ -42,6 +42,13 @@
+ from badger.gui.components.settings_guard import SettingsGuard
+ from badger.gui.components.pydantic_editor import parameter_problems
+ from badger.gui.components.data_panel import filter_metadata
++from badger.gui.components.continue_run import (
++    ContinueRun,
++    confirm_seed,
++    drop_seed_note,
++    fresh_trust_region,
++    note_source,
++)
+ from badger.gui.components.data_table import (
+     add_row,
+     data_table,
+@@ -80,7 +87,7 @@
+ """
+ 
+ 
+-class BadgerHomePage(QWidget, SettingsGuard):
++class BadgerHomePage(QWidget, SettingsGuard, ContinueRun):
+     sig_routine_activated = pyqtSignal(bool)
+     sig_routine_invalid = pyqtSignal()
+ 
+@@ -260,6 +267,7 @@
+         self.run_monitor.sig_env_ready.connect(self.run_action_bar.env_ready)
+ 
+         self.run_action_bar.sig_start.connect(self.start_run)
++        self.config_continue()
+         self.run_action_bar.sig_start_until.connect(self.start_run_until)
+         self.run_action_bar.sig_stop.connect(self.run_monitor.stop)
+         self.run_action_bar.sig_delete_run.connect(self.run_monitor.delete_run)
+@@ -303,9 +311,17 @@
+         # Load the default generator
+         self.routine_editor.generator_box.cb.setCurrentIndex(0)
+ 
++    def continue_toggled(self, checked):
++        """Shown as the Data tab's "Load displayed data" + "Skip initial point
++        sampling"; Go seeds from seed_sources() (continue_run.py) instead."""
++        self.data_panel.run_data_checkbox.setChecked(checked)
++        self.data_panel.init_points_checkbox.setChecked(checked)
++        ContinueRun.continue_toggled(self, checked)
++
+     def go_run(self, i: int = None):
+         logger.info(f"Activating run: {i}")
+         gc.collect()
++        self.run_action_bar.btn_continue.setChecked(False)  # another run shown
+ 
+         # if self.cb_history.itemText(0) == "Optimization in progress...":
+         #     return
+@@ -469,7 +485,7 @@
+             self.run_action_bar.routine_finished()  # Reset action bar
+             raise BadgerRoutineError("Routine initialization cancelled by user.")
+ 
+-    def prepare_run(self, data=None, init_points_flag=True):
++    def prepare_run(self, data=None, init_points_flag=True, sources=None):
+         """
+         Prepares the run by composing the routine, validating data if present,
+         saving created routine to a yaml file, and passing the routine to
+@@ -488,9 +504,22 @@
+         except Exception as e:
+             self.sig_routine_invalid.emit()
+             raise e
++        drop_seed_note(routine)  # only a seeded run says it was (note_source)
+ 
+         # Add data to routine before saving tmp file
+-        if data is not None:
++        if sources:  # Continue: seeded from earlier runs (continue_run.py)
++            try:
++                data = confirm_seed(self, routine, sources)
++                if data is None:
++                    raise BadgerRoutineError("Run cancelled.")
++            except BadgerRoutineError:
++                self.run_action_bar.routine_finished()  # Reset action bar
++                raise
++            self.data_panel.set_routine(routine)
++            routine.data = data
++            fresh_trust_region(routine)
++            note_source(routine, len(data), [n for n, _ in sources])
++        elif data is not None:
+             # Make sure selected generator is compatible with prior data
+             if routine.generator.name in ["neldermead"]:
+                 self.run_action_bar.routine_finished()  # Reset action bar
+@@ -517,6 +546,8 @@
+                 )
+ 
+             routine.data = data
++            fresh_trust_region(routine)
++            note_source(routine, len(data))
+         else:
+             self.data_panel.set_routine(routine)
+ 
+@@ -555,10 +586,22 @@
+             self.run_action_bar.routine_finished()  # reset the action bar
+             return
+         # Set data options based on checkbox states from data_panel
++        sources = None
++        if self.run_action_bar.btn_continue.isChecked():
++            sources = self.seed_sources()
+         run_data_flag = self.data_panel.use_data
+         init_points_flag = self.data_panel.init_points
+ 
+-        if run_data_flag:
++        if sources:
++            run_data_flag, init_points_flag = True, False
++            self.prepare_run(init_points_flag=False, sources=sources)
++            data_to_load = self.current_routine.data
++            self.run_monitor.init_plots(self.current_routine)
++            self.current_routine.data = data_to_load
++            if self.current_routine.generator.data is None:
++                self.current_routine.generator.data = data_to_load
++
++        elif run_data_flag:
+             data_to_load = self.data_panel.get_data()  # Get data from data_panel
+             self.prepare_run(
+                 data=data_to_load,
