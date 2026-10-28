@@ -1572,3 +1572,9 @@ Fixes (main):
   (raw spill arrays and loss monitors used to come back as observables).
 - `tests/env_fixes_test.py` (stub interface, both twins; fails on the old
   code). READMEs' "Known issue" sections removed.
+- Docs: the "?" button in -mini now shows `docs/guides/minimode.md`, a guide to
+  the simplified -mini (Tuning Task, Parameters, Variables with Range (Δ) and
+  the outside-limits rule, History's Continue / Add its points, every
+  action-bar button, plots, safe-badger), written from the code. The
+  plugin-docs patch prefers `docs/guides/<name>.md` over Badger's guide;
+  plugin_docs_test checks it.

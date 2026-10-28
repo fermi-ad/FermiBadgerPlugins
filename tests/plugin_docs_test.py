@@ -73,10 +73,13 @@ if guides.is_dir():
         if (guides / "generators" / f"{name}.md").exists() and \
                 "From the Badger documentation" not in load_badger_docs(name, "generator"):
             failures.append(f"{name}: Badger's own guide is not appended")
-    if "# Mini Mode" not in load_badger_docs("minimode"):
-        failures.append("the action bar's '?' page (minimode) does not load")
 else:
     print(f"note: Badger's guides not fetched ({guides}); run setup online to check them")
+
+# The action bar's '?' in -mini: our own page (docs/guides/minimode.md), which
+# replaces Badger's (that one shows the stock -mini layout). No fetch needed.
+if "# The compact GUI (-mini)" not in load_badger_docs("minimode"):
+    failures.append("the action bar's '?' page (minimode) is not docs/guides/minimode.md")
 
 for f in failures:
     print("FAIL", f)

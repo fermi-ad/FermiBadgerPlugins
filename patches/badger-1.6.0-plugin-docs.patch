@@ -1,6 +1,6 @@
 diff -ruN a/badger/factory.py b/badger/factory.py
---- a/badger/factory.py	2026-10-23 14:30:37
-+++ b/badger/factory.py	2026-10-23 14:54:05
+--- a/badger/factory.py	2026-10-28 13:21:49
++++ b/badger/factory.py	2026-10-28 13:22:01
 @@ -214,6 +214,28 @@
          Formatted markdown string containing both the README content
          and the plugin class docstring if applicable in a code block.
@@ -30,7 +30,20 @@ diff -ruN a/badger/factory.py b/badger/factory.py
      # .../Badger/src/badger/factory.py
      PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
      BADGER_GUIDES_DIR = PROJECT_ROOT / "documentation" / "docs" / "guides"
-@@ -308,6 +330,9 @@
+@@ -234,8 +256,11 @@
+     docstring = None
+ 
+     try:
++        # FermiBadgerPlugins: a guide of our own (docs/guides/<name>.md in the
++        # plugin repo, e.g. minimode for the simplified -mini) replaces Badger's.
++        ours = Path(BADGER_PLUGIN_ROOT).parent / "docs" / "guides" / f"{name}.md"
+         try:
+-            with open(docs_dir / f"{name}.md", "r") as f:
++            with open(ours if ours.is_file() else docs_dir / f"{name}.md", "r") as f:
+                 readme = f.read()
+         except:
+             readme = f"# {name}\nNo documentation found.\n"
+@@ -308,6 +333,9 @@
      """
  
      readme = _format_md_docs(readme)

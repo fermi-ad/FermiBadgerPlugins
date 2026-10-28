@@ -65,9 +65,10 @@ without the class's type hints, so each is one line of YAML text.
 
 ## Docs
 
-- [ ] The action bar's "?" button opens Badger's own `minimode` guide, which
-  shows the stock `-mini` layout. Once simpler_mini is the norm, give it our
-  own page (e.g. `docs/guides/minimode.md` and a loader tweak).
+- [x] The action bar's "?" in `-mini` shows our own page,
+  `docs/guides/minimode.md` (2026-10-28; the plugin-docs patch prefers
+  `docs/guides/<name>.md` over Badger's guide). The full GUI's "?"
+  (`gui-usage`) still shows Badger's; a page of ours can follow the same way.
 - [ ] Upstream Badger's expected-improvement guide gives `max_travel_distances`
   in absolute units; Xopt 3.2.2 treats it as a fraction of each range. Our page
   says so; worth reporting upstream.
