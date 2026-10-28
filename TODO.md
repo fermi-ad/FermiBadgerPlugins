@@ -96,35 +96,20 @@ mini|g`: a launcher that restores automatically if Badger
 exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 `settings_snapshot_gui_test.py`, FakeBackend).
 
-- [ ] **Hand over the new operator launch line** for the external shortcut,
-  once machine-tested: `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml`
+- [x] **Machine tests on gmpsai2: all pass** (2026-10-26/27, ZZ_PacsysTesting,
+  `safe-badger mini`): Close → Keep / Revert; Ctrl-C (passes through pixi;
+  launcher restores); `kill -9` on the GUI, idle and mid-run (with the worker
+  patch: workers gone, devices restored); `kill -9` on the idle launcher (the
+  documented limit: Badger carries on, snapshot `*.stale` at next start);
+  SIGHUP to the launcher (restored); no Kerberos ticket (a `kdestroy` in
+  another terminal leaves the launcher's own ticket; with none in its own
+  terminal the run cannot write at all). Full offline suite passes there.
+- [x] **Operator launch line requested** (2026-10-28, the user):
+  `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml`
   (replaces `pixi run badger -mini -cf config.local.yaml -t ...`).
-- Machine-test results on gmpsai2 so far: full offline suite passes there
-  (2026-10-26, after the config.local.yaml test fix); **Ctrl-C passes through
-  pixi** and the launcher restores (log, 2026-10-26 12:02); Close → Revert
-  works (2026-10-27 10:28). **GUI killed mid-run (after the worker patch):
-  workers gone, devices reverted** (2026-10-27). kill -9 on the idle GUI and
-  on the idle launcher: smooth (user, 2026-10-27; the launcher case is the
-  documented limit, Badger carries on and the snapshot is flagged `.stale`
-  at the next start). **SIGHUP to the launcher: passed** (2026-10-27 11:37:
-  stopped Badger, restored 4 devices). **All planned machine tests pass**
-  (2026-10-27): next, hand over the operator launch line above.
-  - [x] **Kerberos:** restore after a `kdestroy` in the *second* terminal
-    succeeded (2026-10-27): that terminal's cache only; the launcher's own
-    ticket survived. With `kdestroy` in the launcher's own terminal before
-    starting it, the run could not write at all (0 of 4 devices differed after
-    a mid-run kill; restore had nothing to do). No ticket, no writes. Never `pkill -f badger`: it also hits the
-  launcher, and a SIGKILLed launcher can't restore.
-- [ ] **Machine tests — next, planned for 2026-10-22 on the MCR host** (steps in
-  `docs/progress.md`), with `development/ZZ_PacsysTesting.yaml` (role `testing`),
-  both `safe-badger mini` and `safe-badger g`, including Go in `-g` with an
-  environment chosen without a template:
-  close → Revert; close → Keep; Revert button mid-session; `kill -9` Badger
-  idle and mid-run (run subprocess must die before the restore); Ctrl-C in the
-  launcher's terminal (check pixi passes Ctrl-C through and safe-badger still
-  restores); closing the terminal (SIGHUP); a crash after `kdestroy`
-  (expect the loud warning at start and the manual `pixi run safe-badger restore` line).
-  Then RIL Acsys: the snapshot should record role `ril_tuning`.
+- Never `pkill -f badger` (or `pgrep -f badger | kill -9`): it also hits the
+  launcher, and a SIGKILLed launcher can't restore. `pixi run safe-badger pids`
+  says which PID is which.
 - [x] Maximum age for the *automatic* restore: 2 h from the first template load
   (decided 2026-10-21; sessions normally last under 30 min, 2 h leaves room
   for slow applications). Past it the snapshot becomes `*.expired`, not
@@ -197,8 +182,8 @@ it to paste in.
     `environment.yml` and `tests/test-quick-start-conda.sh` are marked
     frozen: kept, unmaintained, no new patches. The planned conda-vs-pixi
     dual run was skipped.
-  - [ ] Operator shortcut on the MCR host -> `cd <repo> && pixi run
-    safe-badger mini -t 01_Linac_RIL_tuning.yaml` (the user updates it).
+  - [x] Operator shortcut on the MCR host -> `cd <repo> && pixi run
+    safe-badger mini -t 01_Linac_RIL_tuning.yaml`: requested 2026-10-28.
   - [ ] Then retire `FermiBadger_env` on the MCR host by hand
     (`conda env remove -n FermiBadger_env`), and later decide whether to
     delete the frozen conda files from the repo.
@@ -220,22 +205,18 @@ it to paste in.
   completion (dev machine, VPN); no readback warning reported. Hit and
   fixed two unrelated pre-existing bugs along the way (stale per-user
   config above, and `Picker.setText` on stop — see docs/log.md).
-- [ ] `01_Linac_RIL_tuning_Pacsys` with `average_events: {default: 3}`: expect each
-  evaluation ~3 cycles slower and smoother objectives.
-- [ ] Try `development/01_Linac_RIL_tuning_Pacsys.yaml` at all (untested copy of the
-  Acsys template).
-- [ ] Pick an array device for a first `|rms` observable.
-- [ ] Mults machine check on the Pacsys testing role: both quads of a pair
-  move by coefficient × step × steps, `MultOOB` stays 0.
-- [ ] Once the above pass: run the Pacsys template side-by-side with the
-  Acsys production template for several operating shifts (dual-run),
-  watching for divergence or Pacsys-only errors (`DeviceError`, `RuntimeError`).
-- [ ] Cutover: flip `01_Linac_RIL_tuning.yaml`'s `environment.name` from
-  `..._Acsys` to `..._Pacsys` (filename/operator-facing name unchanged — no
-  shortcut edit needed for this phase, it's already running the pixi
-  launch line from the phase above). Retire `_Acsys` from production use
-  (interface code stays for off-site/sim use). Log the switch date and
-  evidence in `docs/log.md` / `docs/progress.md`.
+- [ ] **Cutover (decided 2026-10-28):** Pacsys is vetted as well as it can be
+  (live testing-role checks, the safe-badger machine tests); the planned
+  multi-shift Acsys/Pacsys dual run is dropped. Every real-world tuning
+  template switches to its `_Pacsys` environment; `_Acsys` environments stay
+  in the repo (off-site/sim use) but no template uses them. Log the date in
+  `docs/log.md`.
+- Follow-ups after the cutover, on the machine:
+  - [ ] `average_events: {default: 3}` on RIL: each evaluation ~3 cycles
+    slower, smoother objectives.
+  - [ ] Pick an array device for a first `|rms` observable.
+  - [ ] Mults check on the testing role: both quads of a pair move by
+    coefficient × step × steps, `MultOOB` stays 0.
 
 ## Later
 
@@ -255,7 +236,7 @@ it to paste in.
   User is considering either renaming it to something clearer like
   "Re-Read Values" or removing it outright; undecided, not yet acted on.
 
-## `simpler_mini` branch — UI redesign for typical operators, not developers
+## Simplified `-mini` — UI redesign for typical operators (simpler_mini, merged into main 2026-10-23)
 
 Branch off `main` at `8c7b557` (2026-10-21); **merged into main 2026-10-23**
 (fast-forward to `bc6b9b7`, user's decision after trying it locally; the MCR
@@ -300,6 +281,9 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
   track each one as it lands, same as this entry.
 
 ## Feature wish list (experimental, not scheduled)
+
+- [ ] **Merge `bells-and-whistles` into main** (decided 2026-10-28): Continue
+  from run (phases 1-2), the heteroskedastic testbed, the lit review.
 
 Ideas to explore; nothing here is built yet. Each entry says what already
 exists and what it would touch.
