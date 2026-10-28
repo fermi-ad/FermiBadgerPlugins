@@ -1583,3 +1583,9 @@ Fixes (main):
   label: 96 px clipped it); "Open Docs" stays inside the parameter panels;
   the 7.0 A bulk-supply ratings for source B and the MEBT trims are confirmed
   (comments in both RIL environments no longer call them stand-ins).
+- Docs window: a Back button (user's request: links like Algorithms-Overview
+  had no way back). In the toolbar above the page, so it stays put while the
+  page scrolls; returns to the previous page at the same scroll position
+  (restored after layout, else it snapped to the top); platform Back shortcut;
+  history restarts when the docs are opened afresh.
+  `badger-1.6.0-docs-back-button.patch`, `tests/docs_back_test.py`.
