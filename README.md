@@ -70,23 +70,26 @@ It is safe to re-run: patches already applied are detected and skipped.
 
 ### 3. Launch
 
-```bash
-pixi run badger -g -cf config.local.yaml
-```
-
-Or load a template straight into either GUI (the name is relative to `tuning_templates/`):
+Try it safely first, in the compact GUI under **safe-badger**, which puts back every device the session changed if Badger is interrupted (see [safe-badger](#safe-badger-revert-and-crash-safety)). This template writes only ACNET scratch/test devices (`G:AMANDA`, `Z:CUBE_X/Y/Z`) and needs a Kerberos ticket; it is a demonstration run from a decoy to the global minimum:
 
 ```bash
-pixi run badger -g -cf config.local.yaml -t 01_Linac_RIL_tuning.yaml
-pixi run badger -mini -cf config.local.yaml -t simulation/Xfer400MeV_example_VirtualAccelerator_MADXSuite.yaml
+pixi run safe-badger mini -t development/ZZ_PacsysTesting.yaml
 ```
 
-On the machine, launch either GUI through **safe-badger**, which puts back every device the session changed if Badger is interrupted (see [safe-badger](#safe-badger-revert-and-crash-safety)):
+With no control network at all, a simulation:
+
+```bash
+pixi run badger -mini -cf config.local.yaml -t simulation/TuneQx_SimpleVirtualAccelerator.yaml
+```
+
+Operations (writes real Linac devices; always under safe-badger):
 
 ```bash
 pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml
-pixi run safe-badger g -t 01_Linac_RIL_tuning.yaml
+pixi run safe-badger g -t 01_Linac_RIL_tuning.yaml      # the full GUI
 ```
+
+Template names are relative to `tuning_templates/`. The full GUI without a template: `pixi run safe-badger g` (or `pixi run badger -g -cf config.local.yaml`).
 
 Off-site, on the `offsite` environment, add `-e offsite`: `pixi run -e offsite badger -g -cf config.local.yaml`.
 
