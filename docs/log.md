@@ -1549,3 +1549,8 @@ Fixes (main):
   instead of a fixed 6 s (failed once under load). VA_plugin_smoke_test also
   failed once in the full run under load (the user's Badger running too) and
   passes alone.
+- Setup's closing message now suggests the safe templates first:
+  `safe-badger mini -t development/ZZ_PacsysTesting.yaml` (scratch devices
+  only), then a simulation, then the operators' RIL template marked as writing
+  real devices; the offsite environment gets only the simulation. It used to
+  suggest `Xfer400MeV_example.yaml`, which no longer exists.
