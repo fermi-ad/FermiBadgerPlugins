@@ -22,7 +22,8 @@ to type. A value that cannot be used is marked red, with the reason in its
 tooltip, and Go refuses to start until it is fixed.
 
 **Variables**: the devices the optimizer may change. Add one with the dropdown;
-**Refresh** reads their current values again. Columns: **Saved** (the value
+**Re-read values** reads their current values again (they also update by
+themselves after Reset environment, Dial in and each point). Columns: **Saved** (the value
 when the task loaded), **Current**, **Range (Δ)** (how far the optimizer may go
 either side of the current value; edit it per variable, or widen or narrow
 them all by about 10% with the arrows in the header). Untick a variable to leave it where it is.

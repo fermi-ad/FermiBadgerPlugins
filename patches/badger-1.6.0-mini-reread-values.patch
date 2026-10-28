@@ -1,0 +1,17 @@
+diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
+--- a/badger/gui/mini/components/env_cbox.py	2026-10-28 13:28:16
++++ b/badger/gui/mini/components/env_cbox.py	2026-10-28 13:29:07
+@@ -488,8 +488,11 @@
+         edit_var.setFixedWidth(192)
+ 
+         # refresh current
+-        self.refresh_current_btn = QPushButton("Refresh")
+-        self.refresh_current_btn.setFixedSize(96, 24)
++        # "Refresh" was unclear: it re-reads the Current column, live (they
++        # also update by themselves after Reset Env, Dial In and each point)
++        self.refresh_current_btn = QPushButton("Re-read values")
++        self.refresh_current_btn.setFixedHeight(24)  # width: as the label needs
++        self.refresh_current_btn.setMinimumWidth(96)
+ 
+         # show checked only
+         self.check_only_var = check_only_var = QCheckBox("Show Checked Only")

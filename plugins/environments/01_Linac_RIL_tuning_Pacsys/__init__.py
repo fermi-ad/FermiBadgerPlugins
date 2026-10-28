@@ -11,8 +11,7 @@ from pydantic import PrivateAttr
 # together. Sources A and B and MEBT Q1 and Q2 each have their own bulk supply; the two
 # sources must not interfere. Source A's supply limits the sum of the positive currents
 # and, separately, the magnitude of the sum of the negative ones, to 8 A each; the
-# others limit the sum of |I|. TODO: their 7.0 A is a stand-in pending expert
-# confirmation of each bulk supply's rating. Module level so the observables below
+# others limit the sum of |I|, rated 7.0 A (confirmed 2026-10-28). Module level so the observables below
 # can be listed from it.
 _BULK_PS = {
     'SourceATrims': {'positive': 8.0, 'negative': 8.0,

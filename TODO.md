@@ -229,15 +229,12 @@ it to paste in.
   overwriting operations templates refused. Full GUI also got the -mini VOCS
   layout (`badger-1.6.0-full-gui-vocs-layout.patch`). Both still to be tried
   on the production host along with the simpler mini.
-- [ ] Bulk-supply ratings for source B and the two MEBT trim supplies are 7.0 A stand-ins pending expert
+- [x] Bulk-supply ratings for source B and the two MEBT trim supplies: 7.0 A confirmed (user, 2026-10-28); was a stand-in pending expert
   confirmation. (Mult coefficients 20.0 and step size 0.05 were confirmed 2026-10-08.)
-- [ ] **Deferred design decision**: the `-mini` "Refresh" button next to Variables
-  (`refresh_current_btn` in `env_cbox.py`) does an on-demand live read of all
-  listed variables' current values (distinct from the auto-refresh on Reset
-  Env, Dial In, and after each evaluated point — see docs/log.md 2026-10-21).
-  User is considering either renaming it to something clearer like
-  "Re-Read Values" or removing it outright; undecided, not yet acted on.
-
+- [x] **The `-mini` "Refresh" button** (next to Variables) is now **"Re-read
+  values"** (user's decision, 2026-10-28; `badger-1.6.0-mini-reread-values.patch`):
+  an on-demand live read of the Current column, which also updates by itself
+  after Reset Env, Dial In and each point.
 ## Simplified `-mini` — UI redesign for typical operators (simpler_mini, merged into main 2026-10-23)
 
 Branch off `main` at `8c7b557` (2026-10-21); **merged into main 2026-10-23**
@@ -250,11 +247,10 @@ and doesn't need Badger-developer concepts surfaced as main-window rows.
   "Parameters" row with "Machine Interface"/"Optimization Algo" buttons
   (now in `badger-1.6.0-mini-simpler-ui.patch`). `env_cb`/`algo_cb` stay
   functional, just not shown — see docs/log.md 2026-10-21.
-- [ ] **Open: where should "Open Docs" live, and what should it show?**
-  Currently a provisional button inside each new collapsible panel. User
-  explicitly undecided on placement, and separately noted the docs
-  content itself (`BadgerDocsWindow`) is bare-bones and needs filling in
-  — that's a distinct task from the button's placement.
+- [x] **"Open Docs" stays where it is** (user's decision, 2026-10-28): inside
+  the Machine Interface / Optimization Algo panels, next to the settings it
+  describes; the action bar's "?" is for the window as a whole
+  (`docs/guides/minimode.md`).
 - [x] Removed the empty left sidebar next to Variables/Objectives/
   Constraints/Observables: each table now spans full width, left-justified
   where the label used to start, instead of a fixed 96px label column with

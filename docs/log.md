@@ -1578,3 +1578,8 @@ Fixes (main):
   action-bar button, plots, safe-badger), written from the code. The
   plugin-docs patch prefers `docs/guides/<name>.md` over Badger's guide;
   plugin_docs_test checks it.
+- Decisions (user, 2026-10-28): the -mini "Refresh" button becomes "Re-read
+  values" (`badger-1.6.0-mini-reread-values.patch`; the width now follows the
+  label: 96 px clipped it); "Open Docs" stays inside the parameter panels;
+  the 7.0 A bulk-supply ratings for source B and the MEBT trims are confirmed
+  (comments in both RIL environments no longer call them stand-ins).
