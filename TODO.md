@@ -59,8 +59,10 @@ without the class's type hints, so each is one line of YAML text.
   upstream main vs branch in one env (botorch 0.17.2): no new failures (4
   torch-compile tests fail on both, on this Mac). Not opened yet: user wants
   more testing first. Once released, drop our local patch.
-- [ ] Badger PR: the docs window's Back button (`badger-1.6.0-docs-back-button.patch`;
-  user, 2026-10-28: "a fix we should pass upstream to the Badger dev").
+- [x] Badger PR: the docs window's Back button: **xopt-org/Badger#298**
+  (opened 2026-10-28; branch `docs-back-button` on jasonstjohn/Badger, clone
+  `../Badger-docs-back`; fork CI green, its test ran). Once merged and
+  released, drop `badger-1.6.0-docs-back-button.patch`.
 - [ ] Badger: `_compose_routine` resets TuRBO state only for the short
   controller names (our `badger-1.6.0-turbo-state-reset.patch`); worth a
   Badger PR too.

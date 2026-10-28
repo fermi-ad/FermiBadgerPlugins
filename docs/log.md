@@ -1589,3 +1589,7 @@ Fixes (main):
   (restored after layout, else it snapped to the top); platform Back shortcut;
   history restarts when the docs are opened afresh.
   `badger-1.6.0-docs-back-button.patch`, `tests/docs_back_test.py`.
+- Opened xopt-org/Badger#298 (docs window Back button), re-applied to
+  upstream main's version of docs_window.py, with a pytest-qt test (a long
+  stand-in page, so it needs no guide files). Fork CI green: Linting, Tests on
+  3.11 and 3.12 (the new test ran and passed), PyPI build.
