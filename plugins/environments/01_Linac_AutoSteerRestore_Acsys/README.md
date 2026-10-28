@@ -26,12 +26,6 @@ The loaded template sets these; change them here before a run if needed.
 - `w_sumsq`: weights for `W_SumLosses`, `{loss monitor: weight}`. Each term is (weight × (1 + reading))².
 - `debug`: print every read and write to the terminal.
 
-## Known issue
-
-Requesting `VTrajError_SumSqBPM_calc` currently fails: the code that adds its
-inputs refers to an undefined name. Use the individual `-SETPOINT`
-observables until it is fixed.
-
 ## Safety
 
 - Every device this environment can write is recorded when the template loads; Revert, or the Keep/Revert question on close, puts them back.

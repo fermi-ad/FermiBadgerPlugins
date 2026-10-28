@@ -39,7 +39,9 @@ class Environment(environment.Environment):
         if not self.interface:
             raise BadgerNoInterfaceError
         calc_these = []
-        if 'DR_SDF' in observable_names: # Ensure the inputs to the calc will be returned
+        requested = list(observable_names)  # the caller's list stays as it was
+        observable_names = list(observable_names)
+        if 'DR_SDF_calc' in observable_names: # Ensure the inputs to the calc will be read
             for observable_name in ['Z:INSPLL_1_SRS[:]', 'Z:ITGSIG_1_SRS[:]']: 
                 if not observable_name in observable_names:
                     observable_names.append(observable_name)
@@ -66,11 +68,13 @@ class Environment(environment.Environment):
                         i_begin_spill = i
                         break
                 # Get the slice of the ITGSIG_1_SRS values that correspond to the spill
-                = result['Z:ITGSIG_1_SRS[:]'][i_begin_spill-1:i_begin_spill+self.spill_length]
+                # (from one sample before the spill; at sample 0, -1 would wrap to the end)
+                itgsig_spill = result['Z:ITGSIG_1_SRS[:]'][max(i_begin_spill-1, 0):i_begin_spill+self.spill_length]
                 # Calculate the variance of the ITGSIG_1_SRS values in the spill using numpy, and the SDF from that
                 result['DR_SDF_calc'] = 1.0 / (1.0 + np.var(itgsig_spill))
-    
-        return result
+
+        # Only what was asked for: not the spill arrays read just for the calc
+        return {name: result[name] for name in requested if name in result}
 
 
 

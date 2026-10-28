@@ -59,12 +59,6 @@ class Environment(environment.Environment):
                            'L:D74BPH':  0.341,
                            'L:D74BPV': -1.7,
                            'B:HPQ2':    1.348,
-                           'B:VPQ2':  16.2,
-                           
-                           'L:D73BPV': -0.53,
-                           'L:D74BPH':  0.341,
-                           'L:D74BPV': -1.7,
-                           'B:HPQ2':    1.348,
                            'B:VPQ2':  16.2}
     w_sumsq:       dict = {"L:DELM18": 1., "L:D00LM": 1., "L:D0VLM": 1.,
                            "L:D11LM": 1., "L:D12LM": 1., "L:D13LM": 1., "L:D14LM": 1.,
@@ -97,18 +91,15 @@ class Environment(environment.Environment):
         if not self.interface:
             raise BadgerNoInterfaceError
 
-        # Is this really needed?  Is there a case where the setpoint-subtracted, sq'd values are wanted but not listed?
-        if 'VTrajError_SumSqBPM_calc' in observable_names: # Ensure the inputs to the calc will be returned
-            #for input_dev in ["L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT"]:
-            for obsvbl in observable_names: 
-                if obsvbl.count('-SETPOINT')>0:
-                    observable_names.append(input_dev)
-                    print (f'Appending Obsv {obsvbl}')
+        requested = list(observable_names)  # the caller's list stays as it was
+        observable_names = list(observable_names)
+        # VTrajError_SumSqBPM_calc sums the '-SETPOINT' squared errors that were
+        # requested alongside it (the interface returns them squared).
 
-        if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be returned
+        if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be read
             for input_dev in list(self.w_sumsq.keys()):
                 if not input_dev in observable_names: observable_names.append(input_dev)
-            observable_names.remove('W_SumLosses') # only removes first occurrence. 
+            observable_names.remove('W_SumLosses') # computed below, not read
 
         # Some observables are calculated from read-back values. Set them aside, then read the others. 
         get_these_observables = []
@@ -133,12 +124,13 @@ class Environment(environment.Environment):
                     if sqerror_name.count('-SETPOINT') == 0: continue # Skip the non-setpoint results
                     sumsqerror += result[sqerror_name]                # Square Error is what the Interface should have returned
                 result['VTrajError_SumSqBPM_calc'] = sumsqerror
-        if "W_SumLosses" in observable_names and len(self.w_sumsq.keys())>0:
+        if "W_SumLosses" in requested and len(self.w_sumsq.keys())>0:
             sumsq = 0.0
             for dev_read, weight in self.w_sumsq.items():
                 if dev_read not in result.keys(): print (f'Unable to find {dev_read} among the read-back results: {list(result.keys())}')
                 sumsq += pow(weight * (1.0+result[dev_read]), 2.0) # Add unity, then scale by the weight, then square and add to the sum.
             result['W_SumLosses'] = sumsq
 
-        return result
+        # Only what was asked for: not the loss monitors read just for W_SumLosses
+        return {name: result[name] for name in requested if name in result}
 

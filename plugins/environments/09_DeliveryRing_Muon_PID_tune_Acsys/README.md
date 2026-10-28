@@ -19,12 +19,6 @@ the muon-campaign spill smoother, i.e. to raise the spill duty factor. It reads 
 - `setpoints`, `w_sumsq`: present for consistency with the other machine environments; not used by `DR_SDF_calc`.
 - `debug`: print every read and write to the terminal.
 
-## Known issue
-
-`DR_SDF_calc` currently fails: the code checks for the name `DR_SDF` instead of
-`DR_SDF_calc` when deciding to read the spill arrays, so they are never read.
-This Acsys version also has a syntax error that stops it loading at all.
-
 ## Safety
 
 - Every device this environment can write is recorded when the template loads; Revert, or the Keep/Revert question on close, puts them back.

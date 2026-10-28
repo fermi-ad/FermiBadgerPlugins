@@ -16,11 +16,4 @@ acsys.
 ## Parameters (Machine Interface)
 
 - `settings_role`: the DPM role used to write settings; your Kerberos principal must hold it (default `testing`).
-- `sample_event`: the clock event the readings are taken on (default `E,15,E,0`).
-
-## Known issue
-
-This environment predates the current interface: it calls interface methods
-in ways that no longer match (`get_value`, and adding `.SETTING` itself). It
-is expected to fail until it is brought up to date. `01_Linac_RIL_tuning` and
-`01_Linac_EnergyStabilization` show the current pattern.
+- `sample_events`: which clock event the readings are taken on, `{device or 'default': '@e,<event>,e,<delay>'}`. Default event 15.

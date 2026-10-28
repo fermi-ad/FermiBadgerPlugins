@@ -21,12 +21,6 @@ same environment through acsys.
 - `setpoints`, `w_sumsq`: present for consistency with the other machine environments; not used by `DR_SDF_calc`.
 - `debug`: print every read and write to the terminal.
 
-## Known issue
-
-`DR_SDF_calc` currently fails: the code checks for the name `DR_SDF` instead of
-`DR_SDF_calc` when deciding to read the spill arrays, so they are never read.
-The Acsys twin also has a syntax error that stops it loading.
-
 ## Safety
 
 - Every device this environment can write is recorded when the template loads; Revert, or the Keep/Revert question on close, puts them back.

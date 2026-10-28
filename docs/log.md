@@ -1554,3 +1554,21 @@ Fixes (main):
   only), then a simulation, then the operators' RIL template marked as writing
   real devices; the offsite environment gets only the simulation. It used to
   suggest `Xfer400MeV_example.yaml`, which no longer exists.
+
+## 2026-10-28 — housekeeping: three environments fixed (both twins)
+
+- DeliveryRing Muon PID: Acsys twin did not import (line lost its left-hand
+  side); `DR_SDF_calc` never read its spill arrays (checked for 'DR_SDF'); a
+  spill starting at sample 0 made `i-1` wrap to the end of the array.
+- AutoSteerRestore: `VTrajError_SumSqBPM_calc` raised NameError (undefined
+  `input_dev`, in a loop that also appended to the list it iterated);
+  `W_SumLosses` was never computed (removed from the names, then tested for);
+  five duplicated `setpoints` keys (same values).
+- MinD7LMSM: called `interface.get_value` (gone), passed a string where
+  `sample_events` is a dict, and wrote `L:V5QSET.SETTING.SETTING`; now
+  `get_settings` / `get_values(..., sample_events={'default': '@e,15,e,0'})` /
+  bare names. Parameter renamed `sample_events` (no template uses it).
+- All three: no longer modify the caller's list; return only requested names
+  (raw spill arrays and loss monitors used to come back as observables).
+- `tests/env_fixes_test.py` (stub interface, both twins; fails on the old
+  code). READMEs' "Known issue" sections removed.

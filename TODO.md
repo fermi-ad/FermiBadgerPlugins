@@ -72,21 +72,19 @@ without the class's type hints, so each is one line of YAML text.
   in absolute units; Xopt 3.2.2 treats it as a fraction of each range. Our page
   says so; worth reporting upstream.
 
-## Environment bugs found while writing their docs (2026-10-23)
+## Environment bugs found while writing their docs (2026-10-23) — fixed 2026-10-28
 
-Each README says so under "Known issue"; none affects the RIL, EnergyStabilization,
-QuadTuning or ZZ_PacsysTesting environments.
-
-- [ ] `09_DeliveryRing_Muon_PID_tune_Acsys` does not import: line 69 is
-  `= result[...]`, missing `itgsig_spill` on the left (the Pacsys twin has it).
-- [ ] `09_DeliveryRing_Muon_PID_tune_*`: `get_observables` checks for
-  `'DR_SDF'`, not `'DR_SDF_calc'`, so the spill arrays are never read and
-  `DR_SDF_calc` fails.
-- [ ] `01_Linac_AutoSteerRestore_*`: asking for `VTrajError_SumSqBPM_calc`
-  appends an undefined `input_dev`; its `setpoints` dict also repeats keys.
-- [ ] `01_Linac_MinD7LMSM_using_Tank5Phase_*`: calls `interface.get_value`
-  and passes `sample_event` positionally, and adds `.SETTING` itself; out of
-  date with the interfaces.
+- [x] `09_DeliveryRing_Muon_PID_tune_*`: Acsys twin's syntax error (import
+  failed); `DR_SDF_calc` checked for `'DR_SDF'` so the spill arrays were never
+  read; a spill starting at sample 0 sliced from the end.
+- [x] `01_Linac_AutoSteerRestore_*`: `VTrajError_SumSqBPM_calc` hit an undefined
+  name; `W_SumLosses` was never computed (the name was removed, then tested);
+  repeated `setpoints` keys.
+- [x] `01_Linac_MinD7LMSM_using_Tank5Phase_*`: brought up to date with the
+  interfaces (`get_settings`, `get_values` with `sample_events`, bare names to
+  `set_values`); parameter `sample_event` became `sample_events`.
+- All three, both twins: the caller's list of names is left alone and only the
+  requested names come back. `tests/env_fixes_test.py` (stub interface).
 
 ## safe-badger: revert and crash safety (built 2026-10-21 on main; `docs/safe-badger.md`)
 
