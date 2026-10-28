@@ -2052,3 +2052,29 @@ themselves.
   the Edit... dialogs with the RIL template, then hand over the operator
   launch line `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml`.
 - Step 3 of the plan: pixi as the norm (conda path frozen).
+
+## 2026-10-28: production status — safe-badger tested, Pacsys cutover, branches merged
+
+Status: main carries everything; `bells-and-whistles` merged into it (Continue
+from run, heteroskedastic testbed, lit review).
+
+- safe-badger: every planned machine test passed on gmpsai2 (2026-10-26/27);
+  the operator launch line `cd <repo> && pixi run safe-badger mini -t
+  01_Linac_RIL_tuning.yaml` has been requested. Run workers now stop when
+  their GUI dies; `pixi run safe-badger pids` tells which PID is which.
+- Pacsys cutover done: every real-world template uses its `_Pacsys`
+  environment (operators' filename unchanged); Acsys environments kept,
+  unused.
+- Fixes found on the host this week: variables outside their limits
+  (solenoids at standby before the power outage) are unticked with a warning;
+  `-mini` no longer hangs on a template load error; no validation ERROR logs
+  on template load; templates can set their own initial points.
+
+### Next
+
+- On gmpsai2: `git pull && pixi run setup -- --yes` (new patches), then the
+  operators' shortcut runs Pacsys under safe-badger.
+- After the outage: a first RIL run on Pacsys with the source solenoids back
+  in range; then the follow-ups in TODO.md (average_events, a `|rms`
+  observable, mults check).
+- Upstream: open the Xopt PR when ready; Badger PRs for the general fixes.

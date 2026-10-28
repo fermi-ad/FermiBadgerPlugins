@@ -29,7 +29,7 @@ description: |
     ready to tick. Pick the mobo generator and a second objective (e.g. L:TUNRAD MINIMIZE or
     L:D34LM MINIMIZE) for a Pareto front.
 environment:
-  name: 01_Linac_RIL_tuning_Acsys
+  name: 01_Linac_RIL_tuning_Pacsys
   params:
     debug: false
     mults:

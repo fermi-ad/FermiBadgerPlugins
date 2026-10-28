@@ -1526,3 +1526,26 @@ Fixes (main):
   are undone by taking the branch's TODO.md and log. The outside-limits patch
   is the branch's (rebuilt on top of the Continue patch); the TuRBO-reset
   README row names both tests. Patch set = the branch's; 28 tests pass.
+
+## 2026-10-28 — Pacsys cutover: every real-world template on pacsys
+
+- User: Pacsys is vetted as well as it can be; cut over all real-world
+  templates (the planned multi-shift dual run is dropped).
+- Switched `environment.name` to the `_Pacsys` twin in
+  `tuning_templates/01_Linac_RIL_tuning.yaml` (the operators', filename
+  unchanged) and in the three development templates, renamed per the naming
+  convention: `01_Linac_OutputTrajectory_RIL_tuning_Pacsys.yaml`,
+  `01_Linac_Phases_EnergyStabilization_Pacsys.yaml`,
+  `01_Linac_Quads_QuadTuning_Pacsys.yaml`.
+- Checked before switching, per template: the Pacsys twin accepts every
+  template parameter and offers every selected variable, objective,
+  constraint and observable; the twins' variables, hard limits, observables
+  and parameter defaults are identical (RIL Pacsys only adds the optional
+  `average_events`, off by default).
+- Acsys environments kept, unused (their READMEs say so). README tree and
+  naming example updated. `tests/pacsys_cutover_test.py`: no real-world
+  template may use or be named `_Acsys`. Template lint passes for all four.
+- worker_stops_without_gui_test now waits for Badger's pre-started worker
+  instead of a fixed 6 s (failed once under load). VA_plugin_smoke_test also
+  failed once in the full run under load (the user's Badger running too) and
+  passes alone.

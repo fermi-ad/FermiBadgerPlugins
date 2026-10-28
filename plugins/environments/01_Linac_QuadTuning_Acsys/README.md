@@ -2,6 +2,8 @@
 
 Tunes the Linac quadrupoles to lower beam losses along the Linac. It reads and writes ACNET through acsys. `01_Linac_QuadTuning_Pacsys` is the same environment through pacsys.
 
+**No template uses this environment since 2026-10-28**: every real-world template was switched to its `_Pacsys` twin. It is kept for comparison.
+
 ## What it can tune (variables)
 
 - Drift-tube Linac quads `L:Q01` ... `L:Q44` (45 to 185 A).

@@ -5,6 +5,8 @@ and the phases of two cavities, regulating two energy readings back to their
 values at the start of the run. It reads and writes ACNET through acsys.
 `01_Linac_EnergyStabilization_Pacsys` is the same environment through pacsys.
 
+**No template uses this environment since 2026-10-28**: every real-world template was switched to its `_Pacsys` twin. It is kept for comparison.
+
 ## What it can tune (variables)
 
 - `L:V5QSET`: tank 5 phase setting.

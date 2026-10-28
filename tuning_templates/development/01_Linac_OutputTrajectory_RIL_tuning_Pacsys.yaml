@@ -12,7 +12,7 @@ description: |
   Windows: +-0.3 around the live readback at load (Automatic).
   Notes: the targets are the setpoints in the environment params; edit them there. Readings on $52.
 environment:
-  name: 01_Linac_RIL_tuning_Acsys
+  name: 01_Linac_RIL_tuning_Pacsys
   params:
     debug: false
     sample_events:

@@ -13,7 +13,7 @@ description: |
   Notes: readings on $0A. Expected improvement with the optimize turbo controller.
     L:QPS508 runs on an isolation transformer; do not push it high.
 environment:
-  name: 01_Linac_QuadTuning_Acsys
+  name: 01_Linac_QuadTuning_Pacsys
   params:
     debug: false
     sample_events:

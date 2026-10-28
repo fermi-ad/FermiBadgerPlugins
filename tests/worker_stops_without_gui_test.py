@@ -17,7 +17,6 @@ import os
 import sys
 
 TEMPLATE = "tuning_templates/simulation/TuneQx_SimpleVirtualAccelerator.yaml"
-READY_SECONDS = 6  # Badger pre-starts its run worker; Go before it is ready fails
 RUN_SECONDS = 12
 
 
@@ -48,8 +47,19 @@ def gui(config):
         print("WORKERS", " ".join(map(str, pids)), flush=True)
         os.kill(os.getpid(), signal.SIGKILL)
 
-    QTimer.singleShot(READY_SECONDS * 1000, page.start_run)
-    QTimer.singleShot((READY_SECONDS + RUN_SECONDS) * 1000, die)
+    # Go once Badger's pre-started run worker is ready (Go before then fails),
+    # however long a loaded machine takes; then die RUN_SECONDS later.
+    waited = []
+
+    def go_when_ready():
+        if page.process_manager.processes_queue or len(waited) > 120:
+            page.start_run()
+            QTimer.singleShot(RUN_SECONDS * 1000, die)
+        else:
+            waited.append(1)
+            QTimer.singleShot(500, go_when_ready)
+
+    QTimer.singleShot(500, go_when_ready)
     app.exec_()
     _ = window
 

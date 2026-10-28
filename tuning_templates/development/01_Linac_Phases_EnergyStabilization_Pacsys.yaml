@@ -14,7 +14,7 @@ description: |
     so a setting past the wrap is allowed and means the same as setting - 360. With
     settings_role nosettings the phases are read but never set; give a real role to tune.
 environment:
-  name: 01_Linac_EnergyStabilization_Acsys
+  name: 01_Linac_EnergyStabilization_Pacsys
   params:
     debug: false
     periods:

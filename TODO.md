@@ -205,12 +205,15 @@ it to paste in.
   completion (dev machine, VPN); no readback warning reported. Hit and
   fixed two unrelated pre-existing bugs along the way (stale per-user
   config above, and `Picker.setText` on stop — see docs/log.md).
-- [ ] **Cutover (decided 2026-10-28):** Pacsys is vetted as well as it can be
+- [x] **Cutover (decided and done 2026-10-28):** Pacsys is vetted as well as it can be
   (live testing-role checks, the safe-badger machine tests); the planned
   multi-shift Acsys/Pacsys dual run is dropped. Every real-world tuning
   template switches to its `_Pacsys` environment; `_Acsys` environments stay
-  in the repo (off-site/sim use) but no template uses them. Log the date in
-  `docs/log.md`.
+  in the repo (off-site/sim use) but no template uses them. Done: the
+  operators' `01_Linac_RIL_tuning.yaml` (same filename) and the three
+  development templates (renamed `..._Pacsys.yaml`); each twin checked to
+  accept every template parameter and name, with identical variables, hard
+  limits and observables. `tests/pacsys_cutover_test.py` guards it.
 - Follow-ups after the cutover, on the machine:
   - [ ] `average_events: {default: 3}` on RIL: each evaluation ~3 cycles
     slower, smoother objectives.

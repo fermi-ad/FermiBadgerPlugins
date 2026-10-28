@@ -1,9 +1,12 @@
 # Linac RIL tuning (Acsys)
 
 Tunes the front end of the Linac: the RIL ion sources, LEBT, RFQ and MEBT, plus
-the last Linac trims, to raise transmission and lower losses. This is the
-machine interface behind the operations template `01_Linac_RIL_tuning.yaml`.
+the last Linac trims, to raise transmission and lower losses. It was the
+machine interface behind the operations template `01_Linac_RIL_tuning.yaml`
+until 2026-10-28.
 It reads and writes ACNET through acsys. `01_Linac_RIL_tuning_Pacsys` is the same environment through pacsys.
+
+**No template uses this environment since 2026-10-28**: every real-world template was switched to its `_Pacsys` twin. It is kept for comparison.
 
 ## What it can tune (variables)
 
