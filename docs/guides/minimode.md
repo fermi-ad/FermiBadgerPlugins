@@ -78,3 +78,18 @@ starting values. Points from earlier runs (Continue) are drawn separately.
 Closing the window with devices changed asks **Keep / Revert / Cancel**. If
 Badger crashes or is killed, safe-badger stops it and restores; the run itself
 stops within a second. `pixi run safe-badger pids` shows which process is which.
+
+## If Badger stops responding
+
+If the window freezes, or **Stop** does nothing, end the window from a second
+terminal; safe-badger then stops the run and puts the devices back:
+
+    cd /home/lcape/FermiBadgerPlugins
+    pixi run safe-badger pids        # shows the "Badger GUI" PID
+    kill -9 <Badger GUI PID>
+
+Or press Ctrl-C in the terminal that started safe-badger. Never `kill -9` the
+safe-badger launcher itself, or `pkill -f badger`: then nothing can restore.
+
+A Stop pressed while a point is being set or read takes effect when that point
+is done: a delay of up to one evaluation is normal.

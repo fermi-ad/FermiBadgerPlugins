@@ -286,11 +286,33 @@ work on `*.stale` files too.
 | Badger crashes, or `kill -9` on Badger | launcher stops the group (and the worker), then restores |
 | Ctrl-C in the launcher's terminal | launcher stops Badger, then restores (the question is never shown) |
 | Terminal window closed (SIGHUP) | same as Ctrl-C; output goes only to `logs/safe-badger.log` |
+| ssh connection with X forwarding drops | Badger loses its display and exits, and the launcher gets SIGHUP: it stops the group and restores. Each part is tested (SIGHUP; GUI killed mid-run); the combination not yet |
 | `kill` (SIGTERM) on the launcher | same as Ctrl-C |
 | `kill -9` on the launcher, host down | nothing at the time: Badger and its run carry on unwatched (seen on the production host, 2026-10-27); the next `safe-badger mini` renames the snapshot `*.stale` and logs the restore command. Use `kill -HUP` on the launcher instead (`safe-badger pids` shows which PID) |
 | Any of the three above, more than 2 h after the first template load | stops Badger, does **not** restore; snapshot renamed `*.expired`, restore command logged |
 | No Kerberos ticket | warning at start; a restore fails and logs the manual command |
 | Plain `badger -mini` / `badger -g` (no launcher) | Revert and the close question work; no automatic restore. If the GUI crashes or is killed, its run workers stop by themselves within about a second |
+
+## If Badger stops responding
+
+A frozen GUI never handles a Stop click, and its run keeps going: the worker's
+watchdog only acts when the GUI process is gone, not when it hangs. So end the
+GUI; the launcher does the rest:
+
+```
+pixi run safe-badger pids        # the "Badger GUI" PID, and the launcher's
+kill -9 <Badger GUI PID>
+```
+
+The launcher ends Badger's process group (the worker too, which also exits by
+itself within a second) and restores. Equivalent: `kill -HUP <launcher PID>` or
+Ctrl-C in the launcher's terminal (up to ~10 s: TERM, then KILL after 5 s).
+Never `kill -9` the launcher or `pkill -f badger`: a SIGKILLed launcher cannot
+restore, and Badger runs on.
+
+If the GUI responds but Stop seems slow: it is checked before each point, not
+during one, so a point in the middle of a long set-and-settle or read finishes
+first (up to one evaluation).
 
 ## Limits
 

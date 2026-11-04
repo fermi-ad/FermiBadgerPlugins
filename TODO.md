@@ -110,6 +110,9 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 - [x] **Operator launch line requested** (2026-10-28, the user):
   `cd <repo> && pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml`
   (replaces `pixi run badger -mini -cf config.local.yaml -t ...`).
+- [ ] Machine test: an ssh connection with X forwarding dropping mid-run (the way
+  operators connect): expect Badger to exit, the launcher to restore, and the
+  log to say so. Each part already passed (SIGHUP, GUI killed mid-run).
 - Never `pkill -f badger` (or `pgrep -f badger | kill -9`): it also hits the
   launcher, and a SIGKILLed launcher can't restore. `pixi run safe-badger pids`
   says which PID is which.

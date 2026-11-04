@@ -1593,3 +1593,13 @@ Fixes (main):
   upstream main's version of docs_window.py, with a pytest-qt test (a long
   stand-in page, so it needs no guide files). Fork CI green: Linting, Tests on
   3.11 and 3.12 (the new test ran and passed), PyPI build.
+
+## 2026-11-04 — "If Badger stops responding" in the docs
+
+- Operators connect over ssh with X forwarding. Added an "If Badger stops
+  responding" section to the -mini "?" page and to docs/safe-badger.md: kill
+  -9 the GUI (`safe-badger pids` for the PID), or HUP / Ctrl-C the launcher;
+  never kill -9 the launcher. A frozen GUI never handles Stop and its run goes
+  on (the worker watchdog acts on a dead GUI, not a hung one); a slow Stop on a
+  responsive GUI waits for the current point. safe-badger.md's endings table
+  gains the X-forwarding drop (untested as a combination: TODO).
