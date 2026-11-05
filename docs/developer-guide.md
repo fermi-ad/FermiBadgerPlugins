@@ -319,8 +319,10 @@ or a stub interface. From the repo root, in this order:
    copy a focused test: `tests/archetype_test.py` (every feature, on
    `FakeBackend`) or `tests/env_fixes_test.py` (a stub interface). Use
    `NoisyFakeBackend` (`tests/noisy_fake.py`), as those two do: its readings
-   carry 0.1% Gaussian noise, so compare with a tolerance, never `==`. Stored
-   settings stay exact.
+   carry 0.1% Gaussian noise, on a fresh seed each run (printed;
+   `NOISY_FAKE_SEED=<seed>` repeats a run), including each event averaged by
+   `average_events`. So compare with a tolerance, never `==`, and leave a wide
+   margin (6σ or more). Stored settings stay exact.
 3. The whole suite:
    `for t in tests/*_test.py; do pixi run python "$t" || echo "FAIL $t"; done`.
    It takes 10 to 20 minutes; GUI tests run offscreen.

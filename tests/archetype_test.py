@@ -70,6 +70,7 @@ assert w('L:LDPADJ.SETTING') is not None and w(f'{PAIR}.SETTING') is None
 # the computed ones, and the ones from settings; only the requested names come back
 ev = env.sample_events
 fb.set_reading('G:LINEFF' + ev['default'], 0.9)
+fb.set_reading('L:D7TOR' + ev['default'], 30.0)  # average_events 3: mean of 3 noisy events
 fb.set_reading('B:400DFT' + ev['default'], 10.0)  # 'hold': the first reading is the target
 for d, v in {'L:D73BPV': -0.53 + 0.1, 'L:D74BPV': -1.7 - 0.2}.items():
     fb.set_reading(d + ev['default'], v)
@@ -80,13 +81,14 @@ signal = np.r_[np.zeros(3), np.tile([1.0, 3.0], 250)]
 fb.set_reading('Z:INSPLL_1_SRS[:]' + ev['Z:INSPLL_1_SRS[:]'], gate, value_type=ValueType.SCALAR_ARRAY)
 fb.set_reading('Z:ITGSIG_1_SRS[:]' + ev['Z:ITGSIG_1_SRS[:]'], signal, value_type=ValueType.SCALAR_ARRAY)
 
-names = ['G:LINEFF', 'B:400DFT-SETPOINT', 'Z:ITGSIG_1_SRS[:]|std', 'W_SumLosses',
+names = ['G:LINEFF', 'L:D7TOR', 'B:400DFT-SETPOINT', 'Z:ITGSIG_1_SRS[:]|std', 'W_SumLosses',
          'VTrajError_SumSqBPM_calc', 'SpillDutyFactor_calc', 'BulkPS_SourceATrims_Pos',
          'BulkPS_MEBTQ1trims', 'MultOOB_MUQ']
 asked = list(names)
 out = quiet(env.get_observables, asked)
 assert asked == names and sorted(out) == sorted(names), out  # list untouched; nothing extra
 assert np.isclose(out['G:LINEFF'], 0.9, rtol=0.01), out
+assert np.isclose(out['L:D7TOR'], 30.0, rtol=0.01) and out['L:D7TOR'] != 30.0, out
 assert out['B:400DFT-SETPOINT'] < (10.0 * 0.01) ** 2, out  # held at its first reading, +- noise
 assert np.isclose(out['VTrajError_SumSqBPM_calc'], 0.1 ** 2 + 0.2 ** 2, rtol=0.1), out
 assert np.isclose(out['Z:ITGSIG_1_SRS[:]|std'], np.std(signal), rtol=0.01), out

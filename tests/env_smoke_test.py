@@ -35,8 +35,6 @@ def smoke(env_name):
     except ValidationError:  # an environment that never writes (the archetype)
         env, writes = E(interface=Interface()), False
     fb = env.interface._backend_override = NoisyFakeBackend()
-    if hasattr(env, "average_events"):  # averaging waits for streamed events the fake
-        env.average_events = {"default": 1}  # never sends (tests/pacsys_interface_test.py covers it)
     env.interface._timeout = 1.0
 
     variables = [v for v in E.variables if plain(v)]

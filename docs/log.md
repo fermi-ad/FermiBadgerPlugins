@@ -1706,3 +1706,11 @@ Fixes (main):
   comparing with tolerances. The other FakeBackend tests (interface, unwrap,
   mults, heteroskd) stay exact: they check exact arithmetic. Not explored:
   whether 0.1% is realistic for any given device.
+
+- Follow-up (user: real runs aren't reproducible): the noisy fake now takes a
+  fresh seed each run (`secrets.randbits(32)`, printed to stderr;
+  `NOISY_FAKE_SEED` repeats one), and streams independently noisy events to
+  subscriptions every 10 ms, so `average_events` > 1 works on it and each
+  averaged input is noisy. The smoke test no longer forces averaging off; the
+  archetype test checks `L:D7TOR` averaged over 3 events. Tolerances are 6σ
+  or wider; 50 runs on fresh seeds, no failures.
