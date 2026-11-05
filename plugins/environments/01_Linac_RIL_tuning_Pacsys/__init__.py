@@ -1,6 +1,6 @@
-# The most complete Pacsys environment, and the one to copy. Its conventions (mults,
-# BulkPS, periods, -SETPOINT observables, averaging, computed observables) are explained
-# in docs/developer-guide.md, "Conventions in the code you copied".
+# The operations environment for RIL tuning. Its conventions (mults, BulkPS, periods,
+# -SETPOINT observables, averaging, computed observables) are explained in
+# docs/developer-guide.md; new environments start from ZZ_Archetype_Pacsys instead.
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
 from typing import Dict

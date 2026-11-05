@@ -2095,3 +2095,9 @@ fixed (found by the new `tests/env_smoke_test.py`).
 
 A new environment and template in one command: `pixi run new-env
 <region>_<Descriptive>_Pacsys [--from <env>]` (developer guide, "Quickstart").
+
+## 2026-11-05: the archetype
+
+New environments start from `ZZ_Archetype_Pacsys` (every feature, never
+writes): `pixi run new-env <name>`. Keep it complete: a feature added to any
+environment goes there too, tested in `tests/archetype_test.py`.

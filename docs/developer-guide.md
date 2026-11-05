@@ -12,8 +12,8 @@ One command, from the repo root, with your new environment's name
 pixi run new-env 01_Linac_MyTask_Pacsys
 ```
 
-It copies the most complete working pair, `01_Linac_RIL_tuning_Pacsys` and its
-development template, to `plugins/environments/01_Linac_MyTask_Pacsys/` and
+It copies the **archetype**, `ZZ_Archetype_Pacsys` and its development template,
+to `plugins/environments/01_Linac_MyTask_Pacsys/` and
 `tuning_templates/development/01_Linac_MyTask_Pacsys.yaml`. It renames them
 throughout, and makes both read only (`settings_role: nosettings`). Then it
 checks them offline (nothing reaches ACNET): the template loads as the GUI
@@ -21,6 +21,9 @@ would (`tests/template_lint_test.py`), and the environment reads and sets on a
 fake ACNET (`tests/env_smoke_test.py`). It refuses a name that breaks the
 convention, and never overwrites. To start from another example (table below),
 add `--from <environment>`.
+
+Why the archetype (see "Terminology to know"): the operations environments,
+such as RIL, can change without changing what new environments start from.
 
 Then edit (here `$NEW` is your environment's name):
 
@@ -51,8 +54,8 @@ move the file to `tuning_templates/development/` and rename it.
 
 | Start from | When |
 |---|---|
-| `01_Linac_RIL_tuning_Pacsys` | most tasks: plain devices, mults, BulkPS, phases, setpoints, averaging, computed observables |
-| `01_Linac_EnergyStabilization_Pacsys` | the knob you set is not the device that measures its effect (read/set pairs, settle triplets) |
+| `ZZ_Archetype_Pacsys` (the default) | most tasks: every feature, to keep or delete |
+| an operations environment, e.g. `01_Linac_RIL_tuning_Pacsys` | a variant of one that exists, with its devices and limits |
 | `ZZ_PacsysTesting` | the smallest; scratch devices only, for learning |
 
 ## Terminology to know
@@ -76,6 +79,11 @@ move the file to `tuning_templates/development/` and rename it.
   must lie inside them.
 - **Observable**: anything Badger may read: a device, or a value the
   environment computes. Objectives and constraints are chosen from these.
+- **Archetype**: `ZZ_Archetype_Pacsys`, an environment kept only to be copied.
+  It holds every feature in "Conventions in the code you copied", with real
+  device names, and its template uses them. It never writes (it refuses any
+  role but `nosettings`); `new-env` removes that guard from your copy.
+  `tests/archetype_test.py` checks every feature.
 - **Settings role**: the DPM role used for writing settings; the Kerberos
   principal running Badger must be in the role's users, and the devices must
   be in the role, too. `nosettings` means read only.
@@ -113,8 +121,8 @@ A name in `variables` or `observables` can take these forms:
 ### Read/set pairs and settle triplets
 
 Use a pair when the knob you set is not the device that shows its effect: in
-EnergyStabilization, Badger sets the phase adjust `L:LDPADJ` and reads the
-measured phase `L:CDPHAS`.
+the archetype (as in EnergyStabilization), Badger sets the phase adjust
+`L:LDPADJ` and reads the measured phase `L:CDPHAS`.
 
 - The variable's value is the **reading** (the first name). Badger writes the
   value it chooses to the **setting** (the second). The two must share units
@@ -128,10 +136,10 @@ measured phase `L:CDPHAS`.
 - A plain device is checked: its stored SETTING must match the value sent
   (a warning if it doesn't).
 - safe-badger records and restores the setting device (the second name).
-- Reading pairs: EnergyStabilization's `get_variables` calls
-  `interface.get_values`, which returns the reading. RIL's calls
-  `interface.get_settings`, which returns the setting device's SETTING. If you
-  add a pair to a RIL copy, read it the EnergyStabilization way.
+- In `get_variables`, the archetype reads pairs with `interface.get_values`
+  (the reading) and plain devices with `interface.get_settings` (the
+  SETTING). Some operations environments read everything one way; if you copy
+  one of those and add a pair, read it the archetype's way.
 
 ### `-SETPOINT` observables and `setpoints`
 
@@ -146,14 +154,15 @@ which regulates a quantity back to where it was when the run started.
 comes back wrapped into one period; the interface unwraps it so a pass through
 0 is not a 360° jump, and `get_variables` moves it to the branch nearest the
 middle of its hard limits. Declare a free-running phase variable two periods
-wide (`[0., 720.]`); RIL's phases have tight operating limits instead. See the
+wide (`[0., 720.]`), as the archetype's `L:CDPHAS` pair is; its `L:RFQPAH` has
+tight operating limits instead. See the
 README, "Periodic (phase, angle) devices".
 
 ### Timing and averaging: `sample_events`, `average_events`
 
 - `sample_events`: a dictionary of data request timing: which clock event each reading uses,
-  `{device or 'default': '@e,<event>,e,<delay>'}`. RIL reads on $52, and
-  `B:BOOEFF` on $1F.
+  `{device or 'default': '@e,<event>,e,<delay>'}`. The archetype reads on $52,
+  `B:BOOEFF` on $1F, and its arrays on $83.
 - `average_events`: `{device or 'default': N}`. A reading becomes the mean of N
   fresh events (N > 1 needs an event, not `@i`). It costs N cycles per point
   and gives a smoother objective.
@@ -161,8 +170,8 @@ README, "Periodic (phase, angle) devices".
 ### Mults: several devices on one knob
 
 A **mult** is a console-style knob: one Badger variable that moves several
-devices together in fixed proportion. In RIL, `mult:MUQ` moves `L:MUQ1` and
-`L:MUQ2`.
+devices together in fixed proportion. In the archetype (as in RIL), `mult:MUQ`
+moves `L:MUQ1` and `L:MUQ2`.
 
 - The variable `mult:<name>` is an integer step count within its hard limits
   (`[-10, 10]`).
@@ -189,20 +198,21 @@ draw too much together.
 - The `BulkPS_Limit` parameter lists each supply: its `devices`, and either
   `limit` (the sum of |I| stays ≤ it) or `positive` and `negative` (the sum of
   positive currents ≤ one, and the magnitude of the sum of negative currents ≤
-  the other). RIL's defaults are in `_BULK_PS` at the top of the file.
+  the other). The archetype's defaults are in `_BULK_PS` at the top of the file.
 - Before every write, `set_variables` checks each budget. If one is over, it
   moves the largest current being set toward zero until it fits. Members not
   being set count at their live setting; if they alone exceed the limit, the
   write is refused.
 - Each budget is also an observable, `BulkPS_<group>` (or `_Pos` and `_Neg`),
-  so a template can constrain it, as RIL's does.
+  so a template can constrain it, as the archetype's does.
 - The logic lives in `plugins/supply_limits.py`.
 
 ### Computed observables
 
-An observable the interface doesn't read directly: RIL's
-`VTrajError_SumSqBPM_calc` (a sum of `-SETPOINT` errors) and `W_SumLosses` (a
-weighted sum of loss monitors, weights in `w_sumsq`). `get_observables`:
+An observable the interface doesn't read directly. The archetype has three:
+`W_SumLosses` (a weighted sum of loss monitors, weights in `w_sumsq`),
+`VTrajError_SumSqBPM_calc` (a sum of `-SETPOINT` errors), and
+`SpillDutyFactor_calc` (from two whole arrays, with numpy). `get_observables`:
 
 1. copies the list it is given (never modify the caller's list);
 2. adds the inputs it needs and removes the computed names;
@@ -277,7 +287,7 @@ The keys; `tests/template_lint_test.py` requires the first group:
 
 | Key | What it holds |
 |---|---|
-| `name`, `description` | the description is shown to operators: say the goal, objective, variables, windows, and anything unusual (see the RIL template) |
+| `name`, `description` | the description is shown to operators: say the goal, objective, variables, windows, and anything unusual (see the archetype's template) |
 | `environment` | `name`, and `params` (the environment's parameters, overriding its defaults). `name` should be your new Environment. |
 | `vocs` | `variables` (`{name: [lo, hi]}`), `objectives` (`{name: {type: MinimizeObjective}}`, or `MaximizeObjective`), `constraints` (`{name: {type: LessThanConstraint, value: 18.0}}`, or `GreaterThanConstraint`), `observables`. That is the form `Save as` writes; the short forms `MINIMIZE` and `[LESS_THAN, 18.0]` also work |
 | `generator` | the algorithm and its settings (`expected_improvement` is the usual choice; see `docs/algorithms/`) |
@@ -302,8 +312,8 @@ or a stub interface. From the repo root, in this order:
    GUI would.
 2. `pixi run python tests/env_smoke_test.py <your environment>`: reads and a
    set on a fake ACNET. For mults, pairs, arrays and computed observables,
-   copy a focused test: `tests/env_fixes_test.py` (a stub interface),
-   `tests/mults_test.py` or `tests/periodic_phase_test.py` (`FakeBackend`).
+   copy a focused test: `tests/archetype_test.py` (every feature, on
+   `FakeBackend`) or `tests/env_fixes_test.py` (a stub interface).
 3. The whole suite:
    `for t in tests/*_test.py; do pixi run python "$t" || echo "FAIL $t"; done`.
    It takes 10 to 20 minutes; GUI tests run offscreen.

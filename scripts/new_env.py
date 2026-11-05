@@ -1,5 +1,6 @@
-"""Make a new Pacsys environment and its development template by copying a working
-pair, then check both offline. Nothing is read from or written to ACNET.
+"""Make a new Pacsys environment and its development template by copying the
+archetype (ZZ_Archetype_Pacsys: every feature, never writes) or another working
+environment, then check both offline. Nothing is read from or written to ACNET.
 
     pixi run new-env 01_Linac_MyTask_Pacsys
     pixi run new-env 01_Linac_MyTask_Pacsys --from 01_Linac_EnergyStabilization_Pacsys
@@ -22,6 +23,24 @@ ENVS = Path('plugins/environments')
 TEMPLATES = Path('tuning_templates/development')
 
 
+def strip_archetype_only(text):
+    """Drop the blocks only the archetype needs: from a line holding 'ARCHETYPE-ONLY'
+    through the one holding 'END ARCHETYPE-ONLY' (a # or <!-- --> comment). A blank
+    line left doubled by the removal goes too."""
+    out, skip, removed = [], False, False
+    for line in text.splitlines(keepends=True):
+        if skip or 'ARCHETYPE-ONLY' in line:
+            skip = 'END ARCHETYPE-ONLY' not in line
+            removed = True
+            continue
+        if removed and not line.strip() and (not out or not out[-1].strip()):
+            removed = False
+            continue
+        removed = False
+        out.append(line)
+    return ''.join(out)
+
+
 def sub(path, pattern, repl, flags=0):
     path.write_text(re.sub(pattern, repl, path.read_text(), flags=flags))
 
@@ -40,7 +59,7 @@ def source_template(env):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     ap.add_argument('new', help='<region>_<Descriptive>_Pacsys, e.g. 01_Linac_MyTask_Pacsys')
-    ap.add_argument('--from', dest='src', default='01_Linac_RIL_tuning_Pacsys',
+    ap.add_argument('--from', dest='src', default='ZZ_Archetype_Pacsys',
                     help='environment to copy (default: %(default)s)')
     ap.add_argument('--no-check', action='store_true', help='skip the lint and smoke tests')
     a = ap.parse_args(argv)
@@ -62,6 +81,7 @@ def main(argv=None):
     shutil.copy(src_template, template)
     for p in [*env_dir.iterdir(), template]:
         if p.suffix in ('.py', '.yaml', '.md'):
+            p.write_text(strip_archetype_only(p.read_text()))
             sub(p, re.escape(a.src), a.new)
     # Read only until the developer sets a real role, in both places it is set.
     sub(env_dir / '__init__.py', r"settings_role:(\s*)str(\s*)=.*", r"settings_role:\1str\2= 'nosettings'")

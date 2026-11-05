@@ -1661,3 +1661,28 @@ Fixes (main):
   interface's), and with no arguments it checks every environment whose
   configs.yaml names BasicPacsysInterface (the ZZ ones were missed by the
   `*_Pacsys` glob). New `tests/new_env_test.py`.
+
+## 2026-11-05 — the archetype environment
+
+- User: new environments should start from an archetype with every feature, so
+  RIL can change without disturbing `new-env`. Asked: real device names but
+  never writes (chosen), and named `ZZ_Archetype_Pacsys` (chosen).
+- `plugins/environments/ZZ_Archetype_Pacsys`: RIL's features (plain devices,
+  BulkPS with both limit kinds, a mult and its OOB observable, a tight-limit
+  phase, sample_events per device, average_events, numeric setpoints,
+  W_SumLosses, VTrajError) plus EnergyStabilization's (a settle triplet read
+  by its reading, two periods wide; 'hold') and DR Muon's (arrays: a `|std`
+  reduction and a numpy-computed SpillDutyFactor_calc). A pydantic validator
+  refuses any role but nosettings (Badger validates on assignment too).
+  Template `development/ZZ_Archetype_Pacsys.yaml` uses each kind.
+- `new-env` defaults to it and strips the `ARCHETYPE-ONLY` blocks (the guard,
+  its import, the archetype notes) line by line, dropping a blank line only
+  where the block sat between two.
+- `tests/archetype_test.py`: every feature on FakeBackend (the guard is
+  bypassed with object.__setattr__ to test writes). Gotchas: arrays in the
+  fake need `value_type=ValueType.SCALAR_ARRAY`; Badger's get_observables
+  wrapper reorders names. `env_smoke_test` now accepts a never-writing
+  environment and sets average_events to 1 (averaging waits for streamed
+  events the fake never sends; pacsys_interface_test covers it).
+- The `last-acsys` tag had vanished locally (likely pruned by fetch); retagged
+  at 79aa179, the last commit with Acsys code, and pushed.

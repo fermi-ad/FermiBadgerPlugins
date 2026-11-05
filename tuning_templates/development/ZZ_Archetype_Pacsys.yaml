@@ -1,0 +1,83 @@
+# ARCHETYPE-ONLY
+# The archetype's template: a pattern to copy (`pixi run new-env <name>`), never run
+# for tuning (the archetype refuses any role but nosettings).
+# END ARCHETYPE-ONLY
+# Keys are explained in docs/developer-guide.md, "Make tuning templates for your
+# Environment". The GUI's Save as rewrites this file without comments.
+name: ZZ_Archetype_Pacsys
+description: |
+  Goal: (what this task improves, and why).
+  Objective: G:LINEFF MAXIMIZE.
+  Variables: source A trims L:ATRMHU, L:ATRMVU; the mult knob mult:MUQ (MEBT Q1 and Q2
+    together); RFQ phase L:RFQPAH; cavity phase L:LDPADJ, read back as L:CDPHAS.
+  Constraints: L:TK1RAD < 18; the source A bulk supply (BulkPS_SourceATrims_Pos and _Neg
+    < 8); MultOOB_MUQ < 0.5 (no more than half a mult step lost to the quads' limits).
+  Observables: W_SumLosses, B:400DFT-SETPOINT, Z:ITGSIG_1_SRS[:]|std.
+  Windows: +-0.5 trims, +-3 mult steps, +-5 deg phases, around the live readback at
+    load and again at Go.
+  Notes: anything unusual an operator should know before pressing Go.
+badger_version: 1.6.0
+relative_to_current: true
+environment:
+  name: ZZ_Archetype_Pacsys
+  params:                      # override the environment's defaults
+    debug: false
+    settings_role: nosettings  # a copy's real role goes here, when it is ready
+    sample_events:
+      default: '@e,52,e,0'
+      B:BOOEFF: '@e,1f,e,0'
+      Z:ITGSIG_1_SRS[:]: '@e,83,e,0'
+      Z:INSPLL_1_SRS[:]: '@e,83,e,0'
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 2000
+    max_time: 5.0
+    mixed_max_discrete_configurations: 512
+    n_restarts: 20
+    name: LBFGS
+  turbo_controller:
+    failure_tolerance: 6
+    length: 0.021475
+    length_max: 2.0
+    length_min: 0.007813
+    name: SafetyTurboController
+    restrict_model_data: true
+    scale_factor: 1.25
+    success_tolerance: 6
+initial_point_actions:         # first points: the current values, then 3 random ones near them
+- type: add_curr
+- type: add_rand
+  config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+critical_constraint_names: []  # constraints whose violation stops the run
+vrange_limit_options:          # the window around each variable's current value
+  L:ATRMHU: {limit_option_idx: 2, delta: 0.5, ratio_curr: 0.1, ratio_full: 0.1}
+  L:ATRMVU: {limit_option_idx: 2, delta: 0.5, ratio_curr: 0.1, ratio_full: 0.1}
+  mult:MUQ: {limit_option_idx: 2, delta: 3.0, ratio_curr: 0.1, ratio_full: 0.1}
+  L:RFQPAH: {limit_option_idx: 2, delta: 5.0, ratio_curr: 0.1, ratio_full: 0.1}
+  L:CDPHAS,L:LDPADJ,tol2@0.1: {limit_option_idx: 2, delta: 5.0, ratio_curr: 0.1, ratio_full: 0.1}
+vocs:
+  variables:
+    L:ATRMHU: [-0.5, 0.5]
+    L:ATRMVU: [-0.5, 0.5]
+    mult:MUQ: [-3.0, 3.0]
+    L:RFQPAH: [200.0, 210.0]
+    L:CDPHAS,L:LDPADJ,tol2@0.1: [355.0, 365.0]
+  objectives:
+    G:LINEFF: {type: MaximizeObjective}
+  constraints:
+    L:TK1RAD: {type: LessThanConstraint, value: 18.0}
+    BulkPS_SourceATrims_Pos: {type: LessThanConstraint, value: 8.0}
+    BulkPS_SourceATrims_Neg: {type: LessThanConstraint, value: 8.0}
+    MultOOB_MUQ: {type: LessThanConstraint, value: 0.5}
+  observables:
+  - W_SumLosses
+  - B:400DFT-SETPOINT
+  - Z:ITGSIG_1_SRS[:]|std
+  constants: {}

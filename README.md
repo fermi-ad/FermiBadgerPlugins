@@ -322,6 +322,7 @@ FermiBadgerPlugins/
 │   │   ├── 01_Linac_RIL_tuning_Pacsys/
 │   │   ├── 09_DeliveryRing_Muon_PID_tune_Pacsys/
 │   │   ├── 99_Sim_VirtualAccelerator_MADXSuite/
+│   │   ├── ZZ_Archetype_Pacsys/      # every feature, never writes: what `pixi run new-env` copies
 │   │   └── ...
 │   ├── interfaces/             # Badger Interface plugins
 │   │   ├── BasicPacsysInterface/   # ACNET through pacsys: every real-machine environment

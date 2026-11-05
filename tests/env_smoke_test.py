@@ -18,6 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, "plugins")
 from pacsys.testing import FakeBackend  # noqa: E402
+from pydantic import ValidationError  # noqa: E402
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
 
 
@@ -27,8 +28,14 @@ def plain(name):  # an ordinary device name: no pair, mult, array, reduction or 
 
 def smoke(env_name):
     E = importlib.import_module(f"environments.{env_name}").Environment
-    env = E(interface=Interface(), settings_role="testing")  # any role: the fake accepts it
+    try:
+        env = E(interface=Interface(), settings_role="testing")  # any role: the fake accepts it
+        writes = True
+    except ValidationError:  # an environment that never writes (the archetype)
+        env, writes = E(interface=Interface()), False
     fb = env.interface._backend_override = FakeBackend()
+    if hasattr(env, "average_events"):  # averaging waits for streamed events the fake
+        env.average_events = {"default": 1}  # never sends (tests/pacsys_interface_test.py covers it)
     env.interface._timeout = 1.0
 
     variables = [v for v in E.variables if plain(v)]
@@ -50,11 +57,11 @@ def smoke(env_name):
             lo = E.variables[variables[0]][0]
             env.set_variables({variables[0]: lo})
             written = fb.get_written_value(f"{variables[0]}.SETTING")
-            assert written == lo, (variables[0], written, lo)
+            assert written == (lo if writes else None), (variables[0], written, lo, writes)
         if observables:
             got = env.get_observables(list(observables))
             assert got == {o: 1.0 for o in observables}, got
-    print(f"ok    {env_name}  ({len(variables)} vars, {len(observables)} obs)")
+    print(f"ok    {env_name}  ({len(variables)} vars, {len(observables)} obs{'' if writes else ', never writes'})")
 
 
 names = sys.argv[1:] or sorted(p.parent.name for p in Path("plugins/environments").glob("*/configs.yaml")

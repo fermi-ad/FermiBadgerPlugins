@@ -1,0 +1,7 @@
+name: "ZZ_Archetype_Pacsys"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicPacsysInterface
