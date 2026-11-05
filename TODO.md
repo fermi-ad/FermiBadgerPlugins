@@ -420,7 +420,7 @@ exists and what it would touch.
     constraint boundaries?), and how it interacts with drift (old data may be
     wrong, not just redundant).
 
-- [ ] **Draft an environment from the Elog** (idea 2026-11-05). For a given
+- [ ] **Draft an environment from the Elog and Device DB** (idea 2026-11-05). For a given
   machine: scrape the Elog for an initial list of the variables and objectives
   operators tune and watch; estimate each variable's valid range from its
   history; hand back a working draft environment. The screen grabs in Elog
