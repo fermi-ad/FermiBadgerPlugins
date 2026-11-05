@@ -6,7 +6,8 @@ environment, then check both offline. Nothing is read from or written to ACNET.
     pixi run new-env 01_Linac_MyTask_Pacsys --from 01_Linac_EnergyStabilization_Pacsys
 
 Creates plugins/environments/<NEW>/ and tuning_templates/development/<NEW>.yaml,
-renamed throughout and read only (settings_role 'nosettings'). Never overwrites.
+renamed throughout and read only (settings_role 'nosettings'), and, from the
+archetype, tests/<NEW>_test.py (a test of every feature). Never overwrites.
 """
 import argparse
 import re
@@ -17,6 +18,8 @@ from pathlib import Path
 
 import yaml
 
+ARCHETYPE = 'ZZ_Archetype_Pacsys'
+ARCHETYPE_TEST = Path('tests/archetype_test.py')
 REGIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '99']  # README naming table
 NAME = re.compile(r'(\d\d)_[A-Za-z0-9]+_\w+_Pacsys')
 ENVS = Path('plugins/environments')
@@ -59,7 +62,7 @@ def source_template(env):
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
     ap.add_argument('new', help='<region>_<Descriptive>_Pacsys, e.g. 01_Linac_MyTask_Pacsys')
-    ap.add_argument('--from', dest='src', default='ZZ_Archetype_Pacsys',
+    ap.add_argument('--from', dest='src', default=ARCHETYPE,
                     help='environment to copy (default: %(default)s)')
     ap.add_argument('--no-check', action='store_true', help='skip the lint and smoke tests')
     a = ap.parse_args(argv)
@@ -69,17 +72,21 @@ def main(argv=None):
         sys.exit(f'{a.new!r} does not follow <region>_<Descriptive>_Pacsys, region one of '
                  f'{", ".join(REGIONS)} (README: "Environment and template naming convention").')
     env_dir, template = ENVS / a.new, TEMPLATES / f'{a.new}.yaml'
+    # The archetype comes with a test of every feature; it is copied too.
+    test = Path('tests') / f'{a.new}_test.py' if a.src == ARCHETYPE else None
     src_dir = ENVS / a.src
     if not src_dir.is_dir():
         sys.exit(f'{src_dir} not found: run from the repo root, and --from an existing environment.')
     src_template = source_template(a.src)
-    for p in (env_dir, template):
-        if p.exists():
+    for p in (env_dir, template, test):
+        if p and p.exists():
             sys.exit(f'{p} already exists; not overwriting.')
 
     shutil.copytree(src_dir, env_dir, ignore=shutil.ignore_patterns('__pycache__'))
     shutil.copy(src_template, template)
-    for p in [*env_dir.iterdir(), template]:
+    if test:
+        shutil.copy(ARCHETYPE_TEST, test)
+    for p in [*env_dir.iterdir(), template, *([test] if test else [])]:
         if p.suffix in ('.py', '.yaml', '.md'):
             p.write_text(strip_archetype_only(p.read_text()))
             sub(p, re.escape(a.src), a.new)
@@ -87,16 +94,21 @@ def main(argv=None):
     sub(env_dir / '__init__.py', r"settings_role:(\s*)str(\s*)=.*", r"settings_role:\1str\2= 'nosettings'")
     sub(template, r'settings_role: .*', 'settings_role: nosettings')
     sub(template, r'^name: .*', f'name: {a.new}', flags=re.M)
-    print(f'Made {env_dir}/ and {template} (from {a.src}; settings_role nosettings).')
+    made = f'{env_dir}/, {template}' + (f', {test}' if test else '')
+    if test:
+        sub(test, re.escape(ARCHETYPE_TEST.name), test.name)
+    print(f'Made {made} (from {a.src}; settings_role nosettings).', flush=True)
 
     if not a.no_check:
-        for test in (['tests/template_lint_test.py'], ['tests/env_smoke_test.py', a.new]):
-            if subprocess.run([sys.executable, *test]).returncode:
-                sys.exit(f'{test[0]} failed: fix that before editing further.')
+        checks = [['tests/template_lint_test.py'], ['tests/env_smoke_test.py', a.new]]
+        for check in checks + ([[str(test)]] if test else []):
+            if subprocess.run([sys.executable, *check]).returncode:
+                sys.exit(f'{check[0]} failed: fix that before editing further.')
     print(f'\nNext, edit (docs/developer-guide.md, "Quickstart"):\n'
           f'  {env_dir}/__init__.py   variables, observables, and their limits\n'
           f'  {env_dir}/README.md     what operators see under Open Docs\n'
-          f'  {template}   description, environment.params, vocs')
+          f'  {template}   description, environment.params, vocs'
+          + (f'\n  {test}   the features you keep, with your devices' if test else ''))
 
 
 if __name__ == '__main__':

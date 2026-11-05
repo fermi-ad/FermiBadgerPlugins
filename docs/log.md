@@ -1714,3 +1714,13 @@ Fixes (main):
   averaged input is noisy. The smoke test no longer forces averaging off; the
   archetype test checks `L:D7TOR` averaged over 3 events. Tolerances are 6σ
   or wider; 50 runs on fresh seeds, no failures.
+
+## 2026-11-05 — new-env copies the archetype's feature test
+
+- User asked where new devs meet the fake ACNET; the gap: a copied environment
+  had no feature test (the smoke test covers plain devices only). `new-env`
+  now copies `tests/archetype_test.py` to `tests/<name>_test.py` (only from the
+  archetype), strips its archetype-only parts (the never-writes check and its
+  import), renames it, and runs it with the lint and smoke checks. Guide: one
+  new edit step ("it fails at the first line about a device or feature you
+  changed; change or delete it") and the checklist; no new concepts.

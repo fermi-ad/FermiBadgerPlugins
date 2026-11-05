@@ -1,10 +1,14 @@
-"""Offline check of every feature in ZZ_Archetype_Pacsys, the pattern new environments
-are copied from (`pixi run new-env`), on pacsys's FakeBackend with 0.1% noise on its
-readings (tests/noisy_fake.py; settings stay exact): nothing reaches ACNET.
+"""Offline check of every feature in ZZ_Archetype_Pacsys, on pacsys's FakeBackend with
+0.1% noise on its readings (tests/noisy_fake.py; settings stay exact): nothing
+reaches ACNET. When you change or delete a feature in the environment, change or
+delete its lines here; a failure names the line.
 
 Run from the repo root:
     pixi run python tests/archetype_test.py
 """
+# ARCHETYPE-ONLY
+# `pixi run new-env <name>` copies this test with the archetype, to tests/<name>_test.py.
+# END ARCHETYPE-ONLY
 import contextlib
 import importlib
 import io
@@ -15,10 +19,13 @@ import numpy as np
 sys.path.insert(0, 'plugins')
 from noisy_fake import NoisyFakeBackend  # noqa: E402  readings carry 0.1% noise
 from pacsys.types import ValueType  # noqa: E402
+# ARCHETYPE-ONLY
 from pydantic import ValidationError  # noqa: E402
+# END ARCHETYPE-ONLY
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
 
-E = importlib.import_module('environments.ZZ_Archetype_Pacsys').Environment
+NAME = 'ZZ_Archetype_Pacsys'
+E = importlib.import_module(f'environments.{NAME}').Environment
 PAIR = 'L:CDPHAS,L:LDPADJ,tol2@0.1'
 
 
@@ -27,6 +34,7 @@ def quiet(fn, *a, **kw):
         return fn(*a, **kw)
 
 
+# ARCHETYPE-ONLY
 # --- never writes: any role but nosettings is refused, at construction and in the GUI
 for make in (lambda: E(interface=Interface(), settings_role='ril_tuning'),
              lambda: setattr(E(interface=Interface()), 'settings_role', 'ril_tuning')):
@@ -35,12 +43,13 @@ for make in (lambda: E(interface=Interface(), settings_role='ril_tuning'),
         raise AssertionError('the archetype accepted a writing role')
     except ValidationError:
         pass
+# END ARCHETYPE-ONLY
 
 env = E(interface=Interface())
 assert env.settings_role == 'nosettings'
 fb = env.interface._backend_override = NoisyFakeBackend()
 env.interface._timeout = 5.0
-object.__setattr__(env, 'settings_role', 'testing')  # bypass the guard, to test the write path
+object.__setattr__(env, 'settings_role', 'testing')  # a writing role, for the fake only
 
 settings = {'L:ATRMHU': 1.0, 'L:ATRMVU': 1.0, 'L:ATRMHD': 1.0, 'L:ATRMVD': -1.0,
             'L:MUQ1H': 0.5, 'L:MUQ1V': 0.5, 'L:MDQ1H': -0.5, 'L:MDQ1V': 0.5,
@@ -97,4 +106,4 @@ spill = signal[2:3 + env.spill_length]
 assert np.isclose(out['SpillDutyFactor_calc'], 1 / (1 + np.var(spill)), rtol=0.01), out
 assert out['BulkPS_MEBTQ1trims'] == 2.0, out  # sum of |I|: 0.5 * 4
 assert out['MultOOB_MUQ'] == 0.0, out
-print('ARCHETYPE TEST PASSED')
+print(f'{NAME} TEST PASSED')

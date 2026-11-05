@@ -12,13 +12,14 @@ One command, from the repo root, with your new environment's name
 pixi run new-env 01_Linac_MyTask_Pacsys
 ```
 
-It copies the **archetype**, `ZZ_Archetype_Pacsys` and its development template,
-to `plugins/environments/01_Linac_MyTask_Pacsys/` and
-`tuning_templates/development/01_Linac_MyTask_Pacsys.yaml`. It renames them
-throughout, and makes both read only (`settings_role: nosettings`). Then it
+It copies the **archetype**, `ZZ_Archetype_Pacsys`, with its development
+template and its test, to `plugins/environments/01_Linac_MyTask_Pacsys/`,
+`tuning_templates/development/01_Linac_MyTask_Pacsys.yaml`, and
+`tests/01_Linac_MyTask_Pacsys_test.py`. It renames them throughout, and makes
+the environment and template read only (`settings_role: nosettings`). Then it
 checks them offline (nothing reaches ACNET): the template loads as the GUI
-would (`tests/template_lint_test.py`), and the environment reads and sets on a
-fake ACNET (`tests/env_smoke_test.py`). It refuses a name that breaks the
+would (`tests/template_lint_test.py`), the environment reads and sets on a fake
+ACNET (`tests/env_smoke_test.py`), and your test checks every feature. It refuses a name that breaks the
 convention, and never overwrites. To start from another example (table below),
 add `--from <environment>`.
 
@@ -38,10 +39,14 @@ Then edit (here `$NEW` is your environment's name):
    `vocs`: the variables, objectives, constraints and observables of this one
    task. Every name in `vocs` must be in the environment; every variable needs
    an entry in `vrange_limit_options` (the window around its current value).
-4. Run the two checks again (`pixi run python tests/template_lint_test.py` and
-   `pixi run python tests/env_smoke_test.py $NEW`), then the whole suite (see
+4. **`tests/${NEW}_test.py`**: it fails at the first line about a device or
+   feature you changed. Change that line to match, or delete it with the
+   feature.
+5. Run the checks again (`pixi run python tests/template_lint_test.py`,
+   `pixi run python tests/env_smoke_test.py $NEW`, and
+   `pixi run python tests/${NEW}_test.py`), then the whole suite (see
    "Testing").
-5. On the machine, read only:
+6. On the machine, read only:
    `pixi run safe-badger mini -t development/$NEW.yaml`. Check the **Current**
    column and the plots. Only when that looks right, set a real role, with the
    operators' OK (see "Testing", step 5).
@@ -314,11 +319,12 @@ or a stub interface. From the repo root, in this order:
 
 1. `pixi run python tests/template_lint_test.py`: every template loads as the
    GUI would.
-2. `pixi run python tests/env_smoke_test.py <your environment>`: reads and a
-   set on a fake ACNET. For mults, pairs, arrays and computed observables,
-   copy a focused test: `tests/archetype_test.py` (every feature, on
-   `FakeBackend`) or `tests/env_fixes_test.py` (a stub interface). Use
-   `NoisyFakeBackend` (`tests/noisy_fake.py`), as those two do: its readings
+2. `pixi run python tests/env_smoke_test.py <your environment>` (reads and a
+   set on a fake ACNET), and your environment's own test,
+   `tests/<your environment>_test.py` (every feature; `new-env` made it from
+   the archetype's). For an environment copied with `--from`, copy
+   `tests/archetype_test.py` by hand. The tests use `NoisyFakeBackend`
+   (`tests/noisy_fake.py`): its readings
    carry 0.1% Gaussian noise, on a fresh seed each run (printed;
    `NOISY_FAKE_SEED=<seed>` repeats a run), including each event averaged by
    `average_events`. So compare with a tolerance, never `==`, and leave a wide
@@ -345,7 +351,8 @@ changing a patch, re-run `pixi run setup -- --yes`. Never edit
 - [ ] Hard limits checked with the hardware owner; defaults are safe
       (`nosettings` role).
 - [ ] README with the five sections; template `description` filled in.
-- [ ] `template_lint_test.py`, `env_smoke_test.py`, and the full suite pass.
+- [ ] `template_lint_test.py`, `env_smoke_test.py`, your environment's test, and
+      the full suite pass.
 - [ ] Tried read only on the machine; writing only under safe-badger.
 - [ ] `docs/log.md` entry for anything non-obvious you found.
 
