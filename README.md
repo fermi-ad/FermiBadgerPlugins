@@ -316,6 +316,7 @@ FermiBadgerPlugins/
 ├── pixi.lock                   # Pinned resolution for osx-arm64 and linux-64
 ├── pixi_setup.sh               # Patch/config/verify logic behind `pixi run setup`
 ├── safe_badger.py              # `pixi run safe-badger`: launcher that restores settings if Badger is interrupted
+├── scripts/new_env.py          # `pixi run new-env <name>`: a new environment + template from a working one
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)
 │   │   ├── 01_Linac_RIL_tuning_Pacsys/

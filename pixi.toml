@@ -14,6 +14,9 @@ setup = "bash pixi_setup.sh"
 # Badger exits without a Keep/Revert answer. Also `safe-badger diff <file>`
 # and `safe-badger restore <file>`. See safe_badger.py.
 safe-badger = "python safe_badger.py"
+# `pixi run new-env <region>_<Descriptive>_Pacsys [--from <env>]`: copy a working
+# environment and its development template, renamed and read only, then check both.
+new-env = "python scripts/new_env.py"
 
 [activation.env]
 # linear_operator 0.6.1 (under gpytorch/botorch, so every Bayesian generator)

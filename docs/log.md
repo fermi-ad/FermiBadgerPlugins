@@ -1643,3 +1643,21 @@ Fixes (main):
   AutoSteerRestore (copy the list, return only what was asked);
   `tests/env_fixes_test.py` covers them. Gotcha: FakeBackend readings are
   keyed by the full DRF, event included (`G:LINEFF@e,52,e,0`).
+
+## 2026-11-05 — `pixi run new-env`: the quickstart in one line
+
+- Pulled the user's guide edits (79aa179, phrasing on the pre-quickstart guide);
+  rebased the unpushed Acsys-retirement commit onto it and ported each phrasing
+  into the new structure by hand. README heading now "Periodic (phase, angle)
+  devices", matching the guide.
+- User asked why perl: `sed -i` differs between macOS and Linux. Replaced the
+  10-line shell quickstart with `scripts/new_env.py` (pixi task `new-env`). The
+  only input is the new name; `--from` picks the source (default RIL Pacsys).
+  It checks the name against the convention, never overwrites, copies without
+  `__pycache__`, renames, sets `nosettings`, then runs the lint and smoke tests.
+  When the source has no template named after it, the first development
+  template using it is taken (EnergyStabilization's is `..._Phases_...`).
+- `tests/env_smoke_test.py`: the fake's default event is now `@i` (the
+  interface's), and with no arguments it checks every environment whose
+  configs.yaml names BasicPacsysInterface (the ZZ ones were missed by the
+  `*_Pacsys` glob). New `tests/new_env_test.py`.

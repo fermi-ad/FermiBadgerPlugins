@@ -7,7 +7,7 @@ and computed observables need their own test (see tests/mults_test.py,
 tests/periodic_phase_test.py, tests/env_fixes_test.py).
 
 Run from the repo root:
-    pixi run python tests/env_smoke_test.py                          # every *_Pacsys environment
+    pixi run python tests/env_smoke_test.py                          # every Pacsys environment
     pixi run python tests/env_smoke_test.py 01_Linac_MyTask_Pacsys   # just yours
 """
 import contextlib
@@ -40,7 +40,7 @@ def smoke(env_name):
     observables = [o for o in E.observables if plain(o)][:3]
     events = getattr(env, "sample_events", {})
     for dev in observables:
-        event = events.get(dev, events.get("default", ""))
+        event = events.get(dev, events.get("default", "@i"))  # the interface's default
         fb.set_reading(dev + event, 1.0)  # keyed by the DRF read, event included
 
     with contextlib.redirect_stdout(io.StringIO()):
@@ -57,7 +57,8 @@ def smoke(env_name):
     print(f"ok    {env_name}  ({len(variables)} vars, {len(observables)} obs)")
 
 
-names = sys.argv[1:] or sorted(p.parent.name for p in Path("plugins/environments").glob("*_Pacsys/__init__.py"))
+names = sys.argv[1:] or sorted(p.parent.name for p in Path("plugins/environments").glob("*/configs.yaml")
+                               if "BasicPacsysInterface" in p.read_text())
 for n in names:
     smoke(n)
 print("ENV SMOKE TEST PASSED")

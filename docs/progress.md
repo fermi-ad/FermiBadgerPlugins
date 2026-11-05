@@ -2090,3 +2090,8 @@ fixed (found by the new `tests/env_smoke_test.py`).
 
 - On gmpsai2: `git pull && pixi install && pixi run setup -- --yes`; one
   read-only load (grpcio was bumped by the relock).
+
+## 2026-11-05: `pixi run new-env`
+
+A new environment and template in one command: `pixi run new-env
+<region>_<Descriptive>_Pacsys [--from <env>]` (developer guide, "Quickstart").

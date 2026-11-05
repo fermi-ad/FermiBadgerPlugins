@@ -5,32 +5,24 @@ once `./bootstrap.sh` (or `pixi run setup`) has passed.
 
 ## Quickstart: a new environment and template in ten minutes
 
-Copy the most complete working pair, rename it, and swap the devices. From the
-repo root:
+One command, from the repo root, with your new environment's name
+(`<region>_<Descriptive>_Pacsys`; see "Names" below):
 
 ```bash
-NEW=01_Linac_MyTask_Pacsys     # <region>_<Descriptive>_Pacsys; see "Names" below
-FROM=01_Linac_RIL_tuning_Pacsys
-
-# 1. Copy the environment and its development template
-cp -R plugins/environments/$FROM plugins/environments/$NEW
-rm -rf plugins/environments/$NEW/__pycache__
-cp tuning_templates/development/$FROM.yaml tuning_templates/development/$NEW.yaml
-
-# 2. Rename, and make both read only (role 'nosettings') until you are ready to write
-perl -pi -e "s/$FROM/$NEW/g" plugins/environments/$NEW/*.py plugins/environments/$NEW/*.yaml \
-    tuning_templates/development/$NEW.yaml
-perl -pi -e "s/settings_role: str = .*/settings_role: str = 'nosettings'/" \
-    plugins/environments/$NEW/__init__.py
-perl -pi -e "s/settings_role: .*/settings_role: nosettings/; s/^name: .*/name: $NEW/" \
-    tuning_templates/development/$NEW.yaml
-
-# 3. Check it (offline: nothing reaches ACNET)
-pixi run python tests/template_lint_test.py         # your template loads as the GUI would
-pixi run python tests/env_smoke_test.py $NEW        # reads and a set, on a fake ACNET
+pixi run new-env 01_Linac_MyTask_Pacsys
 ```
 
-Both checks should pass before you change anything. Then edit:
+It copies the most complete working pair, `01_Linac_RIL_tuning_Pacsys` and its
+development template, to `plugins/environments/01_Linac_MyTask_Pacsys/` and
+`tuning_templates/development/01_Linac_MyTask_Pacsys.yaml`. It renames them
+throughout, and makes both read only (`settings_role: nosettings`). Then it
+checks them offline (nothing reaches ACNET): the template loads as the GUI
+would (`tests/template_lint_test.py`), and the environment reads and sets on a
+fake ACNET (`tests/env_smoke_test.py`). It refuses a name that breaks the
+convention, and never overwrites. To start from another example (table below),
+add `--from <environment>`.
+
+Then edit (here `$NEW` is your environment's name):
 
 1. **`plugins/environments/$NEW/__init__.py`**: swap the devices in
    `variables` (each with its hard limits `[lo, hi]`) and `observables`. Delete
@@ -43,7 +35,9 @@ Both checks should pass before you change anything. Then edit:
    `vocs`: the variables, objectives, constraints and observables of this one
    task. Every name in `vocs` must be in the environment; every variable needs
    an entry in `vrange_limit_options` (the window around its current value).
-4. Run the two checks again, then the whole suite (see "Testing").
+4. Run the two checks again (`pixi run python tests/template_lint_test.py` and
+   `pixi run python tests/env_smoke_test.py $NEW`), then the whole suite (see
+   "Testing").
 5. On the machine, read only:
    `pixi run safe-badger mini -t development/$NEW.yaml`. Check the **Current**
    column and the plots. Only when that looks right, set a real role, with the
@@ -53,7 +47,7 @@ An easier way to make a template: load an existing one in the GUI, change it,
 and **Save as...**. It saves under `tuning_templates/saved/` (git ignores it);
 move the file to `tuning_templates/development/` and rename it.
 
-**Which example to start from:**
+**Which example to start from** (`--from`):
 
 | Start from | When |
 |---|---|
