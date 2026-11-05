@@ -35,7 +35,7 @@ and the parse itself is deferred to the first call that actually needs the Line.
 Delete the sidecar to force a re-deduction; it is also ignored when the lattice
 file changes.
 
-Known xtrack behaviour: changing a main bend *angle* moves neither the orbit nor
+Known xtrack behavior: changing a main bend *angle* moves neither the orbit nor
 the tune, because xtrack's Bend carries the reference trajectory along with the
 geometry.  Steer with corrector currents instead.
 """

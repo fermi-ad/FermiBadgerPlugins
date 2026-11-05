@@ -1603,3 +1603,16 @@ Fixes (main):
   on (the worker watchdog acts on a dead GUI, not a hung one); a slow Stop on a
   responsive GUI waits for the current point. safe-badger.md's endings table
   gains the X-forwarding drop (untested as a combination: TODO).
+
+## 2026-11-04 — developer guide for new devs
+
+- New `docs/developer-guide.md` (user: new devs will make their own templates
+  and environments): terms defined; anatomy of an environment (configs.yaml,
+  __init__.py from EnergyStabilization, README sections) and rules learned the
+  hard way; the Pacsys interface's name forms and parameters; the template keys
+  (VOCS forms as Save as writes them, vrange_limit_options meanings, initial
+  points, formulas); testing in safe order; a pre-PR checklist.
+- README "For Developers" and "Related Documentation" point to it; HANDOFF.md
+  marked historical.
+- US spelling (the user's global rule): centre, centred, behaviour,
+  quantisation, labelled fixed in docs, comments, and the Continue patch.

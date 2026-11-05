@@ -42,7 +42,7 @@ def main():
     shown = []
 
     def answer(text):
-        """Make every QMessageBox pick the button labelled `text` (no dialogs offscreen)."""
+        """Make every QMessageBox pick the button labeled `text` (no dialogs offscreen)."""
         def pick(self):
             shown.append(self.text())
             [b for b in self.buttons() if b.text().replace("&", "") == text][0].click()

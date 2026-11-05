@@ -236,7 +236,7 @@ def main():
         assert page.seed_extra == []  # disarming forgets added runs
 
         # Plain Go right after showing a seeded TuRBO run: the new run gets no
-        # stale trust-region centre (badger-1.6.0-turbo-state-reset.patch; one
+        # stale trust-region center (badger-1.6.0-turbo-state-reset.patch; one
         # left over made every new point fall outside the region), and no
         # copied "Seeded with" line.
         page.routine_editor.load_template_yaml(False, template_path=TUNEQX)

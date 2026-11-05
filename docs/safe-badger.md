@@ -186,7 +186,7 @@ settle loops, periodic-phase unwrapping or supply-limit clipping.
   run `klist`: the `klist` inside the pixi environment (MIT krb5) can't see the
   macOS ticket cache, and reports "no ticket" when pacsys has one.
 
-## GUI behaviour
+## GUI behavior
 
 - **Capture:** `routine_editor.sig_load_template` is emitted after every
   successful template load (`-t` at start-up, the template dropdown, and

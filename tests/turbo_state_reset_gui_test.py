@@ -1,7 +1,7 @@
 """Offscreen check of badger-1.6.0-turbo-state-reset.patch, in both GUIs: a run
-composed right after showing a TuRBO run gets no stale trust-region centre.
+composed right after showing a TuRBO run gets no stale trust-region center.
 Upstream blanks it only for the short controller names, but a run's saved
-controller is named OptimizeTurboController; the centre left over made every
+controller is named OptimizeTurboController; the center left over made every
 new point fall outside the region (FeasibilityError on the first BO step,
 seen 2026-10-25). Uses a simulation template; nothing is run.
 

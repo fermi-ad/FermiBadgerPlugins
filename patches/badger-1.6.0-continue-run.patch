@@ -238,7 +238,7 @@ diff -ruN a/badger/gui/components/continue_run.py b/badger/gui/components/contin
 +
 +
 +def fresh_trust_region(routine):
-+    """Give a seeded run a new trust region: full size, centred anew.
++    """Give a seeded run a new trust region: full size, centered anew.
 +
 +    Keeps the controller's settings (tolerances, limits, ...) but not its
 +    state, so a region the earlier run had shrunk does not carry over; the

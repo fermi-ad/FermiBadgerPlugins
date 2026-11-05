@@ -363,6 +363,8 @@ FermiBadgerPlugins/
 
 [↑ Back to top](#contents)
 
+**New here? Start with [docs/developer-guide.md](docs/developer-guide.md)**: writing a Badger environment and a tuning template, testing them safely, and a checklist. The notes below are reference for particular features.
+
 ### Environment and template naming convention
 
 `plugins/environments/*` folders and `tuning_templates/*.yaml` files are named so they alpha-sort in the Badger GUI's picker in physical beam order, not plain alphabetical order:
@@ -460,6 +462,8 @@ Environment parameters that hold a mapping (`setpoints`, `w_sumsq`, `sample_even
 [↑ Back to top](#contents)
 
 - [CLAUDE.md](CLAUDE.md) - Project overview and standards
-- [HANDOFF.md](HANDOFF.md) - Developer handoff guide with critical gotchas
+- [docs/developer-guide.md](docs/developer-guide.md) - Writing environments and templates: start here
+- [docs/safe-badger.md](docs/safe-badger.md) - Revert and crash safety, in detail
+- [HANDOFF.md](HANDOFF.md) - Historical handoff notes (2026-09; parts are out of date)
 - [docs/progress.md](docs/progress.md) - Current development status
 - [docs/log.md](docs/log.md) - Session history

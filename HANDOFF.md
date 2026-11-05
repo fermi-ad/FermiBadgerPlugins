@@ -1,3 +1,7 @@
+> **Historical (2026-09).** Parts of this are out of date: it predates pixi,
+> Pacsys, and safe-badger. New developers: start with
+> [docs/developer-guide.md](docs/developer-guide.md) and the README.
+
 # HANDOFF: VirtualAccelerator_MADXSuite Plugin Development
 
 ## Quick Start for New Developers

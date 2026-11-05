@@ -43,7 +43,7 @@ class Interface(interface.Interface):
     # through the module-level pacsys.* functions (global default backend).
     _backend_override: Backend
     # ponytail: readback tolerance for a bare device's stored SETTING vs the value sent.
-    # Only quantisation or front-end clipping can differ; widen if a device class needs it.
+    # Only quantization or front-end clipping can differ; widen if a device class needs it.
     _readback_rtol = 1e-3
     _readback_atol = 1e-6
 
@@ -271,7 +271,7 @@ class Interface(interface.Interface):
         return settings_dict
 
     # After a batch write: a bare device's stored SETTING must match what was sent (warn
-    # only -- quantisation and front-end clipping are legitimate); a pair's readback is
+    # only -- quantization and front-end clipping are legitimate); a pair's readback is
     # its READING device, verified by the settle loop, so no value comparison here.
     def _check_readbacks(self, drf_dict, debug=False):
         bare = [(name, val) for name, val in drf_dict.items()
