@@ -5,7 +5,7 @@ first time a Badger session loads an environment that declares the device
 (first-seen wins: later template loads only add devices). Restore writes the
 same raw values back with pacsys. Badger's own environment code is not involved
 on either side, so mult knobs, read/set pairs and periodic unwrapping can't skew
-what gets restored, and Acsys environments are covered too (same devices).
+what gets restored.
 
 Imported by:
 - both GUIs, via the SettingsGuard mixin (badger-1.6.0-revert-settings.patch):
@@ -36,8 +36,8 @@ MAX_AUTO_RESTORE_HOURS = 2
 ABS_TOL = 1e-6
 
 # Same rule as BasicPacsysInterface.extract_setting_devices: in 'READ,SET[,tol...]'
-# the setting device is the second field. Copied, not imported: Acsys environments
-# never load that interface.
+# the setting device is the second field. Copied, not imported: an environment on
+# another interface (a simulation) never loads it.
 _PAIR = re.compile(r'^.:.+,.:.+')
 
 log = logging.getLogger('settings_snapshot')

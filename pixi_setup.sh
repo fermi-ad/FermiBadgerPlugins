@@ -1,5 +1,5 @@
 #!/bin/bash
-# Run via `pixi run setup` (or `pixi run -e onsite setup` on the MCR host):
+# Run via `pixi run setup`:
 #   1. apply the Badger patches to this pixi environment
 #   2. write config.local.yaml with this clone's paths
 #   2b. sync those same paths into Badger's own per-user settings file,
@@ -308,41 +308,27 @@ else
     echo "Setup finished WITH ERRORS (see FAILED lines above)."
 fi
 echo "=========================================="
-ENV_FLAG=""
-[[ -n "${PIXI_ENVIRONMENT_NAME:-}" && "$PIXI_ENVIRONMENT_NAME" != "default" ]] && \
-    ENV_FLAG="-e $PIXI_ENVIRONMENT_NAME "
 SIM_TEMPLATE="simulation/TuneQx_SimpleVirtualAccelerator.yaml"
-if [[ "${PIXI_ENVIRONMENT_NAME:-default}" == "offsite" ]]; then
-    # no control network here: only a simulation
-    cat <<EOF
-
-To try it (a simulation: nothing reaches ACNET):
-
-    cd $REPO
-    pixi run ${ENV_FLAG}badger -mini -cf config.local.yaml -t $SIM_TEMPLATE
-EOF
-else
-    cat <<EOF
+cat <<EOF
 
 To try it safely first, in the compact GUI under safe-badger (it restores any
 device it changed if Badger is interrupted):
 
     cd $REPO
-    pixi run ${ENV_FLAG}safe-badger mini -t development/ZZ_PacsysTesting.yaml
+    pixi run safe-badger mini -t development/ZZ_PacsysTesting.yaml
 
   ACNET scratch/test devices only (G:AMANDA, Z:CUBE_X/Y/Z), needs a Kerberos
   ticket; a demonstration run from a decoy to the global minimum.
 
 Or with no control network at all, a simulation:
 
-    pixi run ${ENV_FLAG}badger -mini -cf config.local.yaml -t $SIM_TEMPLATE
+    pixi run badger -mini -cf config.local.yaml -t $SIM_TEMPLATE
 
 Operations (writes real Linac devices; always under safe-badger):
 
-    pixi run ${ENV_FLAG}safe-badger mini -t 01_Linac_RIL_tuning.yaml
+    pixi run safe-badger mini -t 01_Linac_RIL_tuning.yaml
 
-Full GUI: pixi run ${ENV_FLAG}safe-badger g    (or badger -g -cf config.local.yaml)
+Full GUI: pixi run safe-badger g    (or badger -g -cf config.local.yaml)
 EOF
-fi
 
 exit $FAILED

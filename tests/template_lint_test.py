@@ -37,7 +37,7 @@ for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '**', '*.yam
                     constraints=t['vocs']['constraints'], constants={},
                     observables=t['vocs']['observables'])
         filter_generator_config(t['generator']['name'], t['generator'])
-        # README "For Developers": <region>_<task>_<env core>[_Acsys|_Pacsys].yaml,
+        # README "For Developers": <region>_<task>_<env core>[_Pacsys].yaml,
         # or just <env>.yaml. Core = env name minus region prefix and suffix.
         if t['relative_to_current']:
             # Windows are built around the live readback per variable (calc_auto_bounds):
@@ -49,7 +49,7 @@ for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '**', '*.yam
             assert not bad, f'variables on unsafe limit_option_idx 0 (or missing): {bad}'
         if fname != f'{env}.yaml':
             r1, r2, core = env.split('_', 2)
-            suffix = next((s for s in ('_Acsys', '_Pacsys') if core.endswith(s)), '')
+            suffix = '_Pacsys' if core.endswith('_Pacsys') else ''
             core = core.removesuffix(suffix)
             # Templates under simulation/ drop the region prefix: the directory says it.
             # Top-level (operations) templates drop the interface suffix: operators need not know it.

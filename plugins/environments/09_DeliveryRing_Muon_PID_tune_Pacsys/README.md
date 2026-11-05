@@ -2,8 +2,7 @@
 
 Tunes the gains of the Delivery Ring slow-extraction regulation loop to make
 the muon-campaign spill smoother, i.e. to raise the spill duty factor. It reads
-and writes ACNET through pacsys. `09_DeliveryRing_Muon_PID_tune_Acsys` is the
-same environment through acsys.
+and writes ACNET through pacsys.
 
 ## What it can tune (variables)
 

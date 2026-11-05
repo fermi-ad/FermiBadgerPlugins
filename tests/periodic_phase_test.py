@@ -1,8 +1,7 @@
 """Offline check of periodic (phase) handling, no control network needed.
 
 Drives BasicPacsysInterface and the EnergyStabilization_Pacsys environment
-through pacsys.testing.FakeBackend. BasicAcsysInterface carries the identical
-unwrap code but has no fake backend, so it is covered by the shared helper only.
+through pacsys.testing.FakeBackend.
 
 Run from the repo root:
     python tests/periodic_phase_test.py

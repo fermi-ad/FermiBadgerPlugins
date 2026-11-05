@@ -2078,3 +2078,15 @@ from run, heteroskedastic testbed, lit review).
   in range; then the follow-ups in TODO.md (average_events, a `|rms`
   observable, mults check).
 - Upstream: open the Xopt PR when ready; Badger PRs for the general fixes.
+
+## 2026-11-04: Acsys retired; developer guide quickstart
+
+Status: one pixi environment, Pacsys only (last Acsys version: tag
+`last-acsys`). `docs/developer-guide.md` starts with a tested copy-and-rename
+quickstart and explains the code conventions. RIL and QuadTuning observables
+fixed (found by the new `tests/env_smoke_test.py`).
+
+### Next
+
+- On gmpsai2: `git pull && pixi install && pixi run setup -- --yes`; one
+  read-only load (grpcio was bumped by the relock).

@@ -90,6 +90,10 @@ without the class's type hints, so each is one line of YAML text.
   `set_values`); parameter `sample_event` became `sample_events`.
 - All three, both twins: the caller's list of names is left alone and only the
   requested names come back. `tests/env_fixes_test.py` (stub interface).
+- [x] Found 2026-11-04 by the new `tests/env_smoke_test.py`: `01_Linac_RIL_tuning_Pacsys`
+  never computed `W_SumLosses` (removed, then tested, as AutoSteerRestore had);
+  `01_Linac_QuadTuning_Pacsys` always computed it, so any read without it raised
+  KeyError. Both also changed the caller's list and returned the inputs. Fixed.
 
 ## safe-badger: revert and crash safety (built 2026-10-21 on main; `docs/safe-badger.md`)
 
@@ -131,6 +135,12 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
   Z:CUBE_X 1.0 → 5.0; restored to 1.0 straight away.
 
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
+
+- [ ] **On gmpsai2 after the Acsys retirement (2026-11-04):** `git pull && pixi install
+  && pixi run setup -- --yes` (the lock changed: acsys gone; grpcio 1.84.0→1.85.1,
+  anyio, cython, pyasn1 minor bumps). Then one read-only template load to exercise
+  pacsys on the new grpcio. Leftover `_Acsys/__pycache__` folders are harmless
+  (Badger lists only folders with an `__init__.py`); `rm -rf` them if wanted.
 
 Decided 2026-10-20, order swapped same day: pixi first (fully landed),
 Pacsys after. Both are dual-run cutovers — old path stays live alongside

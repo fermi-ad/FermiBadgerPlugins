@@ -1616,3 +1616,30 @@ Fixes (main):
   marked historical.
 - US spelling (the user's global rule): centre, centred, behaviour,
   quantisation, labelled fixed in docs, comments, and the Continue patch.
+
+## 2026-11-04 — Acsys retired; developer-guide quickstart
+
+- User: new devs should see only Pacsys; retire acsys-py. Tagged `last-acsys`
+  (cad4b0c) first. Deleted the six `_Acsys` environments, `BasicAcsysInterface`,
+  `plugins/scanner.py` (acsys-only), the conda path (`environment.yml`,
+  `setup.sh`, `tests/test-quick-start-conda.sh`), and
+  `tests/check_RIL_tuning_live_bounds.py` (Acsys-only; the outside-limits patch
+  now does its job in the GUI).
+- pixi: one environment. The `onsite` feature, the FNAL index and the
+  `offsite` environment are gone (pacsys is on PyPI), so no FNAL network is
+  needed to install. `./bootstrap.sh --offsite/--onsite` print a note and carry
+  on. The relock also bumped grpcio 1.84.0→1.85.1 and anyio, cython, pyasn1
+  (minor; unpinned PyPI deps). Not yet exercised live.
+- Developer guide now opens with a quickstart: copy RIL Pacsys and its template,
+  rename with `perl -pi`, set `nosettings`, lint, smoke test. Run literally,
+  passed, removed. A "Conventions in the code you copied" section explains
+  pairs, settle triplets (`tolN@T`: last N readings span ≤ T, 15 s timeout),
+  `-SETPOINT`, periods, events and averaging, mults, BulkPS, computed
+  observables, and the free safety.
+- New `tests/env_smoke_test.py`: each `*_Pacsys` environment (or one named)
+  on `FakeBackend`: plain reads, a set checked by the value written, plain
+  observables. It found two bugs at once: RIL never computed `W_SumLosses`;
+  QuadTuning raised KeyError on any read without it. Both fixed like
+  AutoSteerRestore (copy the list, return only what was asked);
+  `tests/env_fixes_test.py` covers them. Gotcha: FakeBackend readings are
+  keyed by the full DRF, event included (`G:LINEFF@e,52,e,0`).

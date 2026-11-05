@@ -1,13 +1,14 @@
-"""Offline checks of three environments fixed 2026-10-28 (both twins of each, Acsys
-and Pacsys), with a stub interface: no control network, no acsys/pacsys needed.
+"""Offline checks of three environments fixed 2026-10-28, with a stub interface: no
+control network, no pacsys needed.
 
-- 09_DeliveryRing_Muon_PID_tune: the Acsys twin imports (a line had lost its
-  left-hand side); DR_SDF_calc reads the spill arrays it needs (it checked for
+- 09_DeliveryRing_Muon_PID_tune: DR_SDF_calc reads the spill arrays it needs (it checked for
   'DR_SDF'); a spill starting at sample 0 no longer slices from the end.
 - 01_Linac_AutoSteerRestore: VTrajError_SumSqBPM_calc no longer hits an
   undefined name; W_SumLosses is computed (the name was removed, then tested).
 - 01_Linac_MinD7LMSM_using_Tank5Phase: uses the interfaces' current calls
   (get_settings, get_values with sample_events, bare names to set_values).
+- 01_Linac_RIL_tuning (2026-11-04): W_SumLosses is computed; same list rules.
+- 01_Linac_QuadTuning (2026-11-04): W_SumLosses only when asked (it raised KeyError).
 - All: the caller's list of names is left alone, and only the requested names
   come back (not the inputs read for a calculation).
 
@@ -55,7 +56,7 @@ def env(name):
     return importlib.import_module(f"environments.{name}").Environment
 
 
-for twin in ("Acsys", "Pacsys"):
+for twin in ("Pacsys",):  # ponytail: the Acsys twins were deleted 2026-11-04
     # --- DeliveryRing Muon PID
     E = env(f"09_DeliveryRing_Muon_PID_tune_{twin}")
     stub = Stub()
@@ -93,5 +94,26 @@ for twin in ("Acsys", "Pacsys"):
     names = ["L:D7LMSM"]
     assert e.get_observables(names) == {"L:D7LMSM": 1.0} and names == ["L:D7LMSM"]
     assert stub.calls[-1] == ("get_values", ["L:D7LMSM"], {"default": "@e,15,e,0"}), stub.calls[-1]
+
+# --- RIL_tuning (fixed 2026-11-04, the same two faults as AutoSteerRestore)
+E = env("01_Linac_RIL_tuning_Pacsys")
+stub = Stub()
+e = E(interface=stub)
+names = ["W_SumLosses", "VTrajError_SumSqBPM_calc", "G:LINEFF"]
+out = e.get_observables(names)
+assert names == ["W_SumLosses", "VTrajError_SumSqBPM_calc", "G:LINEFF"], names
+assert sorted(out) == sorted(names), sorted(out)  # not the loss monitors or BPM errors
+assert out["VTrajError_SumSqBPM_calc"] == 0.75, out  # three -SETPOINT inputs at 0.25
+assert np.isclose(out["W_SumLosses"], len(e.w_sumsq) * (1.0 * (1 + 1.0)) ** 2), out
+
+# --- QuadTuning (fixed 2026-11-04): W_SumLosses only when asked, inputs not returned
+E = env("01_Linac_QuadTuning_Pacsys")
+stub = Stub()
+e = E(interface=stub)
+assert e.get_observables(["L:D7LMSM"]) == {"L:D7LMSM": 1.0}  # was KeyError: L:DELM18
+names = ["W_SumLosses"]
+out = e.get_observables(names)
+assert names == ["W_SumLosses"] and list(out) == ["W_SumLosses"], out
+assert np.isclose(out["W_SumLosses"], sum(w ** 2 for w in e.w_sumsq.values())), out
 
 print("ENV FIXES TEST PASSED")

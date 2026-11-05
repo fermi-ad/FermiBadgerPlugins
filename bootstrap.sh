@@ -4,24 +4,21 @@
 #   2. pixi install (resolves and builds the environment from pixi.toml)
 #   3. pixi run setup (patches, config.local.yaml, discoverability check)
 #
-#   ./bootstrap.sh                 default: adds acsys (needs the FNAL network); use on the MCR host
-#   ./bootstrap.sh --offsite       off-site/dev: no acsys, no FNAL network needed
+#   ./bootstrap.sh                 one environment, on or off the FNAL network
 #   ./bootstrap.sh --yes           never prompt during the setup step
 set -euo pipefail
 
 # macOS ships bash 3.2, which errors on an empty array under 'set -u'; plain
 # strings avoid that rather than guarding every array expansion.
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ENV_NAME=""
-ENV_FLAG=""
 SETUP_YES=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --offsite)  ENV_NAME="offsite"; ENV_FLAG="-e offsite"; shift ;;
-        --onsite)   shift ;;  # now the default; accepted as a no-op for anyone who already typed it
+        --offsite|--onsite)  # retired 2026-11-04 with acsys: one environment now
+            echo "Note: $1 is no longer needed (acsys is retired; one environment works anywhere)."; shift ;;
         --yes|-y)   SETUP_YES="--yes"; shift ;;
-        --help|-h)  sed -n '2,8p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+        --help|-h)  sed -n '2,7p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
         *) echo "Unknown option: $1 (try --help)" >&2; exit 2 ;;
     esac
 done
@@ -47,10 +44,10 @@ else
 fi
 
 echo
-echo "2. pixi environment${ENV_NAME:+ ($ENV_NAME)}"
+echo "2. pixi environment"
 cd "$REPO"
-pixi install $ENV_FLAG
+pixi install
 
 echo
 echo "3. Patches, config, verify"
-pixi run $ENV_FLAG setup -- $SETUP_YES
+pixi run setup -- $SETUP_YES

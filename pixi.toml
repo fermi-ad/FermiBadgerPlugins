@@ -7,9 +7,7 @@ channels = ["conda-forge"]
 platforms = [{ name = "osx-arm64-macos15", platform = "osx-arm64", macos = "15.0" }, "linux-64"]
 
 [tasks]
-# Patches + config.local.yaml + discoverability check, for whichever
-# environment this is run in (`pixi run setup` for default/onsite,
-# `pixi run -e offsite setup` off the FNAL network).
+# Patches + config.local.yaml + discoverability check.
 setup = "bash pixi_setup.sh"
 # The operator launch line: `pixi run safe-badger mini -t <template>` runs
 # -mini under a launcher that restores every device the session changed if
@@ -46,16 +44,6 @@ xpart = "==0.23.13"
 xsuite = "==0.54.0"
 xtrack = "==0.107.0"
 pacsys = "==0.3.0"
-
-# acsys is FNAL-network-only. The default environment includes it (operators
-# on the MCR host always have FNAL network, and dropping the -e flag there
-# is worth it); off-network dev work opts out with `pixi install -e offsite`.
-[feature.onsite.pypi-dependencies]
-acsys = "==0.12.8"
-
-[feature.onsite.pypi-options]
-extra-index-urls = ["https://www-bd.fnal.gov/pip3"]
-
-[environments]
-default = { features = ["onsite"] }
-offsite = []
+# acsys and the onsite/offsite split were retired 2026-11-04 (all templates use
+# pacsys, from PyPI): one environment, on or off the FNAL network. The last
+# version with them is the git tag `last-acsys`.

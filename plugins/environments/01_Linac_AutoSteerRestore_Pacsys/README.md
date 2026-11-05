@@ -3,7 +3,6 @@
 Steers the beam at the end of the Linac back onto a reference trajectory,
 using six trims, by minimizing the distance of the BPM readings from their
 reference positions. It reads and writes ACNET through pacsys.
-`01_Linac_AutoSteerRestore_Acsys` is the same environment through acsys.
 
 ## What it can tune (variables)
 

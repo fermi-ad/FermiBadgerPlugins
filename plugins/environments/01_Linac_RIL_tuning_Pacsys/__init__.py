@@ -1,3 +1,6 @@
+# The most complete Pacsys environment, and the one to copy. Its conventions (mults,
+# BulkPS, periods, -SETPOINT observables, averaging, computed observables) are explained
+# in docs/developer-guide.md, "Conventions in the code you copied".
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
 from typing import Dict
@@ -195,15 +198,17 @@ class Environment(environment.Environment):
     def get_observables(self, observable_names: list[str]) -> dict:        
         if not self.interface:
             raise BadgerNoInterfaceError
+        requested = list(observable_names)  # the caller's list stays as it was
+        observable_names = list(observable_names)
         calc_these = []
-        if 'VTrajError_SumSqBPM_calc' in observable_names: # Ensure the inputs to the calc will be returned
+        if 'VTrajError_SumSqBPM_calc' in observable_names: # Ensure the inputs to the calc will be read
             for input_dev in ["L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT"]:
                 if not input_dev in observable_names: observable_names.append(input_dev)
 
-        if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be returned
+        if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be read
             for input_dev in list(self.w_sumsq.keys()):
                 if not input_dev in observable_names: observable_names.append(input_dev)
-            observable_names.remove('W_SumLosses') # only removes first occurrence. 
+            observable_names.remove('W_SumLosses') # computed below, not read
 
         bulk_ps_names = [n for n in observable_names if n.startswith(BULK_PS_PREFIX)]
         for n in bulk_ps_names: observable_names.remove(n)
@@ -229,7 +234,7 @@ class Environment(environment.Environment):
                 for sqerror in ["L:D73BPV-SETPOINT", "L:D74BPV-SETPOINT", "B:VPQ2-SETPOINT"]:
                     sumsqerror += result[sqerror]
                 result['VTrajError_SumSqBPM_calc'] = sumsqerror
-        if "W_SumLosses" in observable_names and len(self.w_sumsq.keys())>0:
+        if "W_SumLosses" in requested and len(self.w_sumsq.keys())>0:
             sumsq = 0.0
             for dev_read, weight in self.w_sumsq.items():
                 if dev_read not in result.keys(): print (f'Unable to find {dev_read} among the read-back results: {list(result.keys())}')
@@ -241,7 +246,8 @@ class Environment(environment.Environment):
         for name in oob_names:
             result[name] = self._mult_oob.get(name[len(OOB_PREFIX):], 0.0)
 
-        return result
+        # Only what was asked for: not the inputs read just for a calculation
+        return {name: result[name] for name in requested if name in result}
 
 
 

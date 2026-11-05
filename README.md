@@ -55,7 +55,7 @@ cd FermiBadgerPlugins
 This installs [pixi](https://pixi.sh) if it's not already on your `PATH`, resolves and builds the environment from `pixi.toml`, applies the Badger patches, writes `config.local.yaml`, and verifies the plugin is discoverable — see [Apply patches and configure by hand](#apply-patches-and-configure-by-hand) for what it does under the hood:
 
 1. Installs pixi, if missing.
-2. `pixi install` builds the environment from `pixi.toml`/`pixi.lock`. The default environment includes `acsys` from FNAL's internal pip repository, so it needs the FNAL network (on-site or VPN) — this matches the MCR host. Off that network, use `./bootstrap.sh --offsite` instead, which skips `acsys`.
+2. `pixi install` builds the environment from `pixi.toml`/`pixi.lock`. Everything comes from public channels, so it works on or off the FNAL network.
 3. Applies the Badger patches to that environment.
 4. Writes `config.local.yaml` with this clone's paths — it works no matter where you cloned the repo, `/tmp` included. Your archive and logbook directories default to `~/BadgerArchive` and `~/BadgerLogs`; press Enter to accept or type your own.
 5. Verifies that Badger can discover the plugins.
@@ -65,7 +65,6 @@ It is safe to re-run: patches already applied are detected and skipped.
 ```bash
 ./bootstrap.sh --help     # options
 ./bootstrap.sh --yes      # take every default, no prompts
-./bootstrap.sh --offsite  # skip acsys; no FNAL network needed, for off-site dev work
 ```
 
 ### 3. Launch
@@ -90,8 +89,6 @@ pixi run safe-badger g -t 01_Linac_RIL_tuning.yaml      # the full GUI
 ```
 
 Template names are relative to `tuning_templates/`. The full GUI without a template: `pixi run safe-badger g` (or `pixi run badger -g -cf config.local.yaml`).
-
-Off-site, on the `offsite` environment, add `-e offsite`: `pixi run -e offsite badger -g -cf config.local.yaml`.
 
 `config.local.yaml` is gitignored, so the tracked `config.yaml` stays a clean template and `git pull` never conflicts with your local paths.
 
@@ -148,9 +145,9 @@ Full technical description (processes, snapshot file format, every ending, tests
 - **cpymad** for MADX
 - **pacsys** (FNAL Accelerator Control System)
 
-`acsys` (also FNAL Accelerator Control System, but requiring the FNAL network to install) is part of the default environment, matching the MCR host. Off-site dev work uses the `offsite` environment instead, which skips it. `pixi.lock` pins exact versions for `osx-arm64` and `linux-64`; regenerate it with `pixi install` (or `pixi install -e offsite`) after editing `pixi.toml`, and commit the updated lock file.
+`pixi.lock` pins exact versions for `osx-arm64` and `linux-64`; regenerate it with `pixi install` after editing `pixi.toml`, and commit the updated lock file.
 
-**Legacy conda path (frozen 2026-10-23).** pixi is the only maintained way to install. `environment.yml` (the `FermiBadger_env` conda environment, `acsys` unconditional) and `./setup.sh` stay in the repo, unmaintained: they get no new patches, so a conda install lags behind pixi from here on. Use them only to keep an existing conda install running until it is retired; `tests/test-quick-start-conda.sh` checks that path.
+**Retired 2026-11-04:** the conda path (`environment.yml`, `setup.sh`), `acsys`, the `offsite` environment, and the `_Acsys` environments with `BasicAcsysInterface`. The last version with them is the git tag `last-acsys`.
 
 ### Why Patches Are Required
 
@@ -244,15 +241,6 @@ This simulation-tuning environment accepts these parameters in its tuning templa
 
 [↑ Back to top](#contents)
 
-### FNAL Network Required (default pixi environment)
-
-The `acsys` package is hosted on FNAL's internal pip repository (`https://www-bd.fnal.gov/pip3`). You must be on the FNAL network (on-site or VPN) to install it. The `offsite` pixi environment (`pixi install -e offsite` / `./bootstrap.sh --offsite`) doesn't need it.
-
-**Error if off-network**:
-```
-error: Because acsys was not found in the package registry and you require acsys==0.12.8, we can conclude that your requirements are unsatisfiable.
-```
-
 ### libGL.so.1 Missing
 
 On headless systems or some Docker configurations, Badger may fail with:
@@ -277,7 +265,7 @@ to prevent slow performance from thread contention.
 
 ### Environment Not Found
 
-If `pixi run badger` fails with no environment built, re-run `pixi install` (or `pixi install -e offsite`) from the repo root; `pixi.toml` defines it, so there's no separate "does it exist" check.
+If `pixi run badger` fails with no environment built, re-run `pixi install` from the repo root; `pixi.toml` defines it, so there's no separate "does it exist" check.
 
 ### Dict type must have subtypes Error
 
@@ -309,8 +297,7 @@ FermiBadgerPlugins/
 │   ├── safe-badger.md          # How the snapshot, Revert and automatic restore are built
 │   ├── algorithms/             # One page per optimization algorithm, shown by its Open Docs button
 │   └── ...
-├── environment.yml             # Legacy conda environment (frozen 2026-10-23, unmaintained)
-├── patches/                    # Badger bug fixes, applied by bootstrap.sh/setup.sh in the order patches/README.md lists
+├── patches/                    # Badger bug fixes, applied by `pixi run setup` in the order patches/README.md lists
 │   ├── pydantic_editor-badger-1.6.0-dict-subtypes.patch
 │   ├── badger-mini-config.patch
 │   ├── badger-mini-var-table-env-configs.patch
@@ -325,27 +312,25 @@ FermiBadgerPlugins/
 │   ├── badger-1.6.0-param-table-editor.patch
 │   ├── xopt-3.2.2-turbo-serialization.patch
 │   └── README.md
-├── pixi.toml                   # Pixi environment definition (default includes acsys; offsite drops it)
+├── pixi.toml                   # Pixi environment definition
 ├── pixi.lock                   # Pinned resolution for osx-arm64 and linux-64
 ├── pixi_setup.sh               # Patch/config/verify logic behind `pixi run setup`
 ├── safe_badger.py              # `pixi run safe-badger`: launcher that restores settings if Badger is interrupted
 ├── plugins/
 │   ├── environments/           # Badger Environment plugins (see naming convention below)
-│   │   ├── 01_Linac_RIL_tuning_Acsys/
-│   │   ├── 09_DeliveryRing_Muon_PID_tune_Acsys/
+│   │   ├── 01_Linac_RIL_tuning_Pacsys/
+│   │   ├── 09_DeliveryRing_Muon_PID_tune_Pacsys/
 │   │   ├── 99_Sim_VirtualAccelerator_MADXSuite/
 │   │   └── ...
 │   ├── interfaces/             # Badger Interface plugins
+│   │   ├── BasicPacsysInterface/   # ACNET through pacsys: every real-machine environment
 │   │   └── VirtualAccelerator_MADXSuiteInterface/
 │   └── settings_snapshot.py    # Snapshot/diff/restore of device settings (used by -mini and safe-badger)
-├── setup.sh                    # Legacy conda install/patch/config script (frozen, unmaintained)
 ├── sim_configs/                # MAD-X lattice files and settings
 │   └── DeliveryRing/
 ├── tests/                      # Diagnostic and verification scripts
-│   ├── check_RIL_tuning_live_bounds.py  # Read-only live-bounds diagnostic
 │   ├── template_lint_test.py   # Headless check that every tuning template loads
-│   ├── test-quick-start.sh     # Fresh-clone verification script (pixi)
-│   └── test-quick-start-conda.sh  # Fresh-clone verification script (legacy conda, frozen)
+│   └── test-quick-start.sh     # Fresh-clone verification script (pixi)
 └── tuning_templates/           # Pre-configured optimization setups (see naming convention below)
     ├── 01_Linac_RIL_tuning.yaml            # operations-ready physical-machine templates live at the top level
     ├── development/                        # physical-machine templates still being worked on
@@ -370,7 +355,7 @@ FermiBadgerPlugins/
 `plugins/environments/*` folders and `tuning_templates/*.yaml` files are named so they alpha-sort in the Badger GUI's picker in physical beam order, not plain alphabetical order:
 
 ```
-<region>_<Descriptive>[_Acsys|_Pacsys]
+<region>_<Descriptive>[_Pacsys]
 ```
 
 `<region>` is a zero-padded two-digit code, chosen so digit-first names sort ahead of any unprefixed legacy name and leave room to insert new regions later without renumbering:
@@ -389,23 +374,23 @@ FermiBadgerPlugins/
 | `10` | MuonCampus |
 | `99` | Sim (simulation environments — always sorts last, regardless of how many real regions exist) |
 
-Every real-machine environment (backed by an actual control-system interface, not a simulation) carries an explicit `_Acsys` or `_Pacsys` suffix naming which control system it talks to — even when only one variant currently exists, so the interface choice stays visible to the next developer. Drop any part of the descriptive name that would otherwise just repeat the region name (e.g. `LinacQuadTuning` under `01_Linac` becomes `01_Linac_QuadTuning_Acsys`, not `01_Linac_LinacQuadTuning_Acsys`).
+Every real-machine environment (backed by an actual control-system interface, not a simulation) carries the `_Pacsys` suffix naming the control-system interface it uses (an earlier `_Acsys` set was retired 2026-11-04), so the interface choice stays visible to the next developer. Drop any part of the descriptive name that would otherwise just repeat the region name (e.g. `LinacQuadTuning` under `01_Linac` becomes `01_Linac_QuadTuning_Pacsys`, not `01_Linac_LinacQuadTuning_Pacsys`).
 
-A tuning template's filename follows its own token order, `<region>_<tuning_task>_<env_plugin>[_Acsys|_Pacsys]`, so templates still group and sort by region the same way the environment picker does, while leading with the descriptive part instead of repeating the full environment name up front:
+A tuning template's filename follows its own token order, `<region>_<tuning_task>_<env_plugin>[_Pacsys]`, so templates still group and sort by region the same way the environment picker does, while leading with the descriptive part instead of repeating the full environment name up front:
 
 ```
 01_Linac_OutputTrajectory_RIL_tuning_Pacsys.yaml
 ```
 
-Here `01_Linac` is the region code, `OutputTrajectory` is the tuning task, `RIL_tuning` is the `env_plugin` (the parent environment's own name, with its region prefix and interface suffix stripped — i.e. `01_Linac_RIL_tuning_Pacsys` minus `01_Linac_` and `_Pacsys`), and `Pacsys` is the interface suffix. Simulation templates live in `tuning_templates/simulation/` and drop the `99_Sim_` region prefix as well as the interface suffix (their parent sim environments keep the prefix, since they share one picker with the real-machine environments), e.g. `simulation/TuneQx_SimpleVirtualAccelerator.yaml`. Physical-machine templates go in `tuning_templates/development/` until they are ready for operations, then move to the top level, which is the only level the `-mini` dropdown lists. Top-level templates also drop the `_Acsys`/`_Pacsys` suffix (e.g. `01_Linac_RIL_tuning.yaml`): operators need not know which control-system interface the template's environment uses, and the `environment.name` inside the file still records it. An environment's general-purpose template is named after the environment alone, e.g. `development/01_Linac_RIL_tuning_Pacsys.yaml`; it checks the recommended default selection, and the operator reaches the narrower setups by unchecking variables in the GUI rather than by picking a different template.
+Here `01_Linac` is the region code, `OutputTrajectory` is the tuning task, `RIL_tuning` is the `env_plugin` (the parent environment's own name, with its region prefix and interface suffix stripped — i.e. `01_Linac_RIL_tuning_Pacsys` minus `01_Linac_` and `_Pacsys`), and `Pacsys` is the interface suffix. Simulation templates live in `tuning_templates/simulation/` and drop the `99_Sim_` region prefix as well as the interface suffix (their parent sim environments keep the prefix, since they share one picker with the real-machine environments), e.g. `simulation/TuneQx_SimpleVirtualAccelerator.yaml`. Physical-machine templates go in `tuning_templates/development/` until they are ready for operations, then move to the top level, which is the only level the `-mini` dropdown lists. Top-level templates also drop the `_Pacsys` suffix (e.g. `01_Linac_RIL_tuning.yaml`): operators need not know which control-system interface the template's environment uses, and the `environment.name` inside the file still records it. An environment's general-purpose template is named after the environment alone, e.g. `development/01_Linac_RIL_tuning_Pacsys.yaml`; it checks the recommended default selection, and the operator reaches the narrower setups by unchecking variables in the GUI rather than by picking a different template.
 
 When a region assignment is ambiguous — e.g. an environment that varies a parameter in one region but reads a diagnostic from another — ask before guessing; Fermilab device-prefix meanings require domain knowledge.
 
-**Gotcha:** `badger.factory.load_plugin` loads environment modules via `importlib.import_module(f"environments.{name}")`, which works fine with digit-leading folder names. But a literal `from environments.01_Linac_RIL_tuning_Acsys import X` is a `SyntaxError` — any ad hoc script or test that needs to import a renamed environment module directly must use `importlib.import_module(...)` instead (see `tests/VA_deferred_expressions_test.py` and `tests/VA_plugin_smoke_test.py` for the pattern).
+**Gotcha:** `badger.factory.load_plugin` loads environment modules via `importlib.import_module(f"environments.{name}")`, which works fine with digit-leading folder names. But a literal `from environments.01_Linac_RIL_tuning_Pacsys import X` is a `SyntaxError` — any ad hoc script or test that needs to import a renamed environment module directly must use `importlib.import_module(...)` instead (see `tests/VA_deferred_expressions_test.py` and `tests/VA_plugin_smoke_test.py` for the pattern).
 
 ---
 
-### Periodic (phase) devices
+### Periodic (phase, angle) devices
 
 A phase in degrees or radians is the same physics at `x` and `x + n*period`, and the setting devices accept values past the wrap. Two things make Badger handle that:
 

@@ -151,8 +151,8 @@ class's `variables` dict:
 - Names containing `-SETPOINT` are skipped. They are observables.
 - A read/set pair (`READ,SET[,tolN@T]`, e.g. `L:CDPHAS,L:LDPADJ,tol2@0.1`)
   records its second field, the setting device. This rule is copied from
-  `BasicPacsysInterface.extract_setting_devices`, not imported, because Acsys
-  environments never load that interface.
+  `BasicPacsysInterface.extract_setting_devices`, not imported, because the
+  simulation environments never load that interface.
 - If the role is missing or `nosettings`, nothing is recorded. This covers the
   simulation environments, and EnergyStabilization unless its template sets a
   role.

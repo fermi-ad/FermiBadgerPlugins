@@ -105,11 +105,13 @@ class Environment(environment.Environment):
     def get_observables(self, observable_names: list[str]) -> dict:        
         if not self.interface:
             raise BadgerNoInterfaceError
+        requested = list(observable_names)  # the caller's list stays as it was
+        observable_names = list(observable_names)
         calc_these = []
-        if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be returned
+        if 'W_SumLosses' in observable_names: # Ensure the inputs to the calc will be read
             for input_dev in list(self.w_sumsq.keys()):
                 if not input_dev in observable_names: observable_names.append(input_dev)
-            observable_names.remove('W_SumLosses') # only removes first occurrence. 
+            observable_names.remove('W_SumLosses') # computed below, not read
 
         get_these_observables = [] # The list of actual devices to be read
         for observable_name in observable_names:
@@ -122,11 +124,12 @@ class Environment(environment.Environment):
         result = self.interface.get_values(get_these_observables,
                                            sample_events=self.sample_events,
                                            debug=self.debug)
-        if len(self.w_sumsq.keys())>0:
+        if 'W_SumLosses' in requested and len(self.w_sumsq.keys())>0:
             sumsq = 0.0
             for dev_read, weight in self.w_sumsq.items():
                 sumsq += pow(weight * result[dev_read], 2.0)
             result['W_SumLosses'] = sumsq
-        return result
+        # Only what was asked for: not the loss monitors read just for W_SumLosses
+        return {name: result[name] for name in requested if name in result}
 
 

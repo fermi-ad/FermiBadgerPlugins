@@ -1,8 +1,7 @@
 """Offline checks of mults (console-style fixed-proportion knobs), no control network needed.
 
 The pure helper first, then the RIL Pacsys environment driven through
-pacsys.testing.FakeBackend. The Acsys environment shares the same helper and the same
-method bodies but has no fake backend.
+pacsys.testing.FakeBackend.
 
 Run from the repo root:
     pixi run python tests/mults_test.py

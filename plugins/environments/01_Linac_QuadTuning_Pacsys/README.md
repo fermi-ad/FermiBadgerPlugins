@@ -1,8 +1,7 @@
 # Linac quad tuning (Pacsys)
 
 Tunes the Linac quadrupoles to lower beam losses along the Linac. It reads and
-writes ACNET through pacsys. `01_Linac_QuadTuning_Acsys` is the same
-environment through acsys.
+writes ACNET through pacsys.
 
 ## What it can tune (variables)
 

@@ -73,11 +73,7 @@ Changes 1–5 were developed as separate patches and then merged into one, `badg
 > and rebuild the env.
 >
 > **From-scratch check** (do this before committing a new patch): `rsync` the working
-> tree to `/tmp/X` excluding `.git` and `.pixi`, then `cd /tmp/X && ./bootstrap.sh --yes`
-> (defaults to the FNAL-network-requiring onsite environment; add `--offsite`
-> off that network). Legacy conda path:
-> `./setup.sh --yes --env-name X` (drop the `acsys` lines from the copy's
-> `environment.yml` first if off-site). Expect `applied` for every patch and a
+> tree to `/tmp/X` excluding `.git` and `.pixi`, then `cd /tmp/X && ./bootstrap.sh --yes`. Expect `applied` for every patch and a
 > `badger/` + `xopt/` tree identical to the working env.
 >
 > Both setup scripts also sync their resolved paths into Badger's own

@@ -1,6 +1,6 @@
 """Guard for the Pacsys cutover (2026-10-28): every real-world tuning template
 (not simulation/, not saved/) uses a Pacsys (or test) environment, never an
-Acsys one. The Acsys environments stay in the repo, unused.
+Acsys one. The Acsys environments were deleted 2026-11-04 (git tag `last-acsys`).
 
 Run from the repo root:
     pixi run python tests/pacsys_cutover_test.py

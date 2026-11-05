@@ -3,7 +3,6 @@
 Holds the 400 MeV beam energy steady by adjusting Linac RF: the tank 5 phase
 and the phases of two cavities, regulating two energy readings back to their
 values at the start of the run. It reads and writes ACNET through pacsys.
-`01_Linac_EnergyStabilization_Acsys` is the same environment through acsys.
 
 ## What it can tune (variables)
 

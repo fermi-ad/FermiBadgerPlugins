@@ -2,7 +2,7 @@
 into one period, but value and value + n*period are the same physics.
 
 Shared by the interfaces and environments under plugins/ (this directory is on
-sys.path when Badger loads a plugin, the same way scanner.py is found).
+sys.path when Badger loads a plugin).
 """
 
 

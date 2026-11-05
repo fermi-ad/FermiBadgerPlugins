@@ -2,8 +2,6 @@
 
 A one-knob test environment: adjust the tank 5 phase to minimize the loss
 monitor sum `L:D7LMSM`. It reads and writes ACNET through pacsys.
-`01_Linac_MinD7LMSM_using_Tank5Phase_Acsys` is the same environment through
-acsys.
 
 ## What it can tune (variables)
 
