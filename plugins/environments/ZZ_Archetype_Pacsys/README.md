@@ -45,7 +45,7 @@ The loaded template sets these; change them here before a run if needed.
 - `sample_events`: which clock event each reading is taken on,
   `{device or 'default': '@e,<event>,e,0'}`.
 - `average_events`: average each reading over N fresh events, `{device or 'default': N}`.
-- `periods`: devices whose value wraps around, `{reading device: period}`.
+- `periodic_devices` (formerly `periods`): devices whose value wraps around, `{reading device: period}`.
 - `setpoints`: targets for the `-SETPOINT` observables, a number or `'hold'` (the
   first reading of the run).
 - `BulkPS_Limit`: each bulk power supply, its trims, and its limit in amps.

@@ -1,5 +1,6 @@
 """Offline check of every feature in ZZ_Archetype_Pacsys, the pattern new environments
-are copied from (`pixi run new-env`), on pacsys's FakeBackend: nothing reaches ACNET.
+are copied from (`pixi run new-env`), on pacsys's FakeBackend with 0.1% noise on its
+readings (tests/noisy_fake.py; settings stay exact): nothing reaches ACNET.
 
 Run from the repo root:
     pixi run python tests/archetype_test.py
@@ -12,7 +13,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, 'plugins')
-from pacsys.testing import FakeBackend  # noqa: E402
+from noisy_fake import NoisyFakeBackend  # noqa: E402  readings carry 0.1% noise
 from pacsys.types import ValueType  # noqa: E402
 from pydantic import ValidationError  # noqa: E402
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
@@ -37,7 +38,7 @@ for make in (lambda: E(interface=Interface(), settings_role='ril_tuning'),
 
 env = E(interface=Interface())
 assert env.settings_role == 'nosettings'
-fb = env.interface._backend_override = FakeBackend()
+fb = env.interface._backend_override = NoisyFakeBackend()
 env.interface._timeout = 5.0
 object.__setattr__(env, 'settings_role', 'testing')  # bypass the guard, to test the write path
 
@@ -51,7 +52,9 @@ fb.set_reading('L:CDPHAS', 2.0)  # a pair's value is its reading; 362 is the sam
 # --- get_variables: plain settings, a mult (0 steps at the start), a pair's reading;
 # periodic values on the branch nearest the middle of their hard limits
 got = quiet(env.get_variables, ['L:ATRMHU', 'mult:MUQ', 'L:RFQPAH', PAIR])
-assert got == {'L:ATRMHU': 1.0, 'mult:MUQ': 0.0, 'L:RFQPAH': 205.0, PAIR: 362.0}, got
+assert {k: got[k] for k in ('L:ATRMHU', 'mult:MUQ', 'L:RFQPAH')} == \
+    {'L:ATRMHU': 1.0, 'mult:MUQ': 0.0, 'L:RFQPAH': 205.0}, got  # settings: exact
+assert abs(got[PAIR] - 362.0) < 0.05, got  # a reading: 2.0 +- 0.1%, on the 360 branch
 assert env._as_found == {'L:MUQ1': 272.0, 'L:MUQ2': 250.0}, env._as_found
 
 # --- set_variables: a mult step moves both quads; the bulk supply clips the largest
@@ -83,13 +86,13 @@ names = ['G:LINEFF', 'B:400DFT-SETPOINT', 'Z:ITGSIG_1_SRS[:]|std', 'W_SumLosses'
 asked = list(names)
 out = quiet(env.get_observables, asked)
 assert asked == names and sorted(out) == sorted(names), out  # list untouched; nothing extra
-assert out['G:LINEFF'] == 0.9
-assert out['B:400DFT-SETPOINT'] == 0.0, out  # held at its first reading
-assert np.isclose(out['VTrajError_SumSqBPM_calc'], 0.1 ** 2 + 0.2 ** 2), out
-assert np.isclose(out['Z:ITGSIG_1_SRS[:]|std'], np.std(signal)), out
-assert np.isclose(out['W_SumLosses'], len(env.w_sumsq) * 4.0), out  # (1 * (1 + 1))^2 each
+assert np.isclose(out['G:LINEFF'], 0.9, rtol=0.01), out
+assert out['B:400DFT-SETPOINT'] < (10.0 * 0.01) ** 2, out  # held at its first reading, +- noise
+assert np.isclose(out['VTrajError_SumSqBPM_calc'], 0.1 ** 2 + 0.2 ** 2, rtol=0.1), out
+assert np.isclose(out['Z:ITGSIG_1_SRS[:]|std'], np.std(signal), rtol=0.01), out
+assert np.isclose(out['W_SumLosses'], len(env.w_sumsq) * 4.0, rtol=0.01), out  # (1 * (1 + 1))^2 each
 spill = signal[2:3 + env.spill_length]
-assert np.isclose(out['SpillDutyFactor_calc'], 1 / (1 + np.var(spill))), out
+assert np.isclose(out['SpillDutyFactor_calc'], 1 / (1 + np.var(spill)), rtol=0.01), out
 assert out['BulkPS_MEBTQ1trims'] == 2.0, out  # sum of |I|: 0.5 * 4
 assert out['MultOOB_MUQ'] == 0.0, out
 print('ARCHETYPE TEST PASSED')

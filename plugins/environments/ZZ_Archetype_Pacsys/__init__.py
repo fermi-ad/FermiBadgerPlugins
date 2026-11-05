@@ -13,7 +13,7 @@ from typing import Dict
 import numpy as np
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
-from pydantic import PrivateAttr
+from pydantic import AliasChoices, Field, PrivateAttr
 # ARCHETYPE-ONLY
 from pydantic import field_validator
 # END ARCHETYPE-ONLY
@@ -61,7 +61,7 @@ class Environment(environment.Environment):
         "L:MUQ2": [225.0, 275.0],
         # A mult: an integer step count; each member moves by coefficient * step * steps.
         "mult:MUQ": [-10, 10],
-        # A periodic plain device with tight operating limits (see periods).
+        # A periodic plain device with tight operating limits (see periodic_devices).
         "L:RFQPAH": [185.0, 225.0],
         # A settle triplet: read L:CDPHAS, set L:LDPADJ, then wait until 2 readings agree
         # within 0.1. Periodic and free-running, so declared two periods wide.
@@ -98,7 +98,9 @@ class Environment(environment.Environment):
     # {device or 'default': N}: the mean of N fresh events (N > 1 needs an event, not @i)
     average_events: Dict[str, int] = {'default': 1, 'L:D7TOR': 3}
     # {reading device: period} for phases, in the device's own units
-    periods: Dict[str, float] = {'L:RFQPAH': 360.0, 'L:CDPHAS': 360.0}
+    # Renamed from 'periods' 2026-11-05; the old name still loads (saved templates, past runs).
+    periodic_devices: Dict[str, float] = Field({'L:RFQPAH': 360.0, 'L:CDPHAS': 360.0},
+        validation_alias=AliasChoices('periodic_devices', 'periods'))
     # Targets for the -SETPOINT observables: a number, or 'hold'
     setpoints: Dict[str, float | str | None] = {'B:400DFT': 'hold',
                                                 'L:D73BPV': -0.53, 'L:D74BPV': -1.7}
@@ -143,14 +145,14 @@ class Environment(environment.Environment):
         if plain:   # a plain device's value is its SETTING
             values.update(self._settings(plain))
         if pairs:   # a pair's value is its live READING (the first name)
-            values.update(self.interface.get_values(pairs, periods=self.periods, debug=self.debug))
+            values.update(self.interface.get_values(pairs, periods=self.periodic_devices, debug=self.debug))
         # A periodic value may arrive on another branch (-179 for 181): move it to the
         # branch nearest the middle of the hard limits.
         for name in plain + pairs:
             reading = name.split(',')[0]
-            if reading in self.periods:
+            if reading in self.periodic_devices:
                 lo, hi = self.variables[name]
-                values[name] = unwrap(values[name], (lo + hi) / 2, self.periods[reading])
+                values[name] = unwrap(values[name], (lo + hi) / 2, self.periodic_devices[reading])
         return values
 
     def set_variables(self, settable_devices: dict[str, float]):
@@ -166,7 +168,7 @@ class Environment(environment.Environment):
         # Keep every bulk supply within its limit (clips the largest current toward zero)
         settable_devices = clip_to_bulk_ps_limits(settable_devices, self.BulkPS_Limit, self._settings)
         self.interface.set_values(settable_devices, settings_role=self.settings_role,
-                                  periods=self.periods, debug=self.debug)
+                                  periods=self.periodic_devices, debug=self.debug)
 
     def get_observables(self, observable_names: list[str]) -> dict:
         if not self.interface:
@@ -186,7 +188,7 @@ class Environment(environment.Environment):
         to_read += [n for n in inputs if n not in to_read]
 
         result = self.interface.get_values(to_read, sample_events=self.sample_events,
-                                           setpoints=self.setpoints, periods=self.periods,
+                                           setpoints=self.setpoints, periods=self.periodic_devices,
                                            average_events=self.average_events, debug=self.debug)
 
         if 'W_SumLosses' in requested:

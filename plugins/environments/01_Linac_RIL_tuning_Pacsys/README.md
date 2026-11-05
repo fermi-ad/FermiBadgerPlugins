@@ -34,7 +34,7 @@ The loaded template sets these; change them here before a run if needed.
 - `average_events`: average each reading over N fresh events, `{device or 'default': N}`. Smoother objectives, but N machine cycles per evaluation. N > 1 needs a streaming event, not `@i`.
 - `setpoints`: targets for the `-SETPOINT` observables, `{reading device: value}`.
 - `w_sumsq`: weights for `W_SumLosses`, `{loss monitor: weight}`. Each term is (weight × (1 + reading))².
-- `periods`: devices whose value wraps around, `{device: period}` (360 for the phases). Readings are unwrapped so a phase passing through 0 is not seen as a jump.
+- `periodic_devices` (formerly `periods`): devices whose value wraps around, `{device: period}` (360 for the phases). Readings are unwrapped so a phase passing through 0 is not seen as a jump.
 - `BulkPS_Limit`: each bulk power supply, the trims it feeds and its limit in amps: `{group: {limit: 7.0, devices: [...]}}` limits the sum of |I|; source A's `{positive: 8.0, negative: 8.0, devices: [...]}` limits the sum of the positive currents and the magnitude of the sum of the negative ones separately. A write that would exceed a limit is reduced, largest current first. The 7.0 A limits are placeholders pending expert confirmation. **Edit...** opens a dialog: the limit(s) and a device list per supply.
 - `mults`: console-style knobs, `{name: {step: 0.05, members: {DEV: coefficient, ...}}}`. Each member moves by coefficient × step × (knob steps) from its as-found setting. With 20.0 and 0.05, one step moves each MEBT quad of a pair by 1.0 A. **Edit...** opens a dialog: a step size and a member table (device pulldown, scale) per mult.
 - `debug`: print every read and write to the terminal.

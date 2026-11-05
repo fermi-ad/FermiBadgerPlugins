@@ -1,5 +1,6 @@
 from typing import Dict
 from badger import environment
+from pydantic import AliasChoices, Field
 from badger.errors import BadgerNoInterfaceError
 from periodic import unwrap
 
@@ -26,7 +27,9 @@ class Environment(environment.Environment):
     # 'hold' regulates to the first readback of the run; a number is an explicit target.
     setpoints:     Dict[str, float | str | None] = {'defaults': None, 'B:400DFT': 'hold', 'B:400DF2': 'hold'}
     # {reading device: period} for phase-like devices, in the device's own units.
-    periods:       Dict[str, float] = {'L:CDPHAS': 360.0, 'L:C7PHAS': 360.0}
+    # Renamed from 'periods' 2026-11-05; the old name still loads (saved templates, past runs).
+    periodic_devices: Dict[str, float] = Field({'L:CDPHAS': 360.0, 'L:C7PHAS': 360.0},
+        validation_alias=AliasChoices('periodic_devices', 'periods'))
     settings_role: str = 'nosettings'
     debug:         bool = False
 
@@ -37,23 +40,23 @@ class Environment(environment.Environment):
         # L:LDPADJ). A periodic reading arrives wrapped into one period; move it
         # onto the branch nearest the middle of the declared bounds so a window
         # around it never straddles a bound.
-        values = self.interface.get_values(variable_names, periods=self.periods, debug=self.debug)
+        values = self.interface.get_values(variable_names, periods=self.periodic_devices, debug=self.debug)
         for name in variable_names:
             reading = self.interface.extract_reading_devices([name])[0]
-            if reading in self.periods:
+            if reading in self.periodic_devices:
                 lo, hi = self.variables[name]
-                values[name] = unwrap(values[name], (lo + hi) / 2, self.periods[reading])
+                values[name] = unwrap(values[name], (lo + hi) / 2, self.periodic_devices[reading])
         return values
 
     def set_variables(self, settable_devices: dict[str, float]):
         if not self.interface:
             raise BadgerNoInterfaceError
         self.interface.set_values(settable_devices, settings_role=self.settings_role,
-                                  periods=self.periods, debug=self.debug)
+                                  periods=self.periodic_devices, debug=self.debug)
 
     def get_observables(self, observable_names: list[str]) -> dict:
         if not self.interface:
             raise BadgerNoInterfaceError
         return self.interface.get_values(observable_names, sample_events=self.sample_events,
-                                         setpoints=self.setpoints, periods=self.periods,
+                                         setpoints=self.setpoints, periods=self.periodic_devices,
                                          debug=self.debug)

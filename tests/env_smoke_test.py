@@ -1,5 +1,6 @@
-"""Offline smoke test of a Pacsys environment: pacsys's FakeBackend stands in for
-ACNET, so nothing is read from or written to a real device.
+"""Offline smoke test of a Pacsys environment: pacsys's FakeBackend, with 0.1% noise on
+its readings (tests/noisy_fake.py), stands in for ACNET, so nothing is read from or
+written to a real device.
 
 For each environment: read a few plain variables, set one to its low hard limit
 (checking the value written), and read a few plain observables. Mults, read/set pairs, arrays
@@ -17,7 +18,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, "plugins")
-from pacsys.testing import FakeBackend  # noqa: E402
+from noisy_fake import NoisyFakeBackend  # noqa: E402  readings carry 0.1% noise
 from pydantic import ValidationError  # noqa: E402
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
 
@@ -33,7 +34,7 @@ def smoke(env_name):
         writes = True
     except ValidationError:  # an environment that never writes (the archetype)
         env, writes = E(interface=Interface()), False
-    fb = env.interface._backend_override = FakeBackend()
+    fb = env.interface._backend_override = NoisyFakeBackend()
     if hasattr(env, "average_events"):  # averaging waits for streamed events the fake
         env.average_events = {"default": 1}  # never sends (tests/pacsys_interface_test.py covers it)
     env.interface._timeout = 1.0
@@ -60,7 +61,8 @@ def smoke(env_name):
             assert written == (lo if writes else None), (variables[0], written, lo, writes)
         if observables:
             got = env.get_observables(list(observables))
-            assert got == {o: 1.0 for o in observables}, got
+            assert sorted(got) == sorted(observables), got
+            assert all(abs(v - 1.0) < 0.01 for v in got.values()), got  # 1.0 +- 0.1% noise
     print(f"ok    {env_name}  ({len(variables)} vars, {len(observables)} obs{'' if writes else ', never writes'})")
 
 

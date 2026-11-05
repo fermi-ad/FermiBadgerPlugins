@@ -63,4 +63,13 @@ fb2.set_reading('L:RFBPAH.SETTING@I', -179.0)     # same physics as 181, inside 
 fb2.set_reading('L:ATRMHU.SETTING@I', -1.5)       # not periodic: untouched
 assert ril.get_variables(['L:RFBPAH', 'L:ATRMHU']) == {'L:RFBPAH': 181.0, 'L:ATRMHU': -1.5}
 
+# --- the parameter was renamed periods -> periodic_devices (2026-11-05): saved templates
+# and past runs with the old name must still load, and nothing reads the old name
+import importlib  # noqa: E402
+for name in ('01_Linac_EnergyStabilization_Pacsys', '01_Linac_RIL_tuning_Pacsys', 'ZZ_Archetype_Pacsys'):
+    E = importlib.import_module(f'environments.{name}').Environment
+    assert E(periods={'L:X': 2.0}).periodic_devices == {'L:X': 2.0}, name
+    assert E(periodic_devices={'L:X': 3.0}).periodic_devices == {'L:X': 3.0}, name
+    assert 'periods' not in E().model_dump() and 'periodic_devices' in E().model_dump(), name
+
 print('PERIODIC PHASE TEST PASSED')

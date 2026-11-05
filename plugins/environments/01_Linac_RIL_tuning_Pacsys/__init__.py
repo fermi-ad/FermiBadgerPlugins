@@ -1,4 +1,4 @@
-# The operations environment for RIL tuning. Its conventions (mults, BulkPS, periods,
+# The operations environment for RIL tuning. Its conventions (mults, BulkPS, periodic devices,
 # -SETPOINT observables, averaging, computed observables) are explained in
 # docs/developer-guide.md; new environments start from ZZ_Archetype_Pacsys instead.
 from badger import environment
@@ -8,7 +8,7 @@ from periodic import unwrap
 from supply_limits import (BulkPSLimits, OBSERVABLE_PREFIX as BULK_PS_PREFIX, bulk_ps_observable,
                            bulk_ps_observables, clip_to_bulk_ps_limits)
 from mults import Mult, expand_mults, is_mult, mult_name, mult_members, OOB_PREFIX
-from pydantic import PrivateAttr
+from pydantic import AliasChoices, Field, PrivateAttr
 
 # Bulk power supplies: each feeds a few trims and trips off if they draw too much
 # together. Sources A and B and MEBT Q1 and Q2 each have their own bulk supply; the two
@@ -67,7 +67,7 @@ class Environment(environment.Environment):
         "L:MDQ2H" : [-4.0, 4.0],
         "L:MDQ2V" : [-4.0, 4.0],
 
-        # RF phases. Periodic (see periods below) but with deliberate operating limits,
+        # RF phases. Periodic (see periodic_devices below) but with deliberate operating limits,
         # so the bounds stay tight rather than two periods wide.
         "L:RFQPAH" : [ 185.0, 225.0],
         "L:RFBPAH" : [ 100.0, 300.0],
@@ -120,7 +120,9 @@ class Environment(environment.Environment):
     settings_role: str = 'ril_tuning_fake'
     debug:         bool= False
     # {reading device: period} for phase-like devices, in the device's own units.
-    periods:       Dict[str, float] = {'L:RFQPAH': 360.0, 'L:RFBPAH': 360.0, 'L:V5QSET': 360.0}
+    # Renamed from 'periods' 2026-11-05; the old name still loads (saved templates, past runs).
+    periodic_devices: Dict[str, float] = Field({'L:RFQPAH': 360.0, 'L:RFBPAH': 360.0, 'L:V5QSET': 360.0},
+        validation_alias=AliasChoices('periodic_devices', 'periods'))
     # Bulk power supplies (see _BULK_PS above). set_variables clips the largest current in a
     # budget toward zero to stay under its limit; each budget is also an observable.
     BulkPS_Limit: BulkPSLimits = _BULK_PS
@@ -173,9 +175,9 @@ class Environment(environment.Environment):
         # A periodic setting may be reported on another branch (e.g. -179 for 181);
         # move it onto the branch nearest the middle of the declared bounds.
         for name in variable_names:
-            if name in self.periods:
+            if name in self.periodic_devices:
                 lo, hi = self.variables[name]
-                values[name] = unwrap(values[name], (lo + hi) / 2, self.periods[name])
+                values[name] = unwrap(values[name], (lo + hi) / 2, self.periodic_devices[name])
         return values
 
     def set_variables(self, settable_devices: dict[str, float]):
@@ -193,7 +195,7 @@ class Environment(environment.Environment):
                                                  lambda devs: self.interface.get_settings(devs, debug=self.debug))
         # Interface BasicPacsysInterface handles (read,set) pairs and optional tolerances.
         self.interface.set_values(settable_devices, settings_role=self.settings_role,
-                                  periods=self.periods, debug=self.debug)
+                                  periods=self.periodic_devices, debug=self.debug)
 
     def get_observables(self, observable_names: list[str]) -> dict:        
         if not self.interface:
@@ -225,7 +227,7 @@ class Environment(environment.Environment):
         result = self.interface.get_values(get_these_observables,
                                            sample_events=self.sample_events,
                                            setpoints   =self.setpoints,
-                                           periods     =self.periods,
+                                           periods     =self.periodic_devices,
                                            average_events=self.average_events,
                                            debug=self.debug)
         if len(calc_these)>0:

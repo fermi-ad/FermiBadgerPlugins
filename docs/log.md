@@ -1686,3 +1686,23 @@ Fixes (main):
   events the fake never sends; pacsys_interface_test covers it).
 - The `last-acsys` tag had vanished locally (likely pruned by fetch); retagged
   at 79aa179, the last commit with Acsys code, and pushed.
+
+## 2026-11-05 — `periodic_devices`; a noisy fake ACNET in tests
+
+- User: "periods" reads oddly for "periodic devices". Renamed the environment
+  parameter to `periodic_devices` in EnergyStabilization, RIL, and the
+  archetype, their READMEs, and the three templates; the old name still loads
+  (pydantic `validation_alias=AliasChoices('periodic_devices', 'periods')`,
+  checked on Badger's base class: keyword, alias, and assignment; dumps use the
+  new name). A template's params go into the GUI editor as written, so an old
+  template shows `periods` until re-saved, and still works. The interface's own
+  `periods=` argument is unchanged (internal). `periodic_phase_test` checks both
+  names on all three.
+- User asked for 0.1% Gaussian noise in the fake ACNET (tests only, chosen over
+  offline practice runs). pacsys's own perturbation is a fixed per-event
+  offset, not noise. New `tests/noisy_fake.py`: NoisyFakeBackend multiplies
+  float readings by 1 + 0.001 N(0,1), seeded; .SETTING stays exact; read_fresh
+  (averaging) not covered. Used by env_smoke_test and archetype_test, now
+  comparing with tolerances. The other FakeBackend tests (interface, unwrap,
+  mults, heteroskd) stay exact: they check exact arithmetic. Not explored:
+  whether 0.1% is realistic for any given device.

@@ -25,7 +25,7 @@ The loaded template sets these; change them here before a run if needed.
 - `settings_role`: the DPM role used to write settings; your Kerberos principal must hold it. The code default, `nosettings`, writes nothing: pick the real role for the run.
 - `sample_events`: which clock event each reading is taken on, `{device or 'default': '@e,<event>,e,0'}`. Default event 15.
 - `setpoints`: targets for the `-SETPOINT` observables, `{reading device: value or 'hold'}`. `hold` means the reading at the start of the run, so the run regulates to wherever the machine was.
-- `periods`: devices whose value wraps around, `{device: period}`. Readings are unwrapped so a phase passing through 0 is not seen as a jump.
+- `periodic_devices` (formerly `periods`): devices whose value wraps around, `{device: period}`. Readings are unwrapped so a phase passing through 0 is not seen as a jump.
 - `debug`: print every read and write to the terminal.
 
 ## Safety

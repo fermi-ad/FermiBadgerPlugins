@@ -17,7 +17,7 @@ environment:
   name: 01_Linac_EnergyStabilization_Pacsys
   params:
     debug: false
-    periods:
+    periodic_devices:
       L:CDPHAS: 360.0
       L:C7PHAS: 360.0
     sample_events:

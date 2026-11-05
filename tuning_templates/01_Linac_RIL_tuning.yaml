@@ -39,7 +39,7 @@ environment:
       MUQ:
         step: 0.05
         members: {L:MUQ1: 20.0, L:MUQ2: 20.0}
-    periods:
+    periodic_devices:
       L:RFBPAH: 360.0
       L:RFQPAH: 360.0
       L:V5QSET: 360.0

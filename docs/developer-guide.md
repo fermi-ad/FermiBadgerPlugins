@@ -148,9 +148,13 @@ minimize. The per-device target comes from the `setpoints` parameter,
 `{device: number or 'hold'}`. `'hold'` means "the first reading of the run",
 which regulates a quantity back to where it was when the run started.
 
-### Phases: `periods`
+### Phases and other wrapping values: `periodic_devices`
 
-`periods` is `{reading device: period}`, e.g. `{'L:RFQPAH': 360.0}`. A phase
+`periodic_devices` is `{reading device: period}`, e.g. `{'L:RFQPAH': 360.0}`.
+It was called `periods` before 2026-11-05; templates with the old name still
+load, through a pydantic alias (copy the archetype's `Field(...,
+validation_alias=...)` line). The environment passes it to the interface as
+`periods=`. A phase
 comes back wrapped into one period; the interface unwraps it so a pass through
 0 is not a 360° jump, and `get_variables` moves it to the branch nearest the
 middle of its hard limits. Declare a free-running phase variable two periods
@@ -313,7 +317,10 @@ or a stub interface. From the repo root, in this order:
 2. `pixi run python tests/env_smoke_test.py <your environment>`: reads and a
    set on a fake ACNET. For mults, pairs, arrays and computed observables,
    copy a focused test: `tests/archetype_test.py` (every feature, on
-   `FakeBackend`) or `tests/env_fixes_test.py` (a stub interface).
+   `FakeBackend`) or `tests/env_fixes_test.py` (a stub interface). Use
+   `NoisyFakeBackend` (`tests/noisy_fake.py`), as those two do: its readings
+   carry 0.1% Gaussian noise, so compare with a tolerance, never `==`. Stored
+   settings stay exact.
 3. The whole suite:
    `for t in tests/*_test.py; do pixi run python "$t" || echo "FAIL $t"; done`.
    It takes 10 to 20 minutes; GUI tests run offscreen.
