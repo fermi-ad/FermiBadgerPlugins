@@ -3,36 +3,34 @@
 For new developers. Setup is in the README's Quick Start; this guide starts
 once `pixi run setup` has passed.
 
-## Terms
+## Terminology to know
 
 - **Environment**: a Python class (one folder in `plugins/environments/`) that
-  says which devices Badger may change and which it may read, and how to do
+  specifies the devices Badger may change and which it may read, and how to do
   both. It is what the GUI calls the **Machine Interface**.
 - **Interface**: the layer that actually talks to the control system.
   `BasicPacsysInterface` (pacsys, used by every real-world template) or
   `BasicAcsysInterface` (acsys, kept but unused). An environment names one in
-  its `configs.yaml`.
+  its `configs.yaml`, but it is effectively hidden to the users. There are others
+  for use with simulation.
 - **Tuning template** (template): a YAML file in `tuning_templates/` that picks
   an environment, sets its parameters, and chooses the variables, objectives,
   constraints, and algorithm for one tuning task. The GUI calls it a
   **Tuning Task**.
-- **VOCS** (Variables, Objectives, Constraints, Observables): the template's
-  choice of what to vary, what to minimize or maximize, what limits to keep,
-  and what else to record.
-- **Variable**: a device Badger may set, with **hard limits**, the range the
+- **VOCS** (Variables, Objectives, Constraints, Observables): A Badger term: each
+  template's choice of what to vary, what to minimize or maximize, what constraints
+  define an acceptable solution, and what else to keep an eye on.
+- **Variable**: a device Badger may vary, with **hard limits**: the range the
   environment allows (`variables = {name: [lo, hi]}`). A template's ranges
   must lie inside them.
 - **Observable**: anything Badger may read: a device, or a value the
   environment computes. Objectives and constraints are chosen from these.
-- **Settings role**: the DPM role used to write settings; the Kerberos
-  principal running Badger must hold it. `nosettings` means read only.
+- **Settings role**: the DPM role used for writing settings; the Kerberos
+  principal running Badger must be in the role's users, and the devices must be in
+  the role, too. `nosettings` means read only. 
 
 ## Before you start
 
-- **Never write to real devices from a test.** Tests use pacsys's
-  `FakeBackend` or a stub interface. For a live try, use the scratch devices
-  (`development/ZZ_PacsysTesting.yaml`: `G:AMANDA`, `Z:CUBE_X/Y/Z`) under
-  safe-badger.
 - **Copy a working pair.** `01_Linac_EnergyStabilization_Pacsys` (environment)
   and `development/01_Linac_Phases_EnergyStabilization_Pacsys.yaml` (template)
   are short, current, and use most features below. `ZZ_PacsysTesting` is the
@@ -41,8 +39,12 @@ once `pixi run setup` has passed.
   README's "Environment and template naming convention". In short,
   environments are `<region>_<Descriptive>_Pacsys`, and templates
   `<region>_<task>_<env>_Pacsys.yaml`.
+- **Never write to real devices from a test.** Tests use pacsys's
+  `FakeBackend` or a stub interface. For a live try, use the scratch devices
+  (`development/ZZ_PacsysTesting.yaml`: `G:AMANDA`, `Z:CUBE_X/Y/Z`) under
+  safe-badger.
 
-## An environment
+## Make (or modify) an Environment
 
 A folder `plugins/environments/<name>/` with three files:
 
@@ -105,29 +107,29 @@ class Environment(environment.Environment):
                                          setpoints=self.setpoints, debug=self.debug)
 ```
 
-Rules that have bitten us:
+Gotchas that have bitten before:
 
-- **Parameters are pydantic fields with type hints**: Badger enforces pydantic
-  strictly. Use simple types (`str`, `int`, `float`, `bool`, `list[str]`,
-  `Dict[str, ...]`); the GUI edits them, and a `{name: value}` field gets an
-  **Edit...** table. Give every field a safe default (`nosettings`, not a
+- **All Environment Parameters are pydantic fields with type hints**: Badger
+  enforces pydantic strictly. Use simple types (`str`, `int`, `float`, `bool`,
+  `list[str]`, `Dict[str, ...]`), and we can add more if you need. The GUI user
+  can edit them. Give every field a safe default (Like role `fakefake`, not a
   real role).
 - **Don't modify `observable_names`**: copy it first if you need to add the
   inputs of a computed observable.
 - **Return only what was asked for.** Inputs read just to compute something
-  (arrays, loss monitors) must not come back: they become columns in Badger's
-  data.
+  (arrays, loss monitors) must not come back: they would become unrequested
+  columns in Badger's accumulating run data.
 - **Computed observables**: by convention their names end in `_calc`, or are
   plain names the interface doesn't know (`TwoWells`, `W_SumLosses`). Read the
   inputs, compute, and add the result. See `ZZ_PacsysTesting` (`AbsProduct`,
   `TwoWells`).
-- **Hard limits are the last line of defense.** Badger refuses to set a value
+- **Environment variable ranges are hard limits.** Badger refuses to set a value
   outside them, and the GUI unticks a variable whose current value is outside
-  them. Make them as tight as the hardware needs.
-- **An Acsys twin** (same class, other interface) is optional and no longer
+  them. Make them as tight as the hardware needs, but leave room for tuning.
+- **An Acsys twin** (same class, other interface) is optional but no longer
   used by templates. New environments need only the `_Pacsys` one.
 
-## What the Pacsys interface does for you
+## What the pacsys Interface does for you
 
 Names in `variables` and `observables` can use these forms:
 
@@ -135,30 +137,30 @@ Names in `variables` and `observables` can use these forms:
 |---|---|
 | `L:ATRMHU` | a plain device: set and read back its SETTING |
 | `L:CDPHAS,L:LDPADJ` | **read/set pair**: read the first, set the second |
-| `L:CDPHAS,L:LDPADJ,tol2@0.1` | the same, and after setting, wait until 2 readings agree within 0.1 |
-| `B:400DFT-SETPOINT` | the **squared error** of `B:400DFT` from its setpoint (see `setpoints`) |
+| `L:CDPHAS,L:LDPADJ,tol2@0.1` | the same, and after setting, tolerance: wait until 2 readings agree within 0.1 |
+| `B:400DFT-SETPOINT` | the **squared error** of `B:400DFT` from its setpoint (see `setpoints`), for minimizing |
 | `Z:ITGSIG_1_SRS[:]` | an array reading |
 | `L:BPMS[:]\|rms` | an array reduced to one number: `mean`, `rms`, `std`, `min`, `max`, `sum`, `absmax` |
 
-Interface parameters your environment passes through (as in the example):
+Interface parameters your Environment can treat as pass-through (as in the example):
 
-- `sample_events`: which clock event each reading uses,
+- `sample_events`: dictionary of Data request timing: which clock event each reading uses,
   `{device or 'default': '@e,<event>,e,<delay>'}`.
-- `setpoints`: targets for `-SETPOINT` observables: a number, or `'hold'` (the
+- `setpoints`: per-device targets for `-SETPOINT` observables: a number, or `'hold'` (the
   first reading of the run).
 - `periods`: `{reading device: period}` for phases; readings are unwrapped so a
   wrap through 0 is not a jump. Declare such variables two periods wide (README:
-  "Periodic (phase) devices").
+  "Periodic (phase, angle) devices").
 - `average_events`: `{device or 'default': N}`, the mean of N fresh events.
 
-Plus, in the RIL environments: **mults** (several quads moved together in fixed
+Plus, in the RIL environments: **mults** (several variables moved together in fixed
 proportion) and **BulkPS** (limits on trims sharing a power supply); see the
 README's "For Developers".
 
 ## The README
 
 The GUI's **Open Docs** (Machine Interface panel) shows the environment's
-`README.md`. Operators read it, so keep it plain. Sections, as in the existing
+`README.md`. Operators read it, so keep it direct. Sections, as in the existing
 environments:
 
 ```
@@ -170,7 +172,7 @@ One paragraph: what it tunes, and why.
 ## Safety
 ```
 
-## A tuning template
+## Make tuning templates for your Environment
 
 Easiest: load an existing template in `-mini`, change it, and **Save as...**
 (it saves under `tuning_templates/saved/`, which git ignores); then move the
@@ -180,8 +182,8 @@ file to `tuning_templates/development/` and edit it there. The keys
 | Key | What it holds |
 |---|---|
 | `name`, `description` | the description is shown to operators: say the goal, objective, variables, windows, and anything unusual (see the EnergyStabilization template) |
-| `environment` | `name` and `params` (the parameters above) |
-| `vocs` | `variables` (`{name: [lo, hi]}`), `objectives` (`{name: {type: MinimizeObjective}}`, or `MaximizeObjective`), `constraints` (`{name: {type: LessThanConstraint, value: 18.0}}`, or `GreaterThanConstraint`), `observables`. That is the form Save as writes; the short forms `MINIMIZE` and `[LESS_THAN, 18.0]` also work |
+| `environment` | `name` and `params` (the parameters above). `name` should be your new Environment. |
+| `vocs` | `variables` (`{name: [lo, hi]}`), `objectives` (`{name: {type: MinimizeObjective}}`, or `MaximizeObjective`), `constraints` (`{name: {type: LessThanConstraint, value: 18.0}}`, or `GreaterThanConstraint`), `observables`. That is the form `Save as` writes; the short forms `MINIMIZE` and `[LESS_THAN, 18.0]` also work |
 | `generator` | the algorithm and its settings (`expected_improvement` is the usual choice; see `docs/algorithms/`) |
 | `relative_to_current` | `true`: each variable's window is computed around its current value at load, and again at Go (see below); `false`: the `vocs` ranges as written |
 | `vrange_limit_options` | per variable, how the window is computed: `limit_option_idx` 0 = ±½·`ratio_curr`·\|current\|, 1 = ±½·`ratio_full`·(hard-limit span), 2 = ±`delta` |
