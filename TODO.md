@@ -419,3 +419,20 @@ exists and what it would touch.
   - Open: what "informative" means here (near the optimum? diverse?
     constraint boundaries?), and how it interacts with drift (old data may be
     wrong, not just redundant).
+
+- [ ] **Draft an environment from the Elog** (idea 2026-11-05). For a given
+  machine: scrape the Elog for an initial list of the variables and objectives
+  operators tune and watch; estimate each variable's valid range from its
+  history; hand back a working draft environment. The screen grabs in Elog
+  entries (parameter pages, plots) could help build those first lists.
+  - Would reuse: `pixi run new-env` (the draft is a filled-in copy of the
+    archetype, so the lint, smoke, and feature tests check it at once); the
+    Elog search work in `~/Development/elog_investigation` (access, speed).
+  - Ranges: from device history (the ACNET data logger: no logger client in
+    pacsys 0.3.0 seen yet, so how to read it is open), cross-checked against
+    the device database's limits (`pacsys.devdb`). Draft hard limits must be
+    marked unconfirmed until the hardware owner signs off.
+  - Open: Elog access needs a login session (no automation yet); reading
+    device names from screen grabs needs OCR or a vision model, and its error
+    rate is untested; which entries count as "tuning" for a machine; how to
+    pick read/set pairs and mults from the text.
