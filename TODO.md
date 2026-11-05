@@ -436,3 +436,7 @@ exists and what it would touch.
     device names from screen grabs needs OCR or a vision model, and its error
     rate is untested; which entries count as "tuning" for a machine; how to
     pick read/set pairs and mults from the text.
+  - In progress elsewhere (user, separate sessions, 2026-11-05): on-premise OCR
+    of the screen grabs, with the extracted strings and data stored in the
+    Elog's backend DB tables. Then this tool reads that text from the DB and
+    does no OCR itself.
