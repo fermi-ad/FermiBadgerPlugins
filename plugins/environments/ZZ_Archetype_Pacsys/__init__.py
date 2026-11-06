@@ -1,5 +1,5 @@
 # ARCHETYPE-ONLY (scripts/new_env.py removes each such block from copies)
-# The archetype: every feature our Pacsys environments use, in one place, as the
+# The archetype: every feature the Pacsys environments here use, in one place, as the
 # pattern `pixi run new-env <name>` copies. The device names are real (from the RIL,
 # EnergyStabilization and DeliveryRing environments) so each feature reads naturally.
 # Keep it complete: a feature added to any environment belongs here too, tested in

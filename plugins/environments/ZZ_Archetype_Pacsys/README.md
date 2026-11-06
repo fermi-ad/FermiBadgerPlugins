@@ -2,7 +2,7 @@
 
 <!-- ARCHETYPE-ONLY -->
 **A pattern for developers, not for tuning.** This environment holds every feature
-our Pacsys environments use, in one place, and never writes (it refuses any
+the Pacsys environments in this repo use, in one place, and never writes (it refuses any
 settings role but `nosettings`). Make a new environment from it with
 `pixi run new-env <region>_<Descriptive>_Pacsys`; see `docs/developer-guide.md`.
 <!-- END ARCHETYPE-ONLY -->
