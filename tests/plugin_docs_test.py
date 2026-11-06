@@ -76,7 +76,7 @@ if guides.is_dir():
 else:
     print(f"note: Badger's guides not fetched ({guides}); run setup online to check them")
 
-# The action bar's '?' in -mini: our own page (docs/guides/minimode.md), which
+# The action bar's '?' in -mini: this repo's own page (docs/guides/minimode.md), which
 # replaces Badger's (that one shows the stock -mini layout). No fetch needed.
 if "# The compact GUI (-mini)" not in load_badger_docs("minimode"):
     failures.append("the action bar's '?' page (minimode) is not docs/guides/minimode.md")

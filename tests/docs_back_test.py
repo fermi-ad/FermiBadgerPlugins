@@ -3,7 +3,7 @@ button (in the toolbar above the page, so it stays on screen however far the pag
 scrolls) returns from a followed link to the page before, at the same scroll
 position; opening the docs afresh (a ? or Open Docs button) starts a new history.
 
-Uses our own pages (docs/guides/minimode.md, docs/algorithms/*.md), so it works
+Uses this repo's own pages (docs/guides/minimode.md, docs/algorithms/*.md), so it works
 without Badger's guides having been fetched.
 
 Run from the repo root:

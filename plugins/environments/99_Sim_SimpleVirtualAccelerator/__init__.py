@@ -31,7 +31,7 @@ class Environment(environment.Environment):
     # strings parsed in __init__ (comma-separated names / inline-YAML mapping).
     # In Badger 1.6.0, dict types need subtypes (Dict[K, V]) to work correctly
     # with the pydantic editor.
-    # For Badger 1.6.0, we also support list types for quad_k_list
+    # For Badger 1.6.0, list types are also supported for quad_k_list
     quad_k_list:      Union[List[str], str] = 'kqd, kqf'
     setpoints:        Union[Dict[str, float], str, None] = '{qx: 2.05015, qy: 1.20948}'
     settings_filename:  str = 'SimpleVirtualAccelerator_settings.yaml'

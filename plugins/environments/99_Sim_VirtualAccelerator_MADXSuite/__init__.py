@@ -559,7 +559,7 @@ class Environment(environment.Environment):
         the deferred path.  Delete it once the deferred path has been exercised
         on every lattice in sim_configs/.
 
-        To have MAD-X re-evaluate every dependent expression, we:
+        To have MAD-X re-evaluate every dependent expression:
 
         1. Read the original lattice file
         2. Replace each variable's definition with the new value

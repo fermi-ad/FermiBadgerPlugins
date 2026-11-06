@@ -389,7 +389,7 @@ Badger 1.5.4 had known issues that needed fixing, and Badger 1.6.0 was released 
 
 1. **turbo_controller null warning**: When `turbo_controller: null` was set, Badger 1.6.0 logged warnings because it couldn't distinguish between "key missing" and "key explicitly null"
 
-2. **vocs field required error**: Badger 1.6.0 raised `KeyError: 'vocs field is required in parameters'` because vocs data is stored in `self.vocs` separately from the YAML tree
+2. **vocs field required error**: Badger 1.6.0 raised `KeyError: 'vocs field is required in parameters'` because vocs data are stored in `self.vocs` separately from the YAML tree
 
 3. **Template structure issue**: Some templates had vocs keys directly under `generator:` without a `vocs:` key
 
@@ -629,7 +629,7 @@ patch -p1 < /path/to/badger-1.6.0-none-parsing-fix.patch
 ## 2026-08-29: List type subtype fix
 
 ### Problem
-When loading the `TuneQx.yaml` template with `SimpleVirtualAccelerator` environment, we got:
+When loading the `TuneQx.yaml` template with `SimpleVirtualAccelerator` environment, this appeared:
 ```
 ValueError: List type must have a subtype
 ```
@@ -1209,7 +1209,7 @@ loaded fine, but the environment-selection path crashed with a 15s timeout
 replies for: []`) — an *empty* missing-device list, which only happens when
 `len(drf_list) == 0` (the list comprehension over an empty range is trivially
 empty). Traced the call stack in the traceback: `select_env()` →
-(`self.env_box.relative_to_curr.isChecked()`, true because of our own
+(`self.env_box.relative_to_curr.isChecked()`, true because of the repo's own
 `relative_to_current: true`) → `set_vrange()` → ... → `update_init_table()`
 → `_fill_init_table()` → `fill_curr_in_init_table()` → `env.get_variables([])`.
 
@@ -1224,10 +1224,10 @@ checked into the routine yet, so this second, independent read fires with
 zero selected variables. `read_once()`/`_do_read()` didn't handle that: it
 still opened a DPM session with zero registered entries and then blocked
 forever on `async for reply in dpm:` waiting for replies to a request that
-asked for nothing — surfaced as our 15s timeout instead of an infinite hang,
+asked for nothing — surfaced as the interface's 15s timeout instead of an infinite hang,
 but still a failure for what is actually a normal, expected transient state.
 
-Fixed at the same layer as before (our own `plugins/scanner.py`, not
+Fixed at the same layer as before (the repo's own `plugins/scanner.py`, not
 Badger's site-packages): both `read_once()` and `set_once()` now short-circuit
 and return immediately (`[]` / `None`) when `drf_list` is empty, before ever
 opening a DPM session. Verified `BasicAcsysInterface.get_settings()` handles
@@ -1254,7 +1254,7 @@ box there) and committed everything together as `7e80442`.
 
 New interface plugin at `plugins/interfaces/BasicPacsysInterface/`, built to
 the same feature set as `BasicAcsysInterface` but on `pacsys`
-(https://github.com/fermi-ad/pacsys) instead of `acsys`/our own
+(https://github.com/fermi-ad/pacsys) instead of `acsys`/the repo's own
 `plugins/scanner.py`. `BasicAcsysInterface` is untouched — both interfaces
 coexist so existing environments keep working unchanged.
 
@@ -1323,7 +1323,7 @@ Added `pacsys==0.2.2` to `environment.yml` alongside the existing
 - A live, Kerberos-authenticated write through `pacsys.dpm(auth=
   KerberosAuth(), role=...)` against a real DPM role (e.g. `ril_tuning_fake`,
   `linac_quads`), to confirm it behaves the same as acsys-py's
-  `dpm.enable_settings(role=...)` for our existing roles. No environment
+  `dpm.enable_settings(role=...)` for the existing roles. No environment
   yet points its `configs.yaml` `interface:` at `BasicPacsysInterface` — do
   that for one low-risk template and live-test before relying on it.
 
@@ -1731,9 +1731,9 @@ observable lists already keep plugin order.
 
 ### Facts verified against pacsys 0.3.0
 - `write_many` never sets `WriteResult.verified`; only `Device.write(verify=Verify)`
-  does, per device. pacsys's own verify reads back `SETTING@I`, same as ours.
+  does, per device. pacsys's own verify reads back `SETTING@I`, same as this interface's.
 - The real DPM backend retargets a bare name to SETTING; `FakeBackend` stores a
-  bare write under READING, hence the explicit `.SETTING` in our write.
+  bare write under READING, hence the explicit `.SETTING` in the interface's write.
 - `FakeBackend.get` rejects bad fields/events/ranges; device names are not
   validated offline.
 - `pacsys.exp` (read_fresh, Monitor) is the experimental namespace.
@@ -1844,7 +1844,7 @@ observable lists already keep plugin order.
 - [x] Confirm the MCR host can reach conda-forge/PyPI and write a pixi
   cache — `./bootstrap.sh` ran there successfully.
 - [ ] Dual-run comparison on the MCR host, then hand over the pixi launch
-  line for the external shortcut (not ours to edit) and retire conda there.
+  line for the external shortcut (not this repo's to edit) and retire conda there.
 
 ## 2026-10-20: MCR host follow-up — PATH gotcha, onsite made the default
 
@@ -1880,7 +1880,7 @@ observable lists already keep plugin order.
   normal step of every setup run, on either path, on any host — no
   manual per-host check needed anymore (closed in TODO.md).
 - Bug 2: `AttributeError: 'Picker' object has no attribute 'setText'` on
-  stop — our own `badger-1.6.0-device-list-gui.patch` swapped the old
+  stop — the repo's own `badger-1.6.0-device-list-gui.patch` swapped the old
   filter `QLineEdit` for `Picker` (a `QComboBox`) but never gave it
   `setText()`. Fixed with one shim method on `Picker` covering all 4 call
   sites (`edit_obj`/`edit_con`/`edit_sta`, both GUI variants).

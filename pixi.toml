@@ -30,7 +30,7 @@ PYTHONWARNINGS = "ignore::FutureWarning:torch.jit._script"
 python = "3.12.1.*"
 badger-opt = "1.6.0.*"
 ipywidgets = "*"  # xopt's pip metadata requires it; the conda recipe does not pull it in
-# Pinned to match the conda env's resolution: our Badger patches (notably
+# Pinned to match the conda env's resolution: this repo's Badger patches (notably
 # pydantic_editor-badger-1.6.0-dict-subtypes.patch) are version-sensitive to
 # pydantic's type-introspection internals, and pixi's unpinned resolve picked
 # a newer point release (2.14.1) than conda's cached one (2.13.5) that

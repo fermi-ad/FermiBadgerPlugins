@@ -98,7 +98,7 @@ readily as a redundant one.
 - **BOLT.** Bardou & Thiran, "Time-Varying Bayesian Optimization Without a
   Metronome" (2025, [arXiv 2501.18963](https://arxiv.org/abs/2501.18963);
   also published as "Optimizing Through Change: Bounds and Recommendations
-  for TVBO Algorithms"). This is the paper most directly about our
+  for TVBO Algorithms"). This is the paper most directly about this project's
   question. It bounds regret in terms of the response time R(n), which
   grows with dataset size n, and gives two recommendations:
   1. *Dataset size:* keep n* = argmax_n Σ_{i=1..n} k_T²(i·R(n)), where k_T
@@ -135,7 +135,7 @@ readily as a redundant one.
     20 s period) are averaged.
   - In the experiment, 15 minutes of history was subsampled to 100 points.
     The code (APSopt/pysddsoptimize) is internal to Argonne, but Kuklev
-    is now in our group, so the code and the subsampling details are one
+    is now in the group, so the code and the subsampling details are one
     conversation away. The ML4PS
     paper names O(n³) as the limitation that keeps problems under about 20
     parameters.
@@ -231,7 +231,7 @@ points, at O(NM²) cost.
   to tuning the LCLS FEL. (Read from the abstract; the PDF was
   unreachable.)
 
-Verdict: this is the right tool at thousands to millions of points. At our
+Verdict: this is the right tool at thousands to millions of points. At this project's
 scale (hundreds to a few thousand points) it adds a variational training
 loop, its own hyperparameters and a model swap inside Xopt, for a problem
 that pruning solves with an override.
@@ -255,9 +255,9 @@ Below a few thousand points on a control-room CPU, the dense Cholesky is
 still fastest. Fitting hyperparameters less often, e.g. only every k steps,
 is a free constant-factor gain that stacks with any of the above.
 
-## How this maps onto our situation
+## How this maps onto this project
 
-| Our situation | Fits best | Why |
+| Situation here | Fits best | Why |
 |---|---|---|
 | Static objective, long run, slow fits (Badger's 8 algorithms) | Family 3: greedy budget (posterior-variance / W₂ leave-one-out score), in a `get_training_data` override | Cost motive only; no kernel change; archive intact |
 | Drifting machine, time-aware GP | Family 2: BOLT or W-DBO style removal, on Xopt's time-dependent generators | Handles redundancy and staleness with one score; BOLT also picks the budget |
@@ -267,7 +267,7 @@ is a free constant-factor gain that stacks with any of the above.
 
 ## A suggested prototype
 
-The smallest experiment that would tell us whether this is worth more:
+The smallest experiment that would show whether this is worth more:
 
 1. A `get_training_data` override on an Xopt Bayesian generator, with a
    `max_training_points` budget (default off). When N exceeds the budget,
@@ -295,11 +295,11 @@ The smallest experiment that would tell us whether this is worth more:
 
 ## Open questions
 
-- **Ask Kuklev first** (now in our group). How does the APS subsampling rank
+- **Ask Kuklev first** (now in the group). How does the APS subsampling rank
   points? Can APSopt's code be shared? Did they compare it with a window? How
   big did N get before it mattered?
 
-- **What "informative" means for us.** Is it near the optimum (FocalBO,
+- **What "informative" means here.** Is it near the optimum (FocalBO,
   IMP-DPP), spread out (IVM, DPP diversity), or near constraint
   boundaries? Constraint models are separate GPs in Xopt. A point
   redundant for the objective may matter for a constraint, so the score
@@ -308,7 +308,7 @@ The smallest experiment that would tell us whether this is worth more:
   small diverse subset (e.g. farthest-point sampling, as suggested in the
   tutorial [arXiv 2603.10992](https://arxiv.org/abs/2603.10992), not yet
   read) and condition on more points. That would split the two costs.
-- **Is cost actually the bottleneck in our runs?** Measure the per-step fit
+- **Is cost actually the bottleneck in these runs?** Measure the per-step fit
   time vs. N on the operator machine before building anything. If runs
   never pass about 500 points, this stays on the wish list.
 - **Interaction with the other wish-list items.** Seeding a run with

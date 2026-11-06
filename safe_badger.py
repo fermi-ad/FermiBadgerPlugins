@@ -86,7 +86,7 @@ def _flag_stale() -> None:
 
 def _end_group(pgid, grace=5.0) -> None:
     """TERM then KILL Badger's whole process group: the GUI and any run subprocess
-    it left behind, so nothing writes while (or after) we restore."""
+    it left behind, so nothing writes during (or after) the restore."""
     # EPERM here means only zombies are left (macOS): nothing that can still write.
     for sig in (signal.SIGTERM, signal.SIGKILL):
         try:
@@ -115,7 +115,7 @@ def _setup_logging() -> None:
 
 def supervise(cmd, path, restore_fn=snapshot.restore) -> int:
     """Run `cmd` in its own process group with FERMIBADGER_SNAPSHOT=path; when it
-    exits (or we are signalled), end the group and restore unless the operator
+    exits (or this launcher is signaled), end the group and restore unless the operator
     already decided. Returns the child's exit code."""
     stop = []
 

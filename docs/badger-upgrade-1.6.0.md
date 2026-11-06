@@ -25,7 +25,7 @@ Successfully upgraded Badger from 1.5.4 to 1.6.0. Two patches were applied to fi
 4. **`initialize_special_field` signature change**:
    - Added return type annotation `-> None`
    - Changed `special_item_dict` default from `defaults.get(field, {})` to `defaults.get(field)`
-   - Removed string-to-dict conversion logic (patches we created for 1.5.4 are not needed)
+   - Removed string-to-dict conversion logic (the patches created for 1.5.4 are not needed)
    - Changed `name` default from `"null" if not special_item_dict else ""` to `""`
 
 ### VOCs Structure Change

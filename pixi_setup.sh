@@ -90,7 +90,7 @@ print(h.hexdigest())" "$REPO/patches")"
         echo "   skipped (this patch set is already applied)"
     else
         # Start from pristine Badger and Xopt: reinstall them from pixi's
-        # package cache and remove the files our patches create (a new file's
+        # package cache and remove the files the patches create (a new file's
         # "from" date is the epoch: 1969-12-31 or 1970-01-01 by time zone),
         # then apply the whole set.
         if [[ -n "${PIXI_ENVIRONMENT_NAME:-}" ]] && pixi reinstall \

@@ -50,7 +50,7 @@ without the class's type hints, so each is one line of YAML text.
   Found: Xopt's heteroskedastic GP floors noise at ~1e-4 of the objective's
   variance (README).
 
-- [ ] **Xopt PR: copy DataFrame selections before `torch.tensor`** (our
+- [ ] **Xopt PR: copy DataFrame selections before `torch.tensor`** (the
   `xopt-3.2.2-negative-strides.patch`, plus a sixth site, `train_Yvar`).
   Branch `fix-negative-strides` on github.com/jasonstjohn/Xopt (worktree
   `../Xopt-negative-strides`), cut from upstream main d48ec24b, with a test in
@@ -58,23 +58,23 @@ without the class's type hints, so each is one line of YAML text.
   ubuntu 3.11-3.14, macOS, Windows; Test Notebooks); full suite locally on
   upstream main vs branch in one env (botorch 0.17.2): no new failures (4
   torch-compile tests fail on both, on this Mac). Not opened yet: user wants
-  more testing first. Once released, drop our local patch.
+  more testing first. Once released, drop the local patch.
 - [x] Badger PR: the docs window's Back button: **xopt-org/Badger#298**
   (opened 2026-10-28; branch `docs-back-button` on jasonstjohn/Badger, clone
   `../Badger-docs-back`; fork CI green, its test ran). Once merged and
   released, drop `badger-1.6.0-docs-back-button.patch`.
 - [ ] Badger: `_compose_routine` resets TuRBO state only for the short
-  controller names (our `badger-1.6.0-turbo-state-reset.patch`); worth a
+  controller names (the repo's `badger-1.6.0-turbo-state-reset.patch`); worth a
   Badger PR too.
 
 ## Docs
 
-- [x] The action bar's "?" in `-mini` shows our own page,
+- [x] The action bar's "?" in `-mini` shows this repo's own page,
   `docs/guides/minimode.md` (2026-10-28; the plugin-docs patch prefers
   `docs/guides/<name>.md` over Badger's guide). The full GUI's "?"
-  (`gui-usage`) still shows Badger's; a page of ours can follow the same way.
+  (`gui-usage`) still shows Badger's; a page from this repo can follow the same way.
 - [ ] Upstream Badger's expected-improvement guide gives `max_travel_distances`
-  in absolute units; Xopt 3.2.2 treats it as a fraction of each range. Our page
+  in absolute units; Xopt 3.2.2 treats it as a fraction of each range. The repo's page
   says so; worth reporting upstream.
 
 ## Environment bugs found while writing their docs (2026-10-23) — fixed 2026-10-28
@@ -390,8 +390,8 @@ exists and what it would touch.
   - Exists: Badger 1.6.0's BO visualizer extension (extensions palette,
     `add_bo_visualizer`), and Xopt's `visualize_model` (with
     `show_feasibility`). Badger 1.6.1 (released 2026-10-15) adds a BAX
-    visualization extension (PR #275) and a few fixes (incl. our turbo
-    controller fix, PR #284).
+    visualization extension (PR #275) and a few fixes (incl. the turbo
+    controller fix from this repo, PR #284).
   - First step: try 1.6.1's and upstream main's visualizers before building
     anything. Moving to 1.6.1 means re-checking all 13 patches against it.
 - [ ] **Smart data curation for long runs** (possibly bigger than Badger: a

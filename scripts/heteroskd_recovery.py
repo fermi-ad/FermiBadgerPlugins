@@ -1,5 +1,5 @@
 """Score how well a GP recovers known heteroskedastic noise, from a Badger run of
-ZZ_PacsysTesting_Heteroskedastic (or any run whose data has an objective, its
+ZZ_PacsysTesting_Heteroskedastic (or any run whose data have an objective, its
 `<objective>_var` and a `<objective>_true_var` column).
 
 Fits Xopt's heteroskedastic GP (given `<objective>_var`) and its standard GP

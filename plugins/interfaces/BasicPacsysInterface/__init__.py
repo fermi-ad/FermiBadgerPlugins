@@ -97,7 +97,7 @@ class Interface(interface.Interface):
             else: ret_list.append(device)
         return ret_list
 
-    # Which DRF tells us a setting landed. A read/set pair's readback is its READING device,
+    # Which DRF shows that a setting landed. A read/set pair's readback is its READING device,
     # a different physical quantity (e.g. measured phase L:CDPHAS for the adjust L:LDPADJ),
     # so it is never compared to the value sent: the settle loop (tolN@T) verifies pairs.
     # A bare device's readback is its stored setting. -SETPOINT names are never written.
@@ -144,7 +144,7 @@ class Interface(interface.Interface):
         return setpoint_list
 
     # Batch read through pacsys, raising a clear DeviceError on the first bad reading
-    # instead of silently handing back an unusable value (pacsys.get_many gives us the
+    # instead of silently handing back an unusable value (pacsys.get_many gives the
     # per-device status for free -- acsys-py's read_once() had no equivalent check).
     def _get_many(self, drfs, debug=False):
         if self._backend_override is not None:
@@ -263,7 +263,7 @@ class Interface(interface.Interface):
         setting_values = self._get_many(setting_drfs, debug=debug)
         if debug: print (f'BasicPacsysInterface.get_settings() got back setting_values: {setting_values}')
         assert (len(setting_values) == len(setting_names))
-        # package it up in a dictionary with the drf_list we we started from
+        # package it up in a dictionary keyed by the drf_list passed in
         settings_dict = {}
         for set_name, set_val in zip(drf_list, setting_values):
             settings_dict[set_name] = set_val

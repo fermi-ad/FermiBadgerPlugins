@@ -23,7 +23,7 @@ import re
 # A MAD-X identifier.  Dots appear in some generated element names.
 IDENT = r'[A-Za-z_][\w.]*'
 
-# Right-hand sides we refuse to defer.  ranf/gauss/tgauss would draw a new
+# Right-hand sides never deferred.  ranf/gauss/tgauss would draw a new
 # random number on every evaluation; table() reads whatever the last TWISS
 # happened to leave behind.  Neither is a functional dependence.
 VOLATILE = re.compile(r'\b(ranf|gauss|tgauss|table)\s*\(', re.I)

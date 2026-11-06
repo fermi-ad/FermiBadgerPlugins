@@ -58,7 +58,7 @@ class Interface(interface.Interface):
         readbacks = {}
         clean_device_list, setpoint_devs = self.extract_reading_devices(device_list, debug=debug)
         for rawdevname in device_list:
-            # Establish whether it's a setpoint observable, and if so, a clean name so we can get the twiss parameter to begin the calculation
+            # Establish whether it's a setpoint observable, and if so, a clean name for getting the twiss parameter to begin the calculation
             issetpoint_dev = self._setpoint_pattern.match(rawdevname)
             if issetpoint_dev: clean_dev_name = rawdevname.replace('-SETPOINT','').strip()
             else: clean_dev_name = rawdevname
@@ -70,7 +70,7 @@ class Interface(interface.Interface):
 
             # Value to return goes in the dictionary
             readbacks[rawdevname] = tempval
-            if issetpoint_dev: #...but update accordingly if it's a squared setpoint disregulation we want
+            if issetpoint_dev: #...but update accordingly if a squared setpoint disregulation is wanted
                 if debug: print (f'Interface get_values() working on setpoint device {clean_dev_name}.')
                 disreg = tempval - setpoints[clean_dev_name]
                 readbacks[rawdevname] = disreg ** 2.0

@@ -12,7 +12,7 @@ metadata:
 `plugins/interfaces/BasicPacsysInterface/` is a new Badger interface plugin
 with the same feature set as `plugins/interfaces/BasicAcsysInterface/`, but
 built on [pacsys](https://github.com/fermi-ad/pacsys) instead of
-`acsys`/our own `plugins/scanner.py`. `BasicAcsysInterface` is untouched —
+`acsys`/the repo's own `plugins/scanner.py`. `BasicAcsysInterface` is untouched —
 both interfaces coexist; no environment has been switched over to the new
 one yet.
 

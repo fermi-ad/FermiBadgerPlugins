@@ -65,7 +65,7 @@ _default_path = None
 
 
 def session_path() -> Path:
-    """This process's snapshot file: the launcher's, or one of our own if Badger was
+    """This process's snapshot file: the launcher's, or a new one if Badger was
     started without the launcher (the Revert button still works then)."""
     global _default_path
     if os.environ.get('FERMIBADGER_SNAPSHOT'):

@@ -90,7 +90,7 @@ for path in sorted(glob.glob(os.path.join(REPO_ROOT, 'tuning_templates', '**', '
             template = yaml.safe_load(handle)
         except yaml.YAMLError as e:
             # Badger's loader is safe_load too, so this one cannot be opened
-            # in the GUI either; not our environment's problem.
+            # in the GUI either; not the environment's problem.
             print(f'  {os.path.basename(path)}: skipped, not safe-loadable ({type(e).__name__})')
             continue
     if template.get('environment', {}).get('name') != '99_Sim_VirtualAccelerator_MADXSuite':

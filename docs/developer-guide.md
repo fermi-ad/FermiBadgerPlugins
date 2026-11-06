@@ -284,7 +284,7 @@ Gotchas that have bitten before:
 
 - **All Environment Parameters are pydantic fields with type hints**: Badger
   enforces pydantic strictly. Use simple types (`str`, `int`, `float`, `bool`,
-  `list[str]`, `Dict[str, ...]`), and we can add more if you need. The GUI user
+  `list[str]`, `Dict[str, ...]`), and more can be added on request. The GUI user
   can edit them. Give every field a safe default (like role `fakefake`, not a
   real role).
 - Never modify `observable_names`, and return only what was asked for (see

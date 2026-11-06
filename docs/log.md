@@ -637,7 +637,7 @@ handoff/PR docs and the README tree at the current set.
 
 ## 2026-10-07 — pacsys 0.3.0
 
-Bumped to pacsys 0.3.0 (environment.yml; installed). Our interface's five
+Bumped to pacsys 0.3.0 (environment.yml; installed). The interface's five
 calls all survive; periodic test passed unchanged. User chose reliability,
 averaged observables and array observables (ramps deferred, no Booster env
 yet). BasicPacsysInterface: failed settings raise; bare devices' stored
@@ -897,7 +897,7 @@ live "Go" there can be trusted — unrelated to Pacsys or pixi specifically.
 **Bug 2 — after stopping the run**: `AttributeError: 'Picker' object has
 no attribute 'setText'`, from `routine_page.py`'s `refresh_ui()` calling
 `self.env_box.edit_obj.setText("")` the way it used to clear the old
-`QLineEdit` filter box. Our own `badger-1.6.0-device-list-gui.patch`
+`QLineEdit` filter box. The repo's own `badger-1.6.0-device-list-gui.patch`
 replaced that box with `Picker` (a `QComboBox`) and never gave it a
 `setText()`; four call sites across both GUI variants
 (`edit_obj`/`edit_con`/`edit_sta`) hit this. Root-cause fix: added a
@@ -1088,7 +1088,7 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 ## 2026-10-23 — docs for the two Parameters buttons
 
 - Both "Open Docs" pages were empty for different reasons. Machine Interface:
-  Badger shows the env plugin's README.md + class docstring; none of our
+  Badger shows the env plugin's README.md + class docstring; none of this repo's
   machine envs had either ("No readme found" / "None"). Optimization Algo:
   `load_badger_docs` reads `documentation/docs/guides/` beside Badger's
   source, which the pip/conda package doesn't ship -> FileNotFoundError as
@@ -1116,12 +1116,12 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   and extracts `docs/guides/` and `static/img/{gui,guides}/` (52 files, 7.6 MB)
   into `<env>/lib/python3.12/documentation/`, where `factory.py` looks.
   Stamp `.badger-version`; offline it only warns.
-- Algorithm pages: ours, then "From the Badger documentation: <title>" (front
+- Algorithm pages: this repo's, then "From the Badger documentation: <title>" (front
   matter stripped, H1 demoted), then Xopt's docstring. The action bar's "?"
   (minimode guide) now works, images included; it shows the stock -mini.
 - Checked against Xopt 3.2.2: the upstream EI guide's `max_travel_distances`
   example (absolute units, "+-1.0 kG") is wrong -- Xopt multiplies by the
-  range width, so it is a fraction of the range, as our page says. And our
+  range width, so it is a fraction of the range, as this repo's page says. And that
   page was wrong about SafetyTurboController: it centres on the mean of the
   feasible points (upstream is right); fixed in 1b7981e.
 - Parameter-editor hover tooltips already show Xopt's Field descriptions.
@@ -1170,7 +1170,7 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   the old parameter pairs, then the user chose to collapse the definitions:
   `mults: {MUQ: {step: 0.05, members: {L:MUQ1: 20.0, L:MUQ2: 20.0}}}` and
   `supplies: {SourceATrims: {limit: 7.0, devices: [L:ATRMHU, ...]}}`
-  (old form dropped, our two RIL templates migrated).
+  (old form dropped, the two RIL templates migrated).
 - `plugins/mults.py` (`Mult` TypedDict; `expand_mults` drops the step-size
   argument; `parse_mult` gone) and `plugins/supply_limits.py` (`Supply`
   TypedDict; `clip_to_supply_limits(requested, supplies, read, warn)`;
@@ -1197,7 +1197,7 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
   byte-identical to a fresh simpler_mini install.
 - Fix in pixi_setup.sh: when the stamp differs, `pixi reinstall -e
   $PIXI_ENVIRONMENT_NAME badger-opt xopt` (from pixi's cache) and remove the
-  files our patches create (found by their epoch "from" date), then apply
+  files the patches create (found by their epoch "from" date), then apply
   the whole set; if the reinstall fails, fall back to patching in place.
   Tested: old stamp -> "reset Badger and Xopt", all 11 applied, stamp written,
   re-run skipped. The legacy conda setup.sh is unchanged (frozen).
@@ -1239,7 +1239,7 @@ on main (worktree `../FermiBadgerPlugins-main`), to merge into `simpler_mini`.
 - "Attribute Qt::AA_EnableHighDpiScaling must be set before QCoreApplication
   is created" (twice): not from the real program -- a 40 s offscreen
   `badger -mini` startup printed neither it nor the torch warning. It came
-  from our GUI tests creating the QApplication before importing badger.gui /
+  from the GUI tests creating the QApplication before importing badger.gui /
   badger.gui.mini, whose module-level setAttribute calls then come too late.
   The six GUI tests now import badger.gui.mini first; all pass, warning gone.
 
