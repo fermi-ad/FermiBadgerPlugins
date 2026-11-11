@@ -133,10 +133,24 @@ SIM_OUTPUT_DIR = REPO_ROOT / 'sim_outputs'
 # cached, so the entries are never touched by the per-iteration reload path.
 _LATTICE_CACHE: dict[tuple[str, str], tuple] = {}
 
+# (lattice cache key, the params that shape the lists, twiss_init) -> (variables,
+# observables, monitor planes, design twiss).  Every copy of a cached Line starts
+# at the design values, so these are the same for each; deducing the observables
+# (0.9 s on the Delivery Ring) and the design twiss (0.3 s) are done once per
+# process instead of once per environment.  The design twiss is only ever read.
+_DEDUCED_CACHE: dict[tuple, tuple] = {}
+
 # Sidecar holding the variable bounds and observable names deduced from a
 # lattice, so a fresh process can advertise them without parsing it.  Written
 # beside the lattice file, named '<lattice>.<sequence>.varcache.json'.
 VARCACHE_SUFFIX = '.varcache.json'
+
+# Sidecar recording that the ':=' rewrite of a lattice reproduced the original,
+# so later processes skip that check (2.4 s on the Delivery Ring).  It holds a
+# hash of the lattice text and of the rewriter's source, and the cpymad version:
+# a change to any of them runs the check again.  Only a passed check is recorded.
+VERIFIED_SUFFIX = '.rewrite-verified.json'
+REWRITER_SOURCE = Path(__file__).with_name('madx_deferred.py')
 
 
 def _new_madx(stdout) -> Madx:
@@ -149,6 +163,27 @@ def _new_madx(stdout) -> Madx:
     mad = Madx(stdout=stdout)
     mad.chdir(str(SIM_OUTPUT_DIR))
     return mad
+
+
+def _rewrite_stamp(source: str) -> dict:
+    """What a recorded verification of the rewrite depends on (see VERIFIED_SUFFIX)."""
+    import cpymad
+    digest = hashlib.sha1(source.encode())
+    digest.update(REWRITER_SOURCE.read_bytes())
+    return {'sha1': digest.hexdigest(), 'cpymad': cpymad.__version__}
+
+
+def _write_json(path: Path, payload) -> None:
+    """Write beside the target, then replace: a half-written file is never read.
+    A cache file must never break the load, so failures only warn."""
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode='w', dir=path.parent, suffix=path.suffix, delete=False
+        ) as handle:
+            json.dump(payload, handle)
+        os.replace(handle.name, path)
+    except Exception as error:
+        logger.warning(f'Could not write the cache file {path.name}: {error}')
 
 
 def _matches(before, after) -> bool:
@@ -329,15 +364,29 @@ class Environment(environment.Environment):
             self._reuse_cached_lattice(key)
 
         # In-place population of the class-level lists (see comment at the
-        # class attributes above).
-        type(self).variables.clear()
-        type(self).variables.update(self._deduce_variables())
-        type(self).observables[:] = self._deduce_observables()
-        self._write_varcache()
+        # class attributes above).  Deduced once per process and param set.
+        deduced_key = (key, json.dumps(self._varcache_params(), sort_keys=True),
+                       json.dumps(self._twiss_init_values, sort_keys=True))
+        if self._use_deferred and deduced_key in _DEDUCED_CACHE:
+            variables, observables, planes, design_twiss = _DEDUCED_CACHE[deduced_key]
+            type(self).variables.clear()
+            type(self).variables.update(variables)
+            type(self).observables[:] = observables
+            self._monitor_planes = dict(planes)
+        else:
+            type(self).variables.clear()
+            type(self).variables.update(self._deduce_variables())
+            type(self).observables[:] = self._deduce_observables()
+            self._write_varcache()
+            # Twiss of the pristine lattice: its optics are the design values.
+            design_twiss = self._compute_twiss()
+            if self._use_deferred:
+                _DEDUCED_CACHE[deduced_key] = (
+                    dict(type(self).variables), list(type(self).observables),
+                    dict(self._monitor_planes), design_twiss)
 
-        # Twiss of the pristine lattice: its optics are the design values,
-        # recorded as default setpoints for '<name>-SETPOINT' observables.
-        self._twiss = self._compute_twiss()
+        # The design optics are the default setpoints for '<name>-SETPOINT'.
+        self._twiss = design_twiss
         self._twiss_chromatic = True
         self._record_default_setpoints(self._twiss)
 
@@ -393,15 +442,7 @@ class Environment(environment.Environment):
             'variables': dict(type(self).variables),
             'observables': list(type(self).observables),
         }
-        try:
-            # Same directory, then replace: a half-written file is never read.
-            with tempfile.NamedTemporaryFile(
-                mode='w', dir=path.parent, suffix=VARCACHE_SUFFIX, delete=False
-            ) as handle:
-                json.dump(payload, handle)
-            os.replace(handle.name, path)
-        except Exception as error:
-            logger.warning(f'Could not write the sidecar cache {path.name}: {error}')
+        _write_json(path, payload)
 
     def _reuse_cached_lattice(self, key):
         """Take a private copy of an already-parsed lattice.
@@ -476,7 +517,8 @@ class Environment(environment.Environment):
         works (via the per-iteration reload) on a lattice the rewriter cannot
         handle.
         """
-        rewritten, stats = to_deferred(lattice_path.read_text())
+        source = lattice_path.read_text()
+        rewritten, stats = to_deferred(source)
         logger.info(
             f"Deferred {stats['vars']} variable assignments and "
             f"{stats['attrs']} element attributes; "
@@ -501,8 +543,19 @@ class Environment(environment.Environment):
         finally:
             Path(rewritten_path).unlink(missing_ok=True)
 
+        verified_path = lattice_path.with_name(lattice_path.name + VERIFIED_SUFFIX)
+        stamp = _rewrite_stamp(source)
+        try:
+            if json.loads(verified_path.read_text()) == stamp:
+                logger.info(f'The rewrite of {lattice_path.name} was verified before; '
+                            'skipping the check')
+                return mad
+        except Exception:  # missing or unreadable: verify
+            pass
+
         mismatch = self._verify_rewrite(mad, lattice_path)
         if mismatch is None:
+            _write_json(verified_path, stamp)
             return mad
 
         logger.warning(

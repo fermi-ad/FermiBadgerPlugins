@@ -24,9 +24,9 @@ generator:
     discrete_max_batch_size: 2048
     discrete_max_choices: 4096
     max_iter: 1000
-    max_time: 5.0
+    max_time: 0.5
     mixed_max_discrete_configurations: 512
-    n_restarts: 20
+    n_restarts: 5
     name: LBFGS
   turbo_controller: null
   vocs:

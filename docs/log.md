@@ -1724,3 +1724,31 @@ Fixes (main):
   import), renames it, and runs it with the lint and smoke checks. Guide: one
   new edit step ("it fails at the first line about a device or feature you
   changed; change or delete it") and the checklist; no new concepts.
+
+## 2026-11-10 — Delivery Ring simulation: where the time goes, and faster
+
+- Measured (`scripts/profile_dr_sim.py`, `scripts/profile_dr_speedups.py`, MacBook
+  arm64): one evaluation (set the quad busses through xdeps, 1.6 ms; 4d twiss,
+  25 ms) is about 30 ms; the optimizer step was 0.6–4.7 s, and 3.3 s median in a
+  closed-loop EI run. The set path is the deferred one: the lattice is parsed
+  once per process, never rewritten per change.
+- Twiss shortcuts that keep every readable observable (co_guess, at_elements)
+  gave no gain; the full twiss stays. Hand-written C or CUDA: rejected, since
+  xtrack's tracking is already compiled C (about half the twiss) and the twiss is
+  a few percent of a step.
+- Done: both DR templates now use `max_time: 0.5`, `n_restarts: 5` (closed-loop
+  EI step 3.3 s -> 0.72 s; best qx-SETPOINT per seed comparable within seed
+  scatter; 3 seeds, no statistical test). Per-process cache of the deduced
+  lists and design twiss (`_DEDUCED_CACHE`): a new environment 1.3 s -> 0.12 s.
+  A `.rewrite-verified.json` stamp (lattice and rewriter hashes, cpymad
+  version) skips the 2.4 s rewrite check on an unchanged lattice: cold load
+  7.8–9.4 s -> 4.0–5.4 s. `tests/VA_load_caches_test.py`.
+- Measured, not changed: Xopt fits a GP to every VOCS output, observables
+  included. The EI template models 5 outputs; with only its objective and
+  constraint (2), the closed-loop step fell 0.72 -> 0.46 s with no quality loss
+  (3 seeds). Dropping them would also stop recording them: the user's call.
+- Thinking ahead: any template read off one twiss (orbit at BPMs, beta,
+  dispersion, coupling) costs the same 25 ms; chromaticity 112 ms. Multi-turn
+  tracking templates (slow extraction, dynamic aperture) would make the
+  simulation dominate; xsuite's OpenMP and GPU contexts are then the lever.
+  Not explored.
