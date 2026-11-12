@@ -1,0 +1,135 @@
+task: RIL tuning
+coverage:
+  n_total_catalog: 265
+  by_kind:
+    tune: 226
+    excluded: 9
+    reverted: 20
+    scan: 9
+    badger: 1
+  n_sessions_attempted: 255
+  n_sessions_with_data: 221
+  n_sessions_missing: 34
+  logger_cutoff_ts_ms: 1669794007333
+  n_sessions_window_refined: 0
+settings: {}
+mults: {}
+objectives:
+  L:D7TOR:
+    n: 176
+    n_excluded_units_suspect: 45
+    overall:
+      unchanged: 150
+      improved: 22
+      worsened: 4
+    by_outcome:
+      unstated:
+        unchanged: 119
+        improved: 15
+        worsened: 2
+      reverted:
+        unchanged: 8
+        improved: 4
+        worsened: 2
+      kept:
+        unchanged: 20
+        improved: 3
+      none:
+        unchanged: 3
+constraints:
+  L:D7LMSM:
+    n: 0
+    template: 18.0
+    empirical_p90: null
+    range: null
+    fraction_over_template: null
+  L:TK4RAD:
+    n: 3
+    template: 50.0
+    empirical_p90: null
+    range: &id001
+    - 29.296875
+    - 60.272216796875
+    fraction_over_template: 0.3333333333333333
+  L:TUNRAD:
+    n: 3
+    template: 150.0
+    empirical_p90: null
+    range: &id002
+    - 47.91259765625
+    - 127.25830078125
+    fraction_over_template: 0.0
+  MultOOB_MUQ:
+    n: 0
+    template: 0.5
+    empirical_p90: null
+    range: null
+    fraction_over_template: null
+  MultOOB_MDQ:
+    n: 0
+    template: 0.5
+    empirical_p90: null
+    range: null
+    fraction_over_template: null
+  BulkPS_SourceATrims_Pos:
+    n: 0
+    template: 8.0
+    empirical_p90: null
+    range: null
+    fraction_over_template: null
+  BulkPS_SourceATrims_Neg:
+    n: 0
+    template: 8.0
+    empirical_p90: null
+    range: null
+    fraction_over_template: null
+joint:
+  goal_by_mode:
+    throughput|turns: 24
+    losses|NuMI: 5
+    throughput|NuMI: 4
+    losses|\$1D: 6
+    losses|turns: 19
+    throughput|\$1D: 4
+    efficiency|400 MeV: 4
+    losses|400 MeV: 9
+    efficiency|turns: 9
+    throughput|400 MeV: 4
+    efficiency|\$1D: 1
+    losses|NuMI downtime: 1
+    throughput|NuMI downtime: 1
+    efficiency|NuMI: 1
+  reverted_device_counts:
+    L:ATRMVD: 2
+    L:BTRMVD: 2
+    L:RFBPAH: 2
+    L:ATRMHD: 1
+    L:D33LM: 1
+    L:TUNRAD: 1
+    L:LTRMH: 1
+    L:MUQ1V: 1
+    L:ATRMHU: 1
+    B:MH1: 1
+    B:MH2: 1
+    L:D23LM: 1
+    L:D72LM: 1
+    L:D7TOR: 1
+    L:BSOL: 1
+comparison:
+  variables: []
+  constraints:
+  - constraint: L:TK4RAD
+    template_value: 50.0
+    empirical_p90: null
+    range: *id001
+    n: 3
+    recommendation: widen to 60.3 (n<20, range-based)
+    confirmed: false
+  - constraint: L:TUNRAD
+    template_value: 150.0
+    empirical_p90: null
+    range: *id002
+    n: 3
+    recommendation: keep
+    confirmed: false
+confirmed: false

@@ -1,0 +1,322 @@
+# Reflection: RIL tuning
+
+## Headline
+- Objective L:D7TOR: 22 improved, 150 unchanged, 4 worsened, out of 176 sessions with logger data (45 more excluded: a beam-off reading at one edge of the window made the delta meaningless).
+
+## Coverage
+- Catalog: 265 entries matched; by kind: {'tune': 226, 'excluded': 9, 'reverted': 20, 'scan': 9, 'badger': 1}.
+- Logger: 221/255 sessions had data; 34 missing.
+- Logger cutoff: earliest session with any logger data is 2022-11-30.
+- Window refined from logged setting changes for 0 of 221 sessions with data (0 expected here: settings are not logged for this task, confirmed by the probe -- see Setting-change ranges).
+- Window prior is untested (entry time minus 90 min to plus 10 min), refined from logged setting changes when available; this is the logbook's account, not live machine data.
+
+## Achievement by outcome
+- L:D7TOR:
+  - unstated: {'unchanged': 119, 'improved': 15, 'worsened': 2}
+  - reverted: {'unchanged': 8, 'improved': 4, 'worsened': 2}
+  - kept: {'unchanged': 20, 'improved': 3}
+  - none: {'unchanged': 3}
+
+## Joint considerations
+Goal x mode co-occurrence (counts):
+- throughput|turns: 24
+- losses|turns: 19
+- losses|400 MeV: 9
+- efficiency|turns: 9
+- losses|\$1D: 6
+- losses|NuMI: 5
+- throughput|NuMI: 4
+- throughput|\$1D: 4
+- efficiency|400 MeV: 4
+- throughput|400 MeV: 4
+
+Devices named in reverted sessions:
+- L:ATRMVD: 2
+- L:BTRMVD: 2
+- L:RFBPAH: 2
+- L:ATRMHD: 1
+- L:D33LM: 1
+- L:TUNRAD: 1
+- L:LTRMH: 1
+- L:MUQ1V: 1
+- L:ATRMHU: 1
+- B:MH1: 1
+- B:MH2: 1
+- L:D23LM: 1
+- L:D72LM: 1
+- L:D7TOR: 1
+- L:BSOL: 1
+
+## Setting-change ranges
+No setting-change data: every `.SETTING` device was confirmed missing from the logger (probed on two sessions 18 months apart, then skipped for the rest to avoid asking the same question 255 times). 33 catalog entries carry a number in the elog text itself, but mapping those free-text numbers to specific devices was not attempted here -- left as a follow-up, not guessed at.
+
+## Template comparison (unconfirmed until the hardware owner signs off)
+| variable | template delta | history median |delta| | p97.5/range | n | recommendation |
+|---|---|---|---|---|---|
+
+| constraint | template value | empirical p90 or range (n<20) | n | recommendation |
+|---|---|---|---|---|
+| L:TK4RAD | 50.0 | [29.3, 60.3] | 3 | widen to 60.3 (n<20, range-based) |
+| L:TUNRAD | 150.0 | [47.9, 127] | 3 | keep |
+
+## Sessions
+- [3745](https://www-bd.fnal.gov/Elog/?orEntryId=3745) 2013-08-29 kind=tune outcome=unstated
+- [32112](https://www-bd.fnal.gov/Elog/?orEntryId=32112) 2014-08-11 kind=tune outcome=unstated
+- [59678](https://www-bd.fnal.gov/Elog/?orEntryId=59678) 2015-05-10 kind=tune outcome=unstated
+- [60290](https://www-bd.fnal.gov/Elog/?orEntryId=60290) 2015-05-18 kind=tune outcome=unstated
+- [61501](https://www-bd.fnal.gov/Elog/?orEntryId=61501) 2015-05-31 kind=tune outcome=unstated
+- [75579](https://www-bd.fnal.gov/Elog/?orEntryId=75579) 2016-02-01 kind=tune outcome=unstated
+- [81630](https://www-bd.fnal.gov/Elog/?orEntryId=81630) 2016-04-18 kind=tune outcome=unstated
+- [93562](https://www-bd.fnal.gov/Elog/?orEntryId=93562) 2016-10-17 kind=tune outcome=unstated
+- [93639](https://www-bd.fnal.gov/Elog/?orEntryId=93639) 2016-10-18 kind=tune outcome=unstated
+- [105635](https://www-bd.fnal.gov/Elog/?orEntryId=105635) 2017-04-09 kind=tune outcome=unstated
+- [120044](https://www-bd.fnal.gov/Elog/?orEntryId=120044) 2017-11-14 kind=tune outcome=unstated
+- [138138](https://www-bd.fnal.gov/Elog/?orEntryId=138138) 2018-07-06 kind=tune outcome=unstated
+- [143642](https://www-bd.fnal.gov/Elog/?orEntryId=143642) 2018-11-08 kind=tune outcome=unstated
+- [168987](https://www-bd.fnal.gov/Elog/?orEntryId=168987) 2020-02-15 kind=tune outcome=unstated
+- [182669](https://www-bd.fnal.gov/Elog/?orEntryId=182669) 2020-12-13 kind=tune outcome=unstated
+- [188842](https://www-bd.fnal.gov/Elog/?orEntryId=188842) 2021-03-01 kind=reverted outcome=reverted
+- [191188](https://www-bd.fnal.gov/Elog/?orEntryId=191188) 2021-03-28 kind=tune outcome=unstated
+- [191191](https://www-bd.fnal.gov/Elog/?orEntryId=191191) 2021-03-28 kind=reverted outcome=reverted
+- [191258](https://www-bd.fnal.gov/Elog/?orEntryId=191258) 2021-03-29 kind=tune outcome=unstated
+- [191349](https://www-bd.fnal.gov/Elog/?orEntryId=191349) 2021-03-30 kind=tune outcome=unstated
+- [203654](https://www-bd.fnal.gov/Elog/?orEntryId=203654) 2021-10-20 kind=tune outcome=unstated
+- [205396](https://www-bd.fnal.gov/Elog/?orEntryId=205396) 2021-11-11 kind=tune outcome=unstated
+- [205916](https://www-bd.fnal.gov/Elog/?orEntryId=205916) 2021-11-19 kind=tune outcome=unstated
+- [206298](https://www-bd.fnal.gov/Elog/?orEntryId=206298) 2021-11-25 kind=reverted outcome=reverted
+- [209925](https://www-bd.fnal.gov/Elog/?orEntryId=209925) 2022-01-27 kind=tune outcome=unstated
+- [210575](https://www-bd.fnal.gov/Elog/?orEntryId=210575) 2022-02-07 kind=reverted outcome=reverted
+- [210577](https://www-bd.fnal.gov/Elog/?orEntryId=210577) 2022-02-07 kind=tune outcome=unstated
+- [211038](https://www-bd.fnal.gov/Elog/?orEntryId=211038) 2022-02-14 kind=tune outcome=unstated
+- [213938](https://www-bd.fnal.gov/Elog/?orEntryId=213938) 2022-03-31 kind=reverted outcome=reverted
+- [216164](https://www-bd.fnal.gov/Elog/?orEntryId=216164) 2022-05-02 kind=tune outcome=unstated
+- [217637](https://www-bd.fnal.gov/Elog/?orEntryId=217637) 2022-05-21 kind=tune outcome=unstated
+- [218173](https://www-bd.fnal.gov/Elog/?orEntryId=218173) 2022-05-27 kind=tune outcome=unstated
+- [226327](https://www-bd.fnal.gov/Elog/?orEntryId=226327) 2022-10-22 kind=tune outcome=unstated
+- [228888](https://www-bd.fnal.gov/Elog/?orEntryId=228888) 2022-11-30 kind=scan outcome=unstated
+- [230472](https://www-bd.fnal.gov/Elog/?orEntryId=230472) 2022-12-25 kind=tune outcome=unstated
+- [231268](https://www-bd.fnal.gov/Elog/?orEntryId=231268) 2023-01-08 kind=tune outcome=unstated
+- [231271](https://www-bd.fnal.gov/Elog/?orEntryId=231271) 2023-01-08 kind=tune outcome=unstated
+- [231281](https://www-bd.fnal.gov/Elog/?orEntryId=231281) 2023-01-09 kind=tune outcome=unstated
+- [235864](https://www-bd.fnal.gov/Elog/?orEntryId=235864) 2023-03-18 kind=tune outcome=unstated
+- [235942](https://www-bd.fnal.gov/Elog/?orEntryId=235942) 2023-03-19 kind=tune outcome=unstated
+- [237186](https://www-bd.fnal.gov/Elog/?orEntryId=237186) 2023-04-03 kind=tune outcome=unstated
+- [237994](https://www-bd.fnal.gov/Elog/?orEntryId=237994) 2023-04-12 kind=tune outcome=unstated
+- [238080](https://www-bd.fnal.gov/Elog/?orEntryId=238080) 2023-04-13 kind=tune outcome=unstated
+- [238361](https://www-bd.fnal.gov/Elog/?orEntryId=238361) 2023-04-16 kind=tune outcome=unstated
+- [238362](https://www-bd.fnal.gov/Elog/?orEntryId=238362) 2023-04-16 kind=tune outcome=unstated
+- [238401](https://www-bd.fnal.gov/Elog/?orEntryId=238401) 2023-04-17 kind=reverted outcome=reverted
+- [238515](https://www-bd.fnal.gov/Elog/?orEntryId=238515) 2023-04-18 kind=tune outcome=unstated
+- [238702](https://www-bd.fnal.gov/Elog/?orEntryId=238702) 2023-04-20 kind=tune outcome=unstated
+- [240037](https://www-bd.fnal.gov/Elog/?orEntryId=240037) 2023-05-07 kind=tune outcome=unstated
+- [240428](https://www-bd.fnal.gov/Elog/?orEntryId=240428) 2023-05-12 kind=tune outcome=kept
+- [240523](https://www-bd.fnal.gov/Elog/?orEntryId=240523) 2023-05-13 kind=tune outcome=unstated
+- [241576](https://www-bd.fnal.gov/Elog/?orEntryId=241576) 2023-05-26 kind=tune outcome=kept
+- [242549](https://www-bd.fnal.gov/Elog/?orEntryId=242549) 2023-06-12 kind=tune outcome=unstated
+- [243138](https://www-bd.fnal.gov/Elog/?orEntryId=243138) 2023-06-20 kind=tune outcome=kept
+- [243234](https://www-bd.fnal.gov/Elog/?orEntryId=243234) 2023-06-21 kind=tune outcome=kept
+- [243255](https://www-bd.fnal.gov/Elog/?orEntryId=243255) 2023-06-21 kind=tune outcome=unstated
+- [243342](https://www-bd.fnal.gov/Elog/?orEntryId=243342) 2023-06-22 kind=tune outcome=unstated
+- [243943](https://www-bd.fnal.gov/Elog/?orEntryId=243943) 2023-07-04 kind=tune outcome=kept
+- [243957](https://www-bd.fnal.gov/Elog/?orEntryId=243957) 2023-07-04 kind=tune outcome=unstated
+- [245139](https://www-bd.fnal.gov/Elog/?orEntryId=245139) 2023-07-20 kind=tune outcome=unstated
+- [252062](https://www-bd.fnal.gov/Elog/?orEntryId=252062) 2024-01-17 kind=tune outcome=kept
+- [252135](https://www-bd.fnal.gov/Elog/?orEntryId=252135) 2024-01-18 kind=tune outcome=unstated
+- [252219](https://www-bd.fnal.gov/Elog/?orEntryId=252219) 2024-01-19 kind=tune outcome=unstated
+- [252293](https://www-bd.fnal.gov/Elog/?orEntryId=252293) 2024-01-20 kind=tune outcome=unstated
+- [252688](https://www-bd.fnal.gov/Elog/?orEntryId=252688) 2024-01-27 kind=tune outcome=kept
+- [252735](https://www-bd.fnal.gov/Elog/?orEntryId=252735) 2024-01-28 kind=tune outcome=unstated
+- [252765](https://www-bd.fnal.gov/Elog/?orEntryId=252765) 2024-01-29 kind=tune outcome=unstated
+- [252851](https://www-bd.fnal.gov/Elog/?orEntryId=252851) 2024-01-30 kind=tune outcome=unstated
+- [252898](https://www-bd.fnal.gov/Elog/?orEntryId=252898) 2024-01-31 kind=tune outcome=unstated
+- [252985](https://www-bd.fnal.gov/Elog/?orEntryId=252985) 2024-02-01 kind=tune outcome=unstated
+- [253073](https://www-bd.fnal.gov/Elog/?orEntryId=253073) 2024-02-02 kind=tune outcome=none
+- [253105](https://www-bd.fnal.gov/Elog/?orEntryId=253105) 2024-02-02 kind=tune outcome=none
+- [253146](https://www-bd.fnal.gov/Elog/?orEntryId=253146) 2024-02-04 kind=tune outcome=unstated
+- [253524](https://www-bd.fnal.gov/Elog/?orEntryId=253524) 2024-02-10 kind=tune outcome=unstated
+- [253557](https://www-bd.fnal.gov/Elog/?orEntryId=253557) 2024-02-11 kind=scan outcome=unstated
+- [253674](https://www-bd.fnal.gov/Elog/?orEntryId=253674) 2024-02-14 kind=tune outcome=kept
+- [254235](https://www-bd.fnal.gov/Elog/?orEntryId=254235) 2024-02-25 kind=tune outcome=unstated
+- [256024](https://www-bd.fnal.gov/Elog/?orEntryId=256024) 2024-03-26 kind=tune outcome=unstated
+- [256615](https://www-bd.fnal.gov/Elog/?orEntryId=256615) 2024-04-03 kind=tune outcome=unstated
+- [256836](https://www-bd.fnal.gov/Elog/?orEntryId=256836) 2024-04-06 kind=tune outcome=kept
+- [256876](https://www-bd.fnal.gov/Elog/?orEntryId=256876) 2024-04-07 kind=reverted outcome=reverted
+- [257268](https://www-bd.fnal.gov/Elog/?orEntryId=257268) 2024-04-12 kind=tune outcome=unstated
+- [257356](https://www-bd.fnal.gov/Elog/?orEntryId=257356) 2024-04-14 kind=tune outcome=kept
+- [257523](https://www-bd.fnal.gov/Elog/?orEntryId=257523) 2024-04-16 kind=tune outcome=unstated
+- [258077](https://www-bd.fnal.gov/Elog/?orEntryId=258077) 2024-04-24 kind=tune outcome=unstated
+- [258087](https://www-bd.fnal.gov/Elog/?orEntryId=258087) 2024-04-24 kind=tune outcome=kept
+- [258138](https://www-bd.fnal.gov/Elog/?orEntryId=258138) 2024-04-25 kind=tune outcome=unstated
+- [258343](https://www-bd.fnal.gov/Elog/?orEntryId=258343) 2024-04-28 kind=tune outcome=unstated
+- [258389](https://www-bd.fnal.gov/Elog/?orEntryId=258389) 2024-04-29 kind=tune outcome=unstated
+- [258429](https://www-bd.fnal.gov/Elog/?orEntryId=258429) 2024-04-30 kind=tune outcome=unstated
+- [259010](https://www-bd.fnal.gov/Elog/?orEntryId=259010) 2024-05-07 kind=tune outcome=unstated
+- [259073](https://www-bd.fnal.gov/Elog/?orEntryId=259073) 2024-05-07 kind=tune outcome=unstated
+- [259088](https://www-bd.fnal.gov/Elog/?orEntryId=259088) 2024-05-07 kind=tune outcome=unstated
+- [259194](https://www-bd.fnal.gov/Elog/?orEntryId=259194) 2024-05-09 kind=tune outcome=unstated
+- [259195](https://www-bd.fnal.gov/Elog/?orEntryId=259195) 2024-05-09 kind=tune outcome=unstated
+- [259215](https://www-bd.fnal.gov/Elog/?orEntryId=259215) 2024-05-09 kind=tune outcome=unstated
+- [259290](https://www-bd.fnal.gov/Elog/?orEntryId=259290) 2024-05-10 kind=tune outcome=unstated
+- [259395](https://www-bd.fnal.gov/Elog/?orEntryId=259395) 2024-05-11 kind=tune outcome=kept
+- [259602](https://www-bd.fnal.gov/Elog/?orEntryId=259602) 2024-05-15 kind=tune outcome=unstated
+- [259621](https://www-bd.fnal.gov/Elog/?orEntryId=259621) 2024-05-15 kind=tune outcome=unstated
+- [259687](https://www-bd.fnal.gov/Elog/?orEntryId=259687) 2024-05-15 kind=tune outcome=unstated
+- [259694](https://www-bd.fnal.gov/Elog/?orEntryId=259694) 2024-05-15 kind=tune outcome=unstated
+- [259794](https://www-bd.fnal.gov/Elog/?orEntryId=259794) 2024-05-17 kind=tune outcome=unstated
+- [259855](https://www-bd.fnal.gov/Elog/?orEntryId=259855) 2024-05-17 kind=tune outcome=unstated
+- [259885](https://www-bd.fnal.gov/Elog/?orEntryId=259885) 2024-05-18 kind=tune outcome=unstated
+- [259892](https://www-bd.fnal.gov/Elog/?orEntryId=259892) 2024-05-18 kind=tune outcome=unstated
+- [260260](https://www-bd.fnal.gov/Elog/?orEntryId=260260) 2024-05-23 kind=tune outcome=unstated
+- [260277](https://www-bd.fnal.gov/Elog/?orEntryId=260277) 2024-05-23 kind=tune outcome=unstated
+- [260348](https://www-bd.fnal.gov/Elog/?orEntryId=260348) 2024-05-23 kind=tune outcome=unstated
+- [260358](https://www-bd.fnal.gov/Elog/?orEntryId=260358) 2024-05-24 kind=tune outcome=unstated
+- [261181](https://www-bd.fnal.gov/Elog/?orEntryId=261181) 2024-06-03 kind=tune outcome=unstated
+- [261182](https://www-bd.fnal.gov/Elog/?orEntryId=261182) 2024-06-03 kind=tune outcome=unstated
+- [262352](https://www-bd.fnal.gov/Elog/?orEntryId=262352) 2024-06-17 kind=reverted outcome=reverted
+- [262453](https://www-bd.fnal.gov/Elog/?orEntryId=262453) 2024-06-17 kind=tune outcome=unstated
+- [262769](https://www-bd.fnal.gov/Elog/?orEntryId=262769) 2024-06-21 kind=tune outcome=unstated
+- [263063](https://www-bd.fnal.gov/Elog/?orEntryId=263063) 2024-06-25 kind=tune outcome=unstated
+- [263962](https://www-bd.fnal.gov/Elog/?orEntryId=263962) 2024-07-07 kind=tune outcome=unstated
+- [264605](https://www-bd.fnal.gov/Elog/?orEntryId=264605) 2024-07-16 kind=tune outcome=unstated
+- [264810](https://www-bd.fnal.gov/Elog/?orEntryId=264810) 2024-07-21 kind=scan outcome=unstated
+- [268430](https://www-bd.fnal.gov/Elog/?orEntryId=268430) 2024-11-01 kind=reverted outcome=reverted
+- [268878](https://www-bd.fnal.gov/Elog/?orEntryId=268878) 2024-11-12 kind=scan outcome=kept
+- [269323](https://www-bd.fnal.gov/Elog/?orEntryId=269323) 2024-11-20 kind=reverted outcome=reverted
+- [270085](https://www-bd.fnal.gov/Elog/?orEntryId=270085) 2024-12-06 kind=tune outcome=unstated
+- [270167](https://www-bd.fnal.gov/Elog/?orEntryId=270167) 2024-12-08 kind=tune outcome=unstated
+- [270393](https://www-bd.fnal.gov/Elog/?orEntryId=270393) 2024-12-12 kind=tune outcome=unstated
+- [270531](https://www-bd.fnal.gov/Elog/?orEntryId=270531) 2024-12-15 kind=tune outcome=unstated
+- [271085](https://www-bd.fnal.gov/Elog/?orEntryId=271085) 2024-12-25 kind=tune outcome=unstated
+- [271117](https://www-bd.fnal.gov/Elog/?orEntryId=271117) 2024-12-26 kind=tune outcome=unstated
+- [271160](https://www-bd.fnal.gov/Elog/?orEntryId=271160) 2024-12-27 kind=tune outcome=unstated
+- [271431](https://www-bd.fnal.gov/Elog/?orEntryId=271431) 2025-01-03 kind=tune outcome=unstated
+- [271472](https://www-bd.fnal.gov/Elog/?orEntryId=271472) 2025-01-04 kind=tune outcome=unstated
+- [271531](https://www-bd.fnal.gov/Elog/?orEntryId=271531) 2025-01-06 kind=tune outcome=unstated
+- [271675](https://www-bd.fnal.gov/Elog/?orEntryId=271675) 2025-01-09 kind=tune outcome=unstated
+- [271728](https://www-bd.fnal.gov/Elog/?orEntryId=271728) 2025-01-10 kind=tune outcome=unstated
+- [271829](https://www-bd.fnal.gov/Elog/?orEntryId=271829) 2025-01-12 kind=tune outcome=unstated
+- [272218](https://www-bd.fnal.gov/Elog/?orEntryId=272218) 2025-01-20 kind=tune outcome=unstated
+- [272426](https://www-bd.fnal.gov/Elog/?orEntryId=272426) 2025-01-24 kind=tune outcome=kept
+- [272448](https://www-bd.fnal.gov/Elog/?orEntryId=272448) 2025-01-24 kind=tune outcome=unstated
+- [272510](https://www-bd.fnal.gov/Elog/?orEntryId=272510) 2025-01-25 kind=tune outcome=unstated
+- [272927](https://www-bd.fnal.gov/Elog/?orEntryId=272927) 2025-02-01 kind=tune outcome=unstated
+- [272976](https://www-bd.fnal.gov/Elog/?orEntryId=272976) 2025-02-02 kind=tune outcome=unstated
+- [273170](https://www-bd.fnal.gov/Elog/?orEntryId=273170) 2025-02-06 kind=tune outcome=unstated
+- [273479](https://www-bd.fnal.gov/Elog/?orEntryId=273479) 2025-02-13 kind=tune outcome=unstated
+- [273729](https://www-bd.fnal.gov/Elog/?orEntryId=273729) 2025-02-19 kind=tune outcome=unstated
+- [274055](https://www-bd.fnal.gov/Elog/?orEntryId=274055) 2025-02-26 kind=tune outcome=unstated
+- [274107](https://www-bd.fnal.gov/Elog/?orEntryId=274107) 2025-02-27 kind=tune outcome=unstated
+- [274348](https://www-bd.fnal.gov/Elog/?orEntryId=274348) 2025-03-05 kind=reverted outcome=reverted
+- [274388](https://www-bd.fnal.gov/Elog/?orEntryId=274388) 2025-03-05 kind=tune outcome=unstated
+- [275010](https://www-bd.fnal.gov/Elog/?orEntryId=275010) 2025-03-18 kind=tune outcome=unstated
+- [275023](https://www-bd.fnal.gov/Elog/?orEntryId=275023) 2025-03-18 kind=tune outcome=unstated
+- [275172](https://www-bd.fnal.gov/Elog/?orEntryId=275172) 2025-03-21 kind=tune outcome=unstated
+- [275272](https://www-bd.fnal.gov/Elog/?orEntryId=275272) 2025-03-23 kind=tune outcome=unstated
+- [275328](https://www-bd.fnal.gov/Elog/?orEntryId=275328) 2025-03-24 kind=tune outcome=unstated
+- [275397](https://www-bd.fnal.gov/Elog/?orEntryId=275397) 2025-03-26 kind=tune outcome=unstated
+- [275463](https://www-bd.fnal.gov/Elog/?orEntryId=275463) 2025-03-27 kind=tune outcome=unstated
+- [275645](https://www-bd.fnal.gov/Elog/?orEntryId=275645) 2025-03-31 kind=tune outcome=unstated
+- [275689](https://www-bd.fnal.gov/Elog/?orEntryId=275689) 2025-04-01 kind=tune outcome=unstated
+- [275967](https://www-bd.fnal.gov/Elog/?orEntryId=275967) 2025-04-06 kind=tune outcome=kept
+- [276091](https://www-bd.fnal.gov/Elog/?orEntryId=276091) 2025-04-08 kind=tune outcome=unstated
+- [276171](https://www-bd.fnal.gov/Elog/?orEntryId=276171) 2025-04-10 kind=scan outcome=none
+- [276433](https://www-bd.fnal.gov/Elog/?orEntryId=276433) 2025-04-15 kind=tune outcome=unstated
+- [276811](https://www-bd.fnal.gov/Elog/?orEntryId=276811) 2025-04-22 kind=tune outcome=unstated
+- [276930](https://www-bd.fnal.gov/Elog/?orEntryId=276930) 2025-04-24 kind=tune outcome=unstated
+- [277090](https://www-bd.fnal.gov/Elog/?orEntryId=277090) 2025-04-27 kind=tune outcome=kept
+- [277165](https://www-bd.fnal.gov/Elog/?orEntryId=277165) 2025-04-29 kind=tune outcome=unstated
+- [277383](https://www-bd.fnal.gov/Elog/?orEntryId=277383) 2025-05-02 kind=tune outcome=unstated
+- [277746](https://www-bd.fnal.gov/Elog/?orEntryId=277746) 2025-05-09 kind=tune outcome=unstated
+- [277753](https://www-bd.fnal.gov/Elog/?orEntryId=277753) 2025-05-09 kind=tune outcome=unstated
+- [277848](https://www-bd.fnal.gov/Elog/?orEntryId=277848) 2025-05-11 kind=reverted outcome=reverted
+- [277933](https://www-bd.fnal.gov/Elog/?orEntryId=277933) 2025-05-13 kind=scan outcome=unstated
+- [277943](https://www-bd.fnal.gov/Elog/?orEntryId=277943) 2025-05-13 kind=reverted outcome=reverted
+- [278159](https://www-bd.fnal.gov/Elog/?orEntryId=278159) 2025-05-15 kind=tune outcome=unstated
+- [278244](https://www-bd.fnal.gov/Elog/?orEntryId=278244) 2025-05-16 kind=tune outcome=unstated
+- [279036](https://www-bd.fnal.gov/Elog/?orEntryId=279036) 2025-05-31 kind=tune outcome=unstated
+- [279077](https://www-bd.fnal.gov/Elog/?orEntryId=279077) 2025-06-01 kind=tune outcome=unstated
+- [280058](https://www-bd.fnal.gov/Elog/?orEntryId=280058) 2025-06-19 kind=tune outcome=unstated
+- [280985](https://www-bd.fnal.gov/Elog/?orEntryId=280985) 2025-07-05 kind=tune outcome=unstated
+- [281015](https://www-bd.fnal.gov/Elog/?orEntryId=281015) 2025-07-05 kind=tune outcome=unstated
+- [285232](https://www-bd.fnal.gov/Elog/?orEntryId=285232) 2025-10-16 kind=tune outcome=unstated
+- [285339](https://www-bd.fnal.gov/Elog/?orEntryId=285339) 2025-10-17 kind=tune outcome=unstated
+- [285386](https://www-bd.fnal.gov/Elog/?orEntryId=285386) 2025-10-18 kind=tune outcome=unstated
+- [285483](https://www-bd.fnal.gov/Elog/?orEntryId=285483) 2025-10-21 kind=tune outcome=unstated
+- [285612](https://www-bd.fnal.gov/Elog/?orEntryId=285612) 2025-10-23 kind=tune outcome=unstated
+- [285942](https://www-bd.fnal.gov/Elog/?orEntryId=285942) 2025-10-29 kind=tune outcome=unstated
+- [286066](https://www-bd.fnal.gov/Elog/?orEntryId=286066) 2025-10-31 kind=scan outcome=unstated
+- [286312](https://www-bd.fnal.gov/Elog/?orEntryId=286312) 2025-11-05 kind=tune outcome=unstated
+- [287069](https://www-bd.fnal.gov/Elog/?orEntryId=287069) 2025-11-19 kind=tune outcome=unstated
+- [287146](https://www-bd.fnal.gov/Elog/?orEntryId=287146) 2025-11-19 kind=reverted outcome=reverted
+- [287275](https://www-bd.fnal.gov/Elog/?orEntryId=287275) 2025-11-22 kind=tune outcome=unstated
+- [287615](https://www-bd.fnal.gov/Elog/?orEntryId=287615) 2025-11-29 kind=tune outcome=unstated
+- [287816](https://www-bd.fnal.gov/Elog/?orEntryId=287816) 2025-12-03 kind=tune outcome=unstated
+- [287843](https://www-bd.fnal.gov/Elog/?orEntryId=287843) 2025-12-04 kind=tune outcome=none
+- [287854](https://www-bd.fnal.gov/Elog/?orEntryId=287854) 2025-12-04 kind=tune outcome=unstated
+- [287984](https://www-bd.fnal.gov/Elog/?orEntryId=287984) 2025-12-06 kind=tune outcome=unstated
+- [288015](https://www-bd.fnal.gov/Elog/?orEntryId=288015) 2025-12-06 kind=tune outcome=unstated
+- [288024](https://www-bd.fnal.gov/Elog/?orEntryId=288024) 2025-12-07 kind=tune outcome=unstated
+- [288267](https://www-bd.fnal.gov/Elog/?orEntryId=288267) 2025-12-10 kind=tune outcome=kept
+- [288327](https://www-bd.fnal.gov/Elog/?orEntryId=288327) 2025-12-11 kind=tune outcome=unstated
+- [288334](https://www-bd.fnal.gov/Elog/?orEntryId=288334) 2025-12-12 kind=tune outcome=unstated
+- [288428](https://www-bd.fnal.gov/Elog/?orEntryId=288428) 2025-12-14 kind=tune outcome=unstated
+- [289120](https://www-bd.fnal.gov/Elog/?orEntryId=289120) 2025-12-26 kind=tune outcome=unstated
+- [289214](https://www-bd.fnal.gov/Elog/?orEntryId=289214) 2025-12-29 kind=tune outcome=unstated
+- [289818](https://www-bd.fnal.gov/Elog/?orEntryId=289818) 2026-01-10 kind=tune outcome=none
+- [290259](https://www-bd.fnal.gov/Elog/?orEntryId=290259) 2026-01-19 kind=tune outcome=kept
+- [290379](https://www-bd.fnal.gov/Elog/?orEntryId=290379) 2026-01-21 kind=tune outcome=unstated
+- [291169](https://www-bd.fnal.gov/Elog/?orEntryId=291169) 2026-02-01 kind=tune outcome=unstated
+- [291556](https://www-bd.fnal.gov/Elog/?orEntryId=291556) 2026-02-07 kind=tune outcome=unstated
+- [292102](https://www-bd.fnal.gov/Elog/?orEntryId=292102) 2026-02-16 kind=tune outcome=unstated
+- [292230](https://www-bd.fnal.gov/Elog/?orEntryId=292230) 2026-02-18 kind=reverted outcome=reverted
+- [292424](https://www-bd.fnal.gov/Elog/?orEntryId=292424) 2026-02-21 kind=tune outcome=unstated
+- [292444](https://www-bd.fnal.gov/Elog/?orEntryId=292444) 2026-02-22 kind=tune outcome=kept
+- [292471](https://www-bd.fnal.gov/Elog/?orEntryId=292471) 2026-02-22 kind=reverted outcome=reverted
+- [292491](https://www-bd.fnal.gov/Elog/?orEntryId=292491) 2026-02-23 kind=tune outcome=kept
+- [293658](https://www-bd.fnal.gov/Elog/?orEntryId=293658) 2026-03-14 kind=tune outcome=unstated
+- [294468](https://www-bd.fnal.gov/Elog/?orEntryId=294468) 2026-03-28 kind=tune outcome=unstated
+- [294507](https://www-bd.fnal.gov/Elog/?orEntryId=294507) 2026-03-29 kind=tune outcome=kept
+- [294880](https://www-bd.fnal.gov/Elog/?orEntryId=294880) 2026-04-05 kind=tune outcome=unstated
+- [294994](https://www-bd.fnal.gov/Elog/?orEntryId=294994) 2026-04-07 kind=tune outcome=unstated
+- [295050](https://www-bd.fnal.gov/Elog/?orEntryId=295050) 2026-04-07 kind=tune outcome=unstated
+- [295368](https://www-bd.fnal.gov/Elog/?orEntryId=295368) 2026-04-13 kind=reverted outcome=reverted
+- [295524](https://www-bd.fnal.gov/Elog/?orEntryId=295524) 2026-04-15 kind=tune outcome=unstated
+- [295953](https://www-bd.fnal.gov/Elog/?orEntryId=295953) 2026-04-21 kind=tune outcome=unstated
+- [295954](https://www-bd.fnal.gov/Elog/?orEntryId=295954) 2026-04-21 kind=tune outcome=unstated
+- [296041](https://www-bd.fnal.gov/Elog/?orEntryId=296041) 2026-04-22 kind=tune outcome=unstated
+- [296129](https://www-bd.fnal.gov/Elog/?orEntryId=296129) 2026-04-23 kind=tune outcome=kept
+- [296186](https://www-bd.fnal.gov/Elog/?orEntryId=296186) 2026-04-24 kind=tune outcome=kept
+- [296784](https://www-bd.fnal.gov/Elog/?orEntryId=296784) 2026-05-04 kind=tune outcome=unstated
+- [297462](https://www-bd.fnal.gov/Elog/?orEntryId=297462) 2026-05-16 kind=tune outcome=unstated
+- [297826](https://www-bd.fnal.gov/Elog/?orEntryId=297826) 2026-05-23 kind=tune outcome=kept
+- [297854](https://www-bd.fnal.gov/Elog/?orEntryId=297854) 2026-05-24 kind=tune outcome=unstated
+- [298288](https://www-bd.fnal.gov/Elog/?orEntryId=298288) 2026-05-29 kind=tune outcome=unstated
+- [298303](https://www-bd.fnal.gov/Elog/?orEntryId=298303) 2026-05-30 kind=tune outcome=unstated
+- [298320](https://www-bd.fnal.gov/Elog/?orEntryId=298320) 2026-05-30 kind=tune outcome=unstated
+- [299078](https://www-bd.fnal.gov/Elog/?orEntryId=299078) 2026-06-11 kind=tune outcome=unstated
+- [301567](https://www-bd.fnal.gov/Elog/?orEntryId=301567) 2026-08-21 kind=tune outcome=unstated
+- [301622](https://www-bd.fnal.gov/Elog/?orEntryId=301622) 2026-08-22 kind=scan outcome=unstated
+- [301678](https://www-bd.fnal.gov/Elog/?orEntryId=301678) 2026-08-24 kind=tune outcome=unstated
+- [301818](https://www-bd.fnal.gov/Elog/?orEntryId=301818) 2026-08-26 kind=tune outcome=unstated
+- [302503](https://www-bd.fnal.gov/Elog/?orEntryId=302503) 2026-09-07 kind=tune outcome=none
+- [302691](https://www-bd.fnal.gov/Elog/?orEntryId=302691) 2026-09-10 kind=scan outcome=kept
+- [302766](https://www-bd.fnal.gov/Elog/?orEntryId=302766) 2026-09-11 kind=tune outcome=none
+- [303640](https://www-bd.fnal.gov/Elog/?orEntryId=303640) 2026-09-23 kind=tune outcome=unstated
+- [303988](https://www-bd.fnal.gov/Elog/?orEntryId=303988) 2026-09-28 kind=tune outcome=unstated
+- [304754](https://www-bd.fnal.gov/Elog/?orEntryId=304754) 2026-10-08 kind=tune outcome=unstated
+- [304842](https://www-bd.fnal.gov/Elog/?orEntryId=304842) 2026-10-09 kind=tune outcome=unstated
+- [304988](https://www-bd.fnal.gov/Elog/?orEntryId=304988) 2026-10-11 kind=tune outcome=kept
+- [305074](https://www-bd.fnal.gov/Elog/?orEntryId=305074) 2026-10-13 kind=tune outcome=unstated
+- [305357](https://www-bd.fnal.gov/Elog/?orEntryId=305357) 2026-10-17 kind=tune outcome=unstated
+- [305443](https://www-bd.fnal.gov/Elog/?orEntryId=305443) 2026-10-19 kind=tune outcome=unstated
+- [306327](https://www-bd.fnal.gov/Elog/?orEntryId=306327) 2026-10-30 kind=tune outcome=unstated
+- [306495](https://www-bd.fnal.gov/Elog/?orEntryId=306495) 2026-11-01 kind=tune outcome=unstated
+- [307053](https://www-bd.fnal.gov/Elog/?orEntryId=307053) 2026-11-07 kind=reverted outcome=reverted
+- [307109](https://www-bd.fnal.gov/Elog/?orEntryId=307109) 2026-11-08 kind=reverted outcome=reverted
+- [307145](https://www-bd.fnal.gov/Elog/?orEntryId=307145) 2026-11-08 kind=reverted outcome=reverted
+- [307350](https://www-bd.fnal.gov/Elog/?orEntryId=307350) 2026-11-11 kind=tune outcome=unstated
+
+## Caveats
+- Window prior (entry time minus 90 min to plus 10 min) is untested.
+- Every statistic above carries its own n; no 95% interval is reported for n < 20.
+- This reflects the logbook's account and the data logger's record, not a live read of the machine.

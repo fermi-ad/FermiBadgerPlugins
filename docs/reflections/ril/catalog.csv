@@ -1,0 +1,266 @@
+entry_id,ts_ms,logs,kind,goals,modes,outcome,devices,numbers,n_comments_6h
+3745,1377818931346,Linac,tune,efficiency,,unstated,,18.5 mA,0
+32112,1407786693388,Linac;PreAcc,tune,,,unstated,,,0
+59678,1431243244475,Booster;External Beamlines;Linac;Operations;PreAcc,tune,losses,,unstated,L:BSOL;L:T01IN,,1
+60290,1431953887374,Linac,tune,,,unstated,,,0
+61501,1433074714190,Linac;Operations;PreAcc,tune,losses;throughput,,unstated,L:BSOL;L:D7LMSM;L:D7TOR;L:TO1IN;L:TO3IN;L:TUNRAD,,1
+75579,1454311248077,Linac;Operations,tune,losses;throughput,,unstated,L:BSOL;L:D7LMSM;L:LSOL;L:TK1RAD;L:TO1IN;L:TO3IN,,4
+81630,1460985587189,Linac,tune,efficiency,,unstated,,,0
+93562,1476706656441,Operations;PreAcc,tune,,,unstated,,,0
+93639,1476773803481,Operations,tune,,,unstated,,,0
+105635,1491753283153,Operations,tune,,,unstated,,,1
+120044,1510618474870,Linac,tune,throughput,turns,unstated,,,0
+138138,1530908837357,Operations,tune,losses,NuMI,unstated,,,0
+143642,1541641333396,Linac,tune,efficiency,,unstated,,,0
+149362,1551102993414,Operations,excluded,,400 MeV;NuMI,unstated,E:12AAIR,,2
+168987,1581791336259,Booster;Linac;Operations;PreAcc,tune,throughput,NuMI,unstated,,0.6 mA,1
+182669,1607818358600,Linac;Operations,tune,losses,,unstated,L:ASOL;L:RFQPAH;L:TUNRAD,,0
+188842,1614615618334,Linac;Operations;PreAcc,reverted,efficiency;losses;throughput,,reverted,L:ATRMHD;L:ATRMVD;L:D33LM;L:TUNRAD,,1
+191188,1616896598768,Booster;Linac;Operations,tune,losses,,unstated,,,1
+191191,1616903270460,Operations;PreAcc,reverted,losses,,reverted,,,0
+191258,1617010355202,Operations;PreAcc,tune,losses,,unstated,,,0
+191349,1617094459918,Operations;PreAcc,tune,efficiency;losses,,unstated,R:KPS1A,1 A,0
+203654,1634712020548,Linac;Operations;PreAcc,tune,losses,,unstated,L:ATRMVU,,0
+205396,1636610652203,Booster;Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,L:400SCA;L:D7LMSM;L:V5QSET,,0
+205916,1637284353175,Booster;Linac;Operations,tune,losses,,unstated,,,1
+206298,1637836613244,Booster;Linac;Operations,reverted,losses,,reverted,L:ATRMVD;L:LTRMH;L:MUQ1V,24.4 mA,1
+209925,1643263655690,Booster;Linac;Operations,tune,efficiency;losses,,unstated,L:V5QSET,,2
+210575,1644206317056,Linac;Operations;PreAcc,reverted,losses;throughput,,reverted,,7.6 deg;21.9 mA;21.6 mA,0
+210577,1644206929411,Booster;Operations,tune,losses;throughput,\$1D;turns,unstated,B:MH2;L:V5QSET,,5
+211038,1644820659092,Linac;Operations;PreAcc,tune,throughput,,unstated,,12.5 A,0
+213938,1648699542537,Linac;PreAcc,reverted,,,reverted,,,0
+215523,1650679363744,Booster;Linac;Operations,excluded,efficiency;losses,400 MeV,unstated,,,3
+216164,1651500858128,Linac;Operations,tune,losses,,unstated,,,1
+217637,1653136536058,Linac;Operations;PreAcc,tune,,,unstated,,,0
+218173,1653690440850,Operations;PreAcc,tune,,,unstated,,,0
+226327,1666423500955,Linac;Operations,tune,losses;throughput,,unstated,L:GR5MID;L:RFBPHAS;L:RFQPHAS;L:V5QSET,,3
+228888,1669794007333,Linac;Operations,scan,efficiency;losses,,unstated,,21.3 mA,1
+230472,1671959913332,Linac;Operations,tune,efficiency;losses;throughput,,unstated,L:D7TOR;L:TUNRAD,,0
+231268,1673209233294,Operations;PreAcc,tune,,,unstated,L:BTRMVU,,1
+231271,1673214263261,Booster;Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+231281,1673230734391,Linac;Operations;PreAcc,tune,losses,,unstated,,,1
+235864,1679163404894,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,L:ASOL;L:RFBPAH;L:V5QSET,,1
+235911,1679197869297,Operations;PreAcc,excluded,,,unstated,L:MUQ1H;L:MUQ1V,,0
+235942,1679240354178,Linac;Operations;PreAcc,tune,losses,,unstated,L:D53LM;L:MDQ1V,,0
+237186,1680492751638,Operations;PreAcc,tune,,,unstated,,,0
+237994,1681269719586,Linac;Operations,tune,losses,,unstated,L:MUQ1H,,0
+238080,1681344229823,Linac;Operations,tune,,,unstated,L:MUQ1H;L:MUQ2H,,0
+238361,1681635511038,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,400 MeV;turns,unstated,,,0
+238362,1681636251403,Booster;Operations,tune,losses,\$1D,unstated,,,0
+238401,1681698842334,Booster;Linac;Operations,reverted,losses,\$1D,reverted,,,5
+238515,1681816006359,Linac;Operations,tune,,,unstated,,,0
+238702,1681972005946,Linac;Operations,tune,,,unstated,,,0
+240037,1683468281769,Linac;Operations,tune,losses,,unstated,L:MUQ1H;L:TUNRAD,,0
+240428,1683857862979,Booster;Linac;Operations,tune,,,kept,L:ATRMVU,,1
+240523,1683950085673,Linac;Operations,tune,efficiency;losses,,unstated,,,0
+241576,1685097239432,Operations;PreAcc,tune,,,kept,,,0
+242549,1686528970719,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,L:MUQ1H,,1
+243138,1687229050396,Operations;PreAcc,tune,,,kept,L:LSOL;L:MUQ1H,,0
+243234,1687323082002,Linac;Operations;PreAcc,tune,,,kept,L:LSOL;L:MUQ1H,,0
+243255,1687337551892,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+243342,1687431624359,Booster;Linac;Operations,tune,throughput,NuMI;turns,unstated,L:V5QSET,,1
+243943,1688438810405,Operations;PreAcc,tune,,,kept,L:ASOL;L:LSOL,,1
+243957,1688456024445,Booster;Linac;Operations,tune,efficiency,,unstated,,,1
+245139,1689871040644,PreAcc,tune,,,unstated,,,3
+252062,1705462783228,Linac;Operations;PreAcc,tune,losses,,kept,L:TO1IN,,1
+252135,1705542836824,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+252219,1705644460826,Linac;Operations,tune,losses,,unstated,L:HT4001;L:MUQ1V;L:STH2;L:STV1,,0
+252293,1705730936324,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+252688,1706325679549,Linac;Operations,tune,,,kept,L:LTRMH;L:MUQ1H,,0
+252735,1706440229382,Linac;Operations;PreAcc,tune,,,unstated,,,0
+252765,1706506181438,Linac;Operations;PreAcc,tune,,,unstated,,,0
+252851,1706611474423,Linac;Operations;PreAcc,tune,,,unstated,,,0
+252898,1706660763730,Linac;Operations,tune,,,unstated,,,0
+252985,1706766319983,Linac;Operations,tune,,,unstated,,,0
+253073,1706890210919,Linac;Operations,tune,,,none,,,0
+253105,1706916256769,Linac;Operations,tune,,,none,,,1
+253146,1707043268370,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,,,0
+253524,1707581737189,Main Injector;Operations,tune,,NuMI,unstated,B:SOL;B:TOR;E:62WW01;E:SACEAV;I:DMPTWT2;I:DMPTWTR;L:SPECUR,0 A,0
+253557,1707671871614,Linac;Operations,scan,efficiency;losses,,unstated,L:GR1MID;L:TK1RAD;L:V1QSET;L:V5QSET,,1
+253674,1707873290819,Linac;Operations,tune,,,kept,L:ASOL;L:LSOL;L:MDQ2H;L:MUQ1H,,0
+254235,1708902311463,Linac;Operations,tune,efficiency;losses,,unstated,,,0
+256024,1711413532748,Booster;Linac;Operations,tune,,,unstated,,,0
+256615,1712117195900,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,L:D7TOR,,0
+256836,1712389883332,Linac;Operations,tune,,,kept,,,1
+256876,1712467911316,Operations,reverted,losses,NuMI,reverted,,,1
+257268,1712959117069,Linac;Operations,tune,,,unstated,,,0
+257356,1713077556536,Booster;Linac;Operations;PreAcc,tune,efficiency;losses,,kept,,,3
+257523,1713263244609,Linac;Operations,tune,efficiency;losses,,unstated,,,1
+258077,1713991183489,Linac;Operations,tune,losses,,unstated,,,0
+258087,1713997116945,Linac;Operations,tune,losses,,kept,,,2
+258138,1714061382147,Booster;Linac;Operations,tune,,,unstated,E:TGTPWR,,0
+258343,1714338739253,Operations;PreAcc,tune,efficiency;losses,,unstated,L:MUQ1V,,1
+258389,1714403143261,Linac;Operations,tune,,,unstated,,,0
+258429,1714438671625,Linac;Operations;PreAcc,tune,,,unstated,,,0
+259010,1715057301067,Linac;Operations,tune,losses,,unstated,,,0
+259073,1715111127589,Linac;Operations;PreAcc,tune,losses,,unstated,,,0
+259080,1715115545455,Operations,excluded,losses,,unstated,E:12AAIR,,2
+259088,1715119347525,Linac;Operations;PreAcc,tune,losses,,unstated,,,0
+259194,1715222366658,Booster;Operations,tune,,,unstated,,,0
+259195,1715223474392,Operations;PreAcc,tune,,,unstated,,,0
+259215,1715251974129,Operations;PreAcc,tune,,,unstated,L:ATRMHD;L:ATRMVU;L:RFQPAH,,0
+259290,1715327295672,Linac;Operations;PreAcc,tune,losses;throughput,NuMI,unstated,L:DRQSV;L:RFIPHS,27 mA,2
+259395,1715450755512,Operations;PreAcc,tune,,,kept,,,0
+259602,1715740695694,Linac;Operations,tune,,,unstated,,,0
+259621,1715754708976,Linac;Operations;PreAcc,tune,throughput,,unstated,L:LTRMH,,1
+259687,1715807641005,Linac;Operations,tune,,,unstated,,,0
+259694,1715812647854,Linac;Operations;PreAcc,tune,,,unstated,,,0
+259794,1715926235430,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+259855,1715987137383,Booster;Operations,tune,losses,,unstated,L:DRQSV,,0
+259885,1716037212798,Operations;PreAcc,tune,losses,,unstated,,,0
+259892,1716040643249,Linac;Operations;PreAcc,tune,efficiency,,unstated,,,0
+260260,1716441159108,Linac;Operations,tune,throughput,,unstated,,,0
+260277,1716469855575,Linac,tune,,,unstated,L:QPS317,50 A;100 A,0
+260348,1716503537071,Linac;Operations;PreAcc,tune,,,unstated,,,0
+260358,1716510599070,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,,1 mA;22.1 mA,5
+261181,1717438512085,Linac,tune,efficiency;losses,,unstated,,,0
+261182,1717438859279,Linac;Operations;PreAcc,tune,efficiency;throughput,turns,unstated,,,1
+262352,1718590567959,Linac;Operations;PreAcc,reverted,efficiency;losses;throughput,,reverted,,,0
+262453,1718667487100,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,,,2
+262769,1718990491014,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,G:LINEFF;L:TUNRAD,,1
+263063,1719318128156,Operations;PreAcc,tune,efficiency;losses,,unstated,L:BIGAUT,,3
+263962,1720369300840,Linac;Operations,tune,losses,,unstated,,,1
+264605,1721165358876,Linac,tune,losses,,unstated,,,1
+264810,1721575435865,Linac;Operations,scan,losses;throughput,,unstated,,13.2 mA;20 deg,16
+268430,1730444526911,Linac;Operations,reverted,throughput,,reverted,,,0
+268878,1731385891139,Linac;Operations,scan,,,kept,,,5
+269323,1732082340400,Linac;Operations,reverted,,,reverted,,,0
+270085,1733469757280,Booster;Linac;Operations,tune,,,unstated,,,0
+270167,1733679693318,Linac;Operations,tune,,,unstated,,,0
+270393,1733997880200,Booster;Linac;Operations,tune,efficiency;losses,,unstated,L:RFBPAH,,1
+270531,1734226498408,Linac;Operations,tune,losses,,unstated,L:D73TMV,,1
+271085,1735087466250,Linac;Operations,tune,losses,,unstated,,,0
+271117,1735172258157,Linac;Operations;PreAcc,tune,losses,,unstated,L:D73TMV;L:MDQ2V,,1
+271160,1735258802049,Linac;Operations,tune,,,unstated,,,0
+271431,1735883697283,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+271472,1735968479815,Linac;Operations;PreAcc,tune,,,unstated,,,1
+271531,1736150551475,Linac;Operations,tune,,,unstated,L:ATRMVD;L:RFBPAH,,0
+271675,1736396862975,Linac;Operations,tune,,,unstated,,,0
+271728,1736493776895,Linac;Operations,tune,efficiency;losses,,unstated,,,0
+271829,1736718764826,Linac;Operations;PreAcc,tune,efficiency,,unstated,,,0
+272218,1737398206673,Operations;PreAcc,tune,efficiency;losses,,unstated,,,2
+272426,1737678885994,Booster;Linac;Operations;PreAcc,tune,efficiency;losses,,kept,B:MH1;B:MH2;L:D23LM,,4
+272448,1737724957446,Booster;Operations,tune,losses,,unstated,,,0
+272510,1737797981852,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+272927,1738377153343,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,,,2
+272976,1738515183953,Linac;Operations;PreAcc,tune,,,unstated,L:ATRMHU,3.42 A;4 A;-1.9 A;-1.9 A;-0.5 A;-3.4 A,5
+273170,1738875859788,Linac;Operations;PreAcc,tune,,,unstated,,,0
+273479,1739463009191,Linac;Operations,tune,,,unstated,L:RFBPAH;L:RFQPAH;L:V5QSET,,0
+273729,1739926395584,Linac;Operations;PreAcc,tune,,,unstated,,,0
+274055,1740570969035,Linac;Operations;PreAcc,tune,losses;throughput,,unstated,L:MUQ1V,,1
+274107,1740661188962,Linac;Operations,tune,,,unstated,,,0
+274348,1741140367971,Booster;Linac;Operations;PreAcc,reverted,losses,,reverted,L:ATRMHU,,3
+274388,1741195881289,Linac;Operations,tune,losses,,unstated,,,1
+275010,1742280936259,Linac;Operations,tune,,,unstated,L:ASOL;L:LSOL,,1
+275023,1742307341122,Linac;Operations,tune,losses,,unstated,,,2
+275172,1742526887288,Linac;Operations,tune,losses;throughput,turns,unstated,L:MUQ1V,1 mA,1
+275272,1742715438386,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+275328,1742838674272,Booster;Linac;Operations,tune,,,unstated,L:MUQ1H,,0
+275397,1742948879762,Linac;Operations;PreAcc,tune,efficiency,,unstated,,,1
+275463,1743086781937,Linac;Operations,tune,efficiency;throughput,,unstated,D:74VPA;L:D73TMV;L:D74VPA;L:D7TOR,,5
+275645,1743438580967,Linac;Operations,tune,efficiency,,unstated,,,0
+275689,1743508596622,Linac;Operations;PreAcc,tune,,,unstated,,,0
+275967,1743958113872,Booster;Linac;Operations;PreAcc,tune,losses;throughput,400 MeV;turns,kept,B:BLLAM0;B:BLQ30,,1
+275975,1743986552142,Operations,excluded,,,unstated,I:B20ALR,,2
+276091,1744143563340,Booster;Linac;Operations;PreAcc,tune,efficiency;losses;throughput,turns,unstated,L:D7TOR,1.2 mA;1.5 mA,1
+276171,1744268534475,Booster;Linac;Operations,scan,,,none,,,1
+276433,1744700328714,Linac;Operations;PreAcc,tune,losses,,unstated,L:D72LM,,2
+276811,1745291048195,Booster;Linac;Operations,tune,efficiency;losses;throughput,turns,unstated,L:D72LM;L:MUQ1V,0.5 mA,1
+276930,1745470999831,Linac;Operations,tune,efficiency;losses;throughput,,unstated,,1 mA,0
+277090,1745760826617,Booster;Linac;Operations,tune,,,kept,B:INJFRQ;B:MV1;L:C7PHAS,,5
+277165,1745903019040,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,,,0
+277383,1746168698847,Booster;Linac;Operations,tune,efficiency;losses,,unstated,,,1
+277746,1746749425653,Linac;Operations,tune,losses,,unstated,,,3
+277753,1746779534879,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,,,0
+277848,1746980915658,Booster;Linac;Operations,reverted,efficiency;losses;throughput,400 MeV;turns,reverted,B:MH1;B:MH2;L:D23LM;L:D72LM;L:D7TOR,1.5 mA,2
+277933,1747105009463,Booster;Linac;Operations,scan,,,unstated,,,0
+277943,1747124075060,Linac;Operations;PreAcc,reverted,losses,,reverted,,,2
+278159,1747323281245,Linac;Operations,tune,,,unstated,L:C7PHAS;L:LSOL;L:MDQ1;L:MUQ1;L:MUQ1V;L:V5QSET,,2
+278244,1747409804359,Linac;Operations;PreAcc,tune,,,unstated,,,0
+279036,1748658192806,Linac;Operations,tune,losses;throughput,,unstated,,5 mA,0
+279077,1748776535873,Operations;PreAcc,tune,,,unstated,,,0
+279142,1748897404934,Operations,excluded,,,unstated,R:SC620A,620 A,2
+280058,1750345222368,Linac;Operations,tune,,,unstated,,,0
+280985,1751687380336,Linac;Operations,tune,efficiency;losses,,unstated,,,1
+281015,1751749352003,Linac;Operations,tune,efficiency,,unstated,E:12AAIR;L:D73TMV,,1
+285232,1760580765205,Controls;Operations;PreAcc,tune,,,unstated,,,1
+285339,1760727047790,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,L:D11LM;L:D31LM;L:D34LM;L:MUQ1H;L:V5QSET,,0
+285386,1760806762957,Linac;Operations,tune,,,unstated,,,0
+285483,1761008448758,Operations;PreAcc,tune,,,unstated,L:BTRMVU,,0
+285612,1761210241473,Linac;Operations,tune,efficiency;losses,,unstated,B:BLQ160;L:BTRMHD,,0
+285942,1761735599984,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,L:D34LM;L:D7TOR;L:RFQPAH;L:TK1RAD,,0
+286066,1761894127618,Linac;Operations;PreAcc,scan,losses;throughput,,unstated,L:D34LM;L:D54LM;L:D61LM;L:TK1RAD,,1
+286312,1762302658466,Linac;Operations,tune,efficiency,,unstated,,,0
+287069,1763522561110,Linac,tune,,,unstated,,,0
+287146,1763596136844,Linac;Operations,reverted,efficiency;losses;throughput,turns,reverted,L:BSOL;L:BTRMHU;L:BTRMVD;L:LTRMV;L:MDQ1H;L:RFBPAH,,3
+287275,1763829745077,Linac;Operations,tune,efficiency;losses;throughput,,unstated,,5 mA,0
+287615,1764446657046,Linac;Operations;PreAcc,tune,efficiency,,unstated,,,0
+287816,1764784553517,Linac;Operations,tune,losses,400 MeV,unstated,,,0
+287843,1764817763226,Booster;Linac;Operations,tune,efficiency;losses,,none,,,2
+287854,1764838791955,Linac;Operations;PreAcc,tune,losses,,unstated,L:D53LM,,0
+287864,1764856206722,Operations,excluded,,,unstated,,,2
+287984,1764994208956,Linac;Operations,tune,losses,,unstated,L:MX1VCB;L:MX3VCB,,1
+288015,1765062932300,Linac;Operations,tune,losses,,unstated,,,1
+288024,1765090809718,Linac;Operations;PreAcc,tune,losses,,unstated,L:D14LM;L:D53LM;L:MX1VCB,,1
+288267,1765410002578,Linac;Operations,tune,,,kept,,,0
+288327,1765494187562,Linac;Operations;PreAcc,tune,efficiency;losses,,unstated,L:D74TMH,,0
+288334,1765505541455,Linac;Operations,tune,efficiency;losses,,unstated,L:D74TMH;L:MDQ1H,,0
+288428,1765674656779,Linac;Operations;PreAcc,tune,losses,,unstated,L:BTRMVD;L:D73TMV;L:RFQPAH,,1
+289120,1766771174851,Linac;Operations,tune,losses;throughput,turns,unstated,L:D14LM;L:D7TOR;L:V5QSET,-0.8 mA,0
+289214,1766982271240,Booster;Linac;Operations,tune,efficiency;losses,,unstated,B:BLQ160,,1
+289818,1768033779280,Linac;Operations;PreAcc,tune,losses,,none,,,0
+290259,1768831585376,Booster;Linac;Operations,tune,efficiency;losses,,kept,,,0
+290379,1768981435753,Booster;Linac;Operations,tune,efficiency;throughput,turns,unstated,,1 mA;1 mA,1
+291110,1769838796088,Operations,excluded,,,unstated,B:Q800,,2
+291169,1769967290020,Booster;Linac;Operations,tune,efficiency;losses;throughput,turns,unstated,,1 mA,2
+291556,1770438492794,Linac;Operations;PreAcc,tune,,,unstated,,,0
+292102,1771281380590,Linac;Operations,tune,losses,,unstated,,,0
+292230,1771431907507,Linac;Operations,reverted,losses,,reverted,,,0
+292424,1771694133007,Linac;Operations;PreAcc,tune,losses;throughput,turns,unstated,L:D21LM;L:D32LM;L:D41LM,,0
+292444,1771741773474,Linac;Operations,tune,losses;throughput,,kept,L:D41LM,,1
+292471,1771789401353,Linac;Operations,reverted,losses,,reverted,E:MBRATE;L:BTRMVD;L:D32LM;L:D41LM;L:RFBPAH;L:RFQPAH,,0
+292491,1771836306357,Linac;Operations,tune,losses,,kept,E:MBRATE;L:D32LM;L:D41LM,,1
+293658,1773526018112,Linac;Operations,tune,losses,,unstated,,,0
+294468,1774678077979,Linac;Operations,tune,losses;throughput,turns,unstated,E:MBRATE,,0
+294507,1774798887169,Booster;Linac;Operations,tune,losses;throughput,turns,kept,L:C7PHAS;L:MUQ1H,,1
+294880,1775370543454,Linac;Operations,tune,efficiency;losses;throughput,,unstated,,5 mA,1
+294994,1775557072140,Linac;Operations,tune,losses;throughput,turns,unstated,G:TURN1D,1.6 mA,1
+295050,1775598592306,Linac;Operations,tune,losses,,unstated,L:D01TMH;L:D02TMH;L:D03TMH;L:D04TMH,,0
+295368,1776091681974,Linac;Operations,reverted,losses;throughput,turns,reverted,,,1
+295524,1776244407003,Linac;Operations;PreAcc,tune,losses,,unstated,,,0
+295953,1776757586621,Linac;Operations;PreAcc,tune,efficiency,,unstated,E:MBRATE,1 mA;4 mA;0.5 mA;7 deg;1 A,1
+295954,1776761427917,External Beamlines;Operations,tune,throughput,\$1D;turns,unstated,E:MBRATE,,0
+296041,1776872902175,Linac;Operations;PreAcc,tune,throughput,,unstated,,21 mA,0
+296129,1776986144996,Linac;Operations,tune,,,kept,,,0
+296186,1777069947623,External Beamlines;Operations,tune,losses;throughput,turns,kept,,,3
+296784,1777913890970,Linac;Operations;PreAcc,tune,,,unstated,L:D73TMV,,0
+297462,1778966960478,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,turns,unstated,,,0
+297826,1779494628141,Booster;Linac;Operations,tune,efficiency;losses,400 MeV,kept,L:V5QSET,,2
+297854,1779584529997,Linac;Operations;PreAcc,tune,efficiency;losses;throughput,,unstated,,7 deg,2
+298288,1780091853907,Linac;Operations;PreAcc,tune,losses,400 MeV,unstated,,,1
+298303,1780109558433,Linac;Operations,tune,losses,,unstated,,,0
+298320,1780144872863,Linac;Operations,tune,losses,,unstated,,,1
+299078,1781167860224,Linac;Operations,tune,losses,,unstated,L:TK4RAD;L:TUNRAD,,0
+301567,1787315575148,Linac;Operations,tune,efficiency;throughput,,unstated,,0.5 mA,0
+301622,1787368392436,Linac;Operations;PreAcc,scan,,,unstated,L:BSOL;L:LSOL;L:MUQ1H;L:MUQ1V,,2
+301678,1787569536648,Linac;Operations,tune,,,unstated,,,0
+301818,1787711834917,Linac;Operations,tune,efficiency;losses;throughput,,unstated,L:D7TOR;L:DELM2,0.5 mA,0
+302503,1788760250274,Linac;Operations,tune,efficiency;throughput,,none,,0.3 mA,0
+302691,1789027761331,Booster;External Beamlines;Linac;Operations;PreAcc,scan,efficiency;losses,\$1D,kept,,481 A;426.5 A,4
+302766,1789096477905,Linac;Operations,tune,losses,,none,,,0
+303640,1790162518444,Linac;Operations,tune,,,unstated,,,0
+303988,1790579730556,Linac;Operations,tune,efficiency;losses,,unstated,,,0
+304754,1791456212095,Linac;Operations,tune,losses,,unstated,,,0
+304842,1791528877615,Linac;Operations,tune,losses,,unstated,,,0
+304856,1791549692011,Operations,excluded,,,unstated,R:MUR1IA,,2
+304988,1791750924104,Linac;Operations,tune,losses,,kept,L:TUNRAD,,0
+305074,1791858057840,Linac;Operations,tune,,,unstated,L:V5QSET,,0
+305357,1792255721251,Booster;Linac;Operations;PreAcc,tune,losses,,unstated,,,0
+305443,1792424314512,Booster;Linac,tune,losses,400 MeV,unstated,,,1
+306327,1793364071187,Linac;Operations,tune,losses,,unstated,L:D44LM;L:D7LMSM;L:TK1RAD;L:TUNRAD,,0
+306495,1793563560296,Linac;Operations,tune,losses,,unstated,L:D44LM;L:D52LM,,0
+307053,1794037710060,Linac;Operations,reverted,losses;throughput,400 MeV;\$1D;turns,reverted,,,5
+307109,1794106486645,Booster;Linac;Operations,reverted,losses;throughput,NuMI;NuMI downtime;\$1D;turns,reverted,,,6
+307145,1794169757897,Linac;Operations,reverted,efficiency;losses,NuMI,reverted,,,0
+307296,1794328668751,Linac,badger,,,unstated,,,0
+307350,1794382409128,Operations;PreAcc,tune,,,unstated,,,0
