@@ -1794,6 +1794,10 @@ Fixes (main):
   Chromaticity -99.5%; LatticeFunctions -23% (least squares -27%) after its
   windows were narrowed (1% on a main bus moves qx 0.1) and the phase tolerance
   widened to 3 deg; ModelFit -32% in 20 steps (least squares recovers the three
-  true fudge factors to 0.001).
+  true fudge factors to 0.001). Correction, same day: the straights' dispersion is
+  not "uncorrectable for lack of nearby knobs"; three erring quads are main-bus only,
+  and two others' shunts (I_DQS213, I_DQS607) were simply not selected.
+- Notes for the lattice's author: `docs/dr-lattice-simulation-notes.md` (a repo doc,
+  not a Claude artifact: colleagues have no Claude accounts).
 - `tests/VA_dr_tasks_test.py`; the smoke test now expects design targets for
   unadvertised channels.

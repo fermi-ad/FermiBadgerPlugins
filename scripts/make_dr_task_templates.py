@@ -109,7 +109,8 @@ template('LatticeFunctions', (
     '  squares solution (bus changes under 0.4%, i_dq404 1.6%, two i_dqs at their limits).\n'
     'Machine errors: six quad fudge factors off by 2-2.5%: beta beat 7.1% (x), 3.4% (y); straight\n'
     '  dispersion 0.08 m RMS (design 0.017 m). Least squares on these knobs halves the beat but leaves\n'
-    '  the straight dispersion: no knob sits near the erring arc quads. The solution space is\n'
+    '  the straight dispersion: three erring quads (DQ309, DQ416, DQ512) have only main-bus power, and\n'
+    '  the shunts of two others (I_DQS213, I_DQS607) are not among the knobs. The solution space is\n'
     '  degenerate; the knob choice suits this error set only.'),
     LAT_KNOBS,
     'sum(rms(bbetx@^p_d[hv]p),rms(bbety@^p_d[hv]p),rms(dx@' + STRAIGHTS + '))',

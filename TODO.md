@@ -258,8 +258,9 @@ it to paste in.
     `d_dkk3i*`, `d_dkk5a*`.
   - The lattice defines the quad stand variables `LH_DQ*`, `LV_DQ*` but never uses
     them; ask the lattice owner. Offsets are modeled with `<quad>.shift_x/y`.
-  - LatticeFunctions: no knob near the erring arc quads, so the straights' dispersion
-    stays (0.08 m vs 0.017 m design); only 8 of 34 points met all constraints in the
+  - LatticeFunctions: the straights' dispersion stays (0.08 m vs 0.017 m design):
+    three erring quads have only main-bus power, and the shunts I_DQS213 and I_DQS607
+    of two others are not knobs (try adding them; untested); only 8 of 34 points met all constraints in the
     closed-loop check. Its knob choice suits its error set only.
   - Tunes: the existing DR_BetatronTunes templates use i_dqf and i_dqd; add i_dqss as
     an option if the lattice distorts.
