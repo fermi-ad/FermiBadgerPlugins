@@ -237,6 +237,23 @@ it to paste in.
   - [ ] Mults check on the testing role: both quads of a pair move by
     coefficient × step × steps, `MultOOB` stays 0.
 
+## Simulation speed and new environments (2026-11)
+
+- [ ] **Booster injection (`03_Booster_InjectionTuning_Pacsys`, read only):** ask the
+  `B:VIMIN` hardware owner how Badger writes interact with its own autotune loop
+  (`B:VIMLUP2` heartbeat, `B:VIMTGT*` targets) before any writing role.
+- [ ] **Draft templates from the reflections:** review
+  `development/01_Linac_LossObjective_RIL_tuning_Pacsys.yaml` (minimize `L:TK4RAD`,
+  `L:D7TOR` floor) and `development/03_Booster_InjectionTuning_Pacsys.yaml` with
+  operators before promoting either.
+- [ ] **DR EI template's observables:** Xopt fits a GP to each VOCS output; listing
+  only the objective and constraint cut the closed-loop step 0.72 -> 0.46 s (3
+  seeds), but stops recording `qx`, `qy` and the rest. Decide.
+- [ ] **Not yet measured:** GUI overhead per step (plots, archive), a run's start-up
+  cost, and timings on gmpsai2 (the profiles ran on the MacBook).
+- [ ] **Multi-turn tracking templates** (slow extraction, dynamic aperture): the
+  simulation would dominate; try xsuite's OpenMP and GPU contexts then.
+
 ## Later
 
 - [ ] Ramps as variables (Booster skew quads via pacsys `BoosterSQRamp`) once a

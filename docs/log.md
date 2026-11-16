@@ -1752,3 +1752,18 @@ Fixes (main):
   tracking templates (slow extraction, dynamic aperture) would make the
   simulation dominate; xsuite's OpenMP and GPU contexts are then the lever.
   Not explored.
+
+## 2026-11-16 — Booster work committed; session wrap-up
+
+- Committed and pushed the Booster injection work from another session
+  (a6fad3e): `docs/reflections/booster_injection/`, the first Booster
+  environment `03_Booster_InjectionTuning_Pacsys` (read only: `B:VIMIN` has its
+  own autotune loop), its feature test and development template; lint, smoke,
+  and the feature test pass. Pushed with it: the RIL reflection (b66a591).
+- The user chose to publish the reflections' raw data (about 62,000
+  data-logger rows and Elog entry IDs; no names, credentials, or quoted Elog
+  text) in this public repo.
+- Settings re-read: model Opus 1M, Opus effort xhigh. The auto-mode
+  environment notes in `~/.claude/settings.json` still list conda
+  (`FermiBadger_env`) as an org CLI, stale since 2026-11-04.
+- Open items gathered in TODO.md, "Simulation speed and new environments".
