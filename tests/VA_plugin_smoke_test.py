@@ -95,15 +95,12 @@ assert obs['qx-SETPOINT'] < 1e-12, 'setpoint error should be ~0 at design'
 assert f'{bpm_obs}-SETPOINT' in obs_alias
 assert env.get_observables([f'{bpm_obs}-SETPOINT'])[f'{bpm_obs}-SETPOINT'] < 1e-12
 
-# ...while an unadvertised channel is readable but has no setpoint, which must
-# raise a clear error rather than silently returning junk.
+# ...and so does an unadvertised channel (since 2026-11-16): it aims at its value
+# on the design lattice.
 extra = f'{bpm_obs.split(".")[0]}.betx'
 print(f'unadvertised twiss column {extra}: {env.get_observables([extra])[extra]:.4f}')
-try:
-    env.get_observables([f'{extra}-SETPOINT'])
-    raise SystemExit('FAIL: missing setpoint did not raise')
-except ValueError as e:
-    print(f'missing setpoint raises: ok ({e})')
+assert env.get_observables([f'{extra}-SETPOINT'])[f'{extra}-SETPOINT'] < 1e-12
+print('unadvertised channel aims at its design value: ok')
 
 # Formula observables (backtick syntax, handled by Badger's env metaclass)
 formula = env.get_observables(['`qx` + `qy`'])

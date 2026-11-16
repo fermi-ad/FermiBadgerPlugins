@@ -1,0 +1,77 @@
+badger_version: 1.6.0
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 1000
+    max_time: 0.5
+    mixed_max_discrete_configurations: 512
+    n_restarts: 5
+    name: LBFGS
+  turbo_controller: null
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+xopt_version: 3.2.1
+name: DR_Chromaticity_sim
+description: |
+  Goal: restore the design chromaticity with the main sextupole buses.
+  Objective: sum(dqx-SETPOINT,dqy-SETPOINT) MINIMIZE, the summed squared errors from the targets
+    (design: dqx 2.05, dqy -1.53; set others in setpoints).
+  Variables: i_dsexf, i_dsexd, design +-10%.
+  Machine errors: six sextupole fudge factors off by 6-8%, giving dqx 2.14, dqy -1.62. Least squares
+    restores both to within 0.004.
+  Notes: every point costs a chromatic twiss (about 0.11 s).
+relative_to_current: false
+critical_constraint_names: []
+formulas: {}
+constraint_formulas: {}
+observable_formulas: {}
+vrange_hard_limit: {}
+vrange_limit_options: {}
+additional_variables: []
+environment:
+  name: 99_Sim_VirtualAccelerator_MADXSuite
+  params:
+    beam_p0c_eV: 8889999999.0
+    debug: false
+    lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
+    rel_range: 0.1
+    sequence_name: full
+    zero_half_range: 3.0
+    machine_errors:
+      f_dsf110: 1.08
+      f_dsf215: 1.06
+      f_dsf313: 1.07
+      f_dsd412: 0.92
+      f_dsd517: 0.93
+      f_dsd611: 0.94
+    extra_observables:
+    - sum(dqx-SETPOINT,dqy-SETPOINT)
+vocs:
+  variables:
+    i_dsexf:
+    - 137.52
+    - 168.08
+    i_dsexd:
+    - 182.88
+    - 223.52
+  objectives:
+    sum(dqx-SETPOINT,dqy-SETPOINT):
+      type: MinimizeObjective
+  constraints:
+    optics_stable:
+      type: GreaterThanConstraint
+      value: 0.5
+  observables:
+    dqx:
+      type: Observable
+    dqy:
+      type: Observable
+  constants: {}

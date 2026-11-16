@@ -1,0 +1,90 @@
+badger_version: 1.6.0
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 1000
+    max_time: 0.5
+    mixed_max_discrete_configurations: 512
+    n_restarts: 5
+    name: LBFGS
+  turbo_controller: null
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+xopt_version: 3.2.1
+name: DR_ModelFit_sim
+description: |
+  Goal: find lattice-model errors by matching the measured orbit response.
+  Objective: orm_rms MINIMIZE, the RMS difference (mm/A) between the model's orbit response to
+    each trim (i_dht*, i_dvt*; 0.1 A each) and the "measured" one.
+  Measured: a hidden copy of the lattice with truth_errors plays the real machine: f_dq105 1.02,
+    f_dq309 0.975, f_dq512 1.015 (design 1.0136, 0.9866, 0.9993).
+  Variables: 8 candidate quad fudge factors f_dq*, design +-10%, the 3 true ones among them.
+  Notes: least squares recovers all three to 0.001 (orm_rms 0.0052 -> 0.0003). Each point costs
+    about 0.5 s (19 orbit solutions). A real-machine version would read a measured response
+    instead of truth_errors.
+relative_to_current: false
+critical_constraint_names: []
+formulas: {}
+constraint_formulas: {}
+observable_formulas: {}
+vrange_hard_limit: {}
+vrange_limit_options: {}
+additional_variables: []
+environment:
+  name: 99_Sim_VirtualAccelerator_MADXSuite
+  params:
+    beam_p0c_eV: 8889999999.0
+    debug: false
+    lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
+    rel_range: 0.1
+    sequence_name: full
+    zero_half_range: 3.0
+    truth_errors:
+      f_dq105: 1.02
+      f_dq309: 0.975
+      f_dq512: 1.015
+    extra_observables:
+    - orm_rms
+vocs:
+  variables:
+    f_dq105:
+    - 0.912213
+    - 1.114927
+    f_dq106:
+    - 0.924888
+    - 1.130418
+    f_dq213:
+    - 0.898085
+    - 1.097659
+    f_dq309:
+    - 0.887955
+    - 1.085277
+    f_dq310:
+    - 0.892197
+    - 1.090461
+    f_dq416:
+    - 0.888406
+    - 1.085828
+    f_dq512:
+    - 0.899364
+    - 1.099222
+    f_dq607:
+    - 0.883323
+    - 1.079617
+  objectives:
+    orm_rms:
+      type: MinimizeObjective
+  constraints:
+    optics_stable:
+      type: GreaterThanConstraint
+      value: 0.5
+  observables: {}
+  constants: {}

@@ -1,0 +1,97 @@
+badger_version: 1.6.0
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 1000
+    max_time: 0.5
+    mixed_max_discrete_configurations: 512
+    n_restarts: 5
+    name: LBFGS
+  turbo_controller: null
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+xopt_version: 3.2.1
+name: DR_OrbitV_sim
+description: |
+  Goal: flatten the vertical closed orbit (base orbit) with the vertical trim dipoles.
+  Objective: rms(y@^p_dvp) MINIMIZE, the RMS orbit at the vertical BPMs (m).
+  Variables: the 8 vertical trims i_dvt*, -3 to 3 A.
+  Machine errors: eight quads offset 0.2-0.3 mm (shift_x, shift_y), giving 0.62 mm (x) and 1.27 mm (y)
+    RMS orbit. The trims cannot cancel quad offsets exactly: least squares reaches 0.21 mm (x),
+    0.25 mm (y), with trims within 2.6 A.
+  Notes: the movable quad stands (LH_DQ*, LV_DQ*) are defined in this lattice but drive nothing,
+    so they are not offered. The other plane is recorded as an observable.
+relative_to_current: false
+critical_constraint_names: []
+formulas: {}
+constraint_formulas: {}
+observable_formulas: {}
+vrange_hard_limit: {}
+vrange_limit_options: {}
+additional_variables: []
+environment:
+  name: 99_Sim_VirtualAccelerator_MADXSuite
+  params:
+    beam_p0c_eV: 8889999999.0
+    debug: false
+    lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
+    rel_range: 0.1
+    sequence_name: full
+    zero_half_range: 3.0
+    machine_errors:
+      q_dq303.shift_x: 0.0002
+      q_dq215.shift_x: -0.0003
+      q_dq418.shift_x: 0.00025
+      q_dq511.shift_x: -0.0002
+      q_dq306.shift_y: 0.0002
+      q_dq212.shift_y: -0.00025
+      q_dq410.shift_y: 0.0003
+      q_dq608.shift_y: -0.0002
+    extra_observables:
+    - rms(y@^p_dvp)
+    - rms(x@^p_dhp)
+vocs:
+  variables:
+    i_dvt107:
+    - -3.0
+    - 3.0
+    i_dvt206:
+    - -3.0
+    - 3.0
+    i_dvt304:
+    - -3.0
+    - 3.0
+    i_dvt306:
+    - -3.0
+    - 3.0
+    i_dvt401:
+    - -3.0
+    - 3.0
+    i_dvt403:
+    - -3.0
+    - 3.0
+    i_dvt406:
+    - -3.0
+    - 3.0
+    i_dvt610:
+    - -3.0
+    - 3.0
+  objectives:
+    rms(y@^p_dvp):
+      type: MinimizeObjective
+  constraints:
+    optics_stable:
+      type: GreaterThanConstraint
+      value: 0.5
+  observables:
+    rms(x@^p_dhp):
+      type: Observable
+  constants: {}

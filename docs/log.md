@@ -1767,3 +1767,33 @@ Fixes (main):
   environment notes in `~/.claude/settings.json` still list conda
   (`FermiBadger_env`) as an org CLI, stale since 2026-11-04.
 - Open items gathered in TODO.md, "Simulation speed and new environments".
+
+## 2026-11-16 — Delivery Ring task templates (simulation)
+
+- From the user's DR task list (orbit, tunes, chromaticity, lattice functions, model
+  errors); answers: simulation first; a `machine_errors` parameter; the full
+  orbit-response model fit. ad-lattices (user's suggestion) holds the DR ACNET map
+  for the later real-machine twins.
+- Simulation interface: computed channels `<stat>(<column>@<regex>)` (rms, mean,
+  max, min, maxabs; `bbetx`/`bbety` beta beat), `phase_x/y(a,b)` in degrees,
+  `sum(...)`. Chosen over Badger template formulas: plain names work in tests,
+  plots, and the GUI tables, and the formula path through the GUI is untried.
+- Environment: any `-SETPOINT` defaults to its design value; `machine_errors`
+  (variables or element attributes such as `q_dq303.shift_x`); `truth_errors`, a
+  hidden copy of the machine, with `orm_rms` (mm/A, 19 trims, 0.1 A each, about
+  0.5 s per point); `extra_observables`, so the GUI offers a template's computed
+  names (it looks every VOCS name up in the advertised list).
+- Found: the lattice's quad stand variables `LH_DQ*`/`LV_DQ*` drive nothing.
+  The orbit-response linearity claim first written in a comment (1e-6) was wrong;
+  measured 7e-5 relative, comment and test corrected.
+- Five templates, `tuning_templates/simulation/DR_{OrbitH,OrbitV,Chromaticity,
+  LatticeFunctions,ModelFit}_sim_...`, written by `scripts/make_dr_task_templates.py`.
+  Each error set and window was checked with least squares (a solution exists)
+  and a closed-loop run (`scripts/sim_closed_loop.py`, 20-30 steps):
+  OrbitH 0.62 -> 0.36 mm (least squares 0.21); OrbitV 1.27 -> 0.47 mm (0.25);
+  Chromaticity -99.5%; LatticeFunctions -23% (least squares -27%) after its
+  windows were narrowed (1% on a main bus moves qx 0.1) and the phase tolerance
+  widened to 3 deg; ModelFit -32% in 20 steps (least squares recovers the three
+  true fudge factors to 0.001).
+- `tests/VA_dr_tasks_test.py`; the smoke test now expects design targets for
+  unadvertised channels.

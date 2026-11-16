@@ -251,6 +251,25 @@ it to paste in.
   seeds), but stops recording `qx`, `qy` and the rest. Decide.
 - [ ] **Not yet measured:** GUI overhead per step (plots, archive), a run's start-up
   cost, and timings on gmpsai2 (the profiles ran on the MacBook).
+- [ ] **DR task templates (simulation, 2026-11-16): follow-ups.**
+  - Confirm two readings of the task list with the DR experts: the "M_DSX602 ~
+    M_DSX502" phase condition read as the horizontal phase advance from `m0_dsx602` to
+    `m0_dsx502` (design 1051.8 deg, target 1050 = 35 x 30 deg); "the kickers" read as
+    `d_dkk3i*`, `d_dkk5a*`.
+  - The lattice defines the quad stand variables `LH_DQ*`, `LV_DQ*` but never uses
+    them; ask the lattice owner. Offsets are modeled with `<quad>.shift_x/y`.
+  - LatticeFunctions: no knob near the erring arc quads, so the straights' dispersion
+    stays (0.08 m vs 0.017 m design); only 8 of 34 points met all constraints in the
+    closed-loop check. Its knob choice suits its error set only.
+  - Tunes: the existing DR_BetatronTunes templates use i_dqf and i_dqd; add i_dqss as
+    an option if the lattice distorts.
+  - Load each new template once in the live `-mini` GUI (the integration test only
+    emulates the GUI's name lookups).
+- [ ] **DR real-machine twins:** ACNET names from ad-lattices
+  (`sections/delivery-ring/shared/device_map.csv`, element -> device, e.g. `P_DHP101`
+  -> `D:HP101`; `device_aliases.csv` for knobs); a `09_DeliveryRing_*_Pacsys`
+  environment; the model fit reading a measured orbit response instead of
+  `truth_errors`.
 - [ ] **Multi-turn tracking templates** (slow extraction, dynamic aperture): the
   simulation would dominate; try xsuite's OpenMP and GPU contexts then.
 

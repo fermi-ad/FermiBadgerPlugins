@@ -1,0 +1,121 @@
+badger_version: 1.6.0
+generator:
+  max_travel_distances: null
+  name: expected_improvement
+  numerical_optimizer:
+    discrete_max_batch_size: 2048
+    discrete_max_choices: 4096
+    max_iter: 1000
+    max_time: 0.5
+    mixed_max_discrete_configurations: 512
+    n_restarts: 5
+    name: LBFGS
+  turbo_controller: null
+initial_point_actions:
+- type: add_curr
+- config:
+    fraction: 0.1
+    method: 0
+    n_points: 3
+  type: add_rand
+xopt_version: 3.2.1
+name: DR_LatticeFunctions_sim
+description: |
+  Goal: restore the lattice functions after quad errors: even beta functions, no dispersion in the
+    straights, the harmonic-sextupole phase advance, and small beams at the kickers.
+  Objective: the sum of the RMS beta beat in x and y at the BPMs and the RMS dispersion (m) at the
+    straight-section BPMs (^p_d[hv]p[1-6]0[1-7]$: the 41 dispersion-free BPMs), MINIMIZE. Equal weights:
+    untested.
+  Constraints: phase_x(m0_dsx602,m0_dsx502) within 3 deg of 1050 (35 x 30 deg; design 1051.8, 1048.1 with
+    these errors);
+    beta at the kickers d_dkk* (max betx < 11 m, max bety < 13.5 m; design 10.2, 12.7);
+    tunes within 0.01 of design.
+  Variables: the 8 quad supplies most effective against these errors, by sensitivity (|J^T r|):
+    main buses i_dqf, i_dqd +-0.2%, i_dqss +-0.5% (1% moves qx by 0.1); i_dq404 +-3%;
+    i_dqs105, i_dqs605, i_dqs301, i_dqs505 +-10% (their hard limits). Windows from the least-
+    squares solution (bus changes under 0.4%, i_dq404 1.6%, two i_dqs at their limits).
+  Machine errors: six quad fudge factors off by 2-2.5%: beta beat 7.1% (x), 3.4% (y); straight
+    dispersion 0.08 m RMS (design 0.017 m). Least squares on these knobs halves the beat but leaves
+    the straight dispersion: no knob sits near the erring arc quads. The solution space is
+    degenerate; the knob choice suits this error set only.
+relative_to_current: false
+critical_constraint_names: []
+formulas: {}
+constraint_formulas: {}
+observable_formulas: {}
+vrange_hard_limit: {}
+vrange_limit_options: {}
+additional_variables: []
+environment:
+  name: 99_Sim_VirtualAccelerator_MADXSuite
+  params:
+    beam_p0c_eV: 8889999999.0
+    debug: false
+    lattice_filename: sim_configs/DeliveryRing/mu2e-dr-model-v2026.03.23.madx
+    rel_range: 0.1
+    sequence_name: full
+    zero_half_range: 3.0
+    machine_errors:
+      f_dq105: 1.02
+      f_dq213: 0.98
+      f_dq309: 1.025
+      f_dq416: 0.975
+      f_dq512: 1.02
+      f_dq607: 0.98
+    setpoints:
+      phase_x(m0_dsx602,m0_dsx502): 1050.0
+    extra_observables:
+    - sum(rms(bbetx@^p_d[hv]p),rms(bbety@^p_d[hv]p),rms(dx@^p_d[hv]p[1-6]0[1-7]$))
+    - phase_x(m0_dsx602,m0_dsx502)-SETPOINT
+    - max(betx@^d_dkk)
+    - max(bety@^d_dkk)
+vocs:
+  variables:
+    i_dqf:
+    - 240.7176
+    - 241.6824
+    i_dqss:
+    - 277.605
+    - 280.395
+    i_dqd:
+    - 240.118801
+    - 241.0812
+    i_dq404:
+    - 858.45
+    - 911.55
+    i_dqs105:
+    - 36.180001
+    - 44.22
+    i_dqs605:
+    - 36.09
+    - 44.11
+    i_dqs301:
+    - 27.0
+    - 33.0
+    i_dqs505:
+    - 36.09
+    - 44.11
+  objectives:
+    sum(rms(bbetx@^p_d[hv]p),rms(bbety@^p_d[hv]p),rms(dx@^p_d[hv]p[1-6]0[1-7]$)):
+      type: MinimizeObjective
+  constraints:
+    optics_stable:
+      type: GreaterThanConstraint
+      value: 0.5
+    phase_x(m0_dsx602,m0_dsx502)-SETPOINT:
+      type: LessThanConstraint
+      value: 9.0
+    max(betx@^d_dkk):
+      type: LessThanConstraint
+      value: 11.0
+    max(bety@^d_dkk):
+      type: LessThanConstraint
+      value: 13.5
+    qx-SETPOINT:
+      type: LessThanConstraint
+      value: 0.0001
+    qy-SETPOINT:
+      type: LessThanConstraint
+      value: 0.0001
+  observables: {}
+  constants: {}

@@ -8,18 +8,58 @@ Channel naming:
 - variables:   line.vars names ('i_dsexf') or element attributes ('q_dq303.k1')
 - observables: global optics ('qx', 'beta_x', ...), monitor orbit readings
                ('p_dvp302.x'), squared-error setpoint channels
-               ('qx-SETPOINT'), and the optics-stability flag
-               ('optics_stable')
+               ('qx-SETPOINT'), the optics-stability flag
+               ('optics_stable'), and computed channels (below)
+
+Computed channels (added 2026-11-16), so a template can ask for a whole-ring
+quantity by name:
+- '<stat>(<column>@<regex>)': a statistic of one twiss column over the elements
+  whose names match the regex (re.search), e.g. 'rms(x@^p_dhp)' (the horizontal
+  orbit at the horizontal monitors) or 'max(betx@^d_dkk)'. Stats: rms, mean, max,
+  min, maxabs. Columns: any twiss column, plus 'bbetx' and 'bbety', the beta
+  beat (beta / design beta - 1).
+- 'phase_x(<a>,<b>)', 'phase_y(<a>,<b>)': the phase advance from element a to a
+  downstream element b, in degrees.
+- 'sum(<channel>,<channel>,...)': the sum of other channels, any of them
+  '-SETPOINT' channels, e.g. 'sum(dqx-SETPOINT,dqy-SETPOINT)' (one objective
+  from two squared errors).
 """
 
 import logging
+import re
 from typing import Any, Optional
 
+import numpy as np
 from badger import interface
 
 logger = logging.getLogger(__name__)
 
 SETPOINT_SUFFIX = '-SETPOINT'
+
+STATS = {
+    'rms': lambda v: float(np.sqrt(np.mean(np.square(v)))),
+    'mean': lambda v: float(np.mean(v)),
+    'max': lambda v: float(np.max(v)),
+    'min': lambda v: float(np.min(v)),
+    'maxabs': lambda v: float(np.max(np.abs(v))),
+}
+STAT_CHANNEL = re.compile(r'^(' + '|'.join(STATS) + r')\((\w+)@(.+)\)$')
+PHASE_CHANNEL = re.compile(r'^phase_([xy])\(([\w.$]+),([\w.$]+)\)$')
+SUM_CHANNEL = re.compile(r'^sum\((.+)\)$')
+BEAT_COLUMNS = {'bbetx': 'betx', 'bbety': 'bety'}  # beta beat against the design
+_MASKS: dict = {}  # (regex, element names) -> boolean row mask; names never change
+
+
+def split_top_level(text: str) -> list[str]:
+    """'a,f(b,c),d' -> ['a', 'f(b,c)', 'd']: split at commas outside parentheses."""
+    parts, depth, start = [], 0, 0
+    for i, c in enumerate(text):
+        depth += (c == '(') - (c == ')')
+        if c == ',' and depth == 0:
+            parts.append(text[start:i].strip())
+            start = i + 1
+    parts.append(text[start:].strip())
+    return parts
 
 # 1.0 while the twiss solves, 0.0 when it does not (unstable optics, no closed
 # orbit).  Every other channel reads NaN there, which a generator cannot learn
@@ -61,13 +101,15 @@ class Interface(interface.Interface):
         twiss=None,
         setpoints: Optional[dict[str, float]] = None,
         debug: bool = False,
+        design_twiss=None,
     ) -> dict[str, float]:
         """Read observable channels from the twiss results.
 
         A '<name>-SETPOINT' channel returns the squared error
         (value - setpoints[name])**2, suitable as a minimization objective.
         If the twiss is None (unstable optics), twiss-derived channels
-        return NaN so the optimizer can penalize the point.
+        return NaN so the optimizer can penalize the point.  design_twiss is
+        needed only by the beta-beat columns.
         """
         if line is None:
             raise ValueError(
@@ -83,32 +125,85 @@ class Interface(interface.Interface):
                 'returning NaN for twiss-derived channels'
             )
 
-        readbacks = {}
-        for raw_name in channel_names:
-            base_name = raw_name.removesuffix(SETPOINT_SUFFIX)
-            value = self._read_observable(base_name, twiss)
-
-            if raw_name != base_name:  # setpoint channel
-                if base_name not in setpoints:
-                    raise ValueError(
-                        f"No setpoint defined for '{base_name}'. Add it to "
-                        "the environment's 'setpoints' parameter (design "
-                        'values are recorded automatically, but only for the '
-                        'observables the environment advertises).'
-                    )
-                value = (value - setpoints[base_name]) ** 2
-                logger.debug(f"  {raw_name}: base={base_name}, measured={value**0.5}, setpoint={setpoints[base_name]}, error={value}")
-
-            readbacks[raw_name] = value
+        readbacks = {name: self._read_channel(name, twiss, design_twiss, setpoints)
+                     for name in channel_names}
 
         if debug:
             print(f'Interface get_values() -> {readbacks}')
         return readbacks
 
-    def _read_observable(self, name: str, twiss) -> float:
+    @staticmethod
+    def setpoint_bases(channel_names: list[str]) -> list[str]:
+        """The base names of the '-SETPOINT' channels asked for, sums opened up."""
+        bases = []
+        for name in channel_names:
+            total = SUM_CHANNEL.match(name)
+            parts = split_top_level(total.group(1)) if total else [name]
+            if total:
+                bases += Interface.setpoint_bases(parts)
+            elif name.endswith(SETPOINT_SUFFIX):
+                bases.append(name.removesuffix(SETPOINT_SUFFIX))
+        return list(dict.fromkeys(bases))
+
+    def _read_channel(self, raw_name: str, twiss, design_twiss, setpoints) -> float:
+        """One channel: a sum of channels, a '-SETPOINT' squared error, or a reading."""
+        total = SUM_CHANNEL.match(raw_name)
+        if total:
+            return sum(self._read_channel(part, twiss, design_twiss, setpoints)
+                       for part in split_top_level(total.group(1)))
+        base_name = raw_name.removesuffix(SETPOINT_SUFFIX)
+        value = self._read_observable(base_name, twiss, design_twiss)
+        if raw_name == base_name:
+            return value
+        if base_name not in setpoints:
+            raise ValueError(
+                f"No setpoint defined for '{base_name}'. Add it to the "
+                "environment's 'setpoints' parameter (the environment fills in "
+                'the design value for any channel it can read on the design '
+                'lattice).'
+            )
+        return (value - setpoints[base_name]) ** 2
+
+    def _element_mask(self, twiss, pattern: str):
+        """Rows of the twiss table whose element names match the regex (cached)."""
+        key = (pattern, hash(tuple(twiss.name)))
+        if key not in _MASKS:
+            regex = re.compile(pattern)
+            _MASKS[key] = np.array([bool(regex.search(n)) for n in twiss.name])
+            if not _MASKS[key].any():
+                raise ValueError(f"No element matches '{pattern}'")
+        return _MASKS[key]
+
+    def _read_observable(self, name: str, twiss, design_twiss=None) -> float:
         """One observable channel from the twiss results (NaN if no twiss)."""
         if name == OPTICS_STABLE_CHANNEL:
             return 0.0 if twiss is None else 1.0
+
+        stat = STAT_CHANNEL.match(name)
+        if stat:
+            fn, column, pattern = stat.groups()
+            if twiss is None:
+                return float('nan')
+            mask = self._element_mask(twiss, pattern)
+            if column in BEAT_COLUMNS:
+                if design_twiss is None:
+                    raise ValueError(f"'{name}' needs the design twiss")
+                beta = BEAT_COLUMNS[column]
+                values = twiss[beta][mask] / design_twiss[beta][mask] - 1.0
+            else:
+                try:
+                    values = twiss[column][mask]
+                except KeyError:
+                    raise ValueError(f"Unknown twiss column '{column}' in '{name}'")
+            return STATS[fn](values)
+
+        phase = PHASE_CHANNEL.match(name)
+        if phase:
+            plane, a, b = phase.groups()
+            if twiss is None:
+                return float('nan')
+            column = f'mu{plane}'
+            return float(360.0 * (twiss[column, b] - twiss[column, a]))
 
         if name in TWISS_SCALAR_CHANNELS:
             if twiss is None:

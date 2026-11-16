@@ -47,7 +47,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import Field
 
@@ -139,6 +139,14 @@ _LATTICE_CACHE: dict[tuple[str, str], tuple] = {}
 # (0.9 s on the Delivery Ring) and the design twiss (0.3 s) are done once per
 # process instead of once per environment.  The design twiss is only ever read.
 _DEDUCED_CACHE: dict[tuple, tuple] = {}
+
+# (lattice cache key, truth_errors, correctors, kick) -> orbit response of the hidden
+# truth machine: computed once per process, read only.
+_TRUTH_ORM: dict[tuple, Any] = {}
+
+# The model-fit channel: RMS mismatch between this Line's orbit response and the
+# truth machine's (see Environment.truth_errors).
+ORM_CHANNEL = 'orm_rms'
 
 # Sidecar holding the variable bounds and observable names deduced from a
 # lattice, so a fresh process can advertise them without parsing it.  Written
@@ -232,6 +240,28 @@ class Environment(environment.Environment):
     # creation uses type() which loses subtype info for dicts).
     # Note: The pydantic_editor requires Dict[K, V] with subtypes, not plain dict.
     setpoints: Union[Dict[str, float], str, None] = Field(default=None)
+    # An imperfect machine (added 2026-11-16): {name: value} applied to this
+    # environment's Line once, after load.  Names are lattice variables (a magnet
+    # fudge factor 'f_dq303') or element attributes (a quad offset
+    # 'q_dq303.shift_x', in m).  '-SETPOINT' targets stay at the design optics, so a
+    # template corrects back toward design.  Note: this lattice defines the quad
+    # stand variables LH_DQ*/LV_DQ* but never uses them; offsets go through
+    # '<quad>.shift_x' and '<quad>.shift_y' instead.
+    machine_errors: Union[Dict[str, float], str, None] = Field(default=None)
+    # For model fitting: a hidden "real machine", a copy of the design Line with
+    # these errors, never touched by the optimizer.  Its orbit response is the
+    # measurement that the 'orm_rms' channel compares this environment's Line with.
+    truth_errors: Union[Dict[str, float], str, None] = Field(default=None)
+    # Orbit response: the correctors (a regex over lattice variables) and the change
+    # applied to each, in the variable's units (A for the DR trims).  On the DR,
+    # 0.1 A and 0.05 A give responses per amp that differ by 7e-5 of their size,
+    # small next to the percent-level mismatches fitted (tests/VA_dr_tasks_test.py).
+    # Computed or element channels to offer besides the deduced ones, e.g.
+    # 'rms(x@^p_dhp)' or 'orm_rms': the GUI loads a template only if every name in
+    # its VOCS is offered.  Listed per template; never cached with the lattice.
+    extra_observables: List[str] = Field(default_factory=list)
+    orm_correctors: str = '^i_d[hv]t'
+    orm_kick: float = 0.1
 
     # Runtime state (pydantic private attributes, not settable via config)
     _line: Optional[Any] = None  # xtrack Line for fast twiss calculations
@@ -246,6 +276,10 @@ class Environment(environment.Environment):
     _monitor_planes: Optional[Dict[str, tuple]] = None  # monitor name -> planes it reads
     _lattice_path: Optional[Any] = None  # Path to the lattice file
     _cache_key: Optional[tuple] = None  # (resolved lattice path, sequence name)
+    _machine_errors: Optional[Dict[str, float]] = None  # parsed 'machine_errors'
+    _truth_errors: Optional[Dict[str, float]] = None  # parsed 'truth_errors'
+    _design_twiss: Optional[Any] = None  # twiss of the pristine lattice (shared, read only)
+    _truth_orm: Optional[Any] = None  # orbit response of the truth_errors machine
 
     def __init__(self, **data):
         # Badger's factory (badger.factory.load_plugin) instantiates
@@ -262,6 +296,8 @@ class Environment(environment.Environment):
         super().__init__(**data)
         self._setpoints = self._parse_mapping(self.setpoints, 'setpoints')
         self._twiss_init_values = self._parse_mapping(self.twiss_init, 'twiss_init')
+        self._machine_errors = self._parse_mapping(self.machine_errors, 'machine_errors')
+        self._truth_errors = self._parse_mapping(self.truth_errors, 'truth_errors')
         self.create_VA()
 
     @staticmethod
@@ -334,6 +370,7 @@ class Environment(environment.Environment):
         type(self).variables.clear()
         type(self).variables.update(cached['variables'])
         type(self).observables[:] = cached['observables']
+        self._offer_extra_observables()
         logger.info(
             f'Advertising {len(cached["variables"])} variables and '
             f'{len(cached["observables"])} observables from the sidecar cache; '
@@ -385,10 +422,20 @@ class Environment(environment.Environment):
                     dict(type(self).variables), list(type(self).observables),
                     dict(self._monitor_planes), design_twiss)
 
+        self._offer_extra_observables()  # after the caches: extras are per template
+
         # The design optics are the default setpoints for '<name>-SETPOINT'.
-        self._twiss = design_twiss
+        self._twiss = self._design_twiss = design_twiss
         self._twiss_chromatic = True
         self._record_default_setpoints(self._twiss)
+
+        if self._machine_errors:
+            self._check_deferred('machine_errors')
+            self.interface.set_values(self._machine_errors, self._line)
+            self._twiss = None  # the machine is no longer the design
+        if self._truth_errors:
+            self._check_deferred('truth_errors')
+            self._truth_orm = self._truth_response(key)
 
     # ------------------------------------------------------------------ #
     # Sidecar cache of the deduced lists
@@ -897,20 +944,91 @@ class Environment(environment.Environment):
             raise BadgerNoInterfaceError
         self._ensure_lattice()
 
-        chromatic = bool(CHROMATIC_OBSERVABLES.intersection(
-            name.removesuffix(SETPOINT_SUFFIX) for name in observable_names
-        ))
+        # Chromaticity is asked for directly, or inside a computed channel.
+        chromatic = any(re.search(r'\bdq[xy]\b', name) for name in observable_names)
         if self._twiss is None or (chromatic and not self._twiss_chromatic):
             self._twiss = self._compute_twiss(chromatic)
             self._twiss_chromatic = chromatic
 
-        return self.interface.get_values(
-            observable_names,
+        names = [n for n in observable_names if n != ORM_CHANNEL]
+        self._fill_design_setpoints(names)
+        result = self.interface.get_values(
+            names,
             self._line,
             self._twiss,
             setpoints=self._setpoints,
             debug=self.debug,
+            design_twiss=self._design_twiss,
         )
+        if ORM_CHANNEL in observable_names:
+            result[ORM_CHANNEL] = self._orm_mismatch()
+        return result
+
+    # ------------------------------------------------------------------ #
+    # Imperfect machines and model fitting (added 2026-11-16)
+    # ------------------------------------------------------------------ #
+
+    def _offer_extra_observables(self):
+        type(self).observables.extend(
+            n for n in self.extra_observables if n not in type(self).observables)
+
+    def _check_deferred(self, field: str):
+        if not self._use_deferred:
+            raise ValueError(f"'{field}' needs the deferred-expression lattice; "
+                             'this lattice fell back to reloading MAD-X per change')
+
+    def _fill_design_setpoints(self, names: list[str]):
+        """A '-SETPOINT' channel without a target in 'setpoints' aims at its design value."""
+        missing = [b for b in self.interface.setpoint_bases(names) if b not in self._setpoints]
+        if missing and self._design_twiss is not None:
+            design = self.interface.get_values(missing, self._line, self._design_twiss,
+                                               design_twiss=self._design_twiss)
+            self._setpoints.update({k: float(v) for k, v in design.items()})
+
+    def _orbit_response(self, line) -> np.ndarray:
+        """Change of the orbit at every monitor, in its own plane(s), per unit change
+        of each corrector: rows are correctors, columns monitor readings; mm per unit."""
+        correctors = sorted(v for v in type(self).variables if re.search(self.orm_correctors, v))
+        if not correctors:
+            raise ValueError(f"No variable matches orm_correctors '{self.orm_correctors}'")
+        readings = [(m, plane) for m, planes in self._monitor_planes.items() for plane in planes]
+
+        def orbit():
+            tw = line.twiss(method='4d', only_orbit=True)
+            return np.array([tw[plane, m] for m, plane in readings])
+
+        base = orbit()
+        rows = []
+        for c in correctors:
+            value = line.vars.val[c]
+            line.vars[c] = value + self.orm_kick
+            try:
+                rows.append((orbit() - base) / self.orm_kick * 1e3)
+            finally:
+                line.vars[c] = value
+        return np.array(rows)
+
+    def _truth_response(self, key) -> np.ndarray:
+        """The orbit response of the hidden machine: design plus truth_errors (cached)."""
+        truth_key = (key, json.dumps(self._truth_errors, sort_keys=True),
+                     self.orm_correctors, self.orm_kick)
+        if truth_key not in _TRUTH_ORM:
+            truth = _LATTICE_CACHE[key][1].copy()
+            truth.particle_ref = self._line.particle_ref
+            self.interface.set_values(self._truth_errors, truth)
+            _TRUTH_ORM[truth_key] = self._orbit_response(truth)
+        return _TRUTH_ORM[truth_key]
+
+    def _orm_mismatch(self) -> float:
+        """RMS difference between this Line's orbit response and the truth's, mm per unit."""
+        if self._truth_orm is None:
+            raise ValueError(f"'{ORM_CHANNEL}' needs the 'truth_errors' parameter")
+        try:
+            model = self._orbit_response(self._line)
+        except Exception as error:  # unstable optics: no orbit to respond
+            logger.warning(f'No orbit response ({error}); returning NaN')
+            return float('nan')
+        return float(np.sqrt(np.mean(np.square(model - self._truth_orm))))
 
     def get_bounds(self, variable_names: list[str]) -> dict[str, list[float]]:
         """Bounds for deduced variables, plus on-the-fly bounds for valid
