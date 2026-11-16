@@ -1,0 +1,7 @@
+name: "03_Booster_InjectionTuning_Pacsys"
+version: "0.1"
+dependencies:
+  - badger-opt
+  - numpy
+interface:
+  - BasicPacsysInterface

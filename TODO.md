@@ -440,3 +440,35 @@ exists and what it would touch.
     of the screen grabs, with the extracted strings and data stored in the
     Elog's backend DB tables. Then this tool reads that text from the DB and
     does no OCR itself.
+  - Landed 2026-11-11, text-only (no OCR, no vision model): the `tuning-reflection`
+    skill in `ProjectDT_FNAL/.claude/skills/`. Elog -> catalog -> data-logger
+    pull (pacsys LOGGER reads, resolved: `DEVICE@<event><-LOGGER:<t1>:<t2>`) ->
+    reflection -> draft template, reusing `new-env` only when an environment
+    itself needs to change. First run: RIL tuning (`docs/reflections/ril/`,
+    `tuning_templates/development/01_Linac_LossObjective_RIL_tuning_Pacsys.yaml`).
+    DevDB cross-check still not attempted (still times out from the dev Mac as
+    of the RIL run, before that session's VPN fix -- worth retrying).
+  - Second run, landed 2026-11-12: Booster injection tuning, the first Booster
+    environment (region `03`, no DevDB access, device names and ranges from elog
+    screenshots read with a vision model). Objective is a computed observable
+    (`WorstLossNorm`, max over calibrated BLMs of normalized deviation from
+    baseline), not one device -- `B:BOOEFF` is a floor constraint instead, per
+    the user's framing that efficiency is a thing to not let slip, not the thing
+    to chase. `docs/reflections/booster_injection/`,
+    `plugins/environments/03_Booster_InjectionTuning_Pacsys/`,
+    `tuning_templates/development/03_Booster_InjectionTuning_Pacsys.yaml`.
+    Found along the way: a bare LOGGER DRF with no `@event` works for this
+    region when explicit event qualifiers (`@p,...`, `@e,...`) do not; worth
+    trying first on any future region. Also found: the earlier RIL reflection's
+    claim that `B:BOOEFF` has no logger data was wrong for that same reason --
+    not yet corrected in `docs/reflections/ril/`.
+
+- [ ] **RF capture tuning draft template** (idea 2026-11-11, after the RIL and
+  Booster-injection reflections). Booster RF-capture tuning (transition frequency,
+  DC1 offset) is the third recurring named tuning task found in the elog (4
+  sessions in the last 30 days alone), often done in the same shift as Booster
+  injection tuning but with a distinct objective (bucket capture efficiency, not
+  orbit/losses). The Booster environment (region `03`) landed 2026-11-12 for
+  injection tuning (`03_Booster_InjectionTuning_Pacsys`); run `tuning-reflection`
+  on RF capture next -- likely shares most of its devices and variable ranges,
+  so a second environment vs. a second template against this one is still open.
