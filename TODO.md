@@ -512,3 +512,20 @@ exists and what it would touch.
   injection tuning (`03_Booster_InjectionTuning_Pacsys`); run `tuning-reflection`
   on RF capture next -- likely shares most of its devices and variable ranges,
   so a second environment vs. a second template against this one is still open.
+
+- [ ] **Variable ranges from alarm limits, or around a typed center** (idea 2026-11-17).
+  Two new ways to set a variable's range, beside today's `limit_option_idx` 0
+  (ratio of the current value), 1 (ratio of the hard-limit span), and 2 (+-delta
+  around the current value):
+  - **Alarm limits:** min and max = the device's ACNET analog alarm limits, read
+    when the template loads. pacsys reads alarm blocks (`pacsys.alarm_block`:
+    `AnalogAlarm`, `LimitType`), and `FakeBackend.set_analog_alarm` allows an
+    offline test.
+  - **Typed center:** the center = a value typed in the variable table, not the
+    live readback, with the range +-delta around it.
+  - Would touch: the `-mini` variable table's Range column and its patch,
+    `vrange_limit_options` in templates (new `limit_option_idx` values),
+    `template_lint_test.py`, and `BasicPacsysInterface` for the alarm read.
+  - Open: alarm limits as the window or also as the hard limits (always inside the
+    environment's)? What if a device has no alarm, or the limits are nominal/
+    tolerance rather than min/max? Is a typed center kept in a saved template?
