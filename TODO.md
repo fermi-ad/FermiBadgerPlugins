@@ -546,3 +546,13 @@ exists and what it would touch.
   - Open: alarm limits as the window or also as the hard limits (always inside the
     environment's)? What if a device has no alarm, or the limits are nominal/
     tolerance rather than min/max? Is a typed center kept in a saved template?
+
+- [ ] **Plots-only view in `-mini`** (idea 2026-11-17): an option to collapse the
+  settings (the Tuning and History tabs on the left) into a sidebar, open the window
+  much larger, and show just the plots, e.g. for watching a run on a large screen.
+  - Would touch: the `-mini` layout in `badger-1.6.0-mini-simpler-ui.patch` (the
+    splitter between the tabs and the plots can collapse a pane; a toggle on the
+    action bar or a keyboard shortcut), and the window's starting size.
+  - Open: remembered between sessions or per launch? A launch flag for the operator
+    shortcut (e.g. `safe-badger mini --plots-only`)? Do the action bar's buttons
+    (Stop, Pause) stay visible? They should, for safety.
