@@ -16,6 +16,9 @@ It reads and writes ACNET through pacsys.
 Only the variables checked in the variable table are moved. Each has hard
 limits in the code; the template's range (Δ) narrows them further.
 
+On the console, the RIL tuning knobs are on parameter page L48, sub-page <1>,
+tab PWR_SUP.
+
 ## What it can read (objectives, constraints, observables)
 
 - Toroids, efficiency and loss monitors: `L:TUNRAD`, `G:LINEFF`, `L:ATOR`, `B:BOOEFF`, the `L:D..LM` loss monitors, ...

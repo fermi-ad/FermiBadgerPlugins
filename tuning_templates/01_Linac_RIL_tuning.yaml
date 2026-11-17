@@ -21,6 +21,7 @@ description: |
   Observables: G:LINEFF, L:D7LMSM, L:TK4RAD, B:BLMLAM, B:BLMQ3, B:BOOEFF.
   Windows: +-0.5 source and MEBT trims, +-0.1 LEBT trims, +-5 solenoids, +-2 steps mults, +-10 deg RF phases,
     all around the live readback at load (Automatic).
+  Console: the RIL tuning knobs are on parameter page L48, sub-page <1>, tab PWR_SUP.
   Notes: readings on $52, B:BOOEFF on $1F. L:RFQPAH, L:RFBPAH and L:V5QSET are periodic (360 deg).
     Expected improvement with the safety turbo controller.
     Mult coefficients are 20.0 and the step size 0.05 (one step = 1.0 A on each quad of the pair).
