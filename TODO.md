@@ -136,7 +136,7 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
-- [ ] **On gmpsai2 after the Acsys retirement (2026-11-04):** `git pull && pixi install
+- [x] (user reported `pixi install` done, 2026-11-17) **On gmpsai2 after the Acsys retirement (2026-11-04):** `git pull && pixi install
   && pixi run setup -- --yes` (the lock changed: acsys gone; grpcio 1.84.0→1.85.1,
   anyio, cython, pyasn1 minor bumps). Then one read-only template load to exercise
   pacsys on the new grpcio. Leftover `_Acsys/__pycache__` folders are harmless
@@ -266,11 +266,14 @@ it to paste in.
     an option if the lattice distorts.
   - Load each new template once in the live `-mini` GUI (the integration test only
     emulates the GUI's name lookups).
-- [ ] **DR real-machine twins:** ACNET names from ad-lattices
-  (`sections/delivery-ring/shared/device_map.csv`, element -> device, e.g. `P_DHP101`
-  -> `D:HP101`; `device_aliases.csv` for knobs); a `09_DeliveryRing_*_Pacsys`
-  environment; the model fit reading a measured orbit response instead of
-  `truth_errors`.
+- [ ] **DR real-machine twins:** a `09_DeliveryRing_*_Pacsys` environment.
+  ad-lattices (`sections/delivery-ring/shared/`) covers only the BPMs (119, confirmed:
+  `P_DHP101` -> `D:HP101`) and the trims (19, confirmed: `T_DHT301` -> `D:HT301`), so
+  the orbit templates can go first. Missing, from a relevant expert: the ACNET names
+  of the main quad buses (`I_DQF`, `I_DQD`, `I_DQSS`, `I_DQ404`), the 61 shunts
+  `I_DQS*`, and the sextupole buses (`I_DSEXF`, `I_DSEXD`); whether `D:HT*` settings
+  are in amps like the lattice's trim currents. The model fit needs a measured orbit
+  response instead of `truth_errors`.
 - [ ] **Multi-turn tracking templates** (slow extraction, dynamic aperture): the
   simulation would dominate; try xsuite's OpenMP and GPU contexts then.
 
