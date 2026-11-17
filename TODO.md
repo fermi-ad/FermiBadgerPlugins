@@ -242,10 +242,27 @@ it to paste in.
 - [ ] **Booster injection (`03_Booster_InjectionTuning_Pacsys`, read only):** ask the
   `B:VIMIN` hardware owner how Badger writes interact with its own autotune loop
   (`B:VIMLUP2` heartbeat, `B:VIMTGT*` targets) before any writing role.
-- [ ] **Draft templates from the reflections:** review
-  `development/01_Linac_LossObjective_RIL_tuning_Pacsys.yaml` (minimize `L:TK4RAD`,
-  `L:D7TOR` floor) and `development/03_Booster_InjectionTuning_Pacsys.yaml` with
-  operators before promoting either.
+- [x] **RIL loss-objective template promoted to operations** (2026-11-17, the user's
+  decision): `01_Linac_LossObjective_RIL_tuning.yaml` (minimize `L:TK4RAD`, `L:D7TOR`
+  > 20 floor), beside the original `01_Linac_RIL_tuning.yaml`.
+- [ ] **Booster draft template:** review `development/03_Booster_InjectionTuning_Pacsys.yaml`
+  with operators before promoting it.
+- [ ] **RIL MEBT trim bulk supplies: confirm with the machine experts, then regroup**
+  (2026-11-17). The user reports the upstream and downstream MEBT quads are on separate
+  power supplies. Today `BulkPS_Limit` groups the trims by quad number, mixing upstream
+  and downstream: `MEBTQ1trims` = `L:MUQ1H/V` + `L:MDQ1H/V`, `MEBTQ2trims` = `L:MUQ2H/V`
+  + `L:MDQ2H/V` (7.0 A placeholders). Proposed, once confirmed: upstream `L:MUQ1H/V` +
+  `L:MUQ2H/V`, downstream `L:MDQ1H/V` + `L:MDQ2H/V`, with their real limits. Touches
+  `_BULK_PS` in `01_Linac_RIL_tuning_Pacsys` and the archetype, both RIL operations
+  templates' `BulkPS_Limit`, their `BulkPS_*` constraints/observable names, and the
+  tests that name the groups. No change until confirmed.
+- [ ] **A MOBO RIL template** (idea 2026-11-17): maximize `L:D7TOR` and minimize
+  `L:TUNRAD` together, giving the Pareto front between throughput and losses.
+  Start in `development/` from the RIL template; needs the MOBO generator's
+  `reference_point` (a worst acceptable value per objective; the RIL reflection's
+  data-logger sessions, `docs/reflections/ril/sessions.csv`, could suggest them) and
+  the same constraints minus `L:TUNRAD < 150`. MOBO steps cost more than EI (0.8 s
+  vs 0.5 s in the DR simulation; untested on RIL).
 - [ ] **DR EI template's observables:** Xopt fits a GP to each VOCS output; listing
   only the objective and constraint cut the closed-loop step 0.72 -> 0.46 s (3
   seeds), but stops recording `qx`, `qy` and the rest. Decide.
@@ -485,7 +502,7 @@ exists and what it would touch.
     pull (pacsys LOGGER reads, resolved: `DEVICE@<event><-LOGGER:<t1>:<t2>`) ->
     reflection -> draft template, reusing `new-env` only when an environment
     itself needs to change. First run: RIL tuning (`docs/reflections/ril/`,
-    `tuning_templates/development/01_Linac_LossObjective_RIL_tuning_Pacsys.yaml`).
+    now `tuning_templates/01_Linac_LossObjective_RIL_tuning.yaml`, promoted 2026-11-17).
     DevDB cross-check still not attempted (still times out from the dev Mac as
     of the RIL run, before that session's VPN fix -- worth retrying).
   - Second run, landed 2026-11-12: Booster injection tuning, the first Booster

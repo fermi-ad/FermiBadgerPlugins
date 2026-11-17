@@ -147,12 +147,6 @@ vocs:
     L:TK4RAD:
       dtype: null
       type: Observable
-    MultOOB_MDQ:
-      dtype: null
-      type: Observable
-    MultOOB_MUQ:
-      dtype: null
-      type: Observable
   variables:
     L:ASOL:
       default_value: null

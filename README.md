@@ -199,7 +199,7 @@ This only rewrites `config.local.yaml`; it asks the same archive/logbook questio
 
 Use `File > Open Template` and choose one from `tuning_templates/`. Badger loads the matching Environment and Interface automatically, along with the template's preset variables, objectives, and algorithm settings.
 
-- Top level of `tuning_templates/` holds the operations-ready physical-machine templates (currently `01_Linac_RIL_tuning.yaml`). These, plus your own saved ones (below), are the ones the `-mini` GUI's template dropdown lists; the full GUI's file dialog can browse into the subdirectories.
+- Top level of `tuning_templates/` holds the operations-ready physical-machine templates (currently `01_Linac_RIL_tuning.yaml` and `01_Linac_LossObjective_RIL_tuning.yaml`). These, plus your own saved ones (below), are the ones the `-mini` GUI's template dropdown lists; the full GUI's file dialog can browse into the subdirectories.
 - `tuning_templates/saved/` - templates saved with `-mini`'s **Save as...** button (Tuning Task box). Gitignored, so each installation keeps its own and `git pull` never touches them; the dropdown lists them as `saved/<name>`. Saving over an operations template is refused.
 - `tuning_templates/development/` - physical-machine templates still being worked on. They require valid Kerberos credentials and the matching settings role.
 - `tuning_templates/simulation/` - simulation templates, no credentials needed:

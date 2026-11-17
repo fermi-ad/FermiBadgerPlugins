@@ -1801,3 +1801,23 @@ Fixes (main):
   not a Claude artifact: colleagues have no Claude accounts).
 - `tests/VA_dr_tasks_test.py`; the smoke test now expects design targets for
   unadvertised channels.
+
+## 2026-11-17 — RIL loss-objective template promoted
+
+- The user promoted the reflection's draft to operations:
+  `tuning_templates/01_Linac_LossObjective_RIL_tuning.yaml` (top-level naming, no
+  `_Pacsys`), minimize `L:TK4RAD` with an `L:D7TOR` > 20 floor; "DRAFT" dropped from its
+  description, the console page added (L48, sub-page <1>, tab PWR_SUP). The original
+  `01_Linac_RIL_tuning.yaml` stays. Lint and the Pacsys cutover test pass.
+- TODO: a MOBO RIL template (maximize `L:D7TOR`, minimize `L:TUNRAD`); variable ranges
+  from alarm limits or around a typed center.
+- RIL operations templates: `MultOOB_*` removed from the plotted observables (user);
+  they stay constraints. MEBT trim bulk-supply regrouping (upstream vs downstream)
+  recorded in TODO, to confirm with the machine experts before any change.
+- Bug found by the full suite and fixed: `extra_observables` (added 2026-11-16) broke
+  GUI loading of simulation templates that do not set it: the parameter editor hands
+  an empty list back as None. Now `Optional`, None = none. That push (fa050b4) had
+  run only the simulation tests, not the full suite.
+- Also found by the full suite: the simulation environment's README lacked
+  `extra_observables` (tests/plugin_docs_test.py requires every parameter documented);
+  added. Full suite: 37 of 37 after that fix.

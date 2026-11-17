@@ -259,7 +259,8 @@ class Environment(environment.Environment):
     # Computed or element channels to offer besides the deduced ones, e.g.
     # 'rms(x@^p_dhp)' or 'orm_rms': the GUI loads a template only if every name in
     # its VOCS is offered.  Listed per template; never cached with the lattice.
-    extra_observables: List[str] = Field(default_factory=list)
+    # None is accepted as none: the GUI's parameter editor hands an empty list back so.
+    extra_observables: Optional[List[str]] = Field(default=None)
     orm_correctors: str = '^i_d[hv]t'
     orm_kick: float = 0.1
 
@@ -970,7 +971,7 @@ class Environment(environment.Environment):
 
     def _offer_extra_observables(self):
         type(self).observables.extend(
-            n for n in self.extra_observables if n not in type(self).observables)
+            n for n in self.extra_observables or [] if n not in type(self).observables)
 
     def _check_deferred(self, field: str):
         if not self._use_deferred:

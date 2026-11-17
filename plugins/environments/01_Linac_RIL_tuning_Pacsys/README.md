@@ -2,7 +2,8 @@
 
 Tunes the front end of the Linac: the RIL ion sources, LEBT, RFQ and MEBT, plus
 the last Linac trims, to raise transmission and lower losses. This is the
-machine interface behind the operations template `01_Linac_RIL_tuning.yaml`.
+machine interface behind the operations templates `01_Linac_RIL_tuning.yaml`
+(maximize `L:D7TOR`) and `01_Linac_LossObjective_RIL_tuning.yaml` (minimize `L:TK4RAD`).
 It reads and writes ACNET through pacsys.
 
 ## What it can tune (variables)

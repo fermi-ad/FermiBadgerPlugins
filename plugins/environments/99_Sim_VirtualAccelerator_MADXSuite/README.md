@@ -35,6 +35,7 @@ Deduced from the lattice: its knobs and element strengths, such as quad
 - `setpoints`: targets for `-SETPOINT` observables, e.g. `{qx: 9.65, qy: 9.74}`. Any observable not listed aims at its design value.
 - `machine_errors`: makes the machine imperfect, `{name: value}` applied once at load: lattice variables (a fudge factor `f_dq303: 1.02`) or element attributes (a quad offset `q_dq303.shift_x: 0.0002`, in m). Targets stay at the design.
 - `truth_errors`: the same form, for a hidden copy of the machine that plays the real one in model fitting (`orm_rms`). The optimizer never touches it.
+- `extra_observables`: computed or element observables to offer besides the deduced ones, e.g. `[rms(x@^p_dhp), orm_rms]`. The GUI loads a template only if every objective, constraint, and observable it names is offered, so a template lists its computed names here.
 - `orm_correctors`, `orm_kick`: the correctors used for the orbit response (a regex; default the DR trims `^i_d[hv]t`) and the change applied to each (default 0.1 A).
 - `debug`: print details of each step to the terminal.
 
