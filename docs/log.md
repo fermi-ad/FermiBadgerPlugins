@@ -1821,3 +1821,19 @@ Fixes (main):
 - Also found by the full suite: the simulation environment's README lacked
   `extra_observables` (tests/plugin_docs_test.py requires every parameter documented);
   added. Full suite: 37 of 37 after that fix.
+
+## 2026-11-17 — session wrap-up
+
+- RIL console page from the user: L48, sub-page <1>, tab PWR_SUP; in both RIL
+  operations templates' descriptions and the environment's Open Docs README.
+- DR real-machine twins: ad-lattices maps only the BPMs (119) and trims (19) to
+  ACNET, all confirmed. Missing: main quad buses, the 61 shunts `I_DQS*`, the sextupole
+  buses, and the trims' setting units. So the orbit templates can move to the machine
+  first (TODO).
+- gmpsai2: `pixi install` done (user, 2026-11-17).
+- TODO added: a plots-only `-mini` view (collapsible settings sidebar, larger window).
+- The stray Claude Docs copy of the DR notes was deleted (user's request); the notes
+  live in `docs/dr-lattice-simulation-notes.md`.
+- Lesson: the 2026-11-16 push (fa050b4) ran only the simulation tests and shipped two
+  bugs the full suite caught a day later. The full suite now runs before every push
+  of code changes.

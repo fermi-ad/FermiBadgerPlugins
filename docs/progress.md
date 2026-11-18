@@ -2101,3 +2101,22 @@ A new environment and template in one command: `pixi run new-env
 New environments start from `ZZ_Archetype_Pacsys` (every feature, never
 writes): `pixi run new-env <name>`. Keep it complete: a feature added to any
 environment goes there too, tested in `tests/archetype_test.py`.
+
+## 2026-11-17: status
+
+- Operations templates (`tuning_templates/`): `01_Linac_RIL_tuning.yaml` (maximize
+  `L:D7TOR`) and, new, `01_Linac_LossObjective_RIL_tuning.yaml` (minimize `L:TK4RAD`,
+  `L:D7TOR` > 20). Console page for the knobs: L48, sub-page <1>, tab PWR_SUP.
+- Delivery Ring simulation: about 30 ms per evaluation; seven `DR_*` templates in
+  `tuning_templates/simulation/` (tunes, MOBO tunes, orbit H and V, chromaticity,
+  lattice functions, model fit). Notes for the lattice's author:
+  `docs/dr-lattice-simulation-notes.md`.
+- Booster injection environment, read only (`B:VIMIN` autotune question open).
+- Full suite: 37 of 37 (2026-11-17).
+
+### Next
+
+- Confirm with the machine experts: the RIL MEBT trims' bulk supplies (upstream vs
+  downstream), and the DR task-list readings (sextupole phase pair, kickers).
+- DR real-machine twins, orbit first; ACNET names for the quad and sextupole supplies.
+- A MOBO RIL template; ranges from alarm limits or a typed center; a plots-only view.
