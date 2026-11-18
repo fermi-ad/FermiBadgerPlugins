@@ -446,6 +446,32 @@ exists and what it would touch.
     (Badger stops a run on a critical violation).
   - Open: risk per constraint or one global number? What to do when no point
     meets the risk (stay put, or shrink the step)?
+- [ ] **Heteroskedastic noise as the default (planned 2026-11-18).** Xopt fits its
+  heteroskedastic GP for any outcome whose data row carries `<outcome>_var` (the variance
+  of the recorded value); nothing needs listing in the VOCS (checked: Badger's evaluator
+  keeps every key `get_observables` returns). Our testbed listed `_var` as VOCS
+  observables, which fits a useless GP to each; environments should instead return
+  `<name>_var` beside each requested outcome (an exception to "only what was asked for";
+  update the developer guide and archetype).
+  - [ ] Calibration study first (offline mock-up, `scripts/heteroskd_calibration.py`):
+    heteroskedastic vs standard GP; noise scenarios constant, proportional, bump, step,
+    and non-Gaussian (Student-t 3 dof, lognormal, rare spikes); variance from N = 2, 3, 5,
+    10, 20 draws; 20 and 50 points. Measures: 68 %/95 % interval coverage of true values
+    and of fresh measurements; reliability of P(constraint satisfied), latent and
+    measured. Also the noise GP's learned length scale vs N (one quick fit, N = 5, 30
+    points: the noise GP's length scale sat at its 0.025-of-range floor with log-variance
+    noise 2.9, i.e. it was not smoothing a strong linear trend; one seed, unexplained).
+  - [ ] Machine check: the data logger's event-by-event readings for a few RIL
+    observables (`L:TK4RAD`, `L:D7TOR`, `L:TUNRAD`): is their noise close to Gaussian?
+  - [ ] Then: `_var` from `average_events` (s^2/N) in `BasicPacsysInterface`; computed
+    observables per event, then mean and variance; a risk-tolerance option on the
+    measured value (predicted noise included), likely for Stopping constraints.
+- [ ] **Front-end noise statistics as a central resource** (user, 2026-11-18): check (or
+  ask the pacsys author) whether pacsys can provide front-end noise statistics for a
+  reading; if not there, look for a central home (the ACNET device database, or another
+  shared place). Long-standing wish: front ends declaring each device's known
+  resolution up front.
+
 - [ ] **Better GP visualizations.** Revisit how the model (objective and
   constraints, with uncertainty) is shown during a run.
   - Exists: Badger 1.6.0's BO visualizer extension (extensions palette,
