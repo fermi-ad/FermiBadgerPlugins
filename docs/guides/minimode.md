@@ -36,8 +36,13 @@ with it ticked: it cannot be tuned from where it is.
 Random**, **Add Row** to type one, **Clear All**. A task may set its own.
 
 **Objectives**: what to minimize or maximize. **Constraints**: limits to keep,
-each with a relation and threshold; a **Critical** constraint stops the run
-when it is broken. **Observables**: extra readings to record.
+each with a relation and threshold. **Stopping**: the run stops when a measured
+value breaks that constraint. **Risk Tolerance**: the largest chance, according
+to the constraint's model, that you accept of the optimizer proposing a point
+that breaks it; 100% (the default) sets no limit, and 0.01% is the most
+cautious (0 is not possible: the model is never certain). If no point meets a
+tolerance, that step ignores it and says so in the log. **Observables**: extra
+readings to record.
 
 ## History tab
 

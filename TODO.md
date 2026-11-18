@@ -426,7 +426,9 @@ exists and what it would touch.
   - Would touch: bringing a "start from run(s)..." choice to `-mini`
     (history tab or Tuning Task box), and a way to pick several runs.
   - Open: how old is too old (drift)? Mark seeded points in the plots?
-- [ ] **Risk-aware constraints.** Constraints are modeled by GPs just like the
+- [x] **Risk-aware constraints** (built 2026-11-18: a Risk Tolerance column per constraint, the
+  Critical column renamed Stopping; `xopt-3.2.2-constraint-risk-tolerance.patch`,
+  `badger-1.6.0-constraint-risk-tolerance.patch`; not yet tried on the machine). Constraints are modeled by GPs just like the
   objective; avoid proposing settings where a constraint is likely on the
   wrong side of its bound, or where its uncertainty makes that too likely,
   with the operator setting the acceptable risk.

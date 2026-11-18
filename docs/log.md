@@ -1878,3 +1878,29 @@ Fixes (main):
   one objective still reports its error (tested). Test-harness lesson: keep every
   Badger window referenced, or Qt aborts on "QThread: Destroyed while thread is still
   running".
+
+## 2026-11-18 — risk-aware constraints
+
+- User's design: rename "Critical" to "Stopping"; a new "Risk Tolerance" column: the
+  acceptable chance, per the constraint's model, that a proposed point breaks it.
+  Decided with the user: percent in the GUI; 0.01 % the minimum (a 0 typed in becomes
+  0.01 %, visibly, with a tooltip: the model is never certain, so 0 cannot be met);
+  blank = 100 % = today's behavior; when no point meets the tolerances, that step
+  ignores them with a warning; stored in the template's generator section
+  (`generator.constraint_risk_tolerance`, fractions), which Badger already saves,
+  archives, and restores.
+- `xopt-3.2.2-constraint-risk-tolerance.patch`: the field on every Bayesian generator;
+  `RiskLimitedAcquisition` subtracts 1e3 x the probability shortfall below 1 -
+  tolerance (P from the constraint GP's posterior mean and spread); hooked into the
+  three `get_acquisition`s (base/UCB, EI, MOBO); fallback inside `propose_candidates`
+  so TuRBO updates once. The 1e3 weight is chosen to dwarf log-acquisition spreads,
+  untested beyond the checks below. Test (synthetic, one variable): with no tolerance
+  EI's point had P(ok) 0.976; at 0.1 % it stepped back (x 0.597 -> 0.592) to 0.9990;
+  UCB and MOBO 0.9990; the fallback fires on a constraint the model cannot be sure of.
+- `badger-1.6.0-constraint-risk-tolerance.patch`: the column in the shared constraint
+  table; both GUIs read it from templates and past runs and write it into the run's
+  generator. Badger's `filter_generator_config` still drops the field from the
+  Optimization Algo panel, so the column is the one place to edit it. GUI test covers
+  both GUIs: headers, default 100 %, 5 % -> 0.05, 0 -> 0.01 %, a template's values,
+  and a reopened run.
+- The minimode "?" page and the developer guide's template keys updated.

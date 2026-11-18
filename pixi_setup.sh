@@ -137,10 +137,14 @@ print(h.hexdigest())" "$REPO/patches")"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mobo-no-turbo-warning.patch"
         # diffed against the tree after all the routine_page.py patches above
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-quiet-generator-switch.patch"
+        # diffed against the tree after all the patches above (con_table, env_cbox, routine_page)
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-constraint-risk-tolerance.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
         # must come after turbo-serialization: diffed against that tree
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-negative-strides.patch"
+        # must come after negative-strides: diffed against that tree
+        apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-constraint-risk-tolerance.patch"
 
         if [[ $FAILED -eq 0 ]]; then
             echo "$WANT" > "$STAMP"

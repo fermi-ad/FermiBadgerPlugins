@@ -299,11 +299,11 @@ The keys; `tests/template_lint_test.py` requires the first group:
 | `name`, `description` | the description is shown to operators: say the goal, objective, variables, windows, and anything unusual (see the archetype's template) |
 | `environment` | `name`, and `params` (the environment's parameters, overriding its defaults). `name` should be your new Environment. |
 | `vocs` | `variables` (`{name: [lo, hi]}`), `objectives` (`{name: {type: MinimizeObjective}}`, or `MaximizeObjective`), `constraints` (`{name: {type: LessThanConstraint, value: 18.0}}`, or `GreaterThanConstraint`), `observables`. That is the form `Save as` writes; the short forms `MINIMIZE` and `[LESS_THAN, 18.0]` also work |
-| `generator` | the algorithm and its settings (`expected_improvement` is the usual choice; see `docs/algorithms/`) |
+| `generator` | the algorithm and its settings (`expected_improvement` is the usual choice; see `docs/algorithms/`). `constraint_risk_tolerance` (optional): `{constraint: fraction}`, the largest modeled chance of proposing a point that breaks it (0.0001 to 1; absent = no limit); the GUI's Risk Tolerance column |
 | `relative_to_current` | `true`: each variable's window is computed around its current value at load, and again at Go; `false`: the `vocs` ranges as written |
 | `vrange_limit_options` | per variable, how the window is computed: `limit_option_idx` 1 = ±½·`ratio_full`·(hard-limit span), 2 = ±`delta`. (0 = ±½·`ratio_curr`·\|current\| collapses to nothing at 0, so the lint refuses it when `relative_to_current` is true) |
 | `initial_point_actions` | the first points: `add_curr` (current values), `add_rand` (`n_points` random points near the current values, within `fraction` of each range) |
-| `critical_constraint_names` | constraints whose violation stops the run |
+| `critical_constraint_names` | constraints whose violation stops the run (the GUI's Stopping column) |
 | `initial_points` (optional) | explicit first points, `{variable: [values]}`; replaces the actions |
 | `formulas` (optional) | computed objectives from readings, e.g. `` `L:A` + `L:B` `` (backticks around names; NumPy allowed) |
 

@@ -1,0 +1,168 @@
+diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bayesian/bayesian_generator.py
+--- a/xopt/generators/bayesian/bayesian_generator.py	2026-11-18 16:50:41
++++ b/xopt/generators/bayesian/bayesian_generator.py	2026-11-18 16:51:22
+@@ -76,6 +76,45 @@
+ 
+ logger = logging.getLogger()
+ 
++
++# Risk tolerance (FermiBadgerPlugins patch xopt-3.2.2-constraint-risk-tolerance):
++# the largest modeled probability an operator accepts that a proposed point violates
++# a constraint. A point whose probability of satisfying a constraint is below
++# 1 - tolerance is penalized in the acquisition; tolerances clamp to [1e-4, 1].
++RISK_TOLERANCE_MIN = 1e-4
++RISK_PENALTY = 1e3  # per unit of probability shortfall; dwarfs (log-)acquisition spreads
++
++
++def risk_shortfall(model, X: Tensor, limits) -> Tensor:
++    """Sum over the limited constraints of max(0, (1 - tolerance) - P(satisfied)) at each
++    point of X (batch x q x d), from the constraint model's posterior mean and spread.
++    limits: [(output index, bound, +1 for less-than or -1 for greater-than, 1 - tolerance)]."""
++    posterior = model.posterior(X)
++    mean, sigma = posterior.mean, posterior.variance.clamp_min(1e-12).sqrt()
++    normal = torch.distributions.Normal(
++        torch.zeros((), dtype=mean.dtype, device=mean.device),
++        torch.ones((), dtype=mean.dtype, device=mean.device),
++    )
++    shortfall = torch.zeros(mean.shape[:-1], dtype=mean.dtype, device=mean.device)
++    for index, bound, sign, needed in limits:
++        p_ok = normal.cdf(sign * (bound - mean[..., index]) / sigma[..., index])
++        shortfall = shortfall + torch.relu(needed - p_ok)
++    return shortfall
++
++
++class RiskLimitedAcquisition(AcquisitionFunction):
++    """An acquisition function minus a steep penalty wherever a point's modeled
++    probability of satisfying a constraint is below 1 - its risk tolerance."""
++
++    def __init__(self, acq: AcquisitionFunction, model, limits):
++        super().__init__(model=model)
++        self.acq = acq
++        self.limits = limits
++
++    def forward(self, X: Tensor) -> Tensor:
++        return self.acq(X) - RISK_PENALTY * risk_shortfall(self.model, X, self.limits).sum(-1)
++
++
+ # It seems pydantic v2 does not auto-register models anymore
+ # So one option is to have explicit unions for model subclasses
+ # The other is to define a descriminated union with name as key, but that stops name field from
+@@ -192,6 +231,12 @@
+     n_interpolate_points: Optional[PositiveInt] = None
+ 
+     n_candidates: int = 1
++    constraint_risk_tolerance: Optional[Dict[str, float]] = Field(
++        None,
++        description="per constraint, the largest modeled probability (1e-4 to 1) "
++        "that a proposed point violates it; 1 or absent = no limit",
++    )
++    _risk_off: bool = PrivateAttr(default=False)
+ 
+     _compatible_turbo_controllers: Optional[list[type[TurboController]]] = PrivateAttr(
+         default=None
+@@ -200,6 +245,13 @@
+         default=[LBFGSOptimizer, GridOptimizer]
+     )
+ 
++    @field_validator("constraint_risk_tolerance", mode="after")
++    def validate_constraint_risk_tolerance(cls, value):
++        # 0 (or less) becomes the most cautious value allowed; above 1 means no limit
++        if value is None:
++            return None
++        return {k: min(max(float(v), RISK_TOLERANCE_MIN), 1.0) for k, v in value.items()}
++
+     @field_validator("vocs", mode="after")
+     @classmethod
+     def validate_vocs(cls, v: VOCS, info: ValidationInfo) -> VOCS:
+@@ -583,6 +635,30 @@
+ 
+         optimization_kwargs = self._get_discrete_optimization_kwargs()
+ 
++        candidates = self._optimize_acquisition(acq_funct, bounds, n_candidates,
++                                                initial_points, optimization_kwargs)
++
++        # No candidate meets the risk tolerances (early in a run, or near a hard edge):
++        # this step ignores them, as without any, and says so.
++        limits = self._risk_limits()
++        if limits and candidates.shape[-1] == len(self.model_input_names):
++            with torch.no_grad():
++                short = risk_shortfall(model, candidates.unsqueeze(0), limits)
++            if float(short.max()) > 1e-6:
++                logger.warning(
++                    "No candidate meets the constraint risk tolerances %s; this step "
++                    "ignores them.", dict(self.constraint_risk_tolerance))
++                self._risk_off = True
++                try:
++                    candidates = self._optimize_acquisition(
++                        self.get_acquisition(model), bounds, n_candidates,
++                        initial_points, optimization_kwargs)
++                finally:
++                    self._risk_off = False
++        return candidates
++
++    def _optimize_acquisition(self, acq_funct, bounds, n_candidates, initial_points,
++                              optimization_kwargs):
+         # get candidates -- grid optimizer does not support batch_initial_conditions
+         if isinstance(self.numerical_optimizer, GridOptimizer):
+             if optimization_kwargs:
+@@ -603,6 +679,28 @@
+             )
+         return candidates
+ 
++    def _risk_limits(self):
++        """[(output index, bound, sign, 1 - tolerance)] for the constraints with a risk
++        tolerance below 1 (none while a step ignores them)."""
++        if not self.constraint_risk_tolerance or self._risk_off:
++            return []
++        names = list(self.model_output_names)
++        limits = []
++        for name, tolerance in self.constraint_risk_tolerance.items():
++            if tolerance >= 1.0:
++                continue
++            if name not in self.vocs.constraints:
++                logger.warning("Risk tolerance for %r ignored: not a constraint", name)
++                continue
++            constraint = self.vocs.constraints[name]
++            sign = 1.0 if type(constraint).__name__ == "LessThanConstraint" else -1.0
++            limits.append((names.index(name), float(constraint.value), sign, 1.0 - tolerance))
++        return limits
++
++    def _apply_risk_tolerance(self, acq, model):
++        limits = self._risk_limits()
++        return RiskLimitedAcquisition(acq, model, limits) if limits else acq
++
+     def get_training_data(self, data: pd.DataFrame) -> pd.DataFrame:
+         """
+         Get training data used to train the GP model.
+@@ -699,6 +797,7 @@
+             # log transform the result to handle the constraints
+             acq = LogAcquisitionFunction(acq)
+ 
++        acq = self._apply_risk_tolerance(acq, model)
+         acq = self._apply_fixed_features_and_contextual_variables(acq)
+         acq = acq.to(**self.tkwargs)
+         return acq
+diff -ruN a/xopt/generators/bayesian/expected_improvement.py b/xopt/generators/bayesian/expected_improvement.py
+--- a/xopt/generators/bayesian/expected_improvement.py	2026-11-18 16:50:41
++++ b/xopt/generators/bayesian/expected_improvement.py	2026-11-18 16:51:09
+@@ -60,6 +60,8 @@
+         # get base acquisition function
+         acq = self._get_acquisition(model)
+ 
++        acq = self._apply_risk_tolerance(acq, model)
++
+         # apply fixed features if specified in the generator
+         acq = self._apply_fixed_features_and_contextual_variables(acq)
+ 
+diff -ruN a/xopt/generators/bayesian/mobo.py b/xopt/generators/bayesian/mobo.py
+--- a/xopt/generators/bayesian/mobo.py	2026-11-18 16:50:41
++++ b/xopt/generators/bayesian/mobo.py	2026-11-18 16:51:09
+@@ -82,6 +82,8 @@
+         # get base acquisition function
+         acq = self._get_acquisition(model)
+ 
++        acq = self._apply_risk_tolerance(acq, model)
++
+         # apply fixed features if specified in the generator
+         acq = self._apply_fixed_features_and_contextual_variables(acq)
+ 
