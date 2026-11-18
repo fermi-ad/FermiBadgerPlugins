@@ -2112,6 +2112,9 @@ environment goes there too, tested in `tests/archetype_test.py`.
   lattice functions, model fit). Notes for the lattice's author:
   `docs/dr-lattice-simulation-notes.md`.
 - Booster injection environment, read only (`B:VIMIN` autotune question open).
+- MOBO RIL template in development (2026-11-18):
+  `development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml` (maximize `L:D7TOR`,
+  minimize `L:TUNRAD`); not yet run on the machine.
 - Full suite: 37 of 37 (2026-11-17).
 
 ### Next
@@ -2119,4 +2122,5 @@ environment goes there too, tested in `tests/archetype_test.py`.
 - Confirm with the machine experts: the RIL MEBT trims' bulk supplies (upstream vs
   downstream), and the DR task-list readings (sextupole phase pair, kickers).
 - DR real-machine twins, orbit first; ACNET names for the quad and sextupole supplies.
-- A MOBO RIL template; ranges from alarm limits or a typed center; a plots-only view.
+- Run the MOBO RIL template with the operators; ranges from alarm limits or a typed
+  center; a plots-only view.

@@ -1848,3 +1848,5 @@ Fixes (main):
   operations limit 150. `L:TUNRAD < 150` dropped as a constraint. Acquisition 0.5 s / 5
   restarts (the DR measurement; untested on RIL). Lint passes; a MOBO generator built
   from it generates a point from 30 synthetic rows in 2.75 s. Not run on the machine.
+- Full suite 37 of 37 before the push (ee4d207). To try it on gmpsai2: `git pull`, then
+  `pixi run safe-badger mini -t development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml`.
