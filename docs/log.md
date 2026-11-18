@@ -1837,3 +1837,14 @@ Fixes (main):
 - Lesson: the 2026-11-16 push (fa050b4) ran only the simulation tests and shipped two
   bugs the full suite caught a day later. The full suite now runs before every push
   of code changes.
+
+## 2026-11-18 — MOBO RIL template started
+
+- `tuning_templates/development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml`, from
+  the operations RIL template: MOBO, maximize `L:D7TOR`, minimize `L:TUNRAD`.
+  Reference point from the RIL reflection's data-logger history
+  (`docs/reflections/ril/sessions.csv`): `L:D7TOR` beam-on 10th percentile 19.9 (192
+  sessions; 255 with beam-off ones), so 20; `L:TUNRAD` 99th percentile 146, so the
+  operations limit 150. `L:TUNRAD < 150` dropped as a constraint. Acquisition 0.5 s / 5
+  restarts (the DR measurement; untested on RIL). Lint passes; a MOBO generator built
+  from it generates a point from 30 synthetic rows in 2.75 s. Not run on the machine.

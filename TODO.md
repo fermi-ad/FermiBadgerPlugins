@@ -256,13 +256,15 @@ it to paste in.
   `_BULK_PS` in `01_Linac_RIL_tuning_Pacsys` and the archetype, both RIL operations
   templates' `BulkPS_Limit`, their `BulkPS_*` constraints/observable names, and the
   tests that name the groups. No change until confirmed.
-- [ ] **A MOBO RIL template** (idea 2026-11-17): maximize `L:D7TOR` and minimize
-  `L:TUNRAD` together, giving the Pareto front between throughput and losses.
-  Start in `development/` from the RIL template; needs the MOBO generator's
-  `reference_point` (a worst acceptable value per objective; the RIL reflection's
-  data-logger sessions, `docs/reflections/ril/sessions.csv`, could suggest them) and
-  the same constraints minus `L:TUNRAD < 150`. MOBO steps cost more than EI (0.8 s
-  vs 0.5 s in the DR simulation; untested on RIL).
+- [ ] **MOBO RIL template: started 2026-11-18** as
+  `development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml`: maximize `L:D7TOR`,
+  minimize `L:TUNRAD` (the user: "the lowest losses for the most throughput"); reference
+  point `L:D7TOR` 20 (about the 10th percentile of 192 beam-on sessions), `L:TUNRAD` 150
+  (the operations limit; 99th percentile 146); operations constraints minus
+  `L:TUNRAD < 150`; acquisition 0.5 s, 5 restarts. Passes the lint; its generator
+  produces a point from synthetic data in 2.75 s. Next: run it on the machine with the
+  operators; decide whether `G:LINEFF` (efficiency) should replace `L:D7TOR`; trim its
+  six observables if steps run slow (each is a fitted GP).
 - [ ] **DR EI template's observables:** Xopt fits a GP to each VOCS output; listing
   only the objective and constraint cut the closed-loop step 0.72 -> 0.46 s (3
   seeds), but stops recording `qx`, `qy` and the rest. Decide.
