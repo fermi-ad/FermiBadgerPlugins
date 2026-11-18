@@ -1850,3 +1850,20 @@ Fixes (main):
   from it generates a point from 30 synthetic rows in 2.75 s. Not run on the machine.
 - Full suite 37 of 37 before the push (ee4d207). To try it on gmpsai2: `git pull`, then
   `pixi run safe-badger mini -t development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml`.
+
+## 2026-11-18 — MOBO template load warnings
+
+- The user saw many "Generator has turbo_controller set but no compatible
+  turbo_controller item exists in tree" warnings loading the MOBO RIL template.
+  Reproduced offscreen: 6 per load in each GUI, for both MOBO templates (also the DR
+  simulation one), none for EI. Cause: Badger's `filter_generator_config` drops
+  `turbo_controller` for mobo on purpose, but `pydantic_editor.set_params_post_setup`
+  initializes it for every Bayesian generator. `turbo_controller: null` in the template
+  does not help (the filter drops it too). New patch
+  `badger-1.6.0-mobo-no-turbo-warning.patch`: skip quietly when the field is absent from
+  the settings. Now 0 warnings; EI templates keep their safety controller.
+  `tests/quiet_template_load_gui_test.py` covers a fresh MOBO load.
+- Found on the way, recorded in TODO: switching to the MOBO template from an EI one in
+  the same window logs one transient ERROR ("does not support single objective
+  optimization"); a fresh window logs nothing.
+- gmpsai2 needs `git pull && pixi run setup -- --yes` (a new patch).

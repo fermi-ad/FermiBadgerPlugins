@@ -1,5 +1,6 @@
 """Offscreen check of badger-1.6.0-quiet-template-load.patch, in both GUIs: loading
-a template with a safety TuRBO controller (a RIL template) logs no ERROR. Before,
+a template with a safety TuRBO controller (a RIL template) logs no ERROR, and a MOBO
+template logs no turbo_controller WARNING. Before,
 filling the objectives table sent a partial VOCS (objectives, no constraints yet)
 to the generator editor, whose validation then failed ("safety turbo controller
 can only be used with constraints") and was logged twice on every such load. The
@@ -13,6 +14,9 @@ Run from the repo root:
     pixi run python tests/quiet_template_load_gui_test.py
 """
 TEMPLATE = "tuning_templates/development/01_Linac_RIL_tuning_Pacsys.yaml"
+# A MOBO template (badger-1.6.0-mobo-no-turbo-warning.patch): Badger's filter drops
+# turbo_controller for mobo, and loading it warned six times that the field was missing.
+MOBO = "tuning_templates/development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml"
 
 
 def stop_workers():
@@ -60,12 +64,14 @@ def main():
 
     QMessageBox.critical = QMessageBox.warning = staticmethod(fail)
 
-    errors = []
+    errors, turbo_warnings = [], []
 
     class Errors(logging.Handler):
         def emit(self, record):
             if record.levelno >= logging.ERROR:
                 errors.append(record.getMessage())
+            elif record.levelno >= logging.WARNING and "turbo_controller" in record.getMessage():
+                turbo_warnings.append(record.getMessage())
 
     logging.getLogger().addHandler(Errors())
 
@@ -84,7 +90,16 @@ def main():
         assert type(tc).__name__ == "SafetyTurboController", tc
         assert sorted(routine.vocs.constraint_names) == wanted, routine.vocs.constraint_names
         assert not fb.writes
-        return window
+        # A fresh window, as an operator opens it. (Switching to MOBO from an EI template in
+        # the same window logs a transient ERROR, a separate issue: TODO.md.)
+        mobo_window = window_cls()
+        mobo_editor = mobo_window.home_page.routine_editor
+        errors.clear()
+        turbo_warnings.clear()
+        mobo_editor.load_template_yaml(False, template_path=MOBO)
+        assert not errors and not turbo_warnings, (errors, turbo_warnings)
+        assert mobo_editor._compose_routine().generator.name == "mobo"
+        return window, mobo_window
 
     try:
         windows = [check(BadgerMiniWindow), check(BadgerMainWindow)]  # noqa: F841 keep alive

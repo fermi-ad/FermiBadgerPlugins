@@ -549,6 +549,14 @@ exists and what it would touch.
     environment's)? What if a device has no alarm, or the limits are nominal/
     tolerance rather than min/max? Is a typed center kept in a saved template?
 
+- [ ] **Switching to a MOBO template from an EI one logs an ERROR** (found 2026-11-18):
+  loading `development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml` in a window that
+  already holds an EI template logs "this generator does not support single objective
+  optimization" once; a fresh window logs nothing. Likely the generator switches to mobo
+  while the old one-objective VOCS is still in the editor (cf. the quiet-template-load
+  patch, which fixed the same ordering for the safety TuRBO). Harmless so far; untested
+  whether the composed routine is affected.
+
 - [ ] **Plots-only view in `-mini`** (idea 2026-11-17): an option to collapse the
   settings (the Tuning and History tabs on the left) into a sidebar, open the window
   much larger, and show just the plots, e.g. for watching a run on a large screen.

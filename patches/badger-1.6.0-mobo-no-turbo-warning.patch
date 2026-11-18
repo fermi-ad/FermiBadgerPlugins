@@ -1,0 +1,14 @@
+--- a/badger/gui/components/pydantic_editor.py	2026-11-18 15:18:09
++++ b/badger/gui/components/pydantic_editor.py	2026-11-18 15:18:09
+@@ -1303,6 +1303,11 @@
+     def initialize_special_field(self, defaults: dict[str, Any], field: str) -> None:
+         widget_items = self.findItems(field, Qt.MatchFlag.MatchExactly)
+ 
++        if len(widget_items) == 0 and field not in defaults:
++            # Left out on purpose (filter_generator_config drops turbo_controller for
++            # mobo, which does not use one): nothing to set up, nothing to warn about.
++            logger.debug(f"Generator has no {field} in its settings; skipping it.")
++            return
+         if len(widget_items) == 0:
+             logger.warning(
+                 f"Generator has {field} set but no compatible {field} item exists in tree. Item has likely been filtered out from not being included in defaults when setting parameters."
