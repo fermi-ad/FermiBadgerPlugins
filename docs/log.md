@@ -1867,3 +1867,14 @@ Fixes (main):
   the same window logs one transient ERROR ("does not support single objective
   optimization"); a fresh window logs nothing.
 - gmpsai2 needs `git pull && pixi run setup -- --yes` (a new patch).
+- The user: spurious errors undermine confidence; fix the switching ERROR, likely both
+  ways. Reproduced: EI -> MOBO ("does not support single objective optimization") and
+  MOBO -> EI ("multi-objective"), once each, both GUIs. Path: `load_template_yaml` ->
+  `set_options_from_template` sets the algorithm combo box -> `select_generator` ->
+  `set_params_from_generator(..., vocs=<previous template's>)` -> `validate()`. New patch
+  `badger-1.6.0-quiet-generator-switch.patch`: no validation in `select_generator` while
+  `hold_vocs` (set by the quiet-template-load patch around template application) is up.
+  After: 0 records both ways, the right generator each time; a hand switch to mobo with
+  one objective still reports its error (tested). Test-harness lesson: keep every
+  Badger window referenced, or Qt aborts on "QThread: Destroyed while thread is still
+  running".

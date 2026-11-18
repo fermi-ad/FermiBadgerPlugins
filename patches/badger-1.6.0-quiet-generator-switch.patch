@@ -1,0 +1,35 @@
+diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
+--- a/badger/gui/components/routine_page.py	2026-11-18 16:29:55
++++ b/badger/gui/components/routine_page.py	2026-11-18 16:29:55
+@@ -1064,7 +1064,13 @@
+             vocs, _ = self.env_box.compose_vocs()
+         except Exception:
+             vocs = None
+-        self.generator_box.edit.set_params_from_generator(name, filtered_config, vocs)
++        # While a template is applied, its own generator settings and VOCS follow at
++        # once; checking the new generator against the previous template's VOCS (one
++        # objective vs. mobo's two) only logged a spurious ERROR.
++        self.generator_box.edit.set_params_from_generator(
++            name, filtered_config, vocs,
++            validate=not getattr(self.env_box, "hold_vocs", False),
++        )
+ 
+         # Update the docs
+         self.window_docs.update_docs(name, "generator")
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-11-18 16:29:55
++++ b/badger/gui/mini/pages/routine_page.py	2026-11-18 16:29:55
+@@ -1089,8 +1089,12 @@
+             vocs, _ = self.env_box.compose_vocs()
+         except Exception:
+             vocs = None
++        # While a template is applied, its own generator settings and VOCS follow at
++        # once; checking the new generator against the previous template's VOCS (one
++        # objective vs. mobo's two) only logged a spurious ERROR.
+         self.env_box.edit_algo_params.set_params_from_generator(
+-            name, filtered_config, vocs
++            name, filtered_config, vocs,
++            validate=not getattr(self.env_box, "hold_vocs", False),
+         )
+ 
+         # Update the docs

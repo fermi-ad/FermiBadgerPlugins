@@ -135,6 +135,8 @@ print(h.hexdigest())" "$REPO/patches")"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-docs-back-button.patch"
         # diffed against the tree after all the pydantic_editor.py patches above
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-mobo-no-turbo-warning.patch"
+        # diffed against the tree after all the routine_page.py patches above
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-quiet-generator-switch.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
         # must come after turbo-serialization: diffed against that tree

@@ -1,6 +1,9 @@
 """Offscreen check of badger-1.6.0-quiet-template-load.patch, in both GUIs: loading
 a template with a safety TuRBO controller (a RIL template) logs no ERROR, and a MOBO
-template logs no turbo_controller WARNING. Before,
+template logs no turbo_controller WARNING. Switching between the two templates in one
+window, either way, logs nothing either (badger-1.6.0-quiet-generator-switch.patch:
+the generator was checked against the previous template's VOCS); switching the
+algorithm by hand to one the objectives cannot use still reports the error. Before,
 filling the objectives table sent a partial VOCS (objectives, no constraints yet)
 to the generator editor, whose validation then failed ("safety turbo controller
 can only be used with constraints") and was logged twice on every such load. The
@@ -99,6 +102,18 @@ def main():
         mobo_editor.load_template_yaml(False, template_path=MOBO)
         assert not errors and not turbo_warnings, (errors, turbo_warnings)
         assert mobo_editor._compose_routine().generator.name == "mobo"
+        # Switch templates in one window, both ways: nothing logged, right generator.
+        for path, name in ((TEMPLATE, "expected_improvement"), (MOBO, "mobo")):
+            errors.clear()
+            mobo_editor.load_template_yaml(False, template_path=path)
+            assert not errors, (path, errors)
+            assert mobo_editor._compose_routine().generator.name == name, path
+        # By hand, mobo with this template's one objective is still reported.
+        mobo_editor.load_template_yaml(False, template_path=TEMPLATE)
+        algo = getattr(mobo_editor.env_box, "algo_cb", None) or mobo_editor.generator_box.cb
+        errors.clear()
+        algo.setCurrentIndex(mobo_editor.generators.index("mobo"))
+        assert any("single objective" in e for e in errors), errors
         return window, mobo_window
 
     try:
