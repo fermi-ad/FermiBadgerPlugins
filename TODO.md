@@ -453,14 +453,14 @@ exists and what it would touch.
   observables, which fits a useless GP to each; environments should instead return
   `<name>_var` beside each requested outcome (an exception to "only what was asked for";
   update the developer guide and archetype).
-  - [ ] Calibration study first (offline mock-up, `scripts/heteroskd_calibration.py`):
-    heteroskedastic vs standard GP; noise scenarios constant, proportional, bump, step,
-    and non-Gaussian (Student-t 3 dof, lognormal, rare spikes); variance from N = 2, 3, 5,
-    10, 20 draws; 20 and 50 points. Measures: 68 %/95 % interval coverage of true values
-    and of fresh measurements; reliability of P(constraint satisfied), latent and
-    measured. Also the noise GP's learned length scale vs N (one quick fit, N = 5, 30
-    points: the noise GP's length scale sat at its 0.025-of-range floor with log-variance
-    noise 2.9, i.e. it was not smoothing a strong linear trend; one seed, unexplained).
+  - [x] Calibration study (2026-11-18; `scripts/heteroskd_calibration.py`, findings in
+    `docs/heteroskedastic-noise-model.md`): the heteroskedastic GP halves the overall
+    probability error and maps the noise well from N >= 5, but at a 5 % tolerance's edge
+    it overshoots in 13-26 % of fits for Gaussian noise and 32-70 % for skewed, spiky,
+    or heavy-tailed noise (the standard GP is more conservative there).
+  - [ ] Before trusting low risk tolerances: try a safety factor, recalibration from the
+    run's residuals, or a heavier-tailed/transformed noise model; extend the study to
+    two or more variables.
   - [ ] Machine check: the data logger's event-by-event readings for a few RIL
     observables (`L:TK4RAD`, `L:D7TOR`, `L:TUNRAD`): is their noise close to Gaussian?
   - [ ] Then: `_var` from `average_events` (s^2/N) in `BasicPacsysInterface`; computed

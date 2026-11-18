@@ -1904,3 +1904,20 @@ Fixes (main):
   both GUIs: headers, default 100 %, 5 % -> 0.05, 0 -> 0.01 %, a template's values,
   and a reopened run.
 - The minimode "?" page and the developer guide's template keys updated.
+
+## 2026-11-18 — heteroskedastic noise: how Xopt does it, and a calibration study
+
+- Found (user's questions): Xopt fits the heteroskedastic GP for any outcome whose data
+  row has `<outcome>_var`; Badger's evaluator keeps every key `get_observables` returns,
+  so nothing needs listing in the VOCS (verified with Xopt). Our testbed's VOCS-listed
+  `_var` observables each got a useless GP. The suffix means variance; only outcomes
+  have noise. The variances must come from the environment (repeated reads); the model
+  only smooths them. Noise is assumed Gaussian. Noise GP: botorch's default RBF kernel,
+  dim-scaled LogNormal length-scale prior, floor 0.025 of the window, on log-variance;
+  written up in `docs/heteroskedastic-noise-model.md` (and a memory pointer).
+- `scripts/heteroskd_calibration.py` (2,800 fits, 380 s): heteroskedastic GP halves the
+  overall calibration error and maps noise well from N >= 5; at a 5 % risk tolerance's
+  edge it overshoots in 13-26 % of fits for Gaussian noise and 32-70 % for non-Gaussian
+  noise; the standard GP is more conservative there. Mitigations not yet tried.
+- TODO: front-end noise statistics as a central resource (pacsys, device DB); the
+  machine noise-shape check (data logger).
