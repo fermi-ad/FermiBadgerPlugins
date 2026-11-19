@@ -461,9 +461,14 @@ exists and what it would touch.
   - [ ] Before trusting low risk tolerances: try a safety factor, recalibration from the
     run's residuals, or a heavier-tailed/transformed noise model; extend the study to
     two or more variables.
-  - [ ] Machine check: the data logger's event-by-event readings for a few RIL
-    observables (`L:TK4RAD`, `L:D7TOR`, `L:TUNRAD`): is their noise close to Gaussian?
-  - [ ] Then: `_var` from `average_events` (s^2/N) in `BasicPacsysInterface`; computed
+  - [x] Machine check, first look (2026-11-18; `scripts/logger_noise.py`, findings in
+    `docs/logger-read-noise.md`): Linac noise 0.5-0.6 % of level; cores near Gaussian,
+    4-sigma tails 1.1-6.5 times Gaussian; B:BOOEFF skewed low; consecutive L:D7TOR
+    pulses correlated, so s^2/N understates an N-pulse mean's variance by 1.6-2.1x (R).
+  - [ ] Wider levels (other periods), per-cycle Booster reads (`@e,XX`), and
+    device-to-device correlation (loss monitors vs L:D7TOR, pulse by pulse).
+  - [ ] Then: `_var` from `average_events`, corrected for correlated events (batch
+    means, or s^2/N times a per-device R), in `BasicPacsysInterface`; computed
     observables per event, then mean and variance; a risk-tolerance option on the
     measured value (predicted noise included), likely for Stopping constraints.
 - [ ] **Front-end noise statistics as a central resource** (user, 2026-11-18): check (or

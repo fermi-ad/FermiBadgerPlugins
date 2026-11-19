@@ -83,7 +83,9 @@ for its noise map and overall calibration (with N >= 5), but a stated risk toler
 not guaranteed at the tail, especially if the machine's noise is skewed or spiky.
 Options: a safety factor on the tolerance, recalibrating the predicted probabilities
 from the run's own residuals, or a heavier-tailed or transformed noise model. The
-machine-data check (is the noise Gaussian?) decides how much this matters.
+machine-data check (`docs/logger-read-noise.md`, first look): cores near Gaussian but
+heavier tails, B:BOOEFF skewed low, and correlated pulses, so `s^2/N` understates the
+variance of an N-pulse mean by about 1.6-2x for L:D7TOR.
 
 ## Seen once, explained by the study
 
