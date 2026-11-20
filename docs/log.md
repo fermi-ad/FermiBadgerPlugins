@@ -1947,3 +1947,9 @@ Fixes (main):
   tooltip). `tests/noise_shapes_test.py`: at a 1 % tolerance with a skewed tail, the
   true violation chance is 3.7 % assuming Gaussian noise, 1.1 % with the shape; the
   robust GP's error at a 150-sigma outlier 0.001 vs 0.34. GUI test extended.
+\n
+- Full suite 40 of 40; pushed d0a8b73. gmpsai2 still needs `git pull && pixi run setup
+  -- --yes`.
+- Commit messages from here on end with a bracket tag (`[ClaudeCode:Opus5.5]`) in place
+  of the `Co-Authored-By:`/`Claude-Session:` trailers (user's standing preference,
+  confirmed 2026-11-19; pushed history unchanged).

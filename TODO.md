@@ -136,6 +136,8 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
+- [ ] **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the
+  last pull there (51aebab): risk tolerance (f5ad771) and noise shapes (d0a8b73).
 - [x] (user reported `pixi install` done, 2026-11-17) **On gmpsai2 after the Acsys retirement (2026-11-04):** `git pull && pixi install
   && pixi run setup -- --yes` (the lock changed: acsys gone; grpcio 1.84.0→1.85.1,
   anyio, cython, pyasn1 minor bumps). Then one read-only template load to exercise
@@ -564,6 +566,11 @@ exists and what it would touch.
     trying first on any future region. Also found: the earlier RIL reflection's
     claim that `B:BOOEFF` has no logger data was wrong for that same reason --
     not yet corrected in `docs/reflections/ril/`.
+  - [ ] 2026-11-19: bare DRFs return every device the RIL probe had listed as
+    missing, all RIL `.SETTING`s included, so its "settings are not logged" is wrong
+    too. `tasks/ril.yaml` (ProjectDT_FNAL) updated to match, not committed there.
+    Next: commit it there (user's say), rerun the RIL reflection with the
+    settings-based window, and correct `docs/reflections/ril/`.
 
 - [ ] **RF capture tuning draft template** (idea 2026-11-11, after the RIL and
   Booster-injection reflections). Booster RF-capture tuning (transition frequency,
