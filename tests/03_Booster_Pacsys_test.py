@@ -1,10 +1,10 @@
-"""Offline check of 03_Booster_InjectionTuning_Pacsys, on pacsys's FakeBackend with 0.1%
+"""Offline check of 03_Booster_Pacsys, on pacsys's FakeBackend with 0.1%
 noise on its readings (tests/noisy_fake.py; settings stay exact): nothing reaches ACNET.
 When you change or delete a feature in the environment, change or delete its lines here;
 a failure names the line.
 
 Run from the repo root:
-    pixi run python tests/03_Booster_InjectionTuning_Pacsys_test.py
+    pixi run python tests/03_Booster_Pacsys_test.py
 """
 import contextlib
 import importlib
@@ -15,7 +15,7 @@ sys.path.insert(0, 'plugins')
 from noisy_fake import NoisyFakeBackend  # noqa: E402  readings carry 0.1% noise
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
 
-NAME = '03_Booster_InjectionTuning_Pacsys'
+NAME = '03_Booster_Pacsys'
 MOD = importlib.import_module(f'environments.{NAME}')
 E = MOD.Environment
 
@@ -27,6 +27,18 @@ def quiet(fn, *a, **kw):
 
 env = E(interface=Interface())
 assert env.settings_role == 'nosettings'
+
+# --- the device table (devices.csv): every variable has a range; the earlier injection
+# draft's devices are all here; L:C7PHAS is periodic; B:VIMIN writes are off
+assert len(E.variables) > 400 and all(lo < hi for lo, hi in E.variables.values())
+for dev in ('L:C7PHAS', 'B:VIMIN', 'B:VIMAX', 'B:MH1', 'B:MH2', 'B:MV1', 'B:MV2'):
+    assert dev in E.variables, dev
+for dev in ('B:BOOEFF', 'G:LINEFF', 'WorstLossNorm', *MOD._WORST_LOSS_DEVICES):
+    assert dev in E.observables, dev
+assert not set(E.variables) & set(E.observables)
+assert env.periodic_devices.get('L:C7PHAS') == 360.0
+assert env.allow_auto_written == []
+assert {'B:VIMIN', 'L:C7PHAS'} <= MOD._AUTO_WRITTEN and 'B:MH1' not in MOD._AUTO_WRITTEN
 fb = env.interface._backend_override = NoisyFakeBackend()
 env.interface._timeout = 5.0
 object.__setattr__(env, 'settings_role', 'testing')  # a writing role, for the fake only
@@ -39,10 +51,20 @@ for dev, val in settings.items():
 got = quiet(env.get_variables, list(settings))
 assert got == settings, got  # settings: exact
 
-# --- set_variables: plain write of every variable
-quiet(env.set_variables, {'B:VIMIN': 104.0, 'B:MH1': 352.0})
+# --- set_variables: a setting another loop also writes (B:VIMIN, L:C7PHAS) is refused
+# unless allow_auto_written names it, and nothing of that request is written
+try:
+    quiet(env.set_variables, {'B:VIMIN': 104.0, 'L:C7PHAS': 161.0, 'B:MH1': 352.0})
+    raise AssertionError('auto-written settings were not refused')
+except RuntimeError as error:
+    assert 'B:VIMIN' in str(error) and 'L:C7PHAS' in str(error), error
+assert not fb.writes, fb.writes
+quiet(env.set_variables, {'B:MH1': 352.0})
 w = fb.get_written_value
-assert w('B:VIMIN.SETTING') == 104.0 and w('B:MH1.SETTING') == 352.0
+assert w('B:MH1.SETTING') == 352.0
+object.__setattr__(env, 'allow_auto_written', ['B:VIMIN'])  # the hardware owner's sign-off
+quiet(env.set_variables, {'B:VIMIN': 104.0})
+assert w('B:VIMIN.SETTING') == 104.0
 
 # --- get_observables: readings plus the computed WorstLossNorm (max over the
 # calibrated devices of (reading - baseline) / scale); only requested names return.

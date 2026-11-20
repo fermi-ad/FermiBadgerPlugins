@@ -57,7 +57,8 @@ for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '**', '*.yam
             region = '' if tier == 'simulation' else f'{r1}_{r2}_'
             if tier == 'tuning_templates':
                 suffix = ''
-            if not re.fullmatch(rf'{region}(.+_)?{core}{suffix}\.yaml', fname):
+            pattern = rf'{region}(.+_)?{core}{suffix}' if core else rf'{region}.+{suffix}'  # region-wide env
+            if not re.fullmatch(rf'{pattern}\.yaml', fname):
                 # Advisory only: readability beats the convention when the full form is clunky.
                 print(f'warn  {fname}: name does not follow {region}<task>_{core}{suffix}.yaml')
         print(f'ok    {fname}  ({len(vocs.variables)} vars, {len(vocs.objectives)} obj)')

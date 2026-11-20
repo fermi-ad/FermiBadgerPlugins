@@ -21,7 +21,7 @@ import yaml
 ARCHETYPE = 'ZZ_Archetype_Pacsys'
 ARCHETYPE_TEST = Path('tests/archetype_test.py')
 REGIONS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '99']  # README naming table
-NAME = re.compile(r'(\d\d)_[A-Za-z0-9]+_\w+_Pacsys')
+NAME = re.compile(r'(\d\d)_[A-Za-z0-9]+(?:_\w+)?_Pacsys')  # task part optional: 03_Booster_Pacsys
 ENVS = Path('plugins/environments')
 TEMPLATES = Path('tuning_templates/development')
 

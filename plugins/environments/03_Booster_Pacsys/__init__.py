@@ -1,19 +1,34 @@
-# Booster injection tuning. Devices and ranges confirmed 2026-11-11 by reading ACNET
-# parameter-page and strip-chart screenshots attached to Booster elog entries (DevDB is
-# still unreachable from the dev Mac); WorstLoss baseline/scale confirmed from the
-# tuning-reflection pull over ~935 historical injection-tuning sessions
-# (docs/reflections/booster_injection/). Everything here is a DRAFT: unconfirmed until
-# the hardware owner signs off, per this repo's convention.
+# Booster: every device a Booster tuning template may use (variables, objectives,
+# constraints, observables), read from devices.csv beside this file. That table is built by
+# scripts/make_booster_devices.py from the fermi-ad/ad-tools device inventory, 90 days of
+# data-logger settings, and 24 months of Booster logbook entries (docs/booster-environment.md
+# has the sources and rules). Everything here is a DRAFT: devices and ranges are unconfirmed
+# until the hardware owners sign off, per this repo's convention.
 #
-# SAFETY: B:VIMIN runs its own background autotune (B:VIMLUP2 heartbeat, B:VIMERR,
-# B:VIMMOD, B:VIMDIAG, targets B:VIMTGT1-3/A-C). It is listed as a variable here on the
-# user's instruction (2026-11-11), but do NOT set a settings_role other than
-# 'nosettings' on this environment until the hardware owner confirms how Badger writes
-# to B:VIMIN interact with that autotune loop -- the two control loops could fight.
-from typing import Dict
+# SAFETY: some settings are also written by another loop: B:VIMIN by its autotune
+# (B:VIMLUP2 heartbeat, targets B:VIMTGT1-3), and every setting whose logged value changes
+# on more than 10 % of its readings (L:C7PHAS on nearly every pulse; the 400 MeV trims,
+# extraction kickers, gamma-t, ...): devices.csv column auto_written. set_variables
+# refuses to write these unless allow_auto_written names them, which must wait for the
+# hardware owner to confirm that Badger and that loop will not fight. The environment
+# reads only (settings_role 'nosettings') until a template names a role.
+import csv
+import os
+from typing import Dict, List
 
 from badger import environment
 from badger.errors import BadgerNoInterfaceError
+
+_DEVICES = os.path.join(os.path.dirname(__file__), "devices.csv")
+with open(_DEVICES, newline="") as _f:
+    _ROWS = list(csv.DictReader(_f))
+# variables: hard limits [lo, hi]; ones without a usable range are left out (see the table)
+_VARIABLES = {r["device"]: [float(r["lo"]), float(r["hi"])] for r in _ROWS
+              if r["role"] == "variable" and r["range_source"] in ("logged", "db")}
+_OBSERVABLES = [r["device"] for r in _ROWS if r["role"] == "observable"]
+_PERIODIC = {r["device"]: float(r["periodic"]) for r in _ROWS if r.get("periodic")}
+_AUTO_WRITTEN = {r["device"] for r in _ROWS if r.get("auto_written") == "True"}
+
 
 # Per-device (baseline, scale) for the normalized "worst loss" objective: the elog shows
 # operators chasing whichever ring sector is spiking that day (S01, S04, S06, S08, S13,
@@ -57,34 +72,22 @@ _WORST_LOSS_DEVICES = (
 
 
 class Environment(environment.Environment):
-    name = "03_Booster_InjectionTuning_Pacsys"
+    name = "03_Booster_Pacsys"
     # Hard limits are the live readback bands actually seen in the screenshots, NOT a
     # hardware owner's sign-off -- see the module docstring.
-    variables = {
-        "L:C7PHAS": [140.0, 180.0],   # Linac accel.-cavity RF phase, DEG; shared Linac/Booster boundary device
-        "B:VIMIN": [95.0, 110.0],     # GMPS injection-porch current, AMPS -- SAFETY: see module docstring
-        "B:VIMAX": [900.0, 1000.0],   # GMPS extraction-flattop current, AMPS
-        "B:MH1": [330.0, 380.0],      # Horizontal Bend #1 PS, AMPS
-        "B:MH2": [670.0, 710.0],      # 400 MeV Horz Bend PS, AMPS (seen alarmed at 692/691 in one screenshot)
-        "B:MV1": [360.0, 400.0],      # Vertical Bend #1 PS, AMPS
-        "B:MV2": [350.0, 390.0],      # Vertical Bend #2 PS, AMPS
-    }
-    observables = [
-        "B:BOOEFF",   # floor constraint in the template, not the objective -- see its description
-        "G:LINEFF",
-        *_WORST_LOSS_DEVICES,
-        "WorstLossNorm",
-    ]
+    variables = _VARIABLES
+    observables = _OBSERVABLES
 
     # --- Parameters ---------------------------------------------------------------
-    settings_role: str = "nosettings"
+    settings_role: str = 'nosettings'
     debug: bool = False
     # Confirmed 2026-11-11: a bare DRF (no @event) returns logger/live data for every
     # device above; explicit periodic/clock-event qualifiers (@p,15000, @e,52, ...)
     # returned nothing for the BLMs and B:BOOEFF here, unlike the Linac/RIL environment.
     sample_events: Dict[str, str] = {}
     average_events: Dict[str, int] = {"default": 1}
-    periodic_devices: Dict[str, float] = {}
+    periodic_devices: Dict[str, float] = dict(_PERIODIC)
+    allow_auto_written: List[str] = []  # SAFETY: see the module comment
 
     def get_variables(self, variable_names: list[str]) -> dict:
         if not self.interface:
@@ -94,6 +97,12 @@ class Environment(environment.Environment):
     def set_variables(self, settable_devices: dict[str, float]):
         if not self.interface:
             raise BadgerNoInterfaceError
+        refused = sorted((set(settable_devices) & _AUTO_WRITTEN) - set(self.allow_auto_written))
+        if refused and self.settings_role != "nosettings":
+            # RuntimeError, not BadgerError: that one opens a Qt dialog, which a run worker lacks
+            raise RuntimeError(f"{', '.join(refused)}: also written by another loop (autotune "
+                               "or regulation); Badger may not write them until "
+                               "allow_auto_written names them (the hardware owner's sign-off).")
         self.interface.set_values(
             settable_devices, settings_role=self.settings_role,
             periods=self.periodic_devices, debug=self.debug,

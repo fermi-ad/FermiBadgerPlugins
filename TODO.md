@@ -241,14 +241,25 @@ it to paste in.
 
 ## Simulation speed and new environments (2026-11)
 
-- [ ] **Booster injection (`03_Booster_InjectionTuning_Pacsys`, read only):** ask the
-  `B:VIMIN` hardware owner how Badger writes interact with its own autotune loop
-  (`B:VIMLUP2` heartbeat, `B:VIMTGT*` targets) before any writing role.
+- [x] **Booster-wide environment `03_Booster_Pacsys`** (2026-11-19,
+  `docs/booster-environment.md`): 440 settings (402 with ranges: 94 from 90 days of
+  logged settings, 308 from database limits), 503 readings, from ad-tools, the logbook,
+  and the data logger; replaces the injection draft (deleted; its template re-pointed).
+- [ ] **Booster, for the hardware owners:** how Badger writes interact with the loops
+  that also write the 50 `auto_written` settings (`B:VIMIN` autotune, `L:C7PHAS` on
+  nearly every pulse, 400 MeV trims, extraction kickers, gamma-t, ...): each stays
+  refused until named in `allow_auto_written`. Also: what the ring magnets' base-device
+  settings do; `L:C7PHAS` vs `L:L7PADJ`; `L:C7PHAS`'s second state near 316 degrees.
+- [ ] **Booster noise profiles per cycle type:** tag logged readings by cycle
+  (`scripts/event_tag.py`; validated on `B:BLMS13`, not on `B:CHG0`), then profile the
+  constraint candidates (BLMs, `B:BEFFnn`).
+- [ ] **Booster templates for the other tasks:** orbit, RF capture and transition,
+  extraction, notching, tune and chromaticity, against `03_Booster_Pacsys`.
 - [x] **RIL loss-objective template promoted to operations** (2026-11-17, the user's
   decision): `01_Linac_LossObjective_RIL_tuning.yaml` (minimize `L:TK4RAD`, `L:D7TOR`
   > 20 floor), beside the original `01_Linac_RIL_tuning.yaml`.
 - [ ] **Booster draft template:** review `development/03_Booster_InjectionTuning_Pacsys.yaml`
-  with operators before promoting it.
+  (now against `03_Booster_Pacsys`) with operators before promoting it.
 - [ ] **RIL MEBT trim bulk supplies: confirm with the machine experts, then regroup**
   (2026-11-17). The user reports the upstream and downstream MEBT quads are on separate
   power supplies. Today `BulkPS_Limit` groups the trims by quad number, mixing upstream
@@ -577,10 +588,8 @@ exists and what it would touch.
   DC1 offset) is the third recurring named tuning task found in the elog (4
   sessions in the last 30 days alone), often done in the same shift as Booster
   injection tuning but with a distinct objective (bucket capture efficiency, not
-  orbit/losses). The Booster environment (region `03`) landed 2026-11-12 for
-  injection tuning (`03_Booster_InjectionTuning_Pacsys`); run `tuning-reflection`
-  on RF capture next -- likely shares most of its devices and variable ranges,
-  so a second environment vs. a second template against this one is still open.
+  orbit/losses). Settled 2026-11-19: a template against the Booster-wide
+  `03_Booster_Pacsys`, which holds the RF capture and transition devices.
 
 - [ ] **Variable ranges from alarm limits, or around a typed center** (idea 2026-11-17).
   Two new ways to set a variable's range, beside today's `limit_option_idx` 0

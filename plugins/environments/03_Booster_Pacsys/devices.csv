@@ -1,0 +1,944 @@
+device,role,family,description,periodic,range_source,notes,lo,hi,logged_p1,logged_p50,logged_p99,change_days,logged_days,change_fraction,logbook_knob,logbook_watched,auto_written
+B:APG,variable,DB.RF_ANODE,Anode Pgm 473 Curve,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:APGF,variable,DB.RF_ANODE,Anode Pgm Ref & DAC,,db,,-10.0,9.99969,,,,,,,0,0,False
+B:APGTS,variable,DB.RF_ANODE,Anode Pgm 473 Curve,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:APGW,variable,DB.RF_ANODE,Anode Program (west),,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:BEX12I,variable,DB.EXT_BUMP,BEX 12 I old HTMH22 053,,logged,,-0.48776,0.232552,-0.367708,0.0989583,0.1125,90.0,90.0,0.2961,1,0,True
+B:BEX2,variable,DB.EXT_BUMP,BEX2 473 Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:BEX3,variable,DB.EXT_BUMP,BEX3 473 Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:BEX4,variable,DB.EXT_BUMP,BEX4 473 Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:BFLAT,variable,logbook knob,"Magnetic field flat at injection, A",,db,,-40.0,40.0,,,,,,,18,0,False
+B:CHOP,variable,logbook knob,"400 MeV chopper PS, kV",,logged,,-13.9825,69.4175,-0.0825,48.0775,55.5175,90.0,90.0,0.6664,4,0,True
+B:CNOTCH,variable,DB.NOTCH,Cog notch trigger,,logged,,2340.24,2435.76,2388.0,2388.0,2388.0,2.0,90.0,0.0,0,0,False
+B:CRVDLY,variable,logbook knob,"LLRF frequency curve delay, us",,logged,,90.5,117.5,95.0,113.0,113.0,26.0,90.0,0.0,14,0,False
+B:DC1OFF,variable,DB.RF_PARAPHASE,Base paraphase offset,,logged,,-1.33612,6.88054,0.0333218,4.13332,5.5111,21.0,90.0,0.0,9,0,False
+B:DC2OFF,variable,DB.RF_PARAPHASE,Base paraphase offset,,logged,,-11.4445,3.22221,-9.00001,-9.00001,0.777766,6.0,90.0,0.0,0,0,False
+B:GMTV,variable,BOOSTER(commented).GAMMA_T,GAMMA-T PS CAP BANK VOLT,,logged,,0.0684375,0.915937,0.209687,0.229687,0.774687,90.0,90.0,0.8255,0,0,True
+B:GMTVCT,variable,BOOSTER(commented).GAMMA_T,Gamma-T Charge Trigger,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:HL1,variable,BOOSTER.CORRECTORS_HL,HL1 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL10,variable,BOOSTER.CORRECTORS_HL,HL10 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL11,variable,BOOSTER.CORRECTORS_HL,HL11 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HL12,variable,BOOSTER.CORRECTORS_HL,HL12 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL13,variable,BOOSTER.CORRECTORS_HL,HL13 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HL14,variable,BOOSTER.CORRECTORS_HL,HL14 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL15,variable,BOOSTER.CORRECTORS_HL,HL15 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:HL16,variable,BOOSTER.CORRECTORS_HL,HL16 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL17,variable,BOOSTER.CORRECTORS_HL,HL17 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HL18,variable,BOOSTER.CORRECTORS_HL,HL18 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL19,variable,BOOSTER.CORRECTORS_HL,HL19 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HL2,variable,BOOSTER.CORRECTORS_HL,HL2 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL20,variable,BOOSTER.CORRECTORS_HL,HL20 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL21,variable,BOOSTER.CORRECTORS_HL,HL21 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL22,variable,BOOSTER.CORRECTORS_HL,HL22 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,3,0,False
+B:HL23,variable,BOOSTER.CORRECTORS_HL,HL23 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL24,variable,BOOSTER.CORRECTORS_HL,HL24 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL3,variable,BOOSTER.CORRECTORS_HL,HL3 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL4,variable,BOOSTER.CORRECTORS_HL,HL4 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HL5,variable,BOOSTER.CORRECTORS_HL,HL5 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:HL6,variable,BOOSTER.CORRECTORS_HL,HL6 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,3,0,False
+B:HL7,variable,BOOSTER.CORRECTORS_HL,HL7 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,3,0,False
+B:HL8,variable,BOOSTER.CORRECTORS_HL,HL8 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:HL9,variable,BOOSTER.CORRECTORS_HL,HL9 Horz Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS1,variable,BOOSTER.CORRECTORS_HS,HS1 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS10,variable,BOOSTER.CORRECTORS_HS,HS10 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS11,variable,BOOSTER.CORRECTORS_HS,HS11 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS12,variable,BOOSTER.CORRECTORS_HS,HS12 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,5,0,False
+B:HS13,variable,BOOSTER.CORRECTORS_HS,HS13 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS14,variable,BOOSTER.CORRECTORS_HS,HS14 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS15,variable,BOOSTER.CORRECTORS_HS,HS15 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HS16,variable,BOOSTER.CORRECTORS_HS,HS16 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,6,0,False
+B:HS17,variable,BOOSTER.CORRECTORS_HS,HS17 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS18,variable,BOOSTER.CORRECTORS_HS,HS18 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,3,0,False
+B:HS19,variable,BOOSTER.CORRECTORS_HS,HS19 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:HS2,variable,BOOSTER.CORRECTORS_HS,HS2 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:HS20,variable,BOOSTER.CORRECTORS_HS,HS20 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HS21,variable,BOOSTER.CORRECTORS_HS,HS21 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HS22,variable,BOOSTER.CORRECTORS_HS,HS22 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HS23,variable,BOOSTER.CORRECTORS_HS,HS23 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS24,variable,BOOSTER.CORRECTORS_HS,HS24 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS3,variable,BOOSTER.CORRECTORS_HS,HS3 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HS4,variable,BOOSTER.CORRECTORS_HS,HS4 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,3,0,False
+B:HS5,variable,BOOSTER.CORRECTORS_HS,HS5 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS6,variable,BOOSTER.CORRECTORS_HS,HS6 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HS7,variable,BOOSTER.CORRECTORS_HS,HS7 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HS8,variable,BOOSTER.CORRECTORS_HS,HS8 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:HS9,variable,BOOSTER.CORRECTORS_HS,HS9 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:HTDEB,variable,LTB.TRIMS_H,400MeV Horz Trim US DEB,,logged,,-5.45875,1.10938,-4.36406,-4.35906,0.0146875,90.0,90.0,0.7159,0,0,True
+B:HTINJ1,variable,LTB.TRIMS_H,400MeV Horz Trim DS Q17,,logged,,-2.18719,10.2397,0.0096875,8.16344,8.79719,90.0,90.0,0.6847,0,0,True
+B:HTINJ2,variable,LTB.TRIMS_H,400MeV Horz Trim US ORBP,,logged,,-1.90656,9.53094,-0.0003125,5.50969,7.62469,90.0,90.0,0.7095,0,0,True
+B:HTMH2,variable,LTB.HTMH2,HTMH2 473 Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:HTMV2,variable,LTB.TRIMS_H,400MeV Vert Trim US MV2,,logged,,0.0209375,0.0434375,0.0246875,0.0309375,0.0396875,90.0,90.0,0.7057,0,0,True
+B:HTQ12,variable,LTB.TRIMS_H,400MeV Horz Trim DS Q12,,logged,,-0.0125,0.038125,-0.0040625,0.0009375,0.0296875,90.0,90.0,0.6685,0,0,True
+B:HTQ13,variable,LTB.TRIMS_H,400MeV Horz Trim US Q13,,logged,,-0.0153437,0.0221937,-0.0090875,0.0046875,0.0159375,90.0,90.0,0.7014,1,0,True
+B:HTQ3,variable,LTB.TRIMS_H,400MeV Horz Trim US Q3,,logged,,-0.361563,1.93344,0.0209375,1.54469,1.55094,90.0,90.0,0.7573,0,0,True
+B:HTQ4,variable,LTB.TRIMS_H,400MeV Horz Trim US Q4,,logged,,-0.0990625,0.710938,0.0359375,0.568438,0.575937,90.0,90.0,0.7611,0,0,True
+B:HTQ5,variable,LTB.TRIMS_H,400MeV Horz Trim US Q5,,logged,,-4.32969,0.879062,-3.46156,-3.45656,0.0109375,90.0,90.0,0.7779,0,0,True
+B:HTQ6,variable,LTB.TRIMS_H,400MeV Horz Trim DS Q6,,logged,,0.0059375,0.0434375,0.0121875,0.0284375,0.0371875,90.0,90.0,0.7555,0,0,True
+B:HTQ7,variable,LTB.TRIMS_H,400MeV Horz Trim US Q7,,logged,,-0.432188,2.23406,0.0121875,1.78094,1.78969,90.0,90.0,0.7333,0,0,True
+B:HTQ8,variable,LTB.TRIMS_H,400MeV Horz Trim DS Q8,,logged,,-1.015,4.91563,-0.0265625,0.0046875,3.92719,90.0,90.0,0.7681,1,0,True
+B:IBEX2,variable,DB.EXT_BUMP,Octupole PS (Old BEX PS),,logged,,-7.60104,10.2397,-3.4375,11.4,13.2167,90.0,90.0,0.9701,0,0,True
+B:IBEX3,variable,DB.EXT_BUMP,BEXBMP LONG 3 I(T),,logged,,-10.24,10.2397,-9.07083,5.66667,8.45,90.0,90.0,0.9819,0,0,True
+B:IBEX4,variable,DB.EXT_BUMP,BEXBMP LONG 4 I(T),,logged,,-10.24,9.61375,-9.7875,2.68333,5.7335,90.0,90.0,0.982,0,0,True
+B:INJFRQ,variable,logbook knob,"LLRF injection frequency, MHz",,logged,,37.1852,38.717,37.9444,37.9578,37.9578,27.0,90.0,0.0,21,0,False
+B:LAM,variable,LTB.BENDS_H,400 MeV lambertson PS,,logged,,409.486,429.314,417.9,420.7,420.9,13.0,90.0,0.0,0,1,False
+B:LPARLN,variable,DB.RF_PARAPHASE,Paraphase Length,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:LPARSL,variable,DB.RF_PARAPHASE,Paraphase Slope,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:LPARST,variable,DB.RF_PARAPHASE,Paraphase Start Time,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:LPHFEN,variable,DB.RF_PARAPHASE,Phase/Radial FB Enable,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:MH1,variable,LTB.BENDS_H,Horizontal Bend #1 PS,,logged,,342.671,362.879,349.7,351.45,355.85,71.0,90.0,0.0042,55,0,False
+B:MH2,variable,LTB.BENDS_H,400 MeV Horz Bend PS,,logged,,678.213,711.191,692.139,696.289,697.266,71.0,90.0,0.0038,54,0,False
+B:MKS04,variable,BOOSTER.MK04,L13 Ext Kicker PS 04,,logged,,0.0,3.89547,-0.0201563,3.10484,3.11234,90.0,90.0,0.5037,7,0,True
+B:MKS05,variable,BOOSTER.KICKERS,MI8 Ext Kicker PS 05,,logged,,0.0,3.76578,-0.000625,2.96813,3.0125,90.0,90.0,0.3755,1,0,True
+B:MKS06,variable,BOOSTER.KICKERS,MI8 Ext Kicker PS 06,,logged,,0.0,3.93531,-0.000625,3.14562,3.14813,90.0,90.0,0.2866,3,0,True
+B:MKS07,variable,BOOSTER.KICKERS,MI8 Ext Kicker PS 07,,logged,,0.0,4.0,-0.000625,3.23813,3.24313,90.0,90.0,0.3108,3,0,True
+B:MKS08,variable,BOOSTER.KICKERS,MI8 Ext Kicker PS 08,,logged,,0.0,4.0,-0.000625,3.23563,3.23813,90.0,90.0,0.0321,5,0,False
+B:MP02I,variable,DB.EXT_SEPTUM,MP02 PS Peak Current,,logged,,21560.1,22440.1,22000.1,22000.1,22000.1,3.0,90.0,0.0,0,0,False
+B:MP02T,variable,DB.EXT_SEPTUM,MP02 TRIGGER,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:MP03I,variable,DB.EXT_SEPTUM,MP03 PS Peak Current,,logged,,-6451.88,29999.1,30.0,25919.1,25957.5,90.0,90.0,0.2483,0,0,True
+B:MP03T,variable,DB.EXT_SEPTUM,MP03 TRIGGER,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:MV0,variable,LTB.BENDS_V,400 Mev Vertical Trim,,logged,,11.7649,12.2451,12.005,12.005,12.005,8.0,90.0,0.0,0,0,False
+B:MV1,variable,LTB.BENDS_V,Vertical Bend #1 PS,,logged,,365.035,386.971,372.552,375.863,379.454,70.0,90.0,0.0013,39,1,False
+B:MV2,variable,LTB.BENDS_V,Vertical Bend #2 PS,,logged,,354.276,375.928,361.587,365.543,368.617,71.0,90.0,0.0042,34,0,False
+B:N750DY,variable,logbook knob,"Q-switch fine delay, 26 ns each",,logged,,86.2,91.8,88.0,90.0,90.0,13.0,90.0,0.0,3,0,False
+B:N750WD,variable,DB.NOTCH,Width of 750 notcher,,db,,127.0,128.0,,,,,,,0,0,False
+B:OFFPBR,variable,DB.RF_PARAPHASE,Beam Rot OFF paraphase,,logged,,78.3956,81.5954,79.9955,79.9955,79.9955,3.0,90.0,0.0,0,0,False
+B:ORBCH0,variable,DB.INJ_ORBUMP,ORBMP CHG Trig0 $11,,db,,-2147.48,2147.48,,,,,,,0,0,False
+B:ORBCH1,variable,DB.INJ_ORBUMP,ORBMP CHG Trig1 $1E $1F,,db,,0.0,4294.97,,,,,,,0,0,False
+B:PARATC,variable,DB.RF_PARAPHASE,Boo Paraphase Table Ctrl,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:PBROFF,variable,DB.RF_PARAPHASE,Beam Rot off paraphase,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:PC1OFF,variable,DB.RF_PARAPHASE,Bseline offset paraphase,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:PC2OFF,variable,DB.RF_PARAPHASE,Post Trans off paraphase,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:PHERGN,variable,logbook knob,"LLRF phase error gain, 2^n",,logged,,138.25,178.75,145.0,160.0,172.0,21.0,90.0,0.0,7,0,False
+B:POTAIN,variable,logbook knob,"Anode pot A at injection, V",,logged,,-1.25,6.25,0.0,0.0,5.0,18.0,90.0,0.0,3,0,False
+B:Q10,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,42.532,44.268,43.4,43.4,43.4,3.0,90.0,0.0,0,0,False
+B:Q11,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,6.2818,6.5382,6.41,6.41,6.41,3.0,90.0,0.0,0,0,False
+B:Q12,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,8.2761,8.6139,8.445,8.445,8.445,2.0,90.0,0.0,0,0,False
+B:Q13,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,11.5762,12.0488,11.8125,11.8125,11.8125,13.0,90.0,0.0,0,0,False
+B:Q14,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,-0.0816,-0.0784,-0.08,-0.08,-0.08,2.0,90.0,0.0,0,0,False
+B:Q15,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,11.809,12.291,12.05,12.05,12.05,3.0,90.0,0.0,0,0,False
+B:Q16,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,18.2966,19.0434,18.67,18.67,18.67,4.0,90.0,0.0,3,11,False
+B:Q17,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,7.546,7.854,7.7,7.7,7.7,3.0,90.0,0.0,0,0,False
+B:Q2,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,73.5,76.5,75.0,75.0,75.0,8.0,90.0,0.0,0,0,False
+B:Q3,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,19.7764,20.5836,20.18,20.18,20.18,4.0,90.0,0.0,0,0,False
+B:Q4,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,18.0614,18.7986,18.43,18.43,18.43,5.0,90.0,0.0,0,0,False
+B:Q5,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,21.3762,22.4738,21.8125,21.8125,22.0375,8.0,90.0,0.0,0,0,False
+B:Q6,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,91.6912,95.4338,93.5625,93.5625,93.5625,13.0,90.0,0.0,0,0,False
+B:Q7,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,90.9195,94.6305,92.775,92.775,92.775,13.0,90.0,0.0,0,0,False
+B:Q8,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,111.818,116.382,114.1,114.1,114.1,13.0,90.0,0.0,0,0,False
+B:Q9,variable,LTB.QUADS,400 Mev Quadrupole PS,,logged,,30.6348,31.8852,31.26,31.26,31.26,7.0,90.0,0.0,0,0,False
+B:QL1,variable,BOOSTER.QUADS_LONG,QL1 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL10,variable,BOOSTER.QUADS_LONG,QL10 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL11,variable,BOOSTER.QUADS_LONG,QL11 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL12,variable,BOOSTER.QUADS_LONG,QL12 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL13,variable,BOOSTER.QUADS_LONG,QL13 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL14,variable,BOOSTER.QUADS_LONG,QL14 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL15,variable,BOOSTER.QUADS_LONG,QL15 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL16,variable,BOOSTER.QUADS_LONG,QL16 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL17,variable,BOOSTER.QUADS_LONG,QL17 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL18,variable,BOOSTER.QUADS_LONG,QL18 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL19,variable,BOOSTER.QUADS_LONG,QL19 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL2,variable,BOOSTER.QUADS_LONG,QL2 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL20,variable,BOOSTER.QUADS_LONG,QL20 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL21,variable,BOOSTER.QUADS_LONG,QL21 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL22,variable,BOOSTER.QUADS_LONG,QL22 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL23,variable,BOOSTER.QUADS_LONG,QL23 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL24,variable,BOOSTER.QUADS_LONG,QL24 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL3,variable,BOOSTER.QUADS_LONG,QL3 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL4,variable,BOOSTER.QUADS_LONG,QL4 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL5,variable,BOOSTER.QUADS_LONG,QL5 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL6,variable,BOOSTER.QUADS_LONG,QL6 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL7,variable,BOOSTER.QUADS_LONG,QL7 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL8,variable,BOOSTER.QUADS_LONG,QL8 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QL9,variable,BOOSTER.QUADS_LONG,QL9 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS1,variable,BOOSTER.QUADS_SHORT,QS1 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS10,variable,BOOSTER.QUADS_SHORT,QS10 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS11,variable,BOOSTER.QUADS_SHORT,QS11 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS12,variable,BOOSTER.QUADS_SHORT,QS12 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS13,variable,BOOSTER.QUADS_SHORT,QS13 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS14,variable,BOOSTER.QUADS_SHORT,QS14 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS15,variable,BOOSTER.QUADS_SHORT,QS15 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS16,variable,BOOSTER.QUADS_SHORT,QS16 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS17,variable,BOOSTER.QUADS_SHORT,QS17 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS18,variable,BOOSTER.QUADS_SHORT,QS18 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS19,variable,BOOSTER.QUADS_SHORT,QS19 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS2,variable,BOOSTER.QUADS_SHORT,QS2 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS20,variable,BOOSTER.QUADS_SHORT,QS20 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS21,variable,BOOSTER.QUADS_SHORT,QS21 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS22,variable,BOOSTER.QUADS_SHORT,QS22 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS23,variable,BOOSTER.QUADS_SHORT,QS23 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS24,variable,BOOSTER.QUADS_SHORT,QS24 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS3,variable,BOOSTER.QUADS_SHORT,QS3 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS4,variable,BOOSTER.QUADS_SHORT,QS4 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS5,variable,BOOSTER.QUADS_SHORT,QS5 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS6,variable,BOOSTER.QUADS_SHORT,QS6 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS7,variable,BOOSTER.QUADS_SHORT,QS7 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS8,variable,BOOSTER.QUADS_SHORT,QS8 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:QS9,variable,BOOSTER.QUADS_SHORT,QS9 Quadrupole Ramp I,,db,,-65.0,64.998,,,,,,,0,0,False
+B:RAG,variable,DB.RF_RADIAL,Radial Gain 473 Curve,,db,,-10.0,9.99969,,,,,,,1,0,False
+B:RAGF,variable,DB.RF_RADIAL,Radial Gain Ref & DAC,,db,,-10.0,9.99969,,,,,,,0,0,False
+B:RFCV1,variable,DB.RF_CURVES,RF Curve 1 473,,db,,-10.0,9.99969,,,,,,,0,0,False
+B:RFCV2,variable,DB.RF_CURVES,RF Curve 2 473,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:RFCV3,variable,DB.RF_CURVES,RF Curve 3 473,,db,,-10.0,9.99969,,,,,,,0,0,False
+B:ROF,variable,DB.RF_RADIAL,Radial Offset 473 Curve,,db,,-54.3478,54.3462,,,,,,,0,0,False
+B:ROFF,variable,DB.RF_RADIAL,Radial Offset Ref & DAC,,db,,-54.3478,54.3462,,,,,,,0,0,False
+B:RSTDLY,variable,logbook knob,"Booster reset delay to TLG, us",,logged,,1005.48,1046.52,1026.0,1026.0,1026.0,2.0,90.0,0.0,13,0,False
+B:SQL1,variable,BOOSTER.SKEW_QUAD_LONG,SQL1 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL10,variable,BOOSTER.SKEW_QUAD_LONG,SQL10 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL11,variable,BOOSTER.SKEW_QUAD_LONG,SQL11 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL12,variable,BOOSTER.SKEW_QUAD_LONG,SQL12 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL13,variable,BOOSTER.SKEW_QUAD_LONG,SQL13 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL14,variable,BOOSTER.SKEW_QUAD_LONG,SQL14 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL15,variable,BOOSTER.SKEW_QUAD_LONG,SQL15 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL16,variable,BOOSTER.SKEW_QUAD_LONG,SQL16 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL17,variable,BOOSTER.SKEW_QUAD_LONG,SQL17 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL18,variable,BOOSTER.SKEW_QUAD_LONG,SQL18 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL19,variable,BOOSTER.SKEW_QUAD_LONG,SQL19 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL2,variable,BOOSTER.SKEW_QUAD_LONG,SQL2 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL20,variable,BOOSTER.SKEW_QUAD_LONG,SQL20 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL21,variable,BOOSTER.SKEW_QUAD_LONG,SQL21 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL22,variable,BOOSTER.SKEW_QUAD_LONG,SQL22 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL23,variable,BOOSTER.SKEW_QUAD_LONG,SQL23 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL24,variable,BOOSTER.SKEW_QUAD_LONG,SQL24 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL3,variable,BOOSTER.SKEW_QUAD_LONG,SQL3 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL4,variable,BOOSTER.SKEW_QUAD_LONG,SQL4 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL5,variable,BOOSTER.SKEW_QUAD_LONG,SQL5 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL6,variable,BOOSTER.SKEW_QUAD_LONG,SQL6 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL7,variable,BOOSTER.SKEW_QUAD_LONG,SQL7 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL8,variable,BOOSTER.SKEW_QUAD_LONG,SQL8 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQL9,variable,BOOSTER.SKEW_QUAD_LONG,SQL9 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS1,variable,BOOSTER.SKEW_QUAD_SHORT,SQS1 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS10,variable,BOOSTER.SKEW_QUAD_SHORT,SQS10 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS11,variable,BOOSTER.SKEW_QUAD_SHORT,SQS11 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS12,variable,BOOSTER.SKEW_QUAD_SHORT,SQS12 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS13,variable,BOOSTER.SKEW_QUAD_SHORT,SQS13 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS14,variable,BOOSTER.SKEW_QUAD_SHORT,SQS14 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS15,variable,BOOSTER.SKEW_QUAD_SHORT,SQS15 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS16,variable,BOOSTER.SKEW_QUAD_SHORT,SQS16 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS17,variable,BOOSTER.SKEW_QUAD_SHORT,SQS17 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS18,variable,BOOSTER.SKEW_QUAD_SHORT,SQS18 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS19,variable,BOOSTER.SKEW_QUAD_SHORT,SQS19 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS2,variable,BOOSTER.SKEW_QUAD_SHORT,SQS2 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,1,0,False
+B:SQS20,variable,BOOSTER.SKEW_QUAD_SHORT,SQS20 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS21,variable,BOOSTER.SKEW_QUAD_SHORT,SQS21 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS22,variable,BOOSTER.SKEW_QUAD_SHORT,SQS22 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS23,variable,BOOSTER.SKEW_QUAD_SHORT,SQS23 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS24,variable,BOOSTER.SKEW_QUAD_SHORT,SQS24 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS3,variable,BOOSTER.SKEW_QUAD_SHORT,SQS3 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS4,variable,BOOSTER.SKEW_QUAD_SHORT,SQS4 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS5,variable,BOOSTER.SKEW_QUAD_SHORT,SQS5 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS6,variable,BOOSTER.SKEW_QUAD_SHORT,SQS6 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS7,variable,BOOSTER.SKEW_QUAD_SHORT,SQS7 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS8,variable,BOOSTER.SKEW_QUAD_SHORT,SQS8 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SQS9,variable,BOOSTER.SKEW_QUAD_SHORT,SQS9 Skew Quad Ramp I,,db,,-5.0,4.99985,,,,,,,0,0,False
+B:SSL1,variable,BOOSTER.SKEW_SEXT_LONG,SSL1 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL10,variable,BOOSTER.SKEW_SEXT_LONG,SSL10 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL11,variable,BOOSTER.SKEW_SEXT_LONG,SSL11 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL12,variable,BOOSTER.SKEW_SEXT_LONG,SSL12 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL13,variable,BOOSTER.SKEW_SEXT_LONG,SSL13 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL14,variable,BOOSTER.SKEW_SEXT_LONG,SSL14 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL15,variable,BOOSTER.SKEW_SEXT_LONG,SSL15 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL16,variable,BOOSTER.SKEW_SEXT_LONG,SSL16 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL17,variable,BOOSTER.SKEW_SEXT_LONG,SSL17 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL18,variable,BOOSTER.SKEW_SEXT_LONG,SSL18 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL19,variable,BOOSTER.SKEW_SEXT_LONG,SSL19 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL2,variable,BOOSTER.SKEW_SEXT_LONG,SSL2 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL20,variable,BOOSTER.SKEW_SEXT_LONG,SSL20 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL21,variable,BOOSTER.SKEW_SEXT_LONG,SSL21 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL22,variable,BOOSTER.SKEW_SEXT_LONG,SSL22 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL23,variable,BOOSTER.SKEW_SEXT_LONG,SSL23 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL24,variable,BOOSTER.SKEW_SEXT_LONG,SSL24 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL3,variable,BOOSTER.SKEW_SEXT_LONG,SSL3 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL4,variable,BOOSTER.SKEW_SEXT_LONG,SSL4 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL5,variable,BOOSTER.SKEW_SEXT_LONG,SSL5 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL6,variable,BOOSTER.SKEW_SEXT_LONG,SSL6 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL7,variable,BOOSTER.SKEW_SEXT_LONG,SSL7 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL8,variable,BOOSTER.SKEW_SEXT_LONG,SSL8 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSL9,variable,BOOSTER.SKEW_SEXT_LONG,SSL9 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS1,variable,BOOSTER.SKEW_SEXT_SHORT,SSS1 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS10,variable,BOOSTER.SKEW_SEXT_SHORT,SSS10 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS11,variable,BOOSTER.SKEW_SEXT_SHORT,SSS11 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS12,variable,BOOSTER.SKEW_SEXT_SHORT,SSS12 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS13,variable,BOOSTER.SKEW_SEXT_SHORT,SSS13 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS14,variable,BOOSTER.SKEW_SEXT_SHORT,SSS14 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS15,variable,BOOSTER.SKEW_SEXT_SHORT,SSS15 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS16,variable,BOOSTER.SKEW_SEXT_SHORT,SSS16 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS17,variable,BOOSTER.SKEW_SEXT_SHORT,SSS17 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS18,variable,BOOSTER.SKEW_SEXT_SHORT,SSS18 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS19,variable,BOOSTER.SKEW_SEXT_SHORT,SSS19 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS2,variable,BOOSTER.SKEW_SEXT_SHORT,SSS2 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS20,variable,BOOSTER.SKEW_SEXT_SHORT,SSS20 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS21,variable,BOOSTER.SKEW_SEXT_SHORT,SSS21 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS22,variable,BOOSTER.SKEW_SEXT_SHORT,SSS22 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS23,variable,BOOSTER.SKEW_SEXT_SHORT,SSS23 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS24,variable,BOOSTER.SKEW_SEXT_SHORT,SSS24 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS3,variable,BOOSTER.SKEW_SEXT_SHORT,SSS3 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS4,variable,BOOSTER.SKEW_SEXT_SHORT,SSS4 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS5,variable,BOOSTER.SKEW_SEXT_SHORT,SSS5 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS6,variable,BOOSTER.SKEW_SEXT_SHORT,SSS6 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS7,variable,BOOSTER.SKEW_SEXT_SHORT,SSS7 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS8,variable,BOOSTER.SKEW_SEXT_SHORT,SSS8 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SSS9,variable,BOOSTER.SKEW_SEXT_SHORT,SSS9 Skew Sext Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:STH1,variable,LTB.TRIMS_H,STH1 PS,,db,,-163.8,163.8,,,,,,,0,0,False
+B:STH2,variable,LTB.misc,STH2 PS,,db,,-163.8,163.8,,,,,,,0,0,False
+B:STV1,variable,LTB.TRIMS_V,STV1 PS,,logged,,-0.03125,0.33625,0.03,0.205,0.275,90.0,90.0,0.1084,0,0,True
+B:STV2,variable,LTB.misc,STV2 PS,,db,,-163.8,163.8,,,,,,,1,0,False
+B:SXL1,variable,BOOSTER.SEXT_LONG,SXL1 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL10,variable,BOOSTER.SEXT_LONG,SXL10 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL11,variable,BOOSTER.SEXT_LONG,SXL11 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL12,variable,BOOSTER.SEXT_LONG,SXL12 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL13,variable,BOOSTER.SEXT_LONG,SXL13 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL14,variable,BOOSTER.SEXT_LONG,SXL14 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL15,variable,BOOSTER.SEXT_LONG,SXL15 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL16,variable,BOOSTER.SEXT_LONG,SXL16 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:SXL17,variable,BOOSTER.SEXT_LONG,SXL17 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL18,variable,BOOSTER.SEXT_LONG,SXL18 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL19,variable,BOOSTER.SEXT_LONG,SXL19 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:SXL2,variable,BOOSTER.SEXT_LONG,SXL2 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL20,variable,BOOSTER.SEXT_LONG,SXL20 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL21,variable,BOOSTER.SEXT_LONG,SXL21 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL22,variable,BOOSTER.SEXT_LONG,SXL22 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL23,variable,BOOSTER.SEXT_LONG,SXL23 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL24,variable,BOOSTER.SEXT_LONG,SXL24 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL3,variable,BOOSTER.SEXT_LONG,SXL3 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL4,variable,BOOSTER.SEXT_LONG,SXL4 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL5,variable,BOOSTER.SEXT_LONG,SXL5 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL6,variable,BOOSTER.SEXT_LONG,SXL6 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL7,variable,BOOSTER.SEXT_LONG,SXL7 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL8,variable,BOOSTER.SEXT_LONG,SXL8 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXL9,variable,BOOSTER.SEXT_LONG,SXL9 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS1,variable,BOOSTER.SEXT_SHORT,SXS1 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS10,variable,BOOSTER.SEXT_SHORT,SXS10 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS11,variable,BOOSTER.SEXT_SHORT,SXS11 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS12,variable,BOOSTER.SEXT_SHORT,SXS12 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS13,variable,BOOSTER.SEXT_SHORT,SXS13 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS14,variable,BOOSTER.SEXT_SHORT,SXS14 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS15,variable,BOOSTER.SEXT_SHORT,SXS15 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS16,variable,BOOSTER.SEXT_SHORT,SXS16 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS17,variable,BOOSTER.SEXT_SHORT,SXS17 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS18,variable,BOOSTER.SEXT_SHORT,SXS18 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS19,variable,BOOSTER.SEXT_SHORT,SXS19 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS2,variable,BOOSTER.SEXT_SHORT,SXS2 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS20,variable,BOOSTER.SEXT_SHORT,SXS20 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS21,variable,BOOSTER.SEXT_SHORT,SXS21 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS22,variable,BOOSTER.SEXT_SHORT,SXS22 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS23,variable,BOOSTER.SEXT_SHORT,SXS23 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS24,variable,BOOSTER.SEXT_SHORT,SXS24 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS3,variable,BOOSTER.SEXT_SHORT,SXS3 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS4,variable,BOOSTER.SEXT_SHORT,SXS4 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS5,variable,BOOSTER.SEXT_SHORT,SXS5 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS6,variable,BOOSTER.SEXT_SHORT,SXS6 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS7,variable,BOOSTER.SEXT_SHORT,SXS7 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS8,variable,BOOSTER.SEXT_SHORT,SXS8 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:SXS9,variable,BOOSTER.SEXT_SHORT,SXS9 Sextupole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:TGMT13,variable,DB.TRANSITION,Gamma-T Trig - $13,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TGMT14,variable,DB.TRANSITION,Gamma-T Trig - $14,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TGMT15,variable,DB.TRANSITION,Gamma-T Trig - $15,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TGMT16,variable,DB.TRANSITION,Gamma-T Trig - $16,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TGMT17,variable,DB.TRANSITION,Gamma-T Trig - $17,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TGMT19,variable,DB.TRANSITION,Gamma-T TRIG- $19,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TGMT1C,variable,DB.TRANSITION,Gamma-T Trig - $1C,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TGMT1D,variable,DB.TRANSITION,Gamma-T Trig - $1D,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TRXINT,variable,DB.TRANSITION,LLRF transition interval,,logged,,19.6,20.4,20.0,20.0,20.0,0.0,90.0,0.0,0,0,False
+B:TTPS13,variable,DB.TRANSITION,Trans Phase Shift Dly 13,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPS14,variable,DB.TRANSITION,Trans Phase Shift Dly 14,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPS15,variable,DB.TRANSITION,Trans Phase Shift Dly 15,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPS16,variable,DB.TRANSITION,Trans Phase Shift Dly 16,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPS17,variable,DB.TRANSITION,Trans Phase Shift Dly 17,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPS19,variable,DB.TRANSITION,Trans Phase shift Dly 19,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPS1C,variable,DB.TRANSITION,Trans Phase Shift Dly 1C,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPS1D,variable,DB.TRANSITION,Trans Phase Shift Dly 1D,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTPSGT,variable,DB.TRANSITION,PhaseShift Trans Gate,,db,,0.0,65535.0,,,,,,,0,0,False
+B:TTRX13,variable,DB.TRANSITION,Transition Gate ON - $13,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTRX14,variable,DB.TRANSITION,Transition Gate ON - $14,,logged,,18808.2,19575.8,19192.0,19192.0,19192.0,2.0,90.0,0.0,0,0,False
+B:TTRX15,variable,DB.TRANSITION,Transition Gate ON - $15,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTRX16,variable,DB.TRANSITION,Transition Gate ON - $16,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTRX17,variable,DB.TRANSITION,Transition Gate ON - $17,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTRX19,variable,DB.TRANSITION,Transition Gate ON - $19,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTRX1C,variable,DB.TRANSITION,Transition Gate ON - $1C,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTRX1D,variable,DB.TRANSITION,Transition Gate ON - $1D,,none,not logged and no usable DB limits: left out,,,,,,,,,0,0,False
+B:TTRXGT,variable,DB.TRANSITION,Paraphase Trans Gate,,db,,0.0,65535.0,,,,,,,0,0,False
+B:TTXFRQ,variable,logbook knob,"LLRF transition frequency, MHz",,logged,,51.1735,53.2762,52.2182,52.2316,52.2316,25.0,90.0,0.0,4,0,False
+B:V803,variable,logbook knob,"MI8 vertical bend at 803 and 809, A",,logged,,-85.8906,421.859,-1.26562,334.234,337.234,90.0,90.0,0.4271,8,0,True
+B:VIMAX,variable,logbook knob,GMPS IMAX read/set,,logged,,948.01,986.705,967.358,967.358,967.358,1.0,8.0,0.0,3,0,False
+B:VIMIN,variable,logbook knob,GMPS IMIN read/set; SAFETY: its own autotune loop also writes it,,logged,,100.538,105.447,102.594,102.834,103.39,77.0,90.0,0.0594,251,9,True
+B:VIMTGT1,variable,logbook knob,"VIMIN autotune target, BLS060/BLS130, mode 1",,logged,,-1.3525,10.4705,0.618,1.9,8.5,53.0,90.0,0.0007,2,0,False
+B:VIMTGT2,variable,logbook knob,"VIMIN autotune target, BLS060/BL1250, mode 2",,logged,,-5.225,39.775,2.275,2.275,32.275,3.0,90.0,0.0,2,0,False
+B:VIMTGT3,variable,logbook knob,"VIMIN autotune target, BLS120/BL1250, mode 3",,logged,,-0.03,0.222,0.012,0.012,0.18,6.0,90.0,0.0,3,0,False
+B:VL1,variable,BOOSTER.CORRECTORS_VL,VL1 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:VL10,variable,BOOSTER.CORRECTORS_VL,VL10 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VL11,variable,BOOSTER.CORRECTORS_VL,VL11 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VL12,variable,BOOSTER.CORRECTORS_VL,VL12 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VL13,variable,BOOSTER.CORRECTORS_VL,VL13 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VL14,variable,BOOSTER.CORRECTORS_VL,VL14 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:VL15,variable,BOOSTER.CORRECTORS_VL,VL15 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:VL16,variable,BOOSTER.CORRECTORS_VL,VL16 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VL17,variable,BOOSTER.CORRECTORS_VL,VL17 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VL18,variable,BOOSTER.CORRECTORS_VL,VL18 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VL19,variable,BOOSTER.CORRECTORS_VL,VL19 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,6,0,False
+B:VL2,variable,BOOSTER.CORRECTORS_VL,VL2 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VL20,variable,BOOSTER.CORRECTORS_VL,VL20 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VL21,variable,BOOSTER.CORRECTORS_VL,VL21 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VL22,variable,BOOSTER.CORRECTORS_VL,VL22 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,4,0,False
+B:VL23,variable,BOOSTER.CORRECTORS_VL,VL23 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,3,0,False
+B:VL24,variable,BOOSTER.CORRECTORS_VL,VL24 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VL3,variable,BOOSTER.CORRECTORS_VL,VL3 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,4,0,False
+B:VL4,variable,BOOSTER.CORRECTORS_VL,VL4 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,4,0,False
+B:VL5,variable,BOOSTER.CORRECTORS_VL,VL5 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,3,0,False
+B:VL6,variable,BOOSTER.CORRECTORS_VL,VL6 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,23,0,False
+B:VL7,variable,BOOSTER.CORRECTORS_VL,VL7 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,2,0,False
+B:VL8,variable,BOOSTER.CORRECTORS_VL,VL8 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,11,0,False
+B:VL9,variable,BOOSTER.CORRECTORS_VL,VL9 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS1,variable,BOOSTER.CORRECTORS_VS,VS1 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VS10,variable,BOOSTER.CORRECTORS_VS,VS10 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VS11,variable,BOOSTER.CORRECTORS_VS,VS11 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VS12,variable,BOOSTER.CORRECTORS_VS,VS12 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS13,variable,BOOSTER.CORRECTORS_VS,VS13 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS14,variable,BOOSTER.CORRECTORS_VS,VS14 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS15,variable,BOOSTER.CORRECTORS_VS,VS15 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS16,variable,BOOSTER.CORRECTORS_VS,VS16 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS17,variable,BOOSTER.CORRECTORS_VS,VS17 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS18,variable,BOOSTER.CORRECTORS_VS,VS18 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS19,variable,BOOSTER.CORRECTORS_VS,VS19 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS2,variable,BOOSTER.CORRECTORS_VS,VS2 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS20,variable,BOOSTER.CORRECTORS_VS,VS20 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS21,variable,BOOSTER.CORRECTORS_VS,VS21 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS22,variable,BOOSTER.CORRECTORS_VS,VS22 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS23,variable,BOOSTER.CORRECTORS_VS,VS23 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS24,variable,BOOSTER.CORRECTORS_VS,VS24 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS3,variable,BOOSTER.CORRECTORS_VS,VS3 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VS4,variable,BOOSTER.CORRECTORS_VS,VS4 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS5,variable,BOOSTER.CORRECTORS_VS,VS5 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VS6,variable,BOOSTER.CORRECTORS_VS,VS6 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS7,variable,BOOSTER.CORRECTORS_VS,VS7 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VS8,variable,BOOSTER.CORRECTORS_VS,VS8 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,1,0,False
+B:VS9,variable,BOOSTER.CORRECTORS_VS,VS9 Vert Dipole Ramp I,,db,,-40.0,39.9988,,,,,,,0,0,False
+B:VTDEB,variable,LTB.TRIMS_V,400MeV Vert Trim US DEB,,logged,,0.0240625,0.0578125,0.0296875,0.0346875,0.0521875,90.0,90.0,0.7044,0,0,True
+B:VTINJ1,variable,LTB.TRIMS_V,400MeV Vert Trim DS Q17,,logged,,-6.12031,1.79969,-4.80031,-0.449062,0.479687,90.0,90.0,0.7209,0,0,True
+B:VTINJ2,variable,LTB.TRIMS_V,400MeV Vert Trim US ORBP,,logged,,-1.91156,5.57344,-0.664062,0.0746875,4.32594,90.0,90.0,0.7153,0,0,True
+B:VTMH22,variable,LTB.TRIMS_V,400MeV Vert Trim DS MH22,,logged,,-0.6525,3.35812,0.0159375,2.68094,2.68969,90.0,90.0,0.7358,0,0,True
+B:VTQ12,variable,LTB.TRIMS_V,400MeV Vert Trim DS Q12,,logged,,-0.9775,4.93063,0.0071875,3.93469,3.94594,90.0,90.0,0.7406,0,0,True
+B:VTQ13,variable,LTB.TRIMS_V,400MeV Vert Trim US Q13,,logged,,-0.407188,2.13156,0.0159375,1.69719,1.70844,90.0,90.0,0.67,0,0,True
+B:VTQ3,variable,LTB.TRIMS_V,400MeV Vert Trim US Q3,,logged,,-0.101562,0.565937,0.0096875,0.445937,0.454688,90.0,90.0,0.7514,0,0,True
+B:VTQ4,variable,LTB.TRIMS_V,400MeV Vert Trim US Q4,,logged,,-0.6075,3.09563,0.0096875,2.46969,2.47844,90.0,90.0,0.7434,0,0,True
+B:VTQ5,variable,LTB.TRIMS_V,400MeV Vert Trim US Q5,,logged,,-4.32062,0.87875,-3.45406,-3.44906,0.0121875,90.0,90.0,0.7507,0,0,True
+B:VTQ6,variable,LTB.TRIMS_V,400MeV Vert Trim DS Q6,,logged,,-0.5525,2.83563,0.0121875,2.26094,2.27094,90.0,90.0,0.7233,0,0,True
+B:VTQ7,variable,LTB.TRIMS_V,400MeV Vert Trim US Q7,,logged,,-1.72125,8.57437,-0.0053125,6.84844,6.85844,90.0,90.0,0.7504,0,0,True
+B:VTQ8,variable,LTB.TRIMS_V,400MeV Vert Trim DS Q8,,logged,,-10.24,2.21969,-8.70531,-8.70031,0.0346875,90.0,90.0,0.7538,0,0,True
+L:C7PHAS,variable,LINAC.CAVITY7,Acceler Cavity RF Phase,360.0,logged,,154.034,167.492,157.239,160.282,164.286,90.0,90.0,0.9587,308,5,True
+L:CDPHAS,variable,LINAC.CAVITYD,Acceler Cavity RF Phase,360.0,logged,,57.2508,190.855,79.5183,82.9038,168.588,90.0,90.0,0.8439,0,0,True
+L:HT4000,variable,LTB.TRIMS_H,Horz. trim dipole DW Q2,,logged,,-0.164795,-0.0732422,-0.149536,-0.0946045,-0.088501,89.0,90.0,0.1781,0,0,True
+L:HT4001,variable,LTB.misc,Horz. trim dipole DW QD3,,logged,,-9.99969,2.19498,-8.12378,-8.10852,0.131226,90.0,90.0,0.5641,0,0,True
+L:HT4002,variable,LTB.misc,Horz. trim dipole UPSPEC,,logged,,-9.99969,2.63824,-9.79004,-9.52148,0.152588,90.0,90.0,0.5012,0,0,True
+L:L7GADJ,variable,LINAC.CAVITY7,Gradient Set Point,,logged,,3.02401,3.18556,3.08586,3.0928,3.1237,90.0,90.0,0.3393,0,0,True
+L:L7PADJ,variable,LINAC.CAVITY7,Cavity Phase Setpoint,,logged,,55.3169,91.7778,61.3937,82.0312,85.701,87.0,90.0,0.1992,2,0,True
+L:LDGADJ,variable,LINAC.CAVITYD,Gradient Set Point,,logged,,1.47001,1.6295,1.50002,1.50002,1.5995,7.0,90.0,0.0,3,0,False
+L:LDPADJ,variable,LINAC.CAVITYD,Cavity Phase Setpoint,,logged,,96.3037,188.125,111.607,119.785,172.822,79.0,90.0,0.3107,6,0,True
+L:RFBPAH,variable,logbook knob,"RF buncher phase adjust, deg",,logged,,150.69,187.787,156.873,175.854,181.604,90.0,90.0,0.8914,3,1,True
+L:RFQPAH,variable,logbook knob,"RFQ phase adjust, deg",,logged,,181.387,207.919,185.809,195.251,203.497,45.0,90.0,0.0002,7,0,False
+L:V5QSET,variable,logbook knob,"Linac RF station 5 phase set point, deg",,logged,,-38.7587,-32.5859,-37.7299,-34.9497,-33.6147,53.0,90.0,0.0002,107,0,False
+L:VT4000,variable,LTB.TRIMS_V,Vert. trim dipole UP Q2,,logged,,0.0762939,0.643921,0.170898,0.531006,0.549316,90.0,90.0,0.351,1,0,True
+L:VT4001,variable,LTB.misc,Vert. trim dipole DW QD3,,logged,,-3.67126,0.85144,-2.91748,-2.41699,0.0976562,90.0,90.0,0.6191,0,0,True
+L:VT4002,variable,LTB.misc,Vert. trim dipole UPSPEC,,logged,,-0.352478,2.36664,0.100708,0.189209,1.91345,90.0,90.0,0.4789,0,0,True
+B:BDEBF,observable,LTB.BPMS,DEB  BPM Phase,,,,,,,,,,,,0,0,False
+B:BEFF13,observable,BOOSTER.EFFICIENCY,Effic.(13) using IRMCHG,,,,,,,,,,,,0,0,False
+B:BEFF14,observable,BOOSTER.EFFICIENCY,Effic.(14) using IRMCHG,,,,,,,,,,,,0,0,False
+B:BEFF15,observable,BOOSTER.EFFICIENCY,Effic.(15) using IRMCHG,,,,,,,,,,,,0,0,False
+B:BEFF16,observable,BOOSTER.EFFICIENCY,Effic.(16) using IRMCHG,,,,,,,,,,,,0,0,False
+B:BEFF17,observable,BOOSTER.EFFICIENCY,Effic.(17) using IRMCHG,,,,,,,,,,,,0,1,False
+B:BEFF19,observable,BOOSTER.EFFICIENCY,Effic.(19) using IRMCHG,,,,,,,,,,,,0,0,False
+B:BEFF1A,observable,BOOSTER.EFFICIENCY,Effic.(1A) using IRMCHG,,,,,,,,,,,,0,0,False
+B:BEFF1C,observable,BOOSTER.EFFICIENCY,Effic.(1C) using IRMCHG,,,,,,,,,,,,0,0,False
+B:BEFF1D,observable,BOOSTER.EFFICIENCY,Effic.(1D) using IRMCHG,,,,,,,,,,,,0,1,False
+B:BFOILF,observable,LTB.BPMS,FOIL  BPM Phase,,,,,,,,,,,,0,0,False
+B:BINJF,observable,LTB.BPMS,INJ  BPM Phase,,,,,,,,,,,,0,0,False
+B:BL0110,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 1-1 Event 10,,,,,,,,,,,,1,0,False
+B:BL0117,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 011 Event 17,,,,,,,,,,,,0,0,False
+B:BL0210,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 2-1 Event 10,,,,,,,,,,,,1,0,False
+B:BL0217,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 021 Event 17,,,,,,,,,,,,0,0,False
+B:BL0230,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM DS Pants MP02 Evt 10,,,,,,,,,,,,0,0,False
+B:BL0237,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 023 Event 17,,,,,,,,,,,,0,0,False
+B:BL0240,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 2-4 Event 10,,,,,,,,,,,,0,0,False
+B:BL0247,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 024 Event 17,,,,,,,,,,,,0,0,False
+B:BL0250,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum US DOG3 Event 10,,,,,,,,,,,,0,0,False
+B:BL0257,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 025 Event 17,,,,,,,,,,,,0,0,False
+B:BL0260,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum MP02 Event 10,,,,,,,,,,,,0,1,False
+B:BL0267,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 026 Event 17,,,,,,,,,,,,0,0,False
+B:BL0510,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 051 Event 10,,,,,,,,,,,,0,0,False
+B:BL0517,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 051 Event 17,,,,,,,,,,,,0,0,False
+B:BL0520,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 052 Event 10,,,,,,,,,,,,0,0,False
+B:BL0527,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 052 Event 17,,,,,,,,,,,,0,0,False
+B:BL0610,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 061 Event 10,,,,,,,,,,,,0,1,False
+B:BL0617,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 061 Event 17,,,,,,,,,,,,0,0,False
+B:BL0620,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 062 Event 10,,,,,,,,,,,,0,0,False
+B:BL0627,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 062 Event 17,,,,,,,,,,,,0,0,False
+B:BL0710,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 071 Event 10,,,,,,,,,,,,0,0,False
+B:BL0717,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 071 Event 17,,,,,,,,,,,,0,0,False
+B:BL0720,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 072 Event 10,,,,,,,,,,,,0,0,False
+B:BL0727,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 072 Event 17,,,,,,,,,,,,0,0,False
+B:BL1210,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 12-1 Event 10,,,,,,,,,,,,0,0,False
+B:BL1217,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 121 Event 17,,,,,,,,,,,,0,0,False
+B:BL1220,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S12 outside Ev10,,,,,,,,,,,,0,0,False
+B:BL1227,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 122 Event 17,,,,,,,,,,,,0,0,False
+B:BL1230,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 12-3 MinT Evt10,,,,,,,,,,,,0,1,False
+B:BL1237,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 123 Event 17,,,,,,,,,,,,0,0,False
+B:BL1240,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 12-4 Event 10,,,,,,,,,,,,0,0,False
+B:BL1247,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 124 Event 17,,,,,,,,,,,,0,0,False
+B:BL1250,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum NtchAbs out Ev10,,,,,,,,,,,,0,0,False
+B:BL1257,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 125 Event 17,,,,,,,,,,,,0,0,False
+B:BL1260,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum DS Ntch Absob Ev,,,,,,,,,,,,0,0,False
+B:BL1267,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum 126 Event 17,,,,,,,,,,,,0,0,False
+B:BL1DF,observable,LTB.BPMS_INJ,L1D  BPM Phase,,,,,,,,,,,,0,0,False
+B:BL1UF,observable,LTB.BPMS_INJ,L1U  BPM Phase,,,,,,,,,,,,0,0,False
+B:BLAMF,observable,LTB.BPMS,LAM  BPM Phase,,,,,,,,,,,,0,0,False
+B:BLL010,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L01 Event 10,,,,,,,,,,,,0,0,False
+B:BLL017,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L01 Event 17,,,,,,,,,,,,0,0,False
+B:BLL020,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L02 Event 10,,,,,,,,,,,,0,0,False
+B:BLL027,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L02 Event 17,,,,,,,,,,,,0,0,False
+B:BLL030,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L03 Event 10,,,,,,,,,,,,0,0,False
+B:BLL037,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L03 Event 17,,,,,,,,,,,,0,0,False
+B:BLL040,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L04 Event 10,,,,,,,,,,,,0,0,False
+B:BLL047,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L04 Event 17,,,,,,,,,,,,0,0,False
+B:BLL050,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L05 Event 10,,,,,,,,,,,,0,0,False
+B:BLL057,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L05 Event 17,,,,,,,,,,,,0,0,False
+B:BLL060,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L06 Event 10,,,,,,,,,,,,0,0,False
+B:BLL067,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L06 Event 17,,,,,,,,,,,,0,0,False
+B:BLL070,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L07 Event 10,,,,,,,,,,,,0,0,False
+B:BLL077,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L07 Event 17,,,,,,,,,,,,0,0,False
+B:BLL080,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L08 Event 10,,,,,,,,,,,,0,0,False
+B:BLL087,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L08 Event 17,,,,,,,,,,,,0,0,False
+B:BLL090,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L09 Event 10,,,,,,,,,,,,0,0,False
+B:BLL097,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L09 Event 17,,,,,,,,,,,,0,0,False
+B:BLL100,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L10 Event 10,,,,,,,,,,,,0,0,False
+B:BLL107,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L10 Event 17,,,,,,,,,,,,0,0,False
+B:BLL110,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L11 Event 10,,,,,,,,,,,,0,0,False
+B:BLL117,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L11 Event 17,,,,,,,,,,,,0,0,False
+B:BLL120,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L12 Event 10,,,,,,,,,,,,0,0,False
+B:BLL127,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L12 Event 17,,,,,,,,,,,,0,0,False
+B:BLL130,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L13 Event 10,,,,,,,,,,,,0,0,False
+B:BLL137,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L13 Event 17,,,,,,,,,,,,0,0,False
+B:BLL140,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L14 Event 10,,,,,,,,,,,,0,0,False
+B:BLL147,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L14 Event 17,,,,,,,,,,,,0,0,False
+B:BLL150,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L15 Event 10,,,,,,,,,,,,0,0,False
+B:BLL157,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L15 Event 17,,,,,,,,,,,,0,0,False
+B:BLL160,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L16 Event 10,,,,,,,,,,,,0,0,False
+B:BLL167,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L16 Event 17,,,,,,,,,,,,0,0,False
+B:BLL170,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L17 Event 10,,,,,,,,,,,,0,0,False
+B:BLL177,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L17 Event 17,,,,,,,,,,,,0,0,False
+B:BLL180,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L18 Event 10,,,,,,,,,,,,0,0,False
+B:BLL187,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L18 Event 17,,,,,,,,,,,,0,0,False
+B:BLL190,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L19 Event 10,,,,,,,,,,,,0,0,False
+B:BLL197,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L19 Event 17,,,,,,,,,,,,0,0,False
+B:BLL200,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L20 Event 10,,,,,,,,,,,,0,0,False
+B:BLL207,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L20 Event 17,,,,,,,,,,,,0,0,False
+B:BLL210,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L21 Event 10,,,,,,,,,,,,0,0,False
+B:BLL217,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L21 Event 17,,,,,,,,,,,,0,0,False
+B:BLL220,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L22 Event 10,,,,,,,,,,,,0,0,False
+B:BLL227,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L22 Event 17,,,,,,,,,,,,0,0,False
+B:BLL230,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L23 Event 10,,,,,,,,,,,,0,0,False
+B:BLL237,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L23 Event 17,,,,,,,,,,,,0,0,False
+B:BLL240,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L24 Event 10,,,,,,,,,,,,0,0,False
+B:BLL247,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum L24 Event 17,,,,,,,,,,,,0,0,False
+B:BLM011,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM inside mid ORBMP,,,,,,,,,,,,0,46,False
+B:BLM021,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM L2 US top of MK05,,,,,,,,,,,,0,0,False
+B:BLM023,observable,BOOSTER.BEAM_LOSS_MONITORS,Downstream pants of MP02,,,,,,,,,,,,0,4,False
+B:BLM024,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ BR1-2 DS end,,,,,,,,,,,,0,0,False
+B:BLM025,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM L3 US top DOGLEG,,,,,,,,,,,,0,2,False
+B:BLM026,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM L3 US MP02 bottom,,,,,,,,,,,,0,108,False
+B:BLM051,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ Hor Pri Collimator,,,,,,,,,,,,0,0,False
+B:BLM052,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ Ver Pri Collimator,,,,,,,,,,,,0,5,False
+B:BLM061,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ L6 A Collimator,,,,,,,,,,,,0,2,False
+B:BLM062,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ L6 B Collimator,,,,,,,,,,,,0,0,False
+B:BLM063,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM 90 deg D.S. of L6,,,,,,,,,,,,0,0,False
+B:BLM071,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ L7 A Collimator,,,,,,,,,,,,0,0,False
+B:BLM121,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ BR12-1,,,,,,,,,,,,0,0,False
+B:BLM122,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ short 12 outside,,,,,,,,,,,,0,0,False
+B:BLM123,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ BR12-3 mini strt,,,,,,,,,,,,0,6,False
+B:BLM124,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ Notch Abs inside,,,,,,,,,,,,0,1,False
+B:BLM125,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ Notch Abs outside,,,,,,,,,,,,0,38,False
+B:BLM126,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM @ Notch Abs DS top,,,,,,,,,,,,0,0,False
+B:BLMDEB,observable,LTB.LOSS_MONITORS,BLM upstream  Debuncher,,,,,,,,,,,,0,0,False
+B:BLMH21,observable,LTB.LOSS_MONITORS,BLM downstream of MH2-1,,,,,,,,,,,,0,0,False
+B:BLMH22,observable,LTB.LOSS_MONITORS,BLM downstream of MH2-2,,,,,,,,,,,,0,0,False
+B:BLML01,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  01 Beam Loss Mntr,,,,,,,,,,,,0,1,False
+B:BLML02,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  02 Beam Loss Mntr,,,,,,,,,,,,0,0,False
+B:BLML03,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  03 Beam Loss Mntr,,,,,,,,,,,,0,26,False
+B:BLML04,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  04 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLML05,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  05 Beam Loss Mntr,,,,,,,,,,,,0,0,False
+B:BLML06,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  06 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLML07,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  07 Beam Loss Mntr,,,,,,,,,,,,0,2,False
+B:BLML08,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  08 Beam Loss Mntr,,,,,,,,,,,,0,7,False
+B:BLML09,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  09 Beam Loss Mntr,,,,,,,,,,,,0,1,False
+B:BLML10,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  10 Beam Loss Mntr,,,,,,,,,,,,0,7,False
+B:BLML11,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  11 Beam Loss Mntr,,,,,,,,,,,,0,6,False
+B:BLML12,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  12 Beam Loss Mntr,,,,,,,,,,,,0,2,False
+B:BLML13,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  13 Beam Loss Mntr,,,,,,,,,,,,0,2,False
+B:BLML14,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  14 Beam Loss Mntr,,,,,,,,,,,,0,1,False
+B:BLML15,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  15 Beam Loss Mntr,,,,,,,,,,,,0,12,False
+B:BLML16,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  16 Beam Loss Mntr,,,,,,,,,,,,0,1,False
+B:BLML17,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  17 Beam Loss Mntr,,,,,,,,,,,,0,1,False
+B:BLML18,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  18 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLML19,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  19 Beam Loss Mntr,,,,,,,,,,,,0,18,False
+B:BLML20,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  20 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLML21,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  21 Beam Loss Mntr,,,,,,,,,,,,0,2,False
+B:BLML22,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  22 Beam Loss Mntr,,,,,,,,,,,,0,12,False
+B:BLML23,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  23 Beam Loss Mntr,,,,,,,,,,,,0,7,False
+B:BLML24,observable,BOOSTER.BEAM_LOSS_MONITORS,Long  24 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLMLAM,observable,LTB.LOSS_MONITORS,BLM downstream LAM,,,,,,,,,,,,0,3,False
+B:BLMMV1,observable,LTB.LOSS_MONITORS,BLM downstream of MV1,,,,,,,,,,,,0,0,False
+B:BLMMV2,observable,LTB.LOSS_MONITORS,BLM upstream of MV2,,,,,,,,,,,,0,0,False
+B:BLMQ10,observable,LTB.LOSS_MONITORS,BLM D.S. of Q9 on Bottom,,,,,,,,,,,,0,0,False
+B:BLMQ16,observable,LTB.LOSS_MONITORS,BLM U.S. of Q11 on top,,,,,,,,,,,,0,0,False
+B:BLMQ2,observable,LTB.LOSS_MONITORS,BLM Dnstream of Q2,,,,,,,,,,,,0,0,False
+B:BLMQ3,observable,LTB.LOSS_MONITORS,BLM downstream of Q3,,,,,,,,,,,,0,1,False
+B:BLMQ4,observable,LTB.LOSS_MONITORS,BLM downstream of Q4,,,,,,,,,,,,0,0,False
+B:BLMQ5,observable,LTB.LOSS_MONITORS,BLM downstream of Q5,,,,,,,,,,,,0,2,False
+B:BLMQ7,observable,LTB.LOSS_MONITORS,BLM downstream of Q7,,,,,,,,,,,,0,0,False
+B:BLMS01,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 01 Beam Loss Mntr,,,,,,,,,,,,0,26,False
+B:BLMS02,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 02 @ BPMS02 inside,,,,,,,,,,,,0,8,False
+B:BLMS03,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 03 Beam Loss Mntr,,,,,,,,,,,,0,9,False
+B:BLMS04,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 04 Beam Loss Mntr,,,,,,,,,,,,0,5,False
+B:BLMS05,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 05 Beam Loss Mntr,,,,,,,,,,,,0,15,False
+B:BLMS06,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 06 Beam Loss Mntr,,,,,,,,,,,,0,104,False
+B:BLMS07,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 07 Beam Loss Mntr,,,,,,,,,,,,0,17,False
+B:BLMS08,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 08 Beam Loss Mntr,,,,,,,,,,,,0,25,False
+B:BLMS09,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 09 Beam Loss Mntr,,,,,,,,,,,,0,1,False
+B:BLMS10,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 10 Beam Loss Mntr,,,,,,,,,,,,0,4,False
+B:BLMS11,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 11 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLMS12,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 12 Beam Loss Mntr,,,,,,,,,,,,0,21,False
+B:BLMS13,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 13 Beam Loss Mntr,,,,,,,,,,,,0,86,False
+B:BLMS14,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 14 Beam Loss Mntr,,,,,,,,,,,,0,0,False
+B:BLMS15,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 15 Beam Loss Mntr,,,,,,,,,,,,0,4,False
+B:BLMS16,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 16 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLMS17,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 17 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLMS18,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 18 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLMS19,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 19 Beam Loss Mntr,,,,,,,,,,,,0,13,False
+B:BLMS20,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 20 Beam Loss Mntr,,,,,,,,,,,,0,1,False
+B:BLMS21,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 21 Beam Loss Mntr,,,,,,,,,,,,0,2,False
+B:BLMS22,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 22 Beam Loss Mntr,,,,,,,,,,,,0,3,False
+B:BLMS23,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 23 Beam Loss Mntr,,,,,,,,,,,,0,2,False
+B:BLMS24,observable,BOOSTER.BEAM_LOSS_MONITORS,Short 24 Beam Loss Mntr,,,,,,,,,,,,0,2,False
+B:BLMU01,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L01 BLM,,,,,,,,,,,,0,0,False
+B:BLMU04,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L04 BLM,,,,,,,,,,,,0,0,False
+B:BLMU05,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L05 BLM,,,,,,,,,,,,0,0,False
+B:BLMU06,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L06 BLM,,,,,,,,,,,,0,0,False
+B:BLMU08,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L08 BLM,,,,,,,,,,,,0,0,False
+B:BLMU09,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L09 BLM,,,,,,,,,,,,0,0,False
+B:BLMU10,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L10 BLM,,,,,,,,,,,,0,0,False
+B:BLMU11,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L11 BLM,,,,,,,,,,,,0,0,False
+B:BLMU14,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L14 BLM,,,,,,,,,,,,0,0,False
+B:BLMU15,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L15 BLM,,,,,,,,,,,,0,0,False
+B:BLMU16,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L16 BLM,,,,,,,,,,,,0,0,False
+B:BLMU17,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L17 BLM,,,,,,,,,,,,0,0,False
+B:BLMU18,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L18 BLM,,,,,,,,,,,,0,0,False
+B:BLMU19,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L19 BLM,,,,,,,,,,,,0,0,False
+B:BLMU20,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L20 BLM,,,,,,,,,,,,0,0,False
+B:BLMU21,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L21 BLM,,,,,,,,,,,,0,0,False
+B:BLMU22,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L22 BLM,,,,,,,,,,,,0,0,False
+B:BLMU23,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L23 BLM,,,,,,,,,,,,0,0,False
+B:BLMU24,observable,BOOSTER.BEAM_LOSS_MONITORS_US,Upstream L24 BLM,,,,,,,,,,,,0,0,False
+B:BLMV1U,observable,LTB.LOSS_MONITORS,BLM upstream of MV1,,,,,,,,,,,,0,1,False
+B:BLQ160,observable,logbook,"BLM sum Q16, event 10",,,,,,,,,,,,3,0,False
+B:BLS010,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S01 Event 10,,,,,,,,,,,,0,0,False
+B:BLS017,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S01 Event 17,,,,,,,,,,,,0,0,False
+B:BLS020,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S02 Event 10,,,,,,,,,,,,1,0,False
+B:BLS027,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S02 Event 17,,,,,,,,,,,,0,0,False
+B:BLS030,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S03 Event 10,,,,,,,,,,,,0,0,False
+B:BLS037,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S03 Event 17,,,,,,,,,,,,0,0,False
+B:BLS040,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S04 Event 10,,,,,,,,,,,,0,0,False
+B:BLS047,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S04 Event 17,,,,,,,,,,,,0,0,False
+B:BLS050,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S05 Event 10,,,,,,,,,,,,0,0,False
+B:BLS057,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S05 Event 17,,,,,,,,,,,,0,0,False
+B:BLS060,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S06 Event 10,,,,,,,,,,,,0,0,False
+B:BLS067,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S06 Event 17,,,,,,,,,,,,0,0,False
+B:BLS070,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S07 Event 10,,,,,,,,,,,,0,0,False
+B:BLS077,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S07 Event 17,,,,,,,,,,,,0,0,False
+B:BLS080,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S08 Event 10,,,,,,,,,,,,0,0,False
+B:BLS087,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S08 Event 17,,,,,,,,,,,,0,0,False
+B:BLS090,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S09 Event 10,,,,,,,,,,,,0,0,False
+B:BLS097,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S09 Event 17,,,,,,,,,,,,0,0,False
+B:BLS100,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S10 Event 10,,,,,,,,,,,,0,0,False
+B:BLS107,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S10 Event 17,,,,,,,,,,,,0,0,False
+B:BLS110,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S11 Event 10,,,,,,,,,,,,0,0,False
+B:BLS117,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S11 Event 17,,,,,,,,,,,,0,0,False
+B:BLS120,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S12 Event 10,,,,,,,,,,,,0,0,False
+B:BLS127,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S12 Event 17,,,,,,,,,,,,0,0,False
+B:BLS130,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S13 Event 10,,,,,,,,,,,,0,0,False
+B:BLS137,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S13 Event 17,,,,,,,,,,,,0,0,False
+B:BLS140,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S14 Event 10,,,,,,,,,,,,0,0,False
+B:BLS147,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S14 Event 17,,,,,,,,,,,,0,0,False
+B:BLS150,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S15 Event 10,,,,,,,,,,,,0,0,False
+B:BLS157,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S15 Event 17,,,,,,,,,,,,0,0,False
+B:BLS160,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S16 Event 10,,,,,,,,,,,,0,0,False
+B:BLS167,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S16 Event 17,,,,,,,,,,,,0,0,False
+B:BLS170,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S17 Event 10,,,,,,,,,,,,0,0,False
+B:BLS177,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S17 Event 17,,,,,,,,,,,,0,0,False
+B:BLS180,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S18 Event 10,,,,,,,,,,,,0,0,False
+B:BLS187,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S18 Event 17,,,,,,,,,,,,0,0,False
+B:BLS190,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S19 Event 10,,,,,,,,,,,,0,0,False
+B:BLS197,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S19 Event 17,,,,,,,,,,,,0,0,False
+B:BLS200,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S20 Event 10,,,,,,,,,,,,0,0,False
+B:BLS207,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S20 Event 17,,,,,,,,,,,,0,0,False
+B:BLS210,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S21 Event 10,,,,,,,,,,,,0,0,False
+B:BLS217,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S21 Event 17,,,,,,,,,,,,0,0,False
+B:BLS220,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S22 Event 10,,,,,,,,,,,,0,0,False
+B:BLS227,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S22 Event 17,,,,,,,,,,,,0,0,False
+B:BLS230,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S23 Event 10,,,,,,,,,,,,0,0,False
+B:BLS237,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S23 Event 17,,,,,,,,,,,,0,0,False
+B:BLS240,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S24 Event 10,,,,,,,,,,,,0,0,False
+B:BLS247,observable,BOOSTER.BEAM_LOSS_MONITORS,BLM Sum S24 Event 17,,,,,,,,,,,,0,0,False
+B:BLV1U0,observable,logbook,"BLM sum V1U, event 10",,,,,,,,,,,,6,0,False
+B:BOOEFF,observable,BOOSTER.EFFICIENCY,Effic. using B:IRMCHG,,,,,,,,,,,,0,4,False
+B:BQ10F,observable,LTB.BPMS,Q10  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ11F,observable,LTB.BPMS,Q11  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ12F,observable,LTB.BPMS,Q12  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ13F,observable,LTB.BPMS,Q13  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ14F,observable,LTB.BPMS,Q14  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ15F,observable,LTB.BPMS,Q15  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ16F,observable,LTB.BPMS,Q16  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ17F,observable,LTB.BPMS,Q17  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ2F,observable,LTB.BPMS,Q2  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ3F,observable,LTB.BPMS,Q3  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ4F,observable,LTB.BPMS,Q4  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ5F,observable,LTB.BPMS,Q5  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ6F,observable,LTB.BPMS,Q6  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ7F,observable,LTB.BPMS,Q7  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ8F,observable,LTB.BPMS,Q8  BPM Phase,,,,,,,,,,,,0,0,False
+B:BQ9F,observable,LTB.BPMS,Q9  BPM Phase,,,,,,,,,,,,0,0,False
+B:BS01F,observable,LTB.BPMS_INJ,S01  BPM Phase,,,,,,,,,,,,0,0,False
+B:BS24F,observable,LTB.BPMS_INJ,S24  BPM Phase,,,,,,,,,,,,0,0,False
+B:CHG0,observable,logbook,Charge through cycle,,,,,,,,,,,,0,9,False
+B:CHG1,observable,BOOSTER.CHG,Charge after Injection,,,,,,,,,,,,0,3,False
+B:CHG122,observable,logbook,Charge at 8 GeV,,,,,,,,,,,,0,0,False
+B:CHG2,observable,BOOSTER.CHG,Charge at Extraction,,,,,,,,,,,,0,3,False
+B:CHGA,observable,BOOSTER.CHG,CHG0 at TCHGA,,,,,,,,,,,,0,1,False
+B:CHGA17,observable,BOOSTER.CHG,BLM BOOSTER CHARGE A $17,,,,,,,,,,,,0,0,False
+B:CHGB,observable,BOOSTER.CHG,CHG0 at TCHGB,,,,,,,,,,,,0,1,False
+B:CHGB17,observable,BOOSTER.CHG,BLM Booster charge,,,,,,,,,,,,0,0,False
+B:CHGEFF,observable,BOOSTER.CHG,Booster CHG eff,,,,,,,,,,,,0,0,False
+B:DCCT,observable,DB.DCCT,Description,,,,,,,,,,,,0,12,False
+B:DCCT1,observable,DB.DCCT,BDCCT AT INJECTION,,,,,,,,,,,,0,0,False
+B:DCCT2,observable,DB.DCCT,BDCCT AT EXTRACTION,,,,,,,,,,,,0,0,False
+B:DCCTA,observable,DB.DCCT,DCCTA Intensity,,,,,,,,,,,,0,0,False
+B:DCCTB,observable,DB.DCCT,DCCTB Intensity,,,,,,,,,,,,0,0,False
+B:DEBINT,observable,LTB.BPMS,DEB  BPM Intensity,,,,,,,,,,,,0,0,False
+B:FOLINT,observable,LTB.BPMS,FOIL  BPM Intensity,,,,,,,,,,,,0,0,False
+B:HP01L,observable,BOOSTER.BPMS_LONG,BPM HP01L,,,,,,,,,,,,0,0,False
+B:HP01S,observable,BOOSTER.BPMS_SHORT,BPM HP01S,,,,,,,,,,,,0,0,False
+B:HP02L,observable,BOOSTER.BPMS_LONG,BPM HP02L,,,,,,,,,,,,0,0,False
+B:HP02S,observable,BOOSTER.BPMS_SHORT,BPM HP02S,,,,,,,,,,,,0,0,False
+B:HP03L,observable,BOOSTER.BPMS_LONG,BPM HP03L,,,,,,,,,,,,0,0,False
+B:HP03S,observable,BOOSTER.BPMS_SHORT,BPM HP03S,,,,,,,,,,,,0,0,False
+B:HP04L,observable,BOOSTER.BPMS_LONG,BPM HP04L,,,,,,,,,,,,0,0,False
+B:HP04S,observable,BOOSTER.BPMS_SHORT,BPM HP04S,,,,,,,,,,,,0,0,False
+B:HP05L,observable,BOOSTER.BPMS_LONG,BPM HP05L,,,,,,,,,,,,0,0,False
+B:HP05S,observable,BOOSTER.BPMS_SHORT,BPM HP05S,,,,,,,,,,,,0,0,False
+B:HP06L,observable,BOOSTER.BPMS_LONG,BPM HP06L,,,,,,,,,,,,0,0,False
+B:HP06S,observable,BOOSTER.BPMS_SHORT,BPM HP06S,,,,,,,,,,,,0,0,False
+B:HP07L,observable,BOOSTER.BPMS_LONG,BPM HP07L,,,,,,,,,,,,0,0,False
+B:HP07S,observable,BOOSTER.BPMS_SHORT,BPM HP07S,,,,,,,,,,,,0,0,False
+B:HP08L,observable,BOOSTER.BPMS_LONG,BPM HP08L,,,,,,,,,,,,0,0,False
+B:HP08S,observable,BOOSTER.BPMS_SHORT,BPM HP08S,,,,,,,,,,,,0,0,False
+B:HP09L,observable,BOOSTER.BPMS_LONG,BPM HP09L,,,,,,,,,,,,0,0,False
+B:HP09S,observable,BOOSTER.BPMS_SHORT,BPM HP09S,,,,,,,,,,,,0,0,False
+B:HP10L,observable,BOOSTER.BPMS_LONG,BPM HP10L,,,,,,,,,,,,0,0,False
+B:HP10S,observable,BOOSTER.BPMS_SHORT,BPM HP10S,,,,,,,,,,,,0,0,False
+B:HP11L,observable,BOOSTER.BPMS_LONG,BPM HP11L,,,,,,,,,,,,0,0,False
+B:HP11S,observable,BOOSTER.BPMS_SHORT,BPM HP11S,,,,,,,,,,,,0,0,False
+B:HP12L,observable,BOOSTER.BPMS_LONG,BPM HP12L,,,,,,,,,,,,0,0,False
+B:HP12S,observable,BOOSTER.BPMS_SHORT,BPM HP12S,,,,,,,,,,,,0,0,False
+B:HP13L,observable,BOOSTER.BPMS_LONG,BPM HP13L,,,,,,,,,,,,0,0,False
+B:HP13S,observable,BOOSTER.BPMS_SHORT,BPM HP13S,,,,,,,,,,,,0,0,False
+B:HP14L,observable,BOOSTER.BPMS_LONG,BPM HP14L,,,,,,,,,,,,0,0,False
+B:HP14S,observable,BOOSTER.BPMS_SHORT,BPM HP14S,,,,,,,,,,,,0,0,False
+B:HP15L,observable,BOOSTER.BPMS_LONG,BPM HP15L,,,,,,,,,,,,0,0,False
+B:HP15S,observable,BOOSTER.BPMS_SHORT,BPM HP15S,,,,,,,,,,,,0,0,False
+B:HP16L,observable,BOOSTER.BPMS_LONG,BPM HP16L,,,,,,,,,,,,0,0,False
+B:HP16S,observable,BOOSTER.BPMS_SHORT,BPM HP16S,,,,,,,,,,,,1,0,False
+B:HP17L,observable,BOOSTER.BPMS_LONG,BPM HP17L,,,,,,,,,,,,0,0,False
+B:HP17S,observable,BOOSTER.BPMS_SHORT,BPM HP17S,,,,,,,,,,,,0,0,False
+B:HP18L,observable,BOOSTER.BPMS_LONG,BPM HP18L,,,,,,,,,,,,0,0,False
+B:HP18S,observable,BOOSTER.BPMS_SHORT,BPM HP18S,,,,,,,,,,,,0,0,False
+B:HP19L,observable,BOOSTER.BPMS_LONG,BPM HP19L,,,,,,,,,,,,0,0,False
+B:HP19S,observable,BOOSTER.BPMS_SHORT,BPM HP19S,,,,,,,,,,,,0,0,False
+B:HP20L,observable,BOOSTER.BPMS_LONG,BPM HP20L,,,,,,,,,,,,0,0,False
+B:HP20S,observable,BOOSTER.BPMS_SHORT,BPM HP20S,,,,,,,,,,,,0,0,False
+B:HP21L,observable,BOOSTER.BPMS_LONG,BPM HP21L,,,,,,,,,,,,0,0,False
+B:HP21S,observable,BOOSTER.BPMS_SHORT,BPM HP21S,,,,,,,,,,,,0,0,False
+B:HP22L,observable,BOOSTER.BPMS_LONG,BPM HP22L,,,,,,,,,,,,0,0,False
+B:HP22S,observable,BOOSTER.BPMS_SHORT,BPM HP22S,,,,,,,,,,,,0,0,False
+B:HP23L,observable,BOOSTER.BPMS_LONG,BPM HP23L,,,,,,,,,,,,0,0,False
+B:HP23S,observable,BOOSTER.BPMS_SHORT,BPM HP23S,,,,,,,,,,,,0,0,False
+B:HP24L,observable,BOOSTER.BPMS_LONG,BPM HP24L,,,,,,,,,,,,0,0,False
+B:HP24S,observable,BOOSTER.BPMS_SHORT,BPM HP24S,,,,,,,,,,,,0,0,False
+B:HPDEB,observable,LTB.BPMS,DEB Horiz Position,,,,,,,,,,,,0,0,False
+B:HPFOIL,observable,LTB.BPMS,Foil Horiz Position,,,,,,,,,,,,0,0,False
+B:HPINJ,observable,LTB.BPMS,INJ Horiz Position,,,,,,,,,,,,0,0,False
+B:HPL1D,observable,LTB.BPMS_INJ,L1D Horiz Position,,,,,,,,,,,,0,0,False
+B:HPL1U,observable,LTB.BPMS_INJ,L1U Horiz Position,,,,,,,,,,,,0,0,False
+B:HPLAM,observable,LTB.BPMS,LAM Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ10,observable,LTB.BPMS,Q10 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ12,observable,LTB.BPMS,Q12 Horiz Position,,,,,,,,,,,,1,0,False
+B:HPQ13,observable,LTB.BPMS,Q13 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ14,observable,LTB.BPMS,Q14 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ15,observable,LTB.BPMS,Q15 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ16,observable,LTB.BPMS,Q16 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ17,observable,LTB.BPMS,Q17 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ2,observable,LTB.BPMS,Q2 Horiz Position,,,,,,,,,,,,1,0,False
+B:HPQ3,observable,LTB.BPMS,Q3 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ4,observable,LTB.BPMS,Q4 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ5,observable,LTB.BPMS,Q5 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ6,observable,LTB.BPMS,Q6 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ7,observable,LTB.BPMS,Q7 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ8,observable,LTB.BPMS,Q8 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPQ9,observable,LTB.BPMS,Q9 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPS01,observable,LTB.BPMS_INJ,S01 Horiz Position,,,,,,,,,,,,0,0,False
+B:HPS24,observable,LTB.BPMS_INJ,S24 Horiz Position,,,,,,,,,,,,0,0,False
+B:INJINT,observable,LTB.BPMS,INJ  BPM Intensity,,,,,,,,,,,,0,0,False
+B:IRMCHG,observable,logbook,BLM Booster charge,,,,,,,,,,,,0,6,False
+B:L1DINT,observable,LTB.BPMS_INJ,L1D BPM Intensity,,,,,,,,,,,,0,0,False
+B:L1UINT,observable,LTB.BPMS_INJ,L1U BPM Intensity,,,,,,,,,,,,0,0,False
+B:LAMINT,observable,LTB.BPMS,LAM BPM Intensity,,,,,,,,,,,,0,0,False
+B:LOSBAL1,observable,logbook,BLS060/BLS130 ratio (VIMIN autotune),,,,,,,,,,,,6,0,False
+B:NOKD,observable,logbook,Notcher kicker,,,,,,,,,,,,25,0,False
+B:Q10INT,observable,LTB.BPMS,Q10  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q11INT,observable,LTB.BPMS,Q11 BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q12INT,observable,LTB.BPMS,Q12  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q13INT,observable,LTB.BPMS,Q13 BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q14INT,observable,LTB.BPMS,Q14  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q15INT,observable,LTB.BPMS,Q15  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q16INT,observable,LTB.BPMS,Q16 BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q17INT,observable,LTB.BPMS,Q17  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q2INT,observable,LTB.BPMS,Q2  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q3INT,observable,LTB.BPMS,Q3 BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q4INT,observable,LTB.BPMS,Q4  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q5INT,observable,LTB.BPMS,Q5 BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q6INT,observable,LTB.BPMS,Q6 BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q7INT,observable,LTB.BPMS,Q7  BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q8INT,observable,LTB.BPMS,Q8 BPM Intensity,,,,,,,,,,,,0,0,False
+B:Q9INT,observable,LTB.BPMS,Q9  BPM Intensity,,,,,,,,,,,,0,0,False
+B:RPOS,observable,logbook,Radial position,,,,,,,,,,,,20,1,False
+B:S01INT,observable,LTB.BPMS_INJ,S01  BPM Intensity,,,,,,,,,,,,0,0,False
+B:S24INT,observable,LTB.BPMS_INJ,S24 BPM Intensity,,,,,,,,,,,,0,0,False
+B:TORDMP,observable,logbook,Booster dump toroid,,,,,,,,,,,,0,4,False
+B:VP01L,observable,BOOSTER.BPMS_LONG,BPM VP01L,,,,,,,,,,,,0,0,False
+B:VP01S,observable,BOOSTER.BPMS_SHORT,BPM VP01S,,,,,,,,,,,,0,0,False
+B:VP02L,observable,BOOSTER.BPMS_LONG,BPM VP02L,,,,,,,,,,,,0,0,False
+B:VP02S,observable,BOOSTER.BPMS_SHORT,BPM VP02S,,,,,,,,,,,,0,0,False
+B:VP03L,observable,BOOSTER.BPMS_LONG,BPM VP03L,,,,,,,,,,,,0,0,False
+B:VP03S,observable,BOOSTER.BPMS_SHORT,BPM VP03S,,,,,,,,,,,,0,0,False
+B:VP04L,observable,BOOSTER.BPMS_LONG,BPM VP04L,,,,,,,,,,,,0,0,False
+B:VP04S,observable,BOOSTER.BPMS_SHORT,BPM VP04S,,,,,,,,,,,,0,0,False
+B:VP05L,observable,BOOSTER.BPMS_LONG,BPM VP05L,,,,,,,,,,,,0,0,False
+B:VP05S,observable,BOOSTER.BPMS_SHORT,BPM VP02S,,,,,,,,,,,,0,0,False
+B:VP06L,observable,BOOSTER.BPMS_LONG,BPM VP06L,,,,,,,,,,,,0,0,False
+B:VP06S,observable,BOOSTER.BPMS_SHORT,BPM VP06S,,,,,,,,,,,,0,0,False
+B:VP07L,observable,BOOSTER.BPMS_LONG,BPM VP07L,,,,,,,,,,,,0,0,False
+B:VP07S,observable,BOOSTER.BPMS_SHORT,BPM VP07S,,,,,,,,,,,,0,0,False
+B:VP08L,observable,BOOSTER.BPMS_LONG,BPM VP08L,,,,,,,,,,,,0,0,False
+B:VP08S,observable,BOOSTER.BPMS_SHORT,BPM VP08S,,,,,,,,,,,,0,0,False
+B:VP09L,observable,BOOSTER.BPMS_LONG,BPM VP09L,,,,,,,,,,,,0,0,False
+B:VP09S,observable,BOOSTER.BPMS_SHORT,BPM VP09S,,,,,,,,,,,,0,0,False
+B:VP10L,observable,BOOSTER.BPMS_LONG,BPM VP10L,,,,,,,,,,,,0,0,False
+B:VP10S,observable,BOOSTER.BPMS_SHORT,BPM VP10S,,,,,,,,,,,,0,0,False
+B:VP11L,observable,BOOSTER.BPMS_LONG,BPM VP11L,,,,,,,,,,,,0,0,False
+B:VP11S,observable,BOOSTER.BPMS_SHORT,BPM VP08S,,,,,,,,,,,,0,0,False
+B:VP12L,observable,BOOSTER.BPMS_LONG,BPM VP12L,,,,,,,,,,,,0,0,False
+B:VP12S,observable,BOOSTER.BPMS_SHORT,BPM VP12S,,,,,,,,,,,,0,0,False
+B:VP13L,observable,BOOSTER.BPMS_LONG,BPM VP13L,,,,,,,,,,,,0,0,False
+B:VP13S,observable,BOOSTER.BPMS_SHORT,BPM VP13S,,,,,,,,,,,,0,0,False
+B:VP14L,observable,BOOSTER.BPMS_LONG,BPM VP14L,,,,,,,,,,,,0,0,False
+B:VP14S,observable,BOOSTER.BPMS_SHORT,BPM VP14S,,,,,,,,,,,,0,0,False
+B:VP15L,observable,BOOSTER.BPMS_LONG,BPM VP15L,,,,,,,,,,,,0,0,False
+B:VP15S,observable,BOOSTER.BPMS_SHORT,BPM VP15S,,,,,,,,,,,,0,0,False
+B:VP16L,observable,BOOSTER.BPMS_LONG,BPM VP16L,,,,,,,,,,,,0,0,False
+B:VP16S,observable,BOOSTER.BPMS_SHORT,BPM VP16S,,,,,,,,,,,,0,0,False
+B:VP17L,observable,BOOSTER.BPMS_LONG,BPM VP17L,,,,,,,,,,,,0,0,False
+B:VP17S,observable,BOOSTER.BPMS_SHORT,BPM VP17S,,,,,,,,,,,,0,0,False
+B:VP18L,observable,BOOSTER.BPMS_LONG,BPM VP18L,,,,,,,,,,,,0,0,False
+B:VP18S,observable,BOOSTER.BPMS_SHORT,BPM VP18S,,,,,,,,,,,,0,0,False
+B:VP19L,observable,BOOSTER.BPMS_LONG,BPM VP19L,,,,,,,,,,,,0,0,False
+B:VP19S,observable,BOOSTER.BPMS_SHORT,BPM VP19S,,,,,,,,,,,,0,0,False
+B:VP20L,observable,BOOSTER.BPMS_LONG,BPM VP20L,,,,,,,,,,,,0,0,False
+B:VP20S,observable,BOOSTER.BPMS_SHORT,BPM VP20S,,,,,,,,,,,,0,0,False
+B:VP21L,observable,BOOSTER.BPMS_LONG,BPM VP21L,,,,,,,,,,,,0,0,False
+B:VP21S,observable,BOOSTER.BPMS_SHORT,BPM VP21S,,,,,,,,,,,,0,0,False
+B:VP22L,observable,BOOSTER.BPMS_LONG,BPM VP22L,,,,,,,,,,,,0,0,False
+B:VP22S,observable,BOOSTER.BPMS_SHORT,BPM VP22S,,,,,,,,,,,,0,0,False
+B:VP23L,observable,BOOSTER.BPMS_LONG,BPM VP23L,,,,,,,,,,,,0,0,False
+B:VP23S,observable,BOOSTER.BPMS_SHORT,BPM VP23S,,,,,,,,,,,,0,0,False
+B:VP24L,observable,BOOSTER.BPMS_LONG,BPM VP24L,,,,,,,,,,,,0,0,False
+B:VP24S,observable,BOOSTER.BPMS_SHORT,BPM VP24S,,,,,,,,,,,,0,0,False
+B:VPDEB,observable,LTB.BPMS,DEB Vert Position,,,,,,,,,,,,0,0,False
+B:VPFOIL,observable,LTB.BPMS,FOIL Horiz Position,,,,,,,,,,,,0,0,False
+B:VPINJ,observable,LTB.BPMS,INJ Vert Position,,,,,,,,,,,,0,0,False
+B:VPL1D,observable,LTB.BPMS_INJ,L1D Vert Position,,,,,,,,,,,,0,0,False
+B:VPL1U,observable,LTB.BPMS_INJ,L1U Vert Position,,,,,,,,,,,,0,0,False
+B:VPLAM,observable,LTB.BPMS,LAM Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ10,observable,LTB.BPMS,Q10 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ11,observable,LTB.BPMS,Q11 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ12,observable,LTB.BPMS,Q12 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ13,observable,LTB.BPMS,Q13 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ14,observable,LTB.BPMS,Q14 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ15,observable,LTB.BPMS,Q15 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ16,observable,LTB.BPMS,Q16 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ17,observable,LTB.BPMS,Q17 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ2,observable,LTB.BPMS,Q2 Vert Position,,,,,,,,,,,,2,0,False
+B:VPQ3,observable,LTB.BPMS,Q3 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ4,observable,LTB.BPMS,Q4 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ5,observable,LTB.BPMS,Q5 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ6,observable,LTB.BPMS,Q6 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ7,observable,LTB.BPMS,Q7 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ8,observable,LTB.BPMS,Q8 Vert Position,,,,,,,,,,,,0,0,False
+B:VPQ9,observable,LTB.BPMS,Q9 Vert Position,,,,,,,,,,,,0,0,False
+B:VPS01,observable,LTB.BPMS_INJ,S01 Vert Position,,,,,,,,,,,,0,0,False
+B:VPS24,observable,LTB.BPMS_INJ,S24 Vert Position,,,,,,,,,,,,0,0,False
+E:MBRATE,observable,logbook,MiniBooNE intensity rate,,,,,,,,,,,,0,9,False
+E:ULMQ01,observable,LTB.LOSS_MONITORS,Q01 Loss Monitor,,,,,,,,,,,,0,0,False
+G:LINEFF,observable,logbook,Linac efficiency,,,,,,,,,,,,0,0,False
+G:TURN13,observable,BOOSTER.TURNS,TEV_FIX # turns <$13>,,,,,,,,,,,,0,0,False
+G:TURN14,observable,BOOSTER.TURNS,STUDY_I # turns <$14>,,,,,,,,,,,,0,0,False
+G:TURN15,observable,BOOSTER.TURNS,NUMI_RR # turns <$15>,,,,,,,,,,,,0,0,False
+G:TURN16,observable,BOOSTER.TURNS,PB_TUNE # turns <$16>,,,,,,,,,,,,0,0,False
+G:TURN17,observable,BOOSTER.TURNS,BOO_STD # turns <$17>,,,,,,,,,,,,0,0,False
+G:TURN19,observable,BOOSTER.TURNS,BOO_STD # turns <$19>,,,,,,,,,,,,0,0,False
+G:TURN1C,observable,BOOSTER.TURNS,MUONEXP # turns <$1C>,,,,,,,,,,,,0,0,False
+G:TURN1D,observable,BOOSTER.TURNS,MINI_BN # turns <$1D>,,,,,,,,,,,,0,0,False
+L:BP201F,observable,LTB.BPMS_DUMP,E 201 PHASE 400MEV,,,,,,,,,,,,0,0,False
+L:BP202F,observable,LTB.BPMS_DUMP,E 202 PHASE 2 400MEV,,,,,,,,,,,,0,0,False
+L:BP203F,observable,LTB.BPMS_DUMP,E 203 PHASE 3 400MEV,,,,,,,,,,,,0,0,False
+L:BP204F,observable,LTB.BPMS_DUMP,E 204 PHASE MOMENTUM,,,,,,,,,,,,0,0,False
+L:BPH201,observable,LTB.BPMS_DUMP,Mom.Dump: Upstream QD3 H,,,,,,,,,,,,0,0,False
+L:BPH202,observable,LTB.BPMS_DUMP,Mom.Dump: Upstream Spec,,,,,,,,,,,,0,0,False
+L:BPH203,observable,LTB.BPMS_DUMP,Mom.Dump: Straight Ahead,,,,,,,,,,,,0,0,False
+L:BPH204,observable,LTB.BPMS_DUMP,Mom.Dump: Upstream MWIRE,,,,,,,,,,,,0,0,False
+L:BPV201,observable,LTB.BPMS_DUMP,Mom.Dump: Upstream QD3 V,,,,,,,,,,,,0,0,False
+L:BPV202,observable,LTB.BPMS_DUMP,Mom.Dump: Upstream Spec,,,,,,,,,,,,0,0,False
+L:BPV203,observable,LTB.BPMS_DUMP,Mom.Dump: Straight Ahead,,,,,,,,,,,,0,0,False
+L:BPV204,observable,LTB.BPMS_DUMP,Mom.Dump: Upstream MWIRE,,,,,,,,,,,,0,0,False
+L:D23LM,observable,logbook,Linac loss,,,,,,,,,,,,0,5,False
+L:D34LM,observable,logbook,Linac loss,,,,,,,,,,,,0,6,False
+L:D41LM,observable,logbook,Linac loss,,,,,,,,,,,,0,4,False
+L:D72LM,observable,logbook,Linac loss,,,,,,,,,,,,0,5,False
+L:D7LMSM,observable,logbook,Linac loss sum,,,,,,,,,,,,0,13,False
+L:D7TOR,observable,logbook,Linac output toroid,,,,,,,,,,,,0,18,False
+L:DELM1,observable,LTB.LOSS_MONITORS,Loss Mon: Lambertson US,,,,,,,,,,,,0,0,False
+L:DELM11,observable,LTB.LOSS_MONITORS,Loss Mon: Not Connected,,,,,,,,,,,,0,0,False
+L:DELM12,observable,LTB.LOSS_MONITORS,Loss Mon: Not Connected,,,,,,,,,,,,0,0,False
+L:DELM13,observable,LTB.LOSS_MONITORS,Loss Mon: Q2 upstream,,,,,,,,,,,,0,0,False
+L:DELM15,observable,LTB.LOSS_MONITORS,Loss Mon: Not Connected,,,,,,,,,,,,0,0,False
+L:DELM2,observable,LTB.LOSS_MONITORS_DUMP,Loss Mon: Spectrometr In,,,,,,,,,,,,0,0,False
+L:DELM3,observable,LTB.LOSS_MONITORS_DUMP,Loss Mon: Straight Dump,,,,,,,,,,,,0,0,False
+L:DELM4,observable,LTB.LOSS_MONITORS_DUMP,Loss Mon: Momentum Dump,,,,,,,,,,,,0,0,False
+L:DELM5,observable,LTB.LOSS_MONITORS,Loss Mon: Lambertson In,,,,,,,,,,,,0,0,False
+L:DELM6,observable,LTB.LOSS_MONITORS,Loss Mon: Not Connected,,,,,,,,,,,,0,0,False
+L:DELM7,observable,LTB.LOSS_MONITORS,Loss Mon: Lambertson Out,,,,,,,,,,,,0,0,False
+L:DELM8,observable,LTB.LOSS_MONITORS_DUMP,Loss Mon: QD4 dwnstream,,,,,,,,,,,,0,0,False
+L:DELM9,observable,LTB.LOSS_MONITORS_DUMP,Loss Mon: SPEC dwnstream,,,,,,,,,,,,0,0,False
+L:TK1RAD,observable,logbook,Linac loss,,,,,,,,,,,,0,12,False
+L:TK4RAD,observable,logbook,Linac loss,,,,,,,,,,,,0,8,False
+L:TLML1,observable,LTB.LOSS_MONITORS_DUMP,Spec TLM   Upstream East,,,,,,,,,,,,0,0,False
+L:TLML2,observable,LTB.LOSS_MONITORS_DUMP,Spec TLM Downstream East,,,,,,,,,,,,0,0,False
+L:TLMR1,observable,LTB.LOSS_MONITORS_DUMP,Spec TLM   Upstream West,,,,,,,,,,,,0,0,False
+L:TLMR2,observable,LTB.LOSS_MONITORS_DUMP,Spec TLM Dowsntream West,,,,,,,,,,,,0,0,False
+L:TUNRAD,observable,logbook,Linac loss,,,,,,,,,,,,0,17,False
+WorstLossNorm,observable,computed,computed: max over calibrated BLMs of (reading - baseline) / scale,,,,,,,,,,,,0,0,False

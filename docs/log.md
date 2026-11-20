@@ -1953,3 +1953,21 @@ Fixes (main):
 - Commit messages from here on end with a bracket tag (`[ClaudeCode:Opus5.5]`) in place
   of the `Co-Authored-By:`/`Claude-Session:` trailers (user's standing preference,
   confirmed 2026-11-19; pushed history unchanged).
+
+## 2026-11-19 — the Booster-wide environment; event-tagged readings
+
+- `03_Booster_Pacsys` (user: one environment for all Booster tasks; fold in and delete
+  the injection draft; this name). Sources: ad-tools device inventory (internal; only
+  the needed fields copied), 24 months of logbook (12 task types; knobs vs watched
+  readings), 90 days of logged settings (`scripts/logger_ranges.py`, new). Device table
+  `devices.csv` from `scripts/make_booster_devices.py` (new): 440 settings, 402 with
+  ranges, 503 readings. `new_env.py` and the template lint accept a name with no task.
+- Found: the ring magnets' settings are not logged; `L:C7PHAS` (periodic) has two states
+  158 degrees apart and changes on 96 % of its 15 Hz readings; 50 settings change often
+  enough that another loop writes them. Write guard generalized from `B:VIMIN` to all of
+  them (`allow_auto_written`). `tests/03_Booster_Pacsys_test.py` (moved from the draft).
+- Event tagging (user's idea: check the tags by proportions and timing):
+  `scripts/event_tag.py`, from ACL's `event_log` over HTTP. Firings cluster into
+  cycles ($10 with $1D or $17 at the reset, $1F about 35 ms later). `B:BLMS13` passes
+  (shares match to 0.02 %, 37 ms delay, R^2 0.84 at its own cycle); `B:CHG0` does not.
+- Docs: `docs/booster-environment.md`; environment README for operators.
