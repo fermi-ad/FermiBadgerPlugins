@@ -59,8 +59,8 @@ def day_row(day, values, rng, period=None):
 
 
 def read_day(get_many, devices, t1, t2):
-    """{device: values} for one day: all devices in one bare-DRF read, then the other
-    events for those that came back empty."""
+    """{device: (times in s, values)} for one day: all devices in one bare-DRF read, then
+    the other events for those that came back empty."""
     out, pending = {}, list(devices)
     for ev in EVENTS:
         if not pending:
@@ -76,7 +76,7 @@ def read_day(get_many, devices, t1, t2):
         for d, r in zip(pending, readings):
             val = r.value if r is not None and getattr(r, "ok", False) else None
             if isinstance(val, dict) and len(val.get("data", ())):
-                out[d] = val["data"]
+                out[d] = (np.asarray(val["micros"]) / 1e6, val["data"])
             else:
                 still.append(d)
         pending = still
@@ -109,7 +109,7 @@ def main():
         t1 = int(dt.datetime.fromisoformat(day).timestamp() * 1000)
         got = read_day(get_many, todo, t1, t1 + DAY_MS)
         for d in todo:
-            row, sample = day_row(day, got.get(d, ()), rng, periods.get(d))
+            row, sample = day_row(day, got.get(d, ((), ()))[1], rng, periods.get(d))
             row = row or {"day": day, "n": 0}
             cached[d] = pd.concat([cached[d], pd.DataFrame([row])], ignore_index=True)
             samples[d].append(pd.DataFrame({"day": day, "value": sample}))

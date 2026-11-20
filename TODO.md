@@ -254,8 +254,11 @@ it to paste in.
 - [ ] **Booster noise profiles per cycle type:** tag logged readings by cycle
   (`scripts/event_tag.py`; validated on `B:BLMS13`, not on `B:CHG0`), then profile the
   constraint candidates (BLMs, `B:BEFFnn`).
-- [ ] **Booster templates for the other tasks:** orbit, RF capture and transition,
-  extraction, notching, tune and chromaticity, against `03_Booster_Pacsys`.
+- [ ] **Booster templates for the other tasks** (plan set aside 2026-11-20, user's call:
+  `docs/plans/booster-templates.md`): orbit, RF capture and RF transition (two), extraction,
+  notching, tunes, and chromaticity against `03_Booster_Pacsys`, every logbook-named
+  device checked; tunes and chromaticity by OCR of their entries' screenshots, then
+  indexed (ramp-table) settings in the interface.
 - [x] **RIL loss-objective template promoted to operations** (2026-11-17, the user's
   decision): `01_Linac_LossObjective_RIL_tuning.yaml` (minimize `L:TK4RAD`, `L:D7TOR`
   > 20 floor), beside the original `01_Linac_RIL_tuning.yaml`.
