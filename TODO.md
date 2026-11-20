@@ -137,7 +137,8 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
 - [ ] **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the
-  last pull there (51aebab): risk tolerance (f5ad771) and noise shapes (d0a8b73).
+  last pull there (51aebab): risk tolerance (f5ad771) and noise shapes (d0a8b73); the
+  pull also brings the Booster-wide environment (d5cb46d).
 - [x] (user reported `pixi install` done, 2026-11-17) **On gmpsai2 after the Acsys retirement (2026-11-04):** `git pull && pixi install
   && pixi run setup -- --yes` (the lock changed: acsys gone; grpcio 1.84.0→1.85.1,
   anyio, cython, pyasn1 minor bumps). Then one read-only template load to exercise

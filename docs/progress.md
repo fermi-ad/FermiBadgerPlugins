@@ -2111,7 +2111,10 @@ environment goes there too, tested in `tests/archetype_test.py`.
   `tuning_templates/simulation/` (tunes, MOBO tunes, orbit H and V, chromaticity,
   lattice functions, model fit). Notes for the lattice's author:
   `docs/dr-lattice-simulation-notes.md`.
-- Booster injection environment, read only (`B:VIMIN` autotune question open).
+- Booster: one environment for every Booster task, `03_Booster_Pacsys` (2026-11-19,
+  `docs/booster-environment.md`): 440 settings (402 with ranges), 503 readings; writes
+  off, and refused for the 50 settings other loops also write until each is signed off.
+  Draft injection template only; templates for the other tasks to come.
 - MOBO RIL template in development (2026-11-18):
   `development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml` (maximize `L:D7TOR`,
   minimize `L:TUNRAD`); not yet run on the machine.

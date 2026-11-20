@@ -1971,3 +1971,5 @@ Fixes (main):
   cycles ($10 with $1D or $17 at the reset, $1F about 35 ms later). `B:BLMS13` passes
   (shares match to 0.02 %, 37 ms delay, R^2 0.84 at its own cycle); `B:CHG0` does not.
 - Docs: `docs/booster-environment.md`; environment README for operators.
+- Full suite 40 of 40; pushed d5cb46d. gmpsai2: `git pull && pixi run setup -- --yes`
+  still pending (patches since 51aebab).
