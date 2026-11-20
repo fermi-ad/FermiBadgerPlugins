@@ -1,0 +1,36 @@
+device: L:TK1RAD
+family: gaussexp
+kL: 1.3618
+kR: 1.5003
+unit_mean: -0.02631
+unit_std: 1.17659
+note: 'noise = sigma(level) * (Z - unit_mean) / unit_std, Z ~ GaussExp(kL, kR): Gaussian core,
+  exponential tails beyond -kL and +kR sigmas. Xopt''s measured-value risk takes only the
+  shape (kL, kR); the scale comes from the run''s own GP.'
+source: L_TK1RAD_2026-11-18_14d.csv.gz
+logged_every_s: 15.0
+steady_readings: 51240
+window: 20
+eta_min: 1.3
+sigma_vs_level:
+- - 16.027374
+  - 0.085003
+- - 19.310913
+  - 0.104527
+- - 22.076874
+  - 0.122393
+- - 22.667389
+  - 0.126946
+- - 23.132324
+  - 0.128941
+- - 23.870239
+  - 0.139543
+gross_outlier_cut_sigmas: 8.0
+gross_outlier_rate: 0.0102
+heldout_exceedance_over_alpha:
+  lo 0.01: 0.935
+  lo 0.05: 0.881
+  hi 0.01: 1.108
+  hi 0.05: 1.086
+fitted: '2026-11-19'
+by: scripts/noise_shape_fit.py

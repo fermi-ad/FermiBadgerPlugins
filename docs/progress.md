@@ -2116,6 +2116,9 @@ environment goes there too, tested in `tests/archetype_test.py`.
   `development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml` (maximize `L:D7TOR`,
   minimize `L:TUNRAD`); not yet run on the machine.
 - Full suite: 37 of 37 (2026-11-17).
+- Noise (2026-11-19): the risk tolerance is on the measured value; GaussExp noise
+  profiles for five devices (`plugins/noise_profiles/`, `docs/noise-shapes.md`), a
+  staleness check, and an optional robust GP (`robust_outcomes`). Offline-tested only.
 
 ### Next
 
@@ -2124,3 +2127,5 @@ environment goes there too, tested in `tests/archetype_test.py`.
 - DR real-machine twins, orbit first; ACNET names for the quad and sextupole supplies.
 - Run the MOBO RIL template with the operators; ranges from alarm limits or a typed
   center; a plots-only view.
+- On the machine: a risk tolerance on a profiled constraint and `robust_outcomes:
+  [L:D7TOR]`; watch the staleness log.

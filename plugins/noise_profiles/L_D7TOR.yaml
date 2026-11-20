@@ -1,0 +1,36 @@
+device: L:D7TOR
+family: gaussexp
+kL: 1.8626
+kR: 2.7042
+unit_mean: -0.01875
+unit_std: 1.03133
+note: 'noise = sigma(level) * (Z - unit_mean) / unit_std, Z ~ GaussExp(kL, kR): Gaussian core,
+  exponential tails beyond -kL and +kR sigmas. Xopt''s measured-value risk takes only the
+  shape (kL, kR); the scale comes from the run''s own GP.'
+source: L_D7TOR_2026-11-18_1d.csv.gz
+logged_every_s: 0.067
+steady_readings: 1059060
+window: 20
+eta_min: 1.3
+sigma_vs_level:
+- - 24.469576
+  - 0.137351
+- - 24.631026
+  - 0.127125
+- - 24.724216
+  - 0.125804
+- - 24.786653
+  - 0.125308
+- - 24.83977
+  - 0.123277
+- - 24.903605
+  - 0.120523
+gross_outlier_cut_sigmas: 8.0
+gross_outlier_rate: 0.00255
+heldout_exceedance_over_alpha:
+  lo 0.01: 1.036
+  lo 0.05: 1.013
+  hi 0.01: 0.787
+  hi 0.05: 0.924
+fitted: '2026-11-19'
+by: scripts/noise_shape_fit.py

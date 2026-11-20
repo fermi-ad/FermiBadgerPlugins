@@ -467,10 +467,20 @@ exists and what it would touch.
     pulses correlated, so s^2/N understates an N-pulse mean's variance by 1.6-2.1x (R).
   - [ ] Wider levels (other periods), per-cycle Booster reads (`@e,XX`), and
     device-to-device correlation (loss monitors vs L:D7TOR, pulse by pulse).
+  - [x] Non-Gaussian noise (2026-11-19; `docs/noise-shapes.md`; patches
+    `xopt-3.2.2-noise-shapes`, `badger-1.6.0-noise-shapes`): GaussExp profiles
+    (Gaussian core, exponential tails) for five devices in `plugins/noise_profiles/`;
+    the risk tolerance is now on the measured value, with the profile's shape; a
+    staleness check of the run's residuals; `robust_outcomes` (robust GP) for gross
+    outliers. Offline-tested only.
+  - [ ] Try it on the machine: a RIL run with a risk tolerance on a profiled constraint
+    (L:D7TOR > x), and `robust_outcomes: [L:D7TOR]` (dropouts); watch the staleness log.
+  - [ ] Refresh profiles from other periods; profiles for L:TK4RAD/L:TUNRAD need a
+    quantized shape (they read in steps of about one sigma).
   - [ ] Then: `_var` from `average_events`, corrected for correlated events (batch
     means, or s^2/N times a per-device R), in `BasicPacsysInterface`; computed
-    observables per event, then mean and variance; a risk-tolerance option on the
-    measured value (predicted noise included), likely for Stopping constraints.
+    observables per event, then mean and variance. With N > 1 the single-reading shape
+    no longer applies as is (an average is more Gaussian).
 - [ ] **Front-end noise statistics as a central resource** (user, 2026-11-18): check (or
   ask the pacsys author) whether pacsys can provide front-end noise statistics for a
   reading; if not there, look for a central home (the ACNET device database, or another

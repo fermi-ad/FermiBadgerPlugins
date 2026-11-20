@@ -1921,3 +1921,29 @@ Fixes (main):
   noise; the standard GP is more conservative there. Mitigations not yet tried.
 - TODO: front-end noise statistics as a central resource (pacsys, device DB); the
   machine noise-shape check (data logger).
+
+## 2026-11-18/19 — read noise from the data logger; non-Gaussian noise models
+
+- `scripts/logger_noise.py` (read-only logger pulls; steady windows by von Neumann
+  ratio; Gaussian reference through the same code; R = an N-average's variance over
+  s^2/N), `docs/logger-read-noise.md`: Linac noise 0.5-0.6 % of level, heavier tails,
+  B:BOOEFF skewed low, correlated L:D7TOR pulses (R 1.6-2.1). Bare logger DRFs (no
+  `@event`) return every device, the RIL settings included; the tuning-reflection
+  skill's `tasks/ril.yaml` (ProjectDT_FNAL) updated to match, not committed there.
+  Pushed 35278d8.
+- `scripts/noise_shape_fit.py`, `docs/noise-shape-fit.md`: Gaussian, Student-t,
+  skew-normal, Johnson SU, Jones-Faddy skew-t, contamination mixture, GaussExp (user's
+  "crystal ball": Gaussian core, exponential tails, C1 splices), and classic Crystal
+  Ball, fitted and checked on held-out halves. Fixes found on the way: window-mean
+  centering let dropouts shift whole windows; whole-window medians made a false cusp
+  at 0; untruncated fits collapse to the k floor because of gross outliers. Profiles:
+  GaussExp truncated at 8 robust sigmas, gross-outlier rate kept apart.
+- User's choices: a robust GP for outliers; measured-value risk with GaussExp;
+  per-device profile files plus a check against the run's own residuals.
+- `xopt-3.2.2-noise-shapes.patch` (new `noise_shape.py`; risk on the measured value,
+  quadrature checked against Monte Carlo; Anderson-Darling staleness check, chosen over
+  a 95 %-band count, which caught 20 % of spiky runs against 100 %;
+  `robust_outcomes`), `badger-1.6.0-noise-shapes.patch` (profiles to the generator;
+  tooltip). `tests/noise_shapes_test.py`: at a 1 % tolerance with a skewed tail, the
+  true violation chance is 3.7 % assuming Gaussian noise, 1.1 % with the shape; the
+  robust GP's error at a 150-sigma outlier 0.001 vs 0.34. GUI test extended.

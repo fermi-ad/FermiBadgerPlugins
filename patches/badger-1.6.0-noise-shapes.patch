@@ -1,0 +1,96 @@
+diff -ruN a/badger/gui/components/con_table.py b/badger/gui/components/con_table.py
+--- a/badger/gui/components/con_table.py	2026-11-19 17:08:41
++++ b/badger/gui/components/con_table.py	2026-11-19 17:08:41
+@@ -51,7 +51,7 @@
+             ["", "Name", "Relation", "Threshold", "Stopping", "Risk Tolerance"]
+         )
+         self.horizontalHeaderItem(4).setToolTip('Stopping: the run stops if a measured value breaks this constraint.')
+-        self.horizontalHeaderItem(5).setToolTip("Risk Tolerance: the largest chance, according to the constraint's model, that you accept of a proposed point breaking this constraint. 100% = no limit (the default). 0.01% is the most cautious setting: the model is never certain, so 0 is not possible and becomes 0.01%. If no point meets it, that step ignores it and says so in the log.")
++        self.horizontalHeaderItem(5).setToolTip("Risk Tolerance: the largest chance you accept that a fresh reading at a proposed point breaks this constraint, according to the constraint's model and its noise (the device's noise profile in plugins/noise_profiles if it has one, else Gaussian). 100% = no limit (the default). 0.01% is the most cautious setting: the model is never certain, so 0 is not possible and becomes 0.01%. If no point meets it, that step ignores it and says so in the log.")
+ 
+     def default_info(self) -> list[Any]:
+         """
+@@ -110,6 +110,6 @@
+         risk_spinbox.setSuffix(" %")
+         risk_spinbox.setCorrectionMode(QAbstractSpinBox.CorrectToNearestValue)
+         risk_spinbox.setValue(info[3] if len(info) > 3 else 100.0)
+-        risk_spinbox.setToolTip("Risk Tolerance: the largest chance, according to the constraint's model, that you accept of a proposed point breaking this constraint. 100% = no limit (the default). 0.01% is the most cautious setting: the model is never certain, so 0 is not possible and becomes 0.01%. If no point meets it, that step ignores it and says so in the log.")
++        risk_spinbox.setToolTip("Risk Tolerance: the largest chance you accept that a fresh reading at a proposed point breaks this constraint, according to the constraint's model and its noise (the device's noise profile in plugins/noise_profiles if it has one, else Gaussian). 100% = no limit (the default). 0.01% is the most cautious setting: the model is never certain, so 0 is not possible and becomes 0.01%. If no point meets it, that step ignores it and says so in the log.")
+ 
+         return (relation_combo, threshold_spinbox, critical_checkbox, risk_spinbox)
+diff -ruN a/badger/gui/components/noise_profiles.py b/badger/gui/components/noise_profiles.py
+--- a/badger/gui/components/noise_profiles.py	1969-12-31 18:00:00
++++ b/badger/gui/components/noise_profiles.py	2026-11-19 17:08:41
+@@ -0,0 +1,26 @@
++"""Noise profiles (FermiBadgerPlugins patch badger-1.6.0-noise-shapes): for each
++constraint whose device has <plugin root>/noise_profiles/<device>.yaml (':' written '_'),
++its noise shape {kL, kR}, for the generator's measured-value risk tolerance
++(xopt-3.2.2-noise-shapes). Profiles are written by scripts/noise_shape_fit.py."""
++import logging
++import os
++
++import yaml
++
++logger = logging.getLogger(__name__)
++
++
++def noise_shapes(plugin_root, names):
++    shapes = {}
++    for name in names:
++        path = os.path.join(plugin_root or "", "noise_profiles", name.replace(":", "_") + ".yaml")
++        if not os.path.exists(path):
++            continue
++        try:
++            with open(path) as f:
++                profile = yaml.safe_load(f)
++            shapes[name] = {"kL": float(profile["kL"]), "kR": float(profile["kR"])}
++        except Exception as error:  # a bad profile must not stop composing a routine
++            logger.warning("Noise profile %s unreadable (%s); %s noise taken as Gaussian.",
++                           path, error, name)
++    return shapes
+diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
+--- a/badger/gui/components/routine_page.py	2026-11-19 17:08:41
++++ b/badger/gui/components/routine_page.py	2026-11-19 17:08:41
+@@ -68,6 +68,7 @@
+ )
+ from badger.gui.components.env_cbox import BadgerEnvBox
+ from badger.gui.components.outside_limits import is_outside, untick_outside_limits
++from badger.gui.components.noise_profiles import noise_shapes
+ from badger.gui.components.filter_cbox import BadgerFilterBox
+ from badger.gui.windows.docs_window import BadgerDocsWindow
+ from badger.gui.windows.edit_script_dialog import BadgerEditScriptDialog
+@@ -1915,6 +1916,11 @@
+             if "constraint_risk_tolerance" in get_generator_dynamic(generator_name).model_fields:
+                 generator_params["constraint_risk_tolerance"] = (
+                     self.env_box.risk_tolerances() or None)
++            # noise profiles -> the generator's noise shapes (badger-1.6.0-noise-shapes)
++            if "constraint_noise_shapes" in get_generator_dynamic(generator_name).model_fields:
++                generator_params["constraint_noise_shapes"] = noise_shapes(
++                    self.BADGER_PLUGIN_ROOT,
++                    [next(iter(c)) for c in self.env_box.con_table.export_data()]) or None
+             generator = get_generator_dynamic(generator_name)(
+                 vocs=vocs, **generator_params
+             )
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-11-19 17:08:41
++++ b/badger/gui/mini/pages/routine_page.py	2026-11-19 17:08:41
+@@ -52,6 +52,7 @@
+ )
+ from badger.gui.mini.components.env_cbox import BadgerEnvBox
+ from badger.gui.components.outside_limits import is_outside, untick_outside_limits
++from badger.gui.components.noise_profiles import noise_shapes
+ from badger.gui.windows.docs_window import BadgerDocsWindow
+ from badger.gui.windows.lim_vrange_dialog import BadgerLimitVariableRangeDialog
+ from badger.gui.windows.ind_lim_vrange_dialog import (
+@@ -1979,6 +1980,11 @@
+             if "constraint_risk_tolerance" in get_generator_dynamic(generator_name).model_fields:
+                 generator_params["constraint_risk_tolerance"] = (
+                     self.env_box.risk_tolerances() or None)
++            # noise profiles -> the generator's noise shapes (badger-1.6.0-noise-shapes)
++            if "constraint_noise_shapes" in get_generator_dynamic(generator_name).model_fields:
++                generator_params["constraint_noise_shapes"] = noise_shapes(
++                    self.BADGER_PLUGIN_ROOT,
++                    [next(iter(c)) for c in self.env_box.con_table.export_data()]) or None
+             generator = get_generator_dynamic(generator_name)(
+                 vocs=vocs, **generator_params
+             )

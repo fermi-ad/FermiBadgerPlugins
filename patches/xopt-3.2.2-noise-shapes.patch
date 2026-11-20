@@ -1,0 +1,329 @@
+Binary files a/xopt/generators/bayesian/__pycache__/noise_shape.cpython-312.pyc and b/xopt/generators/bayesian/__pycache__/noise_shape.cpython-312.pyc differ
+diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bayesian/bayesian_generator.py
+--- a/xopt/generators/bayesian/bayesian_generator.py	2026-11-19 17:02:16
++++ b/xopt/generators/bayesian/bayesian_generator.py	2026-11-19 17:07:42
+@@ -46,6 +46,13 @@
+     StandardModelConstructor,
+ )
+ from xopt.generators.bayesian.models.time_dependent import TimeDependentModelConstructor
++from xopt.generators.bayesian.noise_shape import (
++    AD_CRITICAL_1PCT,
++    NoiseShape,
++    loo_residuals,
++    p_below,
++    shape_check,
++)
+ from xopt.generators.bayesian.objectives import (
+     CustomXoptObjective,
+     create_constraint_callables,
+@@ -87,17 +94,25 @@
+ 
+ def risk_shortfall(model, X: Tensor, limits) -> Tensor:
+     """Sum over the limited constraints of max(0, (1 - tolerance) - P(satisfied)) at each
+-    point of X (batch x q x d), from the constraint model's posterior mean and spread.
+-    limits: [(output index, bound, +1 for less-than or -1 for greater-than, 1 - tolerance)]."""
+-    posterior = model.posterior(X)
+-    mean, sigma = posterior.mean, posterior.variance.clamp_min(1e-12).sqrt()
+-    normal = torch.distributions.Normal(
+-        torch.zeros((), dtype=mean.dtype, device=mean.device),
+-        torch.ones((), dtype=mean.dtype, device=mean.device),
+-    )
++    point of X (batch x q x d). P(satisfied) is for a fresh measured value there: the
++    constraint model's latent posterior plus its noise, Gaussian or of the constraint's
++    noise shape (FermiBadgerPlugins patch xopt-3.2.2-noise-shapes).
++    limits: [(output index, bound, +1 for less-than or -1 for greater-than, 1 - tolerance,
++    optional NoiseShape)]."""
++    latent = model.posterior(X)
++    with warnings.catch_warnings():
++        # a robust (relevance pursuit) GP keeps its outlier variances on its training
++        # points, and says so when asked about others: only its base noise applies here
++        warnings.filterwarnings("ignore", message="SparseOutlierNoise")
++        measured = model.posterior(X, observation_noise=True)
++    mean = latent.mean
++    s = latent.variance.clamp_min(1e-12).sqrt()
++    sigma_n = (measured.variance - latent.variance).clamp_min(1e-12).sqrt()
+     shortfall = torch.zeros(mean.shape[:-1], dtype=mean.dtype, device=mean.device)
+-    for index, bound, sign, needed in limits:
+-        p_ok = normal.cdf(sign * (bound - mean[..., index]) / sigma[..., index])
++    for index, bound, sign, needed, *shape in limits:
++        below = p_below(bound, mean[..., index], s[..., index], sigma_n[..., index],
++                        shape[0] if shape else None)
++        p_ok = below if sign > 0 else 1.0 - below
+         shortfall = shortfall + torch.relu(needed - p_ok)
+     return shortfall
+ 
+@@ -236,7 +251,15 @@
+         description="per constraint, the largest modeled probability (1e-4 to 1) "
+         "that a proposed point violates it; 1 or absent = no limit",
+     )
++    constraint_noise_shapes: Optional[Dict[str, Dict[str, float]]] = Field(
++        None,
++        description="per constraint, the shape of its measurement noise for the risk "
++        "tolerance: {kL, kR}, a GaussExp (Gaussian core, exponential tails beyond kL "
++        "sigmas below and kR sigmas above; its size comes from the constraint's GP); "
++        "absent = Gaussian",
++    )
+     _risk_off: bool = PrivateAttr(default=False)
++    _noise_checked: set = PrivateAttr(default_factory=set)
+ 
+     _compatible_turbo_controllers: Optional[list[type[TurboController]]] = PrivateAttr(
+         default=None
+@@ -252,6 +275,14 @@
+             return None
+         return {k: min(max(float(v), RISK_TOLERANCE_MIN), 1.0) for k, v in value.items()}
+ 
++    @field_validator("constraint_noise_shapes", mode="after")
++    def validate_constraint_noise_shapes(cls, value):
++        # only the shape is used (a profile file carries more); splices clamp to [0.1, 8]
++        if not value:
++            return None
++        shapes = {k: NoiseShape(v["kL"], v["kR"]) for k, v in value.items()}
++        return {k: {"kL": shape.kl, "kR": shape.kr} for k, shape in shapes.items()}
++
+     @field_validator("vocs", mode="after")
+     @classmethod
+     def validate_vocs(cls, v: VOCS, info: ValidationInfo) -> VOCS:
+@@ -694,12 +725,49 @@
+                 continue
+             constraint = self.vocs.constraints[name]
+             sign = 1.0 if type(constraint).__name__ == "LessThanConstraint" else -1.0
+-            limits.append((names.index(name), float(constraint.value), sign, 1.0 - tolerance))
++            shape = (self.constraint_noise_shapes or {}).get(name)
++            limits.append((names.index(name), float(constraint.value), sign, 1.0 - tolerance,
++                           NoiseShape(shape["kL"], shape["kR"]) if shape else None))
+         return limits
+ 
+     def _apply_risk_tolerance(self, acq, model):
++        self._check_noise_shapes(model)
+         limits = self._risk_limits()
+         return RiskLimitedAcquisition(acq, model, limits) if limits else acq
++
++    def _check_noise_shapes(self, model, min_points: int = 20):
++        """Staleness check: compare each shaped constraint's leave-one-out residuals in
++        this run with its noise shape (Anderson-Darling, p < 0.01); once per constraint,
++        warn when they differ with heavier tails (higher excess kurtosis), note when they
++        differ otherwise."""
++        if not self.constraint_noise_shapes or model is None:
++            return
++        names = list(self.model_output_names)
++        for name, shape in self.constraint_noise_shapes.items():
++            if name not in names or name in self._noise_checked:
++                continue
++            gp = model.models[names.index(name)] if hasattr(model, "models") else model
++            try:
++                z = loo_residuals(gp)
++            except Exception as error:  # a check, never a reason to stop a run
++                logger.debug("Noise-shape check for %r skipped: %s", name, error)
++                continue
++            if len(z) < min_points:
++                continue
++            noise_shape = NoiseShape(shape["kL"], shape["kR"])
++            a2, kurtosis = shape_check(z, noise_shape)
++            if a2 <= AD_CRITICAL_1PCT:
++                continue
++            self._noise_checked.add(name)
++            heavier = kurtosis > noise_shape.excess_kurtosis
++            (logger.warning if heavier else logger.info)(
++                "%s: this run's %d leave-one-out residuals differ from its noise profile "
++                "(Anderson-Darling A^2 = %.1f, p < 0.01; excess kurtosis %.1f vs the "
++                "profile's %.1f): %s",
++                name, len(z), a2, kurtosis, noise_shape.excess_kurtosis,
++                f"heavier tails than the profile (a stale profile, or a model that misfits), "
++                f"so risk tolerances on {name} may be optimistic." if heavier else
++                "a stale profile, or a model that misfits.")
+ 
+     def get_training_data(self, data: pd.DataFrame) -> pd.DataFrame:
+         """
+diff -ruN a/xopt/generators/bayesian/models/standard.py b/xopt/generators/bayesian/models/standard.py
+--- a/xopt/generators/bayesian/models/standard.py	2026-11-19 17:02:16
++++ b/xopt/generators/bayesian/models/standard.py	2026-11-19 17:04:09
+@@ -11,6 +11,7 @@
+ from botorch import fit_gpytorch_mll
+ from botorch.models import ModelListGP, SingleTaskGP
+ from botorch.models.gpytorch import BatchedMultiOutputGPyTorchModel
++from botorch.models.robust_relevance_pursuit_model import RobustRelevancePursuitSingleTaskGP
+ from botorch.models.transforms import Normalize, Standardize
+ from botorch.optim.closures import get_loss_closure_with_grads
+ from botorch.optim import ExpMAStoppingCriterion
+@@ -164,6 +165,14 @@
+         description="specify if inputs should be transformed inside the gp "
+         "model, can optionally specify a dict of specifications",
+     )
++    robust_outcomes: List[str] = Field(
++        [],
++        description="outcomes modeled by a robust GP (botorch's "
++        "RobustRelevancePursuitSingleTaskGP): gross outliers among their data (dropouts, "
++        "trips, spikes) get extra noise of their own instead of distorting the fit; fits "
++        "take longer. Not combined with use_cached_hyperparameters "
++        "(FermiBadgerPlugins patch xopt-3.2.2-noise-shapes)",
++    )
+     custom_noise_prior: Optional[Prior] = Field(
+         None,
+         description="specify custom noise prior for the GP likelihood, "
+@@ -369,7 +378,19 @@
+                 "mean_module": mean_module,
+             }
+ 
+-            if train_Yvar is None:
++            if outcome_name in self.robust_outcomes:
++                # robust: outliers get their own noise (relevance pursuit, fitted by the
++                # same fit_gpytorch_mll call, which dispatches on the model type)
++                models.append(
++                    RobustRelevancePursuitSingleTaskGP(
++                        train_X.to(**tkwargs),
++                        train_Y.to(**tkwargs),
++                        train_Yvar=None if train_Yvar is None else train_Yvar.to(**tkwargs),
++                        likelihood=self.get_likelihood() if train_Yvar is None else None,
++                        **kwargs,
++                    )
++                )
++            elif train_Yvar is None:
+                 # train basic single-task-gp model
+                 models.append(
+                     self.build_single_task_gp(
+diff -ruN a/xopt/generators/bayesian/noise_shape.py b/xopt/generators/bayesian/noise_shape.py
+--- a/xopt/generators/bayesian/noise_shape.py	1969-12-31 18:00:00
++++ b/xopt/generators/bayesian/noise_shape.py	2026-11-19 17:09:39
+@@ -0,0 +1,142 @@
++"""Non-Gaussian measurement noise for the measured-value risk tolerance
++(FermiBadgerPlugins patch xopt-3.2.2-noise-shapes).
++
++A constraint's noise shape is a GaussExp: a Gaussian core with an exponential tail beyond
++kL sigmas below and kR sigmas above, matched in value and slope at both splices. Only the
++shape comes from here (a device's noise profile, fitted to logged readings); the noise's
++size comes from the constraint's own GP. A fresh reading is the GP's latent value f plus
++noise sigma_n * e, e the shape standardized to mean 0 and variance 1, and
++
++    P(reading < bound) = E_f[ P(e < (bound - f) / sigma_n) ]
++
++computed by quadrature over whichever of f and e has the larger spread (the integrand is
++then smooth in the integration variable): Gauss-Hermite over f when the latent spread
++s <= sigma_n, otherwise over e (Gauss-Legendre on the core, Gauss-Laguerre on each
++exponential tail). With no shape, the noise is Gaussian: Phi((bound - mean) / sqrt(s^2 +
++sigma_n^2)).
++
++Also: leave-one-out residuals of an exact GP, to check a run's own noise against a
++profile's shape (staleness), by an Anderson-Darling test of the residuals against the
++shape's cdf. In an offline check (one variable; 20 seeds each; 10 % of readings 10 noise
++sigmas high) it flagged all 20 runs of 80 points and none of 20 clean runs, but none of
++20 spiky runs of 30 points: little power in short runs.
++"""
++import math
++
++import numpy as np
++import torch
++from scipy import optimize, stats
++
++K_MIN, K_MAX = 0.1, 8.0  # splices, in sigmas: below 0.1 no core is left; beyond 8, no tail
++AD_CRITICAL_1PCT = 3.857  # Anderson-Darling A^2, fully specified null: p = 0.01
++N_HERMITE, N_LEGENDRE, N_LAGUERRE = 48, 48, 24
++
++
++def _unit_constants(kl, kr):
++    """Normalization, mean, and standard deviation of the unit GaussExp(kL, kR)."""
++    el, er = math.exp(-kl ** 2 / 2), math.exp(-kr ** 2 / 2)
++    core = math.sqrt(2 * math.pi) * (stats.norm.cdf(kr) - stats.norm.cdf(-kl))
++    n = core + el / kl + er / kr
++    m1 = -el / kl ** 2 + er / kr ** 2
++    m2 = core + el * (2 / kl + 2 / kl ** 3) + er * (2 / kr + 2 / kr ** 3)
++    mean = m1 / n
++    return n, mean, math.sqrt(m2 / n - mean ** 2)
++
++
++class NoiseShape:
++    """A GaussExp noise shape, standardized: mean 0, variance 1."""
++
++    def __init__(self, kl: float, kr: float):
++        self.kl = min(max(float(kl), K_MIN), K_MAX)
++        self.kr = min(max(float(kr), K_MIN), K_MAX)
++        self.norm, self.mean, self.std = _unit_constants(self.kl, self.kr)
++        # quadrature over the unit GaussExp Z: nodes z and weights (summing to 1)
++        kl, kr, n = self.kl, self.kr, self.norm
++        x, w = np.polynomial.legendre.leggauss(N_LEGENDRE)
++        z_core = (kr - kl) / 2 + (kr + kl) / 2 * x
++        w_core = (kr + kl) / 2 * w * np.exp(-z_core ** 2 / 2) / n
++        t, wt = np.polynomial.laguerre.laggauss(N_LAGUERRE)
++        z_left, w_left = -kl - t / kl, wt * math.exp(-kl ** 2 / 2) / (n * kl)
++        z_right, w_right = kr + t / kr, wt * math.exp(-kr ** 2 / 2) / (n * kr)
++        self._z = np.concatenate([z_left, z_core, z_right])
++        self._wz = np.concatenate([w_left, w_core, w_right])
++        self._xh, self._wh = np.polynomial.hermite.hermgauss(N_HERMITE)
++        e = (self._z - self.mean) / self.std
++        self.excess_kurtosis = float(np.sum(self._wz * e ** 4) - 3.0)
++
++    def cdf_unit(self, z: torch.Tensor) -> torch.Tensor:
++        """P(Z < z) for the unit GaussExp (not standardized)."""
++        kl, kr, n = self.kl, self.kr, self.norm
++        left = torch.exp(kl ** 2 / 2 + kl * torch.clamp(z, max=-kl)) / kl
++        core = math.exp(-kl ** 2 / 2) / kl + math.sqrt(2 * math.pi) * (
++            _phi_cdf(torch.clamp(z, -kl, kr)) - stats.norm.cdf(-kl))
++        right = n - torch.exp(kr ** 2 / 2 - kr * torch.clamp(z, min=kr)) / kr
++        return torch.where(z < -kl, left, torch.where(z > kr, right, core)) / n
++
++    def cdf(self, e: torch.Tensor) -> torch.Tensor:
++        """P(noise < e) for the standardized shape."""
++        return self.cdf_unit(self.mean + self.std * e)
++
++    def ppf(self, p: float) -> float:
++        """Quantile of the standardized shape (for checks; numpy, not differentiable)."""
++        f = lambda e: float(self.cdf(torch.tensor(e, dtype=torch.double))) - p  # noqa: E731
++        return optimize.brentq(f, -1e3, 1e3)
++
++    def p_below(self, bound, mean, s, sigma_n):
++        """P(f + sigma_n e < bound), f ~ N(mean, s^2), e this shape: tensors broadcast."""
++        dtype, device = mean.dtype, mean.device
++        # over f (Gauss-Hermite), for s <= sigma_n
++        xh = torch.as_tensor(self._xh, dtype=dtype, device=device)
++        wh = torch.as_tensor(self._wh, dtype=dtype, device=device) / math.sqrt(math.pi)
++        f = mean.unsqueeze(-1) + math.sqrt(2) * s.unsqueeze(-1) * xh
++        p_f = (wh * self.cdf((bound - f) / sigma_n.unsqueeze(-1))).sum(-1)
++        # over the noise (Legendre core + Laguerre tails), for s > sigma_n
++        z = torch.as_tensor(self._z, dtype=dtype, device=device)
++        wz = torch.as_tensor(self._wz, dtype=dtype, device=device)
++        e = (z - self.mean) / self.std
++        arg = (bound - mean.unsqueeze(-1) - sigma_n.unsqueeze(-1) * e) / s.unsqueeze(-1)
++        p_e = (wz * _phi_cdf(arg)).sum(-1)
++        return torch.where(s <= sigma_n, p_f, p_e)
++
++
++def _phi_cdf(x):
++    return 0.5 * torch.erfc(-x / math.sqrt(2))
++
++
++def p_below(bound, mean, s, sigma_n, shape=None):
++    """P(a fresh reading < bound): latent f ~ N(mean, s^2) plus noise of size sigma_n,
++    Gaussian when shape is None."""
++    if shape is None:
++        return _phi_cdf((bound - mean) / torch.sqrt(s ** 2 + sigma_n ** 2))
++    return shape.p_below(bound, mean, s, sigma_n)
++
++
++def loo_residuals(gp) -> np.ndarray:
++    """Leave-one-out standardized residuals of an exact GP's training data, in closed
++    form: (K^-1 r)_i / sqrt((K^-1)_ii), K the prior covariance plus the likelihood's
++    noise at the training inputs, r the training targets minus the prior mean (both as
++    the marginal likelihood sees them)."""
++    was_training = gp.training
++    gp.train()
++    try:
++        with torch.no_grad():
++            inputs = gp.train_inputs
++            marginal = gp.likelihood(gp(*inputs), *inputs)
++            K = marginal.covariance_matrix
++            r = (gp.train_targets - marginal.mean).unsqueeze(-1)
++            K_inv = torch.cholesky_inverse(torch.linalg.cholesky(K))
++            z = (K_inv @ r).squeeze(-1) / K_inv.diagonal(dim1=-2, dim2=-1).sqrt()
++    finally:
++        gp.train(was_training)
++    return z.detach().cpu().numpy().ravel()
++
++
++def shape_check(z: np.ndarray, shape: NoiseShape):
++    """Anderson-Darling A^2 of the residuals z against the standardized shape (> 3.857:
++    p < 0.01), and the residuals' excess kurtosis, to compare with the shape's
++    (shape.excess_kurtosis): higher means heavier tails than the shape says."""
++    u = shape.cdf(torch.as_tensor(np.sort(z), dtype=torch.double)).numpy()
++    u = np.clip(u, 1e-12, 1 - 1e-12)
++    n, i = len(u), np.arange(1, len(u) + 1)
++    a2 = -n - np.mean((2 * i - 1) * (np.log(u) + np.log(1 - u[::-1])))
++    return float(a2), float(stats.kurtosis(z))

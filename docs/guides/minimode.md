@@ -37,11 +37,15 @@ Random**, **Add Row** to type one, **Clear All**. A task may set its own.
 
 **Objectives**: what to minimize or maximize. **Constraints**: limits to keep,
 each with a relation and threshold. **Stopping**: the run stops when a measured
-value breaks that constraint. **Risk Tolerance**: the largest chance, according
-to the constraint's model, that you accept of the optimizer proposing a point
-that breaks it; 100% (the default) sets no limit, and 0.01% is the most
-cautious (0 is not possible: the model is never certain). If no point meets a
-tolerance, that step ignores it and says so in the log. **Observables**: extra
+value breaks that constraint. **Risk Tolerance**: the largest chance you accept
+that a fresh reading at a proposed point breaks the constraint, according to the
+constraint's model and its noise (the device's noise profile, if it has one in
+`plugins/noise_profiles/`; else Gaussian noise); 100% (the default) sets no
+limit, and 0.01% is the most cautious (0 is not possible: the model is never
+certain). If no point meets a tolerance, that step ignores it and says so in the
+log, as does a run whose noise no longer matches a device's profile. Rare gross
+outliers (dropouts, trips: the profile's `gross_outlier_rate`) are not in the
+profile, so a tolerance below that rate cannot be guaranteed. **Observables**: extra
 readings to record.
 
 ## History tab
