@@ -1,0 +1,528 @@
+Binary files a/badger/__pycache__/routine.cpython-312.pyc and b/badger/__pycache__/routine.cpython-312.pyc differ
+Binary files a/badger/__pycache__/utils.cpython-312.pyc and b/badger/__pycache__/utils.cpython-312.pyc differ
+Binary files a/badger/gui/components/__pycache__/env_cbox.cpython-312.pyc and b/badger/gui/components/__pycache__/env_cbox.cpython-312.pyc differ
+Binary files a/badger/gui/components/__pycache__/routine_page.cpython-312.pyc and b/badger/gui/components/__pycache__/routine_page.cpython-312.pyc differ
+Binary files a/badger/gui/components/__pycache__/run_monitor.cpython-312.pyc and b/badger/gui/components/__pycache__/run_monitor.cpython-312.pyc differ
+Binary files a/badger/gui/components/__pycache__/var_table.cpython-312.pyc and b/badger/gui/components/__pycache__/var_table.cpython-312.pyc differ
+diff -ruN a/badger/gui/components/env_cbox.py b/badger/gui/components/env_cbox.py
+--- a/badger/gui/components/env_cbox.py	2026-11-20 16:49:27
++++ b/badger/gui/components/env_cbox.py	2026-11-20 16:49:27
+@@ -22,7 +22,7 @@
+ from importlib import resources
+ from typing import Any
+ 
+-from gest_api.vocs import ContinuousVariable
++from gest_api.vocs import ContextualVariable, ContinuousVariable
+ from pydantic_core import ValidationError
+ from PyQt5.QtCore import QPropertyAnimation, QTimer, pyqtSignal
+ from PyQt5.QtGui import QFont, QIcon
+@@ -696,8 +696,13 @@
+ 
+         try:
+             # We want to ensure it's a dict of either lists or ContinuousVariables
++            # Context column -> ContextualVariable (badger-1.6.0-context-variables)
++            context = set(self.var_table.context_names())
+             variables = {
+-                k: list(v) if not isinstance(v, ContinuousVariable) else v
++                k: ContextualVariable(domain=[float(x) for x in (
++                    v.domain if isinstance(v, ContinuousVariable) else v)])
++                if k in context
++                else (list(v) if not isinstance(v, ContinuousVariable) else v)
+                 for k, v in variables.items()
+             }
+             vocs = VOCS(
+diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
+--- a/badger/gui/components/routine_page.py	2026-11-20 16:49:27
++++ b/badger/gui/components/routine_page.py	2026-11-20 16:49:27
+@@ -96,6 +96,9 @@
+ from datetime import datetime
+ from badger.utils import (
+     BlockSignalsContext,
++    context_names,
++    settable_vocs,
++    template_context_names,
+     load_config,
+     strtobool,
+     get_badger_version,
+@@ -443,6 +446,8 @@
+             QMessageBox.warning(self, "Error", f"Missing key in template: {e}")
+             return
+ 
++        # Context column (badger-1.6.0-context-variables), read before VOCS() pops 'type'
++        context = template_context_names(template_dict["vocs"]["variables"])
+         # set vocs
+         vocs = VOCS(
+             variables=template_dict["vocs"]["variables"],
+@@ -516,6 +521,7 @@
+         self.env_box.var_table.update_variables(all_variables)
+         self.env_box.var_table.set_selected(vocs.variables)
+         self.env_box.var_table.addtl_vars = additional_variables
++        self.env_box.var_table.set_context(context)
+ 
+         flag_relative = relative_to_current
+         self.env_box.relative_to_curr.blockSignals(True)
+@@ -888,6 +894,7 @@
+         with BlockSignalsContext(self.env_box.var_table):
+             self.env_box.var_table.update_variables(variables=all_variables, filtered=2)
+         self.env_box.var_table.set_selected(variables)
++        self.env_box.var_table.set_context(context_names(routine.vocs))
+         self.env_box.var_table.addtl_vars = routine.additional_variables
+ 
+         flag_relative = routine.relative_to_current
+@@ -1354,6 +1361,7 @@
+ 
+         n_point = add_rand_config["n_points"]
+         fraction = add_rand_config["fraction"]
++        vocs = settable_vocs(vocs)  # context variables are read, never set
+         random_sample_region = get_local_region(vocs, var_curr, fraction=fraction)
+         with warnings.catch_warnings(record=True) as caught_warnings:
+             try:
+@@ -1633,7 +1641,8 @@
+     def update_init_table(self, force=False):
+         logger.info(f"Updating init table (force={force})")
+         selected = self.env_box.var_table.selected
+-        variable_names = [v for v in selected if selected[v]]
++        context = self.env_box.var_table.context  # read, never set: no initial values
++        variable_names = [v for v in selected if selected[v] and not context.get(v)]
+         update_init_data_table(self.env_box.init_table, variable_names)
+ 
+         if (not force) and (not self.env_box.relative_to_curr.isChecked()):
+diff -ruN a/badger/gui/components/run_monitor.py b/badger/gui/components/run_monitor.py
+--- a/badger/gui/components/run_monitor.py	2026-11-20 16:49:27
++++ b/badger/gui/components/run_monitor.py	2026-11-20 16:49:27
+@@ -9,6 +9,7 @@
+ 
+ import os
+ import traceback
++from badger.utils import without_context  # badger-1.6.0-context-variables
+ from importlib import resources
+ from typing import List
+ 
+@@ -794,9 +795,9 @@
+ 
+         curr_vars = get_current_vars(self.routine)
+ 
+-        self.routine.environment.set_variables(
+-            dict(zip(self.vocs.variable_names, self.init_vars))
+-        )
++        self.routine.environment.set_variables(without_context(  # badger-1.6.0-context-variables
++            self.vocs, dict(zip(self.vocs.variable_names, self.init_vars))
++        ))
+ 
+         self.jump_to_solution(0)
+         self.sig_inspect.emit(0)
+@@ -900,7 +901,8 @@
+             QMessageBox.Yes | QMessageBox.No,
+         )
+         if answer == QMessageBox.Yes:
+-            self.routine.environment.set_variables(self.checkpoint_data)
++            self.routine.environment.set_variables(
++                without_context(self.routine.vocs, self.checkpoint_data))
+             logger.debug(
+                 f"Checkpoint loaded with the following data: {self.checkpoint_data}"
+             )
+@@ -969,7 +971,8 @@
+         # there ought to be a better way to do this
+         if self.routine.vrange_hard_limit:
+             self.routine.environment.variables.update(self.routine.vrange_hard_limit)
+-        self.routine.environment.set_variables(dict(zip(variable_names, solution)))
++        self.routine.environment.set_variables(
++            without_context(self.vocs, dict(zip(variable_names, solution))))
+         # center around the inspector
+         x_range = self.plot_var.getViewBox().viewRange()[0]
+         delta = (x_range[1] - x_range[0]) / 2
+diff -ruN a/badger/gui/components/var_table.py b/badger/gui/components/var_table.py
+--- a/badger/gui/components/var_table.py	2026-11-20 16:49:27
++++ b/badger/gui/components/var_table.py	2026-11-20 16:49:27
+@@ -91,7 +91,7 @@
+         # self.setDragDropOverwriteMode(False)
+ 
+         self.setRowCount(0)
+-        self.setColumnCount(5)
++        self.setColumnCount(6)
+         self.setAlternatingRowColors(True)
+         self.setStyleSheet("alternate-background-color: #262E38;")
+         # self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+@@ -110,7 +110,9 @@
+         self.setColumnWidth(2, 96)
+         self.setColumnWidth(3, 96)
+         self.setColumnWidth(4, 44)
+-        self.setHorizontalHeaderLabels(["", "Name", "Min", "Max", ""])
++        self.setColumnWidth(5, 56)
++        self.setHorizontalHeaderLabels(["", "Name", "Min", "Max", "", "Context"])
++        self._context_tooltip()
+ 
+         self.all_variables: list[
+             dict[str, tuple[float, float]]
+@@ -119,6 +121,7 @@
+             dict[str, tuple[float, float]]
+         ] = []  # store variables to be displayed
+         self.selected: dict[str, bool] = {}  # track var selected status
++        self.context: dict[str, bool] = {}  # Context column (badger-1.6.0-context-variables)
+         self.bounds: dict[str, tuple[float, float]] = {}  # track var bounds
+         self.checked_only = False
+         self.bounds_locked = False
+@@ -370,6 +373,7 @@
+             self.all_variables = variables or []
+             self.variables = self.all_variables[:]  # make a copy
+             self.selected = {}
++            self.context = {}
+             self.bounds = {}
+             self.addtl_vars: list[str] = []
+             for var in self.variables:
+@@ -450,6 +454,18 @@
+ 
+             config_button.clicked.connect(partial(self.handle_config_button, name))
+ 
++            # Context (badger-1.6.0-context-variables): never moved; read and modeled
++            ctx_box = QCheckBox()
++            ctx_box.setChecked(self.context.get(name, False))
++            ctx_box.setToolTip('Context: never moved by the optimizer. Its value is read at every step and the model uses it as an input (an Xopt contextual variable); the range is its expected span.')
++            ctx_box.stateChanged.connect(partial(self.set_context_flag, name))
++            ctx_cell = QWidget()
++            ctx_layout = QHBoxLayout(ctx_cell)
++            ctx_layout.addWidget(ctx_box)
++            ctx_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
++            ctx_layout.setContentsMargins(0, 0, 0, 0)
++            self.setCellWidget(i, 5, ctx_cell)
++
+             if self.bounds_locked:
+                 sb_lower.setEnabled(False)
+                 sb_upper.setEnabled(False)
+@@ -464,12 +480,30 @@
+         self.setItem(n - 1, 1, item)
+         self.setRowHidden(n - 1, True)  # variables are added from the picker, not typed here
+ 
+-        self.setHorizontalHeaderLabels(["", "Name", "Min", "Max", ""])
++        self.setHorizontalHeaderLabels(["", "Name", "Min", "Max", "", "Context"])
++        self._context_tooltip()
+         self.setVerticalHeaderLabels([str(i) for i in range(n)])
+ 
+         if filtered not in [1, 3]:
+             self.sig_sel_changed.emit()
+             self.data_changed.emit()
++
++    def set_context_flag(self, name: str, state: int):
++        self.context[name] = bool(state)
++        self.sig_sel_changed.emit()  # the initial-points table drops context columns
++        self.update_vocs()
++
++    def set_context(self, variable_names: list[str]):
++        self.context = {name: True for name in variable_names}
++        self.update_variables(self.variables, 3)
++
++    def context_names(self) -> list[str]:
++        return [name for name, on in self.context.items() if on]
++
++    def _context_tooltip(self):
++        item = self.horizontalHeaderItem(5)
++        if item:
++            item.setToolTip('Context: never moved by the optimizer. Its value is read at every step and the model uses it as an input (an Xopt contextual variable); the range is its expected span.')
+ 
+     def handle_config_button(self, var_name: str):
+         self.sig_var_config.emit(var_name)
+Binary files a/badger/gui/mini/components/__pycache__/env_cbox.cpython-312.pyc and b/badger/gui/mini/components/__pycache__/env_cbox.cpython-312.pyc differ
+Binary files a/badger/gui/mini/components/__pycache__/var_table.cpython-312.pyc and b/badger/gui/mini/components/__pycache__/var_table.cpython-312.pyc differ
+diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
+--- a/badger/gui/mini/components/env_cbox.py	2026-11-20 16:49:27
++++ b/badger/gui/mini/components/env_cbox.py	2026-11-20 16:49:27
+@@ -44,7 +44,7 @@
+     NoHoverFocusComboBox,
+ )
+ from xopt.vocs import VOCS
+-from gest_api.vocs import ContinuousVariable
++from gest_api.vocs import ContextualVariable, ContinuousVariable
+ 
+ import logging
+ 
+@@ -871,8 +871,13 @@
+ 
+         try:
+             # We want to ensure it's a dict of either lists or ContinuousVariables
++            # Context column -> ContextualVariable (badger-1.6.0-context-variables)
++            context = set(self.var_table.context_names())
+             variables = {
+-                k: list(v) if not isinstance(v, ContinuousVariable) else v
++                k: ContextualVariable(domain=[float(x) for x in (
++                    v.domain if isinstance(v, ContinuousVariable) else v)])
++                if k in context
++                else (list(v) if not isinstance(v, ContinuousVariable) else v)
+                 for k, v in variables.items()
+             }
+             vocs = VOCS(
+diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components/var_table.py
+--- a/badger/gui/mini/components/var_table.py	2026-11-20 16:49:27
++++ b/badger/gui/mini/components/var_table.py	2026-11-20 16:49:27
+@@ -305,7 +305,7 @@
+         # self.setDragDropOverwriteMode(False)
+ 
+         self.setRowCount(0)
+-        self.setColumnCount(6)
++        self.setColumnCount(7)
+         self.setAlternatingRowColors(True)
+         self.setStyleSheet("alternate-background-color: #262E38;")
+         # self.setEditTriggers(QAbstractItemView.NoEditTriggers)
+@@ -322,12 +322,14 @@
+             header.setSectionResizeMode(3, QHeaderView.ResizeMode.Fixed)
+             header.setSectionResizeMode(4, QHeaderView.ResizeMode.Fixed)
+             header.setSectionResizeMode(5, QHeaderView.ResizeMode.Fixed)
++            header.setSectionResizeMode(6, QHeaderView.ResizeMode.Fixed)
+ 
+         self.setColumnWidth(0, 20)
+         self.setColumnWidth(2, 76)
+         self.setColumnWidth(3, 76)
+         self.setColumnWidth(4, 76)
+         self.setColumnWidth(5, 44)
++        self.setColumnWidth(6, 56)
+ 
+         # values for horizontal resizing
+         self._base_viewport_width: int | None = None
+@@ -341,8 +343,9 @@
+         )
+ 
+         self.setHorizontalHeaderLabels(
+-            ["", "Name", "Saved", "Current", "Range (Δ)", ""]
++            ["", "Name", "Saved", "Current", "Range (Δ)", "", "Context"]
+         )
++        self._context_tooltip()
+ 
+         self._init_range_header_controls()
+ 
+@@ -353,6 +356,7 @@
+             dict[str, tuple[float, float]]
+         ] = []  # store variables to be displayed
+         self.selected: dict[str, bool] = {}  # track var selected status
++        self.context: dict[str, bool] = {}  # Context column (badger-1.6.0-context-variables)
+         self.bounds: dict[str, tuple[float, float]] = {}  # track var bounds
+         self.clipped: dict[str, bool] = {}
+         self.saved_values: dict[str, float] = {}
+@@ -808,6 +812,7 @@
+             self.all_variables = variables or []
+             self.variables = self.all_variables[:]  # make a copy
+             self.selected = {}
++            self.context = {}
+             self.bounds = {}
+             self.clipped = {}
+             self.saved_values = {}
+@@ -890,6 +895,18 @@
+ 
+             config_button.clicked.connect(partial(self.handle_config_button, name))
+ 
++            # Context (badger-1.6.0-context-variables): never moved; read and modeled
++            ctx_box = QCheckBox()
++            ctx_box.setChecked(self.context.get(name, False))
++            ctx_box.setToolTip('Context: never moved by the optimizer. Its value is read at every step and the model uses it as an input (an Xopt contextual variable); the range is its expected span.')
++            ctx_box.stateChanged.connect(partial(self.set_context_flag, name))
++            ctx_cell = QWidget()
++            ctx_layout = QHBoxLayout(ctx_cell)
++            ctx_layout.addWidget(ctx_box)
++            ctx_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
++            ctx_layout.setContentsMargins(0, 0, 0, 0)
++            self.setCellWidget(i, 6, ctx_cell)
++
+         # Make extra editable row
+         item = QTableWidgetItem(self.PLACEHOLDER_TEXT)
+         item.setFlags(item.flags() | Qt.ItemIsEditable)
+@@ -898,13 +915,31 @@
+         self.setRowHidden(n - 1, True)  # variables are added from the picker, not typed here
+ 
+         self.setHorizontalHeaderLabels(
+-            ["", "Name", "Saved", "Current", "Range (Δ)", ""]
++            ["", "Name", "Saved", "Current", "Range (Δ)", "", "Context"]
+         )
++        self._context_tooltip()
+         self.setVerticalHeaderLabels([str(i) for i in range(n)])
+ 
+         if filtered not in [1, 3]:
+             self.sig_sel_changed.emit()
+             self.data_changed.emit()
++
++    def set_context_flag(self, name: str, state: int):
++        self.context[name] = bool(state)
++        self.sig_sel_changed.emit()  # the initial-points table drops context columns
++        self.update_vocs()
++
++    def set_context(self, variable_names: list[str]):
++        self.context = {name: True for name in variable_names}
++        self.update_variables(self.variables, 3)
++
++    def context_names(self) -> list[str]:
++        return [name for name, on in self.context.items() if on]
++
++    def _context_tooltip(self):
++        item = self.horizontalHeaderItem(6)
++        if item:
++            item.setToolTip('Context: never moved by the optimizer. Its value is read at every step and the model uses it as an input (an Xopt contextual variable); the range is its expected span.')
+ 
+     def handle_config_button(self, var_name: str):
+         self.sig_var_config.emit(var_name)
+Binary files a/badger/gui/mini/pages/__pycache__/routine_page.cpython-312.pyc and b/badger/gui/mini/pages/__pycache__/routine_page.cpython-312.pyc differ
+diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
+--- a/badger/gui/mini/pages/routine_page.py	2026-11-20 16:49:27
++++ b/badger/gui/mini/pages/routine_page.py	2026-11-20 16:49:27
+@@ -76,6 +76,9 @@
+ from datetime import datetime
+ from badger.utils import (
+     BlockSignalsContext,
++    context_names,
++    settable_vocs,
++    template_context_names,
+     load_config,
+     get_badger_version,
+     get_xopt_version,
+@@ -390,6 +393,8 @@
+             QMessageBox.warning(self, "Error", f"Missing key in template: {e}")
+             return
+ 
++        # Context column (badger-1.6.0-context-variables), read before VOCS() pops 'type'
++        context = template_context_names(template_dict["vocs"]["variables"])
+         # set vocs
+         vocs = VOCS(
+             variables={
+@@ -503,6 +508,7 @@
+         self.env_box.var_table.update_variables(all_variables)
+ 
+         self.env_box.var_table.set_selected(vocs.variables)
++        self.env_box.var_table.set_context(context)
+         self.env_box.var_table.addtl_vars = additional_variables
+ 
+         # self.env_box.relative_to_curr.isChecked().setChecked(flag_relative)
+@@ -912,6 +918,7 @@
+         with BlockSignalsContext(self.env_box.var_table):
+             self.env_box.var_table.update_variables(variables=all_variables, filtered=2)
+         self.env_box.var_table.set_selected(variables)
++        self.env_box.var_table.set_context(context_names(routine.vocs))
+         self.env_box.var_table.addtl_vars = routine.additional_variables
+ 
+         flag_relative = routine.relative_to_current
+@@ -1352,6 +1359,7 @@
+ 
+         n_point = add_rand_config["n_points"]
+         fraction = add_rand_config["fraction"]
++        vocs = settable_vocs(vocs)  # context variables are read, never set
+         random_sample_region = get_local_region(vocs, var_curr, fraction=fraction)
+         with warnings.catch_warnings(record=True) as caught_warnings:
+             try:
+@@ -1683,7 +1691,8 @@
+     def update_init_table(self, force=False):
+         logger.info(f"Updating init table (force={force})")
+         selected = self.env_box.var_table.selected
+-        variable_names = [v for v in selected if selected[v]]
++        context = self.env_box.var_table.context  # read, never set: no initial values
++        variable_names = [v for v in selected if selected[v] and not context.get(v)]
+         update_init_data_table(self.env_box.init_table, variable_names)
+ 
+         if (not force) and (not self.env_box.relative_to_curr.isChecked()):
+diff -ruN a/badger/routine.py b/badger/routine.py
+--- a/badger/routine.py	2026-11-20 16:49:27
++++ b/badger/routine.py	2026-11-20 16:50:48
+@@ -30,7 +30,8 @@
+ from xopt.generators import get_generator
+ from xopt.vocs import get_local_region
+ from xopt.generators.sequential import SequentialGenerator
+-from badger.utils import curr_ts
++from badger.utils import context_names, curr_ts, settable_vocs
++from xopt.vocs import ContextualVariable, random_inputs
+ from badger.environment import BaseEnvironment, instantiate_env
+ from badger.factory import get_env
+ 
+@@ -141,8 +142,12 @@
+             def evaluate_point(point: dict):
+                 logger.debug(f"Evaluating point: {point}")
+                 point = pd.Series(point).explode().to_dict()
+-                env.set_variables(point)
++                # context variables (badger-1.6.0-context-variables): never written, read
++                ctx = context_names(data["generator"].vocs)
++                env.set_variables({k: v for k, v in point.items() if k not in ctx})
+                 obs = env.get_observables(data["generator"].vocs.output_names)
++                if ctx:
++                    obs.update(env.get_variables(ctx))
+                 ts = curr_ts()
+                 obs["timestamp"] = ts.timestamp()
+                 obs["live"] = 1
+@@ -241,11 +246,18 @@
+             logger.debug(f"Updated bounds for {name} (curr): {bounds}")
+             variables_updated[name] = bounds
+ 
++    # context variables keep their type (badger-1.6.0-context-variables)
++    for name in context_names(vocs):
++        bounds = variables_updated.get(name)
++        variables_updated[name] = (
++            ContextualVariable(domain=list(bounds)) if bounds is not None else vocs.variables[name]
++        )
+     return variables_updated
+ 
+ 
+ def calculate_initial_points(init_actions, vocs, env):
+     logger.info("Calculating initial points.")
++    vocs = settable_vocs(vocs)  # context variables are read, never set
+     vnames = vocs.variable_names
+     init_points = {k: [] for k in vnames}
+ 
+@@ -260,8 +272,10 @@
+             n_point = action["config"]["n_points"]
+             fraction = action["config"]["fraction"]
+             random_sample_region = get_local_region(vocs, var_curr, fraction=fraction)
+-            random_points = vocs.random_inputs(
+-                n_point, custom_bounds=random_sample_region
++            # xopt's random_inputs(vocs, ...): VOCS has no random_inputs method (an
++            # upstream bug on this auto-refresh path; badger-1.6.0-context-variables)
++            random_points = random_inputs(
++                vocs, n_point, custom_bounds=random_sample_region
+             )
+             for point in random_points:
+                 for name in vnames:
+diff -ruN a/badger/utils.py b/badger/utils.py
+--- a/badger/utils.py	2026-11-20 16:49:27
++++ b/badger/utils.py	2026-11-20 16:49:27
+@@ -415,7 +415,7 @@
+     Round numeric bounds to a set number of significant figures.
+     This avoids unexpected bounds errors due to inconsistent rounding, defaulting to 10 sig-figs
+     """
+-    if type(bounds) not in [tuple, list, dict, ContinuousVariable]:
++    if not isinstance(bounds, (tuple, list, dict, ContinuousVariable)):  # incl. ContextualVariable
+         raise BadgerLoadConfigError(
+             f"invalid bounds type {type(bounds)}. Must be tuple, dict, or ContinuousVariable"
+         )
+@@ -428,3 +428,41 @@
+     lower = _round_to_sigfig(float(bounds[0]), sigfigs, mode="ceil")
+     upper = _round_to_sigfig(float(bounds[1]), sigfigs, mode="floor")
+     return [lower, upper]
++
++
++# Context variables (FermiBadgerPlugins patch badger-1.6.0-context-variables): a variable
++# checked in the variable table's Context column is an Xopt ContextualVariable. Badger never
++# writes it; its value is read at every step, and the model uses it as an input.
++def context_names(vocs) -> list[str]:
++    from xopt.vocs import ContextualVariable
++
++    return [n for n, v in vocs.variables.items() if isinstance(v, ContextualVariable)]
++
++
++def settable_vocs(vocs):
++    """The VOCS without its context variables (current and random initial points)."""
++    ctx = set(context_names(vocs))
++    if not ctx:
++        return vocs
++    return vocs.model_copy(
++        update={"variables": {n: v for n, v in vocs.variables.items() if n not in ctx}}
++    )
++
++
++def without_context(vocs, values: dict) -> dict:
++    """values minus the VOCS's context variables: what Badger may write."""
++    ctx = set(context_names(vocs))
++    return {k: v for k, v in values.items() if k not in ctx}
++
++
++def template_context_names(variables: dict) -> list[str]:
++    """Context variables in a template's vocs.variables; read it before VOCS(), which
++    pops each entry's 'type'."""
++    from xopt.vocs import ContextualVariable
++
++    names = []
++    for name, v in variables.items():
++        kind = v.get("type") if isinstance(v, dict) else v
++        if isinstance(v, ContextualVariable) or str(kind) in ("ContextualVariable", "CONTEXTUAL"):
++            names.append(name)
++    return names

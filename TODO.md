@@ -254,6 +254,16 @@ it to paste in.
 - [ ] **Booster noise profiles per cycle type:** tag logged readings by cycle
   (`scripts/event_tag.py`; validated on `B:BLMS13`, not on `B:CHG0`), then profile the
   constraint candidates (BLMs, `B:BEFFnn`).
+- [x] **Exogenous (contextual) variables in Badger**: done 2026-11-20, the Context column
+  (`badger-1.6.0-context-variables.patch`, `docs/plans/context-variables.md`). Was: (user, 2026-11-20; after the RIL
+  source-context study, `scripts/ril_context_study.py`, `scripts/ril_context_gp.py`):
+  Xopt 3.2.2 has `ContextualVariable` in the VOCS (Bayesian generators support it; the
+  evaluator returns its measured value, the GP takes it as an input, and the acquisition
+  holds it at its last value: `_apply_fixed_features_and_contextual_variables`;
+  `xopt/tests/generators/bayesian/test_contextual_bo.py`). Badger needs a way to mark a
+  variable exogenous (a GUI column), compose it as a `ContextualVariable`, never write
+  it, and have the environment return its reading. Candidates: the L48 source
+  parameters, Booster turns, if the study finds they change the knobs' response.
 - [ ] **Booster templates for the other tasks** (plan set aside 2026-11-20, user's call:
   `docs/plans/booster-templates.md`): orbit, RF capture and RF transition (two), extraction,
   notching, tunes, and chromaticity against `03_Booster_Pacsys`, every logbook-named

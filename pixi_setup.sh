@@ -141,6 +141,8 @@ print(h.hexdigest())" "$REPO/patches")"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-constraint-risk-tolerance.patch"
         # must come after constraint-risk-tolerance: diffed against that tree
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-noise-shapes.patch"
+        # diffed against the tree after all the Badger patches above
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-context-variables.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
         # must come after turbo-serialization: diffed against that tree

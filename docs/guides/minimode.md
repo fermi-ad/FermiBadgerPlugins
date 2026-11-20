@@ -35,6 +35,11 @@ with it ticked: it cannot be tuned from where it is.
 **Initial Points**: the first settings the run tries. **Add Current**, **Add
 Random**, **Add Row** to type one, **Clear All**. A task may set its own.
 
+**Context** (variables table): a checked variable is never moved; its value is read at
+every step and the model uses it as an input, so the optimizer accounts for it (an
+operating condition it does not control, such as an ion-source setting). Its range is
+its expected span. Only the Bayesian algorithms use it.
+
 **Objectives**: what to minimize or maximize. **Constraints**: limits to keep,
 each with a relation and threshold. **Stopping**: the run stops when a measured
 value breaks that constraint. **Risk Tolerance**: the largest chance you accept
