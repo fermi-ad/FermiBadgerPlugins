@@ -3,7 +3,8 @@ an objective's level, or change how it responds to the RIL knobs? GP kernels on 
 history decide (data and targets as scripts/ril_context_study.py).
 
 Inputs: x = the RIL template's knob settings (14), c = context: the CONTEXT_K source
-parameters and turns ranked highest by the boosted-tree study's permutation importance
+parameters of the source in use (and which source), turns, and beam-cycle counts
+(with the turn-weighted rate) ranked highest by the boosted-tree study's permutation importance
 (a data-driven, untested choice of how many; c is kept small so an ARD kernel stays
 fittable). Models, each an exact GP (botorch SingleTaskGP, standardized outputs,
 inputs scaled to [0, 1]):
@@ -43,7 +44,7 @@ from sklearn.model_selection import GroupKFold
 
 sys.path.insert(0, os.path.dirname(__file__))
 from logger_series import load  # noqa: E402
-from ril_context_study import BEAM_ON, GROUPS, importance  # noqa: E402
+from ril_context_study import BEAM_ON, GROUPS, importance, load_all  # noqa: E402
 
 warnings.filterwarnings("ignore")
 TARGETS = ["L:TK4RAD", "L:TUNRAD", "L:D7TOR", "G:LINEFF"]
@@ -65,6 +66,15 @@ def gp(X, y, kind, nx):
     return m
 
 
+def fit_score(Xtr, ytr, Xte, yte, kind, nx):
+    """(R2, lpd) on the test set, or NaN when the fit fails (botorch's ModelFittingError)."""
+    try:
+        return score(gp(Xtr, ytr, kind, nx), Xte, yte)
+    except Exception as error:  # noqa: BLE001  one failed fit is a result, not an abort
+        print(f"  {kind} fit failed: {type(error).__name__}", flush=True)
+        return float("nan"), float("nan")
+
+
 def score(m, X, y):
     with torch.no_grad():
         post = m.posterior(X, observation_noise=True)
@@ -81,11 +91,11 @@ def compare(X_all, y_all, w, nx, rng, n_train=N_TRAIN):
         tr = rng.choice(tr, min(n_train, len(tr)), replace=False)
         te = rng.choice(te, min(N_TEST, len(te)), replace=False)
         Xtr, ytr, Xte, yte = X_all[tr], y_all[tr], X_all[te], y_all[te]
-        res["M0"].append(score(gp(Xtr[:, :nx], ytr, "joint", nx), Xte[:, :nx], yte))
-        res["M1"].append(score(gp(Xtr, ytr, "additive", nx), Xte, yte))
-        res["M2"].append(score(gp(Xtr, ytr, "joint", nx), Xte, yte))
-        res["M3"].append(score(gp(Xtr[:, nx:], ytr, "joint", nx), Xte[:, nx:], yte))
-    return {k: (float(np.mean([r for r, _ in v])), float(np.mean([l for _, l in v])))
+        res["M0"].append(fit_score(Xtr[:, :nx], ytr, Xte[:, :nx], yte, "joint", nx))
+        res["M1"].append(fit_score(Xtr, ytr, Xte, yte, "additive", nx))
+        res["M2"].append(fit_score(Xtr, ytr, Xte, yte, "joint", nx))
+        res["M3"].append(fit_score(Xtr[:, nx:], ytr, Xte[:, nx:], yte, "joint", nx))
+    return {k: (float(np.nanmean([r for r, _ in v])), float(np.nanmean([l for _, l in v])))
             for k, v in res.items()}
 
 
@@ -116,6 +126,7 @@ def selftest():
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--series", default="logs/logger_series")
+    ap.add_argument("--events", default="logs/event_counts")
     ap.add_argument("--out", default="docs/ril-source-context-gp.md")
     ap.add_argument("--context-k", type=int, default=CONTEXT_K)
     ap.add_argument("--n-train", type=int, default=N_TRAIN)
@@ -125,8 +136,9 @@ def main():
     if a.selftest:
         return selftest()
     knobs = GROUPS["RIL knobs"]
-    ctx_all = GROUPS["source A"] + GROUPS["source B"] + GROUPS["turns"]
-    df = load(a.series, a.targets + knobs + ctx_all)
+    ctx_all = GROUPS["active source"] + GROUPS["turns"] + GROUPS["beam cycles"]
+    src = [d for g in ("source A", "source B") for d in GROUPS[g]] + ["L:SRCNOW"]
+    df = load_all(a.series, a.events, a.targets + knobs + src + [c for c in ctx_all if ":" in c])
     df = df[df["L:D7TOR"] > BEAM_ON]
     knobs = [k for k in knobs if k in df and df[k].notna().mean() > 0.9]
     ctx_all = [c for c in ctx_all if c in df and df[c].notna().mean() > 0.9]
@@ -144,9 +156,12 @@ def main():
         sub = df.dropna(subset=[t] + knobs + ctx_all)
         w = weeks[df.index.isin(sub.index)]
         ctx = list(importance(sub[ctx_all], sub[t], w).head(a.context_k).index)
-        X_all = torch.tensor(sub[knobs + ctx].to_numpy(), dtype=torch.double)
+        # a constant column (a setting never changed) cannot be scaled to [0, 1]: drop it
+        kn = [k for k in knobs if sub[k].std() > 0]
+        ctx = [c for c in ctx if sub[c].std() > 0]
+        X_all = torch.tensor(sub[kn + ctx].to_numpy(), dtype=torch.double)
         y_all = torch.tensor(sub[[t]].to_numpy(), dtype=torch.double)
-        res = compare(X_all, y_all, w, len(knobs), rng, a.n_train)
+        res = compare(X_all, y_all, w, len(kn), rng, a.n_train)
         cell = {k: f"{r2:.2f} / {lpd:.2f}" for k, (r2, lpd) in res.items()}
         lines.append(f"| {t} | {cell['M0']} | {cell['M1']} | {cell['M2']} | {cell['M3']} | "
                      + ", ".join(ctx) + " |")
