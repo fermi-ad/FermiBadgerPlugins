@@ -13,6 +13,7 @@ import sys
 import yaml
 from badger.gui.utils import filter_generator_config
 from xopt import VOCS
+from xopt.vocs import ContextualVariable
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ENVS = set(os.listdir(os.path.join(REPO, 'plugins', 'environments')))
@@ -44,8 +45,11 @@ for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '**', '*.yam
             # idx 1 = +-ratio_full/2 of hard range, idx 2 = +-delta in engineering units.
             # A variable missing here silently falls back to idx 0 (ratio of current
             # value), which collapses to zero width when the readback is 0.0.
+            # Context variables are exempt: their range is never recentered on the reading.
             opts = t['vrange_limit_options']
-            bad = [v for v in vocs.variables if opts.get(v, {}).get('limit_option_idx', 0) == 0]
+            ctx = {v for v, e in vocs.variables.items() if isinstance(e, ContextualVariable)}
+            bad = [v for v in vocs.variables
+                   if v not in ctx and opts.get(v, {}).get('limit_option_idx', 0) == 0]
             assert not bad, f'variables on unsafe limit_option_idx 0 (or missing): {bad}'
         if fname != f'{env}.yaml':
             r1, r2, core = env.split('_', 2)

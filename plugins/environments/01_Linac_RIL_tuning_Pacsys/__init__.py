@@ -29,9 +29,19 @@ _BULK_PS = {
 # property (e.g. "L:AEXTSV.READING"): set_variables refuses a .READING name and
 # safe-badger's snapshot skips it, so nothing here can write an ion-source device. Range:
 # the 0.5th-99.5th percentiles of logged 5-minute medians with beam, while that source fed
-# the RIL (scripts/ril_context_study.py --ranges); a reading outside it widens it. Empty: no
-# source parameter passed the week-by-week test (docs/ril-source-context.md).
-_CONTEXT = {}
+# the RIL (scripts/ril_context_study.py --ranges), rounded outward; a reading outside it
+# widens it. Which: the top three source parameters for L:D7TOR by forward selection on
+# held-out weeks, the user's rule (better in at least 3 of 14 weeks, pooled R2 up at least
+# 0.01; docs/ril-source-context.md). Each source's own; a template ticks Context for the
+# source in use.
+_CONTEXT = {
+    "L:AARCI.READING": [11.41, 11.80],     # source A arc current
+    "L:ASRCI.READING": [1.895, 1.907],     # source A source heater current
+    "L:AEXTV.READING": [-33.32, -32.52],   # source A extractor volts (kV)
+    "L:BARCI.READING": [12.80, 13.09],
+    "L:BSRCI.READING": [2.001, 2.008],
+    "L:BEXTV.READING": [-33.28, -33.11],
+}
 
 
 class Environment(environment.Environment):

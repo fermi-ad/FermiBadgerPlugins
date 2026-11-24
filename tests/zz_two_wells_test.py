@@ -29,7 +29,7 @@ assert np.allclose(best.x, [3, -4, 2, 5], atol=1e-3) and np.isclose(best.fun, -6
 
 fb = FakeBackend()
 for d, v in {"G:AMANDA": 3.0, "Z:CUBE_X": -4.0, "Z:CUBE_Y": 2.0, "Z:CUBE_Z": 5.0}.items():
-    for drf in (d, f"{d}.READING", f"{d}.SETTING"):
+    for drf in ((d,) if d.endswith(".READING") else (d, f"{d}.READING", f"{d}.SETTING")):
         fb.set_reading(drf, v)
 intf = Interface()
 intf._backend_override = fb

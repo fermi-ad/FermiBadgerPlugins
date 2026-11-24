@@ -57,7 +57,7 @@ def main():
     env = importlib.import_module("environments.03_Booster_Pacsys").Environment
     fb = FakeBackend()
     for d, (lo, hi) in env.variables.items():  # the mini GUI reads every variable's value
-        for drf in (d, f"{d}.READING", f"{d}.SETTING"):
+        for drf in ((d,) if d.endswith(".READING") else (d, f"{d}.READING", f"{d}.SETTING")):
             fb.set_reading(drf, (lo + hi) / 2)
     for d in env.observables:
         if ":" in d:

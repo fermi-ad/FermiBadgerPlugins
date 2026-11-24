@@ -40,6 +40,10 @@ description: |
   source in use and the beam rate (held-out R2 0.84 and 0.75), but how they respond to the
   knobs does not (no interaction found); L:TK4RAD is predicted by none of it (its level changes
   little from week to week).
+  Context variables (ticked; read every step and modeled, never moved): L:AARCI.READING,
+  L:ASRCI.READING, L:AEXTV.READING, source A arc current, heater current, and extractor
+  volts, the top three source parameters for L:D7TOR (docs/ril-source-context.md). On
+  source B, tick the L:B ones instead.
   Notes: acquisition search limited to 0.5 s with 5 restarts (on the DR simulation: MOBO steps
     4.1 s -> 0.8 s, same quality over 3 seeds; untested on RIL). No TuRBO controller (MOBO).
     Not yet run on the machine.
@@ -175,6 +179,27 @@ vocs:
       dtype: null
       type: Observable
   variables:
+    L:AARCI.READING:
+      default_value: null
+      domain:
+      - 11.41
+      - 11.8
+      dtype: null
+      type: ContextualVariable
+    L:ASRCI.READING:
+      default_value: null
+      domain:
+      - 1.895
+      - 1.907
+      dtype: null
+      type: ContextualVariable
+    L:AEXTV.READING:
+      default_value: null
+      domain:
+      - -33.32
+      - -32.52
+      dtype: null
+      type: ContextualVariable
     L:ASOL:
       default_value: null
       domain:

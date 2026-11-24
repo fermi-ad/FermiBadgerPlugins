@@ -23,8 +23,10 @@ from pydantic import ValidationError  # noqa: E402
 from interfaces.BasicPacsysInterface import Interface  # noqa: E402
 
 
-def plain(name):  # an ordinary device name: no pair, mult, array, reduction or -SETPOINT
-    return name[1:2] == ":" and not any(c in name for c in ",[|") and "-SETPOINT" not in name
+def plain(name):  # an ordinary setting: no pair, mult, array, reduction, -SETPOINT, or
+    # .READING (a context variable: read, never set; tests/env_fixes_test.py covers it)
+    return (name[1:2] == ":" and not any(c in name for c in ",[|") and "-SETPOINT" not in name
+            and not name.endswith(".READING"))
 
 
 def smoke(env_name):

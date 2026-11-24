@@ -45,7 +45,7 @@ def main():
 
     fb = FakeBackend()
     for d, v in START.items():
-        for drf in (d, f"{d}.READING", f"{d}.SETTING"):
+        for drf in ((d,) if d.endswith(".READING") else (d, f"{d}.READING", f"{d}.SETTING")):
             fb.set_reading(drf, v)
     pacsys.get_many = fb.get_many
 

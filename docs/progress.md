@@ -2139,7 +2139,9 @@ environment goes there too, tested in `tests/archetype_test.py`.
   predict the level of `L:D7TOR`, `L:TUNRAD`, and `L:TK1RAD`; `L:TK4RAD` follows none of
   it. That the source parameters change how `L:D7TOR` responds to the knobs is suggestive
   only (pooled gain mostly from one week; 11 of 14 weeks); no single source parameter
-  passes a week-by-week test. README and RIL template notes say so.
+  passes a week-by-week test. README and RIL template notes say so. On the user's looser
+  rule (3 of 14 weeks), the top three for `L:D7TOR` are context variables in the RIL
+  environment and templates.
 - Context column in both GUIs (never moved; read and modeled; its range widens to take in
   any reading outside it), offline-tested. The RIL environment can carry read-only
   `.READING` context variables; none listed.
@@ -2147,8 +2149,9 @@ environment goes there too, tested in `tests/archetype_test.py`.
 
 ### Next
 
-- RIL context variables: none passed the selection; the user decides whether to loosen
-  the test.
+- RIL context variables (`L:AARCI`, `L:ASRCI`, `L:AEXTV` readings) ticked in the RIL
+  templates: try on the machine.
+- Skew-t noise profiles in the xopt patch (awaiting the user's go-ahead).
 - A designed test on the machine: one knob scanned at two source states.
 - Booster templates (plan set aside: `docs/plans/booster-templates.md`).
 - gmpsai2: `git pull && pixi run setup -- --yes`.

@@ -55,7 +55,7 @@ def main():
     fb = FakeBackend()
 
     def set_device(d, v):
-        for drf in (d, f"{d}.READING", f"{d}.SETTING"):
+        for drf in ((d,) if d.endswith(".READING") else (d, f"{d}.READING", f"{d}.SETTING")):
             fb.set_reading(drf, v)
 
     for d, v in START.items():

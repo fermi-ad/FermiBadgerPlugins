@@ -273,7 +273,12 @@ it to paste in.
     the range widens it (user), at load, at Go, and each step (`docs/plans/context-variables.md`).
   - [x] Selection (`scripts/ril_context_study.py --select`): none passed (best: `L:AARCI`
     for `L:D7TOR`, better in 10 of 14 held-out weeks; 13 needed). The list is empty.
-  - [ ] User's call: add none, or loosen the test (e.g. most weeks rather than nearly all).
+  - [x] User's call (2026-11-24): at least 3 of 14 weeks, top 3 or 4. Taken: `ARCI`,
+    `SRCI`, `EXTV` for `L:D7TOR` (the 4th, `LCC`, gains R2 0.001); `EXTV`'s chance of being
+    a fluke 0.02 alone, at most 0.34 as the best of 21. Added as `L:A/B...READING` context
+    variables, ticked (source A) in the four RIL templates.
+  - [ ] On the machine: does a RIL run with them ticked behave (reads, no warnings) and
+    does the GP use them (length scales)?
   - [ ] A designed test on the machine would settle it: one knob scanned at two source states.
 - [ ] **Source A and Source B versions of the RIL templates** (user, 2026-11-24), and of
   any Linac template that uses or consults ion-source devices. Today: the four RIL

@@ -58,7 +58,7 @@ def main():
     env = importlib.import_module("environments.01_Linac_RIL_tuning_Pacsys").Environment
     fb = FakeBackend()
     for d, (lo, hi) in env.variables.items():
-        for drf in (d, f"{d}.READING", f"{d}.SETTING"):
+        for drf in ((d,) if d.endswith(".READING") else (d, f"{d}.READING", f"{d}.SETTING")):
             fb.set_reading(drf, (lo + hi) / 2)
     pacsys.get_many = fb.get_many
 

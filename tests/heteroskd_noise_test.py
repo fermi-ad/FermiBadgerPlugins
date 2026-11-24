@@ -31,7 +31,7 @@ Env, true_sigma = env_mod.Environment, env_mod.true_sigma
 # --- through the interface: noisy values, no leaked devices ---------------------------
 fb = FakeBackend()
 for d, v in {"G:AMANDA": 1.0, "Z:CUBE_X": 2.0, "Z:CUBE_Y": -1.0, "Z:CUBE_Z": 0.0}.items():
-    for drf in (d, f"{d}.READING", f"{d}.SETTING"):
+    for drf in ((d,) if d.endswith(".READING") else (d, f"{d}.READING", f"{d}.SETTING")):
         fb.set_reading(drf, v)
 intf = Interface()
 intf._backend_override = fb

@@ -44,7 +44,7 @@ for path in sorted(glob.glob(os.path.join(REPO, 'plugins', 'environments', '*_Pa
             failures.append(f'{env_name}: {name}: {e}')
             continue
         drfs.append(reading + sample_events.get(reading, sample_events.get('default', '@i')))
-        if name in Env.variables:
+        if name in Env.variables and not name.endswith('.READING'):  # .READING: read, never set
             drfs.append(f'{intf.extract_setting_devices([name])[0]}.SETTING@I')
             rb = intf.readback_drf(name)
             if rb: drfs.append(rb)

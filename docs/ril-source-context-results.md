@@ -54,3 +54,22 @@ Leave-one-week-out; each held-out week's mean squared error, trees free to combi
 | L:TUNRAD | source parameters | 8/14 | 0.395 | 0.91 | 0.75 | 0.18 | 0.97 | 0.88 | 0.83 | 1.11 | 1.86 | 1.12 | 0.76 | 1.04 | 1.22 | 0.77 | 1.40 |
 | L:TK1RAD | all context | 7/14 | 0.605 | 1.28 | 0.91 | 0.95 | 1.18 | 0.70 | 1.14 | 0.88 | 1.59 | 0.59 | 0.99 | 1.14 | 1.19 | 0.78 | 1.11 |
 | L:TK1RAD | source parameters | 10/14 | 0.090 | 0.63 | 0.87 | 0.85 | 1.03 | 0.63 | 0.90 | 1.08 | 1.75 | 0.76 | 0.83 | 0.66 | 1.67 | 0.91 | 0.42 |
+
+## Which source parameters matter? (forward selection, trees)
+
+Leave-one-week-out; base: RIL knobs, turns, beam cycles, and which source. Candidates (parameters of the source in use that vary within a source): EXTI, EXTV, EXTSV, TOR, ARCV, ARCI, ARCZ, GASV, IG, LCC, CTEMP, STEMP, TTEMP, VTEMP, BTEMP, RACKT, SRCI, TUBEI, VLVI, BOILI, BSP, EVS, EIS. A candidate is added if it lowers the error in enough held-out weeks (default: one-sided sign test, Bonferroni over the candidates left, 0.05).
+
+| target | step | added | R2 before | R2 after | weeks better | p | kept |
+|---|---|---|---|---|---|---|---|
+| L:D7TOR | 1 | ARCI | 0.668 | 0.846 | 10/14 | 0.0898 | yes |
+| L:D7TOR | 2 | SRCI | 0.846 | 0.861 | 9/14 | 0.2120 | yes |
+| L:D7TOR | 3 | EXTV | 0.861 | 0.873 | 12/14 | 0.0065 | yes |
+| L:D7TOR | 4 | LCC | 0.873 | 0.874 | 10/14 | 0.0898 | yes |
+
+## Chance check: EXTV for L:D7TOR, after ARCI, SRCI
+
+Observed: pooled held-out R2 up 0.0120, better in 12/14 weeks. Its series circularly shifted (at least two weeks), 100 draws: gains median 0.0004, max 0.0122; weeks better median 8. P(gain this large by chance) = 0.020 for this parameter alone; picked as the best of 21: 1 - (1 - p)^21 = 0.343 (treats candidates as independent).
+
+## Chance check: LCC for L:D7TOR, after ARCI, SRCI, EXTV
+
+Observed: pooled held-out R2 up 0.0014, better in 10/14 weeks. Its series circularly shifted (at least two weeks), 100 draws: gains median -0.0033, max 0.0012; weeks better median 6. P(gain this large by chance) = 0.010 for this parameter alone; picked as the best of 20: 1 - (1 - p)^20 = 0.180 (treats candidates as independent).

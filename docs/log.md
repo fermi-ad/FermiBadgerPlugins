@@ -2011,5 +2011,14 @@ Fixes (main):
   the user's question about spurious errors: the outside-limits check unticked context
   rows; ranges relative to current recentered them, and a reading outside the range
   made Go fail. Then (user): a reading outside the range widens it, at load, at Go, and
-  each step. Patch `badger-1.6.0-context-variables` regenerated; tests extended. No
-  source parameter listed (selection found none).
+  each step. Patch `badger-1.6.0-context-variables` regenerated; tests extended.
+- User's rule for the selection: at least 3 of 14 weeks, top 3 or 4. Top 4 for `L:D7TOR`:
+  `ARCI`, `SRCI`, `EXTV`, `LCC` (R2 +0.178, +0.015, +0.012, +0.001). Chance test
+  (circular shifts, `--chance`): `EXTV` 0.02 alone, at most 0.34 as the best of 21; `LCC`
+  0.01, at most 0.18, but a negligible gain. Top three added as context variables
+  (`L:AARCI.READING` etc., both sources), ticked for source A in the four RIL templates;
+  template lint exempts context variables from the limit-option rule.
+- Noise shapes vs risk calibration (`--shapes`): with the noise's size right, skew-t is
+  the most honest shape at a 1 % tolerance, GaussExp close, Student-t fails on skewed
+  noise; spikes more frequent than the tolerance defeat every shape (user's preference
+  for heavier tails confirmed; skew-t not yet in the patch).

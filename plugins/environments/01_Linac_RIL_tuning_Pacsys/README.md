@@ -45,9 +45,16 @@ SRC_B) changes what the RIL objectives reach, or how they respond to the knobs.
   14 weeks (one-sided sign test p 0.03), and no single source parameter helps
   consistently. Suggestive only.
 
-Record the source settings with each run. Badger's Context column (never moved; read and
-modeled every step) can carry a source parameter as a read-only `.READING` variable of
-this environment; none is listed, since none passed the study's week-by-week test.
+Record the source settings with each run. Context variables (Badger's Context column:
+read every step and modeled, never moved): `L:AARCI.READING` (arc current),
+`L:ASRCI.READING` (source heater current), and `L:AEXTV.READING` (extractor volts), and
+the same for source B (`L:B...`): the top three source parameters for `L:D7TOR` by
+forward selection on held-out weeks (better in 10, 9, and 12 of 14 weeks; the third's
+chance of being a fluke 0.02 alone, at most 0.34 allowing for its being the best of 21).
+They are readings: the environment refuses to write them, and safe-badger never
+snapshots them. Their ranges are the 0.5-99.5 percentiles of the last three months'
+readings with beam, while that source fed the RIL; a reading outside widens the range.
+The RIL templates tick Context for source A's, the source in use since 2026-09-15.
 Correlation in logged history, not a designed test.
 
 ## Parameters (Machine Interface)

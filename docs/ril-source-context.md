@@ -78,16 +78,52 @@ the context changes how the target responds to the knobs (self-check on syntheti
 | L:TK4RAD | -0.50 | -0.54 | 1.03 |
 | G:LINEFF | -0.30 | -0.31 | 1.01 |
 
-- **L:D7TOR: yes.** Letting the knobs combine with the context removes about two thirds of
+- **L:D7TOR, pooled: yes; week by week: suggestive only** (next section). Pooled over the
+  held-out weeks, letting the knobs combine with the context removes about two thirds of
   the unexplained variance. Located: knobs x the parameters of the source in use gives R2
   0.864 (ratio 0.39), nearly all of it; knobs x beam rate 0.778 (0.63); knobs x which
-  source alone 0.642 (1.00: nothing); source x beam with the knobs kept apart 0.642. So it
-  is the source settings, not the swap itself or the beam rate, that change how L:D7TOR
-  responds to the RIL knobs.
+  source alone 0.642 (1.00: nothing); source x beam with the knobs kept apart 0.642.
 - **L:TUNRAD, L:TK1RAD: no.** Their levels follow the context, but not their response to
   the knobs.
 - Sensitivity: learning rate 0.05 / 0.1 / 0.2 gives ratios 0.38 / 0.36 / 0.32 for
   L:D7TOR and 1.10 / 1.11 / 1.02 for L:TUNRAD: the conclusion does not depend on it.
+
+## Week by week: the check that changed the conclusion
+
+Pooled R2 weights weeks by their bins and by their spread, so one unusual week can carry
+it. Leave-one-week-out (`--interactions --weekly`; table in the results file): letting the
+knobs combine with all the context helps `L:D7TOR` in 7 of 14 held-out weeks (one-sided
+sign test p 0.61); most of the pooled gain is week 45 (2026-11-02 to 11-08; error ratio
+0.09), and week 46 goes the other way (2.93). With the source parameters alone, 11 of 14
+(p 0.03): suggestive, not established. `L:TUNRAD` 8 of 14 either way, `L:TK1RAD` 7 and 10:
+no interaction found.
+
+## Which source parameters matter? (forward selection)
+
+Leave-one-week-out; base: RIL knobs, turns, beam cycles, and which source; candidates: the
+23 parameters of the source in use that vary while one source runs (the others only say
+which source). Each step adds the candidate with the best pooled R2.
+
+- Strict rule (lower the error in nearly every week: sign test, Bonferroni): none passes
+  for `L:D7TOR`, `L:TUNRAD`, or `L:TK1RAD`.
+- The user's rule (better in at least 3 of 14 weeks; plus a pooled R2 gain of at least
+  0.01, an untested floor, since 3 of 14 alone passes almost anything), for `L:D7TOR`:
+
+| step | parameter | R2 | weeks better | chance it is a fluke |
+|---|---|---|---|---|
+| 1 | ARCI, arc current | 0.668 -> 0.846 | 10/14 | not tested |
+| 2 | SRCI, source heater current | 0.846 -> 0.861 | 9/14 | not tested |
+| 3 | EXTV, extractor volts | 0.861 -> 0.873 | 12/14 | 0.02 alone; at most 0.34 as the best of 21 |
+| 4 | LCC (below the 0.01 floor) | 0.873 -> 0.874 | 10/14 | 0.01 alone; at most 0.18 as the best of 20 |
+
+  Chance test (`--chance`): the parameter's series circularly shifted by at least two
+  weeks (keeping its own drifts and steps, breaking its timing against `L:D7TOR`), 100
+  draws; P = share of shifts gaining as much. The correction for picking the best of K
+  treats the candidates as independent, so it overstates; the truth lies between. A
+  shifted copy usually lowers R2 (median -0.003), so the test is easier to pass for a
+  small gain than the gain's size suggests: `LCC` passes it with a negligible gain.
+- Taken (2026-11-24, user's call): the top three, as context variables of the RIL
+  environment, ticked in the four RIL templates for source A.
 
 ## GP kernels (additive vs interacting)
 
@@ -99,12 +135,13 @@ trees better than a smooth kernel; the GP comparison is inconclusive here, not n
 
 ## What it means for RIL tuning
 
-- The best RIL knob settings for throughput (L:D7TOR) can shift when the ion source
-  settings do, the extractor supply voltage of the source in use most of all. Record the source
-  settings (L48 <1>, tabs SRC_A and SRC_B) with each run, and compare runs within a source
-  state.
-- Badger's Context column (never moved; read every step and modeled) is the way to give
-  the optimizer these settings; the RIL environment does not list them as variables yet.
+- Established: which source is in use, and its parameters with the beam rate, set the
+  level of L:D7TOR (about 19 mA on source B, 24 on source A). Suggestive only: that they
+  also change how L:D7TOR responds to the knobs. Record the source settings (L48 <1>, tabs
+  SRC_A and SRC_B) with each run, and compare runs within a source state.
+- Context variables (never moved; read every step and modeled): `L:AARCI.READING`,
+  `L:ASRCI.READING`, `L:AEXTV.READING` (and source B's), ticked in the RIL templates. The
+  GP then models them; whether that helps a run is untested.
 - For the loss objectives, context explains level, not response: comparing runs needs the
   context, but the optimizer gains less from it. L:TK4RAD (the operations loss objective)
   follows none of it.
