@@ -193,11 +193,12 @@ def interaction_weeks(X, y, weeks, knob_cols):
     return mse["free"] / mse["additive"]
 
 
-def select(X, y, weeks, base, candidates, max_steps=4, alpha=0.05):
+def select(X, y, weeks, base, candidates, max_steps=4, alpha=0.05, min_weeks=None, min_gain=0.0):
     """Forward selection of context features that predict y on held-out weeks beyond `base`.
     Each step adds the candidate with the best pooled R2, if it lowers the error in enough
-    held-out weeks: a one-sided sign test over the weeks at alpha / (candidates left)
-    (Bonferroni: the best of many is picked). Stops at the first step that fails.
+    held-out weeks: by default a one-sided sign test over the weeks at alpha / (candidates
+    left) (Bonferroni: the best of many is picked); with min_weeks, at least that many weeks
+    and a pooled R2 gain of at least min_gain. Stops at the first step that fails.
     Returns (chosen, rows of (candidate, R2 before, R2 after, weeks better, weeks, p))."""
     chosen, rows, left = [], [], list(candidates)
     mse0, r20 = week_errors(X[base], y, weeks)
@@ -212,12 +213,32 @@ def select(X, y, weeks, base, candidates, max_steps=4, alpha=0.05):
         rows.append((best, r20, res[best][1], wins, n, p))
         print(f"  {best}: R2 {r20:.3f} -> {res[best][1]:.3f}, better in {wins}/{n} weeks, "
               f"p {p:.4f} (needs <= {alpha / len(left):.4f})", flush=True)
-        if p > alpha / len(left):
+        if (p > alpha / len(left) if min_weeks is None
+                else wins < min_weeks or res[best][1] - r20 < min_gain):
             break
         chosen.append(best)
         left.remove(best)
         mse0, r20 = res[best]
     return chosen, rows
+
+
+def shift_null(X, y, weeks, given, col, draws=100, seed=0):
+    """Is `col`'s held-out gain over `given` chance? Its series (rows in time order) is
+    circularly shifted by at least two weeks' worth of rows, which keeps its own drifts and
+    steps but breaks its timing against y; the gain in pooled R2 is recomputed per draw.
+    Returns (observed gain, observed weeks better, null gains, null weeks better)."""
+    rng = np.random.default_rng(seed)
+    mse0, r20 = week_errors(X[given], y, weeks)
+    mse1, r21 = week_errors(X[given + [col]], y, weeks)
+    n, gap = len(X), 2 * len(X) // len(np.unique(weeks))
+    gains, wins = [], []
+    for _ in range(draws):
+        Xs = X[given + [col]].copy()
+        Xs[col] = np.roll(Xs[col].to_numpy(), int(rng.integers(gap, n - gap)))
+        mse, r2 = week_errors(Xs, y, weeks)
+        gains.append(r2 - r20)
+        wins.append(int(np.sum(mse < mse0)))
+    return r21 - r20, int(np.sum(mse1 < mse0)), np.array(gains), np.array(wins)
 
 
 def importance(X, y, weeks):
@@ -260,6 +281,14 @@ def selftest():
     ys = pd.Series(np.sin(6 * S.k) * (1 + 2 * S.c1) + 0.05 * rng.standard_normal(m))
     chosen, _ = select(S, ys, np.repeat(np.arange(14), m // 14), ["k"], ["c1", "c2"])
     assert chosen == ["c1"], chosen
+    # the shift null: the driver's gain beats every shifted copy; a slowly drifting noise
+    # column's does not stand out
+    S["drift"] = np.cumsum(rng.standard_normal(m)) / 30
+    wk = np.repeat(np.arange(14), m // 14)
+    g, _, null, _ = shift_null(S, ys, wk, ["k"], "c1", draws=10)
+    assert g > null.max(), (g, null)
+    g, _, null, _ = shift_null(S, ys, wk, ["k"], "drift", draws=10)
+    assert np.mean(null >= g) > 0.1, (g, null)
     print("ril_context_study selftest ok")
 
 
@@ -276,6 +305,18 @@ def main():
     ap.add_argument("--weekly", action="store_true",
                     help="with --interactions: leave-one-week-out, each held-out week's error "
                          "ratio (free / additive), for all context and for source parameters only")
+    ap.add_argument("--min-weeks", type=int, default=None,
+                    help="with --select: keep a candidate better in at least this many held-out "
+                         "weeks (and raising pooled R2 by --min-gain) instead of the sign test")
+    ap.add_argument("--min-gain", type=float, default=0.01,
+                    help="with --min-weeks: smallest pooled R2 gain kept (default 0.01, untested)")
+    ap.add_argument("--chance", nargs="+", metavar="PARAM",
+                    help="the last PARAM's chance of a gain this large over the earlier ones "
+                         "(source parameters, e.g. ARCI EXTSV ...), by shift_null(); with "
+                         "--targets (first only), --draws, --candidates-left; appended to --out")
+    ap.add_argument("--draws", type=int, default=100)
+    ap.add_argument("--candidates-left", type=int, default=1,
+                    help="how many candidates the last PARAM was the best of (selection correction)")
     ap.add_argument("--select", action="store_true",
                     help="forward selection of the in-use source's parameters (select()), "
                          "beyond the knobs, beam rate, and which source; appended to --out")
@@ -303,6 +344,26 @@ def main():
         return
     weeks = pd.to_datetime(df.index, unit="s").isocalendar().week.to_numpy()
     groups = {k: [d for d in v if d in df and df[d].notna().mean() > 0.5] for k, v in GROUPS.items()}
+    if a.chance:
+        t = a.targets[0]
+        ok = df[t].notna()
+        base = groups["RIL knobs"] + groups["turns"] + groups["beam cycles"] + ["src_B"]
+        given = base + [f"active_{x}" for x in a.chance[:-1]]
+        col = f"active_{a.chance[-1]}"
+        g, w, null, nw = shift_null(df.loc[ok], df.loc[ok, t], weeks[ok.to_numpy()], given, col, a.draws)
+        p1 = (1 + np.sum(null >= g)) / (1 + len(null))
+        pk = 1 - (1 - p1) ** a.candidates_left
+        lines = ["", f"## Chance check: {a.chance[-1]} for {t}, after {', '.join(a.chance[:-1]) or 'the base'}",
+                 "", f"Observed: pooled held-out R2 up {g:.4f}, better in {w}/{len(np.unique(weeks[ok.to_numpy()]))} weeks. "
+                 f"Its series circularly shifted (at least two weeks), {len(null)} draws: gains "
+                 f"median {np.median(null):.4f}, max {null.max():.4f}; weeks better median "
+                 f"{np.median(nw):.0f}. P(gain this large by chance) = {p1:.3f} for this "
+                 f"parameter alone; picked as the best of {a.candidates_left}: "
+                 f"1 - (1 - p)^{a.candidates_left} = {pk:.3f} (treats candidates as independent)."]
+        print("\n".join(lines), flush=True)
+        with open(a.out, "a") as f:
+            f.write("\n".join(lines) + "\n")
+        return
     if a.select:
         base = groups["RIL knobs"] + groups["turns"] + groups["beam cycles"] + ["src_B"]
         # candidates: parameters that vary while one source is in use (the others only
@@ -312,16 +373,20 @@ def main():
                          for b in (0, 1))]
         lines = ["", "## Which source parameters matter? (forward selection, trees)", "",
                  "Leave-one-week-out; base: RIL knobs, turns, beam cycles, and which source. "
+                 + (f"Rule: better in at least {a.min_weeks} held-out weeks and pooled R2 up by "
+                    f"at least {a.min_gain} (user's threshold; the R2 floor untested). "
+                    if a.min_weeks else "") +
                  f"Candidates (parameters of the source in use that vary within a source): "
                  + ", ".join(c.removeprefix("active_") for c in cands) + ". A candidate is "
-                 "added if it lowers the error in enough held-out weeks (one-sided sign test, "
-                 "Bonferroni over the candidates left, 0.05).", "",
+                 "added if it lowers the error in enough held-out weeks (default: one-sided "
+                 "sign test, Bonferroni over the candidates left, 0.05).", "",
                  "| target | step | added | R2 before | R2 after | weeks better | p | kept |",
                  "|---|---|---|---|---|---|---|---|"]
         for t in a.targets:
             print(t, flush=True)
             ok = df[t].notna()
-            chosen, rows = select(df.loc[ok], df.loc[ok, t], weeks[ok.to_numpy()], base, cands)
+            chosen, rows = select(df.loc[ok], df.loc[ok, t], weeks[ok.to_numpy()], base, cands,
+                                  min_weeks=a.min_weeks, min_gain=a.min_gain)
             for i, (c, r0, r1, w, n, p) in enumerate(rows, 1):
                 lines.append(f"| {t} | {i} | {c.removeprefix('active_')} | {r0:.3f} | {r1:.3f} | "
                              f"{w}/{n} | {p:.4f} | {'yes' if c in chosen else 'no'} |")
