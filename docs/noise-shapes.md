@@ -132,7 +132,40 @@ more than alpha, noise of constant size, so only its shape is at stake:
   varies across the range, a standard GP on single readings misjudges it (the original
   scenarios: lognormal single readings overshoot in all fits at 1 % whatever the shape).
   A safety factor or recalibration from the run's residuals is still needed for those.
-- The skew-t is not yet in the xopt patch (its CDF needs tabulating for torch).
+- Skew-t is now a profile family (next section).
+
+## Skew-t profiles (2026-11-24)
+
+New term, **skew-t**: the Jones-Faddy skew-t, parameters a and b; its left tail falls as
+|e|^-(2a+1) and its right as e^-(2b+1) (a = b: a Student-t with 2a degrees of freedom).
+Power-law tails, heavier than GaussExp's exponential ones. The risk needs a finite variance
+(it standardizes the shape), so a and b must exceed 1.
+
+- In the xopt patch: `SkewTShape`, `make_shape({family: jf_skew_t, a, b})`. Its CDF, a
+  regularized incomplete beta function, is tabulated once (log F and log(1 - F) on 16001
+  points uniform in asinh(e), |e| <= 1e4) and interpolated in torch: within 1e-6 of scipy,
+  and within 0.1 % relative in tails below 1e-3. Quadrature over the noise: 96
+  Gauss-Legendre points in probability. Checked against Monte Carlo
+  (`tests/noise_shapes_test.py`).
+- Profiles (`scripts/noise_shape_fit.py --profiles`) carry both families, fitted to the
+  same residuals with the same 8-sigma cut; `family` picks the one whose more optimistic
+  1 % tail is lower held out (safety first: an optimistic tail breaks a tolerance, a
+  cautious one only costs performance), skew-t on a tie, never a skew-t with a or b below
+  1.05. Held-out exceedance / alpha at 1 %, low and high side:
+
+| device | family | GaussExp | skew-t (a, b) |
+|---|---|---|---|
+| L:D7TOR | skew-t | 1.04, 0.79 | 0.91, 0.75 (7.98, 9.87) |
+| L:TK1RAD | skew-t | 0.94, 1.11 | 0.90, 1.01 (2.77, 2.93) |
+| G:LINEFF | skew-t | 0.95, 4.36 | 0.99, 4.34 (3.41, 2.88) |
+| B:BOOEFF | GaussExp | 0.10, 0.18 | 0.15, 0.26 (2.30, 3.55) |
+| B:BLMLAM | GaussExp | 1.83, 1.06 | 1.83, 0.35 (2.77, 1.00) |
+
+  The differences between the families are small next to the drift between the two
+  halves of each pull (G:LINEFF's high side, 4.3 for both): the staleness check and
+  refreshed profiles matter more than the family. The rule was set after seeing a first
+  pass (which weighed cautious and optimistic tails alike); its reason is the tolerance's
+  purpose, not the result.
 
 ## Limits and open avenues
 

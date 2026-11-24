@@ -1,15 +1,14 @@
-Binary files a/xopt/generators/bayesian/__pycache__/noise_shape.cpython-312.pyc and b/xopt/generators/bayesian/__pycache__/noise_shape.cpython-312.pyc differ
 diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bayesian/bayesian_generator.py
---- a/xopt/generators/bayesian/bayesian_generator.py	2026-11-19 17:02:16
-+++ b/xopt/generators/bayesian/bayesian_generator.py	2026-11-19 17:07:42
+--- a/xopt/generators/bayesian/bayesian_generator.py	2026-11-24 13:50:06
++++ b/xopt/generators/bayesian/bayesian_generator.py	2026-11-24 13:51:06
 @@ -46,6 +46,13 @@
      StandardModelConstructor,
  )
  from xopt.generators.bayesian.models.time_dependent import TimeDependentModelConstructor
 +from xopt.generators.bayesian.noise_shape import (
 +    AD_CRITICAL_1PCT,
-+    NoiseShape,
 +    loo_residuals,
++    make_shape,
 +    p_below,
 +    shape_check,
 +)
@@ -32,7 +31,7 @@ diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bay
 +    constraint model's latent posterior plus its noise, Gaussian or of the constraint's
 +    noise shape (FermiBadgerPlugins patch xopt-3.2.2-noise-shapes).
 +    limits: [(output index, bound, +1 for less-than or -1 for greater-than, 1 - tolerance,
-+    optional NoiseShape)]."""
++    optional noise shape (make_shape))]."""
 +    latent = model.posterior(X)
 +    with warnings.catch_warnings():
 +        # a robust (relevance pursuit) GP keeps its outlier variances on its training
@@ -52,45 +51,46 @@ diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bay
          shortfall = shortfall + torch.relu(needed - p_ok)
      return shortfall
  
-@@ -236,7 +251,15 @@
+@@ -236,7 +251,16 @@
          description="per constraint, the largest modeled probability (1e-4 to 1) "
          "that a proposed point violates it; 1 or absent = no limit",
      )
-+    constraint_noise_shapes: Optional[Dict[str, Dict[str, float]]] = Field(
++    constraint_noise_shapes: Optional[Dict[str, Dict[str, Union[float, str]]]] = Field(
 +        None,
 +        description="per constraint, the shape of its measurement noise for the risk "
 +        "tolerance: {kL, kR}, a GaussExp (Gaussian core, exponential tails beyond kL "
-+        "sigmas below and kR sigmas above; its size comes from the constraint's GP); "
-+        "absent = Gaussian",
++        "sigmas below and kR sigmas above), or {family: jf_skew_t, a, b}, a Jones-Faddy "
++        "skew-t (power-law tails); its size comes from the constraint's GP; absent = "
++        "Gaussian",
 +    )
      _risk_off: bool = PrivateAttr(default=False)
 +    _noise_checked: set = PrivateAttr(default_factory=set)
  
      _compatible_turbo_controllers: Optional[list[type[TurboController]]] = PrivateAttr(
          default=None
-@@ -252,6 +275,14 @@
+@@ -252,6 +276,14 @@
              return None
          return {k: min(max(float(v), RISK_TOLERANCE_MIN), 1.0) for k, v in value.items()}
  
 +    @field_validator("constraint_noise_shapes", mode="after")
 +    def validate_constraint_noise_shapes(cls, value):
-+        # only the shape is used (a profile file carries more); splices clamp to [0.1, 8]
++        # only the shape is used (a profile file carries more); GaussExp splices clamp to
++        # [0.1, 8]; a skew-t needs a, b > 1
 +        if not value:
 +            return None
-+        shapes = {k: NoiseShape(v["kL"], v["kR"]) for k, v in value.items()}
-+        return {k: {"kL": shape.kl, "kR": shape.kr} for k, shape in shapes.items()}
++        return {k: make_shape(v).spec() for k, v in value.items()}
 +
      @field_validator("vocs", mode="after")
      @classmethod
      def validate_vocs(cls, v: VOCS, info: ValidationInfo) -> VOCS:
-@@ -694,12 +725,49 @@
+@@ -694,12 +726,49 @@
                  continue
              constraint = self.vocs.constraints[name]
              sign = 1.0 if type(constraint).__name__ == "LessThanConstraint" else -1.0
 -            limits.append((names.index(name), float(constraint.value), sign, 1.0 - tolerance))
 +            shape = (self.constraint_noise_shapes or {}).get(name)
 +            limits.append((names.index(name), float(constraint.value), sign, 1.0 - tolerance,
-+                           NoiseShape(shape["kL"], shape["kR"]) if shape else None))
++                           make_shape(shape) if shape else None))
          return limits
  
      def _apply_risk_tolerance(self, acq, model):
@@ -117,7 +117,7 @@ diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bay
 +                continue
 +            if len(z) < min_points:
 +                continue
-+            noise_shape = NoiseShape(shape["kL"], shape["kR"])
++            noise_shape = make_shape(shape)
 +            a2, kurtosis = shape_check(z, noise_shape)
 +            if a2 <= AD_CRITICAL_1PCT:
 +                continue
@@ -135,8 +135,8 @@ diff -ruN a/xopt/generators/bayesian/bayesian_generator.py b/xopt/generators/bay
      def get_training_data(self, data: pd.DataFrame) -> pd.DataFrame:
          """
 diff -ruN a/xopt/generators/bayesian/models/standard.py b/xopt/generators/bayesian/models/standard.py
---- a/xopt/generators/bayesian/models/standard.py	2026-11-19 17:02:16
-+++ b/xopt/generators/bayesian/models/standard.py	2026-11-19 17:04:09
+--- a/xopt/generators/bayesian/models/standard.py	2026-11-24 13:50:06
++++ b/xopt/generators/bayesian/models/standard.py	2026-11-24 13:50:06
 @@ -11,6 +11,7 @@
  from botorch import fit_gpytorch_mll
  from botorch.models import ModelListGP, SingleTaskGP
@@ -183,24 +183,29 @@ diff -ruN a/xopt/generators/bayesian/models/standard.py b/xopt/generators/bayesi
                      self.build_single_task_gp(
 diff -ruN a/xopt/generators/bayesian/noise_shape.py b/xopt/generators/bayesian/noise_shape.py
 --- a/xopt/generators/bayesian/noise_shape.py	1969-12-31 18:00:00
-+++ b/xopt/generators/bayesian/noise_shape.py	2026-11-19 17:09:39
-@@ -0,0 +1,142 @@
++++ b/xopt/generators/bayesian/noise_shape.py	2026-11-24 13:52:31
+@@ -0,0 +1,225 @@
 +"""Non-Gaussian measurement noise for the measured-value risk tolerance
 +(FermiBadgerPlugins patch xopt-3.2.2-noise-shapes).
 +
-+A constraint's noise shape is a GaussExp: a Gaussian core with an exponential tail beyond
-+kL sigmas below and kR sigmas above, matched in value and slope at both splices. Only the
-+shape comes from here (a device's noise profile, fitted to logged readings); the noise's
-+size comes from the constraint's own GP. A fresh reading is the GP's latent value f plus
-+noise sigma_n * e, e the shape standardized to mean 0 and variance 1, and
++A constraint's noise shape is one of two families, named by its spec (make_shape):
++  GaussExp {kL, kR}: a Gaussian core with an exponential tail beyond kL sigmas below and
++      kR sigmas above, matched in value and slope at both splices;
++  Jones-Faddy skew-t {family: jf_skew_t, a, b}: power-law tails, the left falling as
++      |e|^-(2a+1) and the right as e^-(2b+1) (a = b: a Student-t with 2a degrees of
++      freedom); heavier than GaussExp's, and the more honest at a 1 % tolerance in an
++      offline calibration (FermiBadgerPlugins docs/noise-shapes.md).
++Only the shape comes from here (a device's noise profile, fitted to logged readings); the
++noise's size comes from the constraint's own GP. A fresh reading is the GP's latent value
++f plus noise sigma_n * e, e the shape standardized to mean 0 and variance 1, and
 +
 +    P(reading < bound) = E_f[ P(e < (bound - f) / sigma_n) ]
 +
 +computed by quadrature over whichever of f and e has the larger spread (the integrand is
 +then smooth in the integration variable): Gauss-Hermite over f when the latent spread
-+s <= sigma_n, otherwise over e (Gauss-Legendre on the core, Gauss-Laguerre on each
-+exponential tail). With no shape, the noise is Gaussian: Phi((bound - mean) / sqrt(s^2 +
-+sigma_n^2)).
++s <= sigma_n, otherwise over e (GaussExp: Gauss-Legendre on the core, Gauss-Laguerre on
++each exponential tail; skew-t: Gauss-Legendre in probability). With no shape, the noise is
++Gaussian: Phi((bound - mean) / sqrt(s^2 + sigma_n^2)).
 +
 +Also: leave-one-out residuals of an exact GP, to check a run's own noise against a
 +profile's shape (staleness), by an Anderson-Darling test of the residuals against the
@@ -208,15 +213,17 @@ diff -ruN a/xopt/generators/bayesian/noise_shape.py b/xopt/generators/bayesian/n
 +sigmas high) it flagged all 20 runs of 80 points and none of 20 clean runs, but none of
 +20 spiky runs of 30 points: little power in short runs.
 +"""
++import functools
 +import math
 +
 +import numpy as np
 +import torch
-+from scipy import optimize, stats
++from scipy import optimize, special, stats
 +
 +K_MIN, K_MAX = 0.1, 8.0  # splices, in sigmas: below 0.1 no core is left; beyond 8, no tail
 +AD_CRITICAL_1PCT = 3.857  # Anderson-Darling A^2, fully specified null: p = 0.01
 +N_HERMITE, N_LEGENDRE, N_LAGUERRE = 48, 48, 24
++N_QUANTILE, N_GRID, E_MAX = 96, 16001, 1e4  # skew-t: quadrature nodes; CDF table, |e| span
 +
 +
 +def _unit_constants(kl, kr):
@@ -230,7 +237,27 @@ diff -ruN a/xopt/generators/bayesian/noise_shape.py b/xopt/generators/bayesian/n
 +    return n, mean, math.sqrt(m2 / n - mean ** 2)
 +
 +
-+class NoiseShape:
++class _Shape:
++    """Common to the standardized shapes: P(f + sigma_n e < bound) by quadrature, from the
++    subclass's cdf (torch) and its nodes over the noise (_e standardized, _we summing to 1)."""
++
++    def p_below(self, bound, mean, s, sigma_n):
++        """P(f + sigma_n e < bound), f ~ N(mean, s^2), e this shape: tensors broadcast."""
++        dtype, device = mean.dtype, mean.device
++        # over f (Gauss-Hermite), for s <= sigma_n
++        xh = torch.as_tensor(self._xh, dtype=dtype, device=device)
++        wh = torch.as_tensor(self._wh, dtype=dtype, device=device) / math.sqrt(math.pi)
++        f = mean.unsqueeze(-1) + math.sqrt(2) * s.unsqueeze(-1) * xh
++        p_f = (wh * self.cdf((bound - f) / sigma_n.unsqueeze(-1))).sum(-1)
++        # over the noise, for s > sigma_n
++        e = torch.as_tensor(self._e, dtype=dtype, device=device)
++        we = torch.as_tensor(self._we, dtype=dtype, device=device)
++        arg = (bound - mean.unsqueeze(-1) - sigma_n.unsqueeze(-1) * e) / s.unsqueeze(-1)
++        p_e = (we * _phi_cdf(arg)).sum(-1)
++        return torch.where(s <= sigma_n, p_f, p_e)
++
++
++class NoiseShape(_Shape):
 +    """A GaussExp noise shape, standardized: mean 0, variance 1."""
 +
 +    def __init__(self, kl: float, kr: float):
@@ -248,8 +275,11 @@ diff -ruN a/xopt/generators/bayesian/noise_shape.py b/xopt/generators/bayesian/n
 +        self._z = np.concatenate([z_left, z_core, z_right])
 +        self._wz = np.concatenate([w_left, w_core, w_right])
 +        self._xh, self._wh = np.polynomial.hermite.hermgauss(N_HERMITE)
-+        e = (self._z - self.mean) / self.std
-+        self.excess_kurtosis = float(np.sum(self._wz * e ** 4) - 3.0)
++        self._e, self._we = (self._z - self.mean) / self.std, self._wz
++        self.excess_kurtosis = float(np.sum(self._wz * self._e ** 4) - 3.0)
++
++    def spec(self) -> dict:
++        return {"kL": self.kl, "kR": self.kr}
 +
 +    def cdf_unit(self, z: torch.Tensor) -> torch.Tensor:
 +        """P(Z < z) for the unit GaussExp (not standardized)."""
@@ -269,21 +299,74 @@ diff -ruN a/xopt/generators/bayesian/noise_shape.py b/xopt/generators/bayesian/n
 +        f = lambda e: float(self.cdf(torch.tensor(e, dtype=torch.double))) - p  # noqa: E731
 +        return optimize.brentq(f, -1e3, 1e3)
 +
-+    def p_below(self, bound, mean, s, sigma_n):
-+        """P(f + sigma_n e < bound), f ~ N(mean, s^2), e this shape: tensors broadcast."""
-+        dtype, device = mean.dtype, mean.device
-+        # over f (Gauss-Hermite), for s <= sigma_n
-+        xh = torch.as_tensor(self._xh, dtype=dtype, device=device)
-+        wh = torch.as_tensor(self._wh, dtype=dtype, device=device) / math.sqrt(math.pi)
-+        f = mean.unsqueeze(-1) + math.sqrt(2) * s.unsqueeze(-1) * xh
-+        p_f = (wh * self.cdf((bound - f) / sigma_n.unsqueeze(-1))).sum(-1)
-+        # over the noise (Legendre core + Laguerre tails), for s > sigma_n
-+        z = torch.as_tensor(self._z, dtype=dtype, device=device)
-+        wz = torch.as_tensor(self._wz, dtype=dtype, device=device)
-+        e = (z - self.mean) / self.std
-+        arg = (bound - mean.unsqueeze(-1) - sigma_n.unsqueeze(-1) * e) / s.unsqueeze(-1)
-+        p_e = (wz * _phi_cdf(arg)).sum(-1)
-+        return torch.where(s <= sigma_n, p_f, p_e)
++class SkewTShape(_Shape):
++    """A Jones-Faddy skew-t noise shape, standardized: mean 0, variance 1 (so a and b must
++    exceed 1). Its CDF, a regularized incomplete beta function torch lacks, is tabulated
++    once: log F and log(1 - F) on N_GRID points uniform in asinh(e) over |e| <= E_MAX,
++    interpolated linearly (beyond, the end values); quadrature over the noise at N_QUANTILE
++    Gauss-Legendre points in probability."""
++
++    def __init__(self, a: float, b: float):
++        self.a, self.b = float(a), float(b)
++        if not min(self.a, self.b) > 1.0:
++            raise ValueError(f"skew-t a = {a}, b = {b}: both must exceed 1 (finite variance)")
++        dist = stats.jf_skew_t(self.a, self.b)
++        self.mean, var = (float(v) for v in dist.stats(moments="mv"))
++        self.std = math.sqrt(var)
++        self.excess_kurtosis = (float(dist.stats(moments="k")) if min(self.a, self.b) > 2
++                                else math.inf)
++        self._u = np.linspace(-math.asinh(E_MAX), math.asinh(E_MAX), N_GRID)
++        self._logF, self._logS = self._log_cdf_sf(self.mean + self.std * np.sinh(self._u))
++        p, w = np.polynomial.legendre.leggauss(N_QUANTILE)
++        self._e, self._we = self.ppf_array((p + 1) / 2), w / 2
++        self._xh, self._wh = np.polynomial.hermite.hermgauss(N_HERMITE)
++
++    def _log_cdf_sf(self, t):
++        """log F and log(1 - F) of the unit skew-t at t: F = I_x(a, b), 1 - F = I_(1-x)(b, a),
++        x = (1 + t / r) / 2, r = sqrt(a + b + t^2); x and 1 - x without cancellation."""
++        a, b = self.a, self.b
++        r = np.sqrt(a + b + t ** 2)
++        x = np.where(t < 0, (a + b) / (2 * r * (r - t)), (1 + t / r) / 2)
++        y = np.where(t > 0, (a + b) / (2 * r * (r + t)), (1 - t / r) / 2)
++        with np.errstate(divide="ignore"):
++            return np.log(special.betainc(a, b, x)), np.log(special.betainc(b, a, y))
++
++    def cdf(self, e: torch.Tensor) -> torch.Tensor:
++        """P(noise < e) for the standardized shape, from the table."""
++        u = torch.asinh(e).clamp(float(self._u[0]), float(self._u[-1]))
++        g = torch.as_tensor(self._u, dtype=e.dtype, device=e.device)
++        i = torch.searchsorted(g, u.contiguous()).clamp(1, len(self._u) - 1)
++        t = (u - g[i - 1]) / (g[i] - g[i - 1])
++        lf = torch.as_tensor(self._logF, dtype=e.dtype, device=e.device)
++        ls = torch.as_tensor(self._logS, dtype=e.dtype, device=e.device)
++        log_f = lf[i - 1] + t * (lf[i] - lf[i - 1])
++        log_s = ls[i - 1] + t * (ls[i] - ls[i - 1])
++        return torch.where(log_f < log_s, torch.exp(log_f), -torch.expm1(log_s))
++
++    def ppf_array(self, p) -> np.ndarray:
++        """Quantiles of the standardized shape, inverted from the table (numpy)."""
++        e = np.sinh(self._u)
++        f = np.where(self._logF < self._logS, np.exp(self._logF), -np.expm1(self._logS))
++        return np.interp(p, f, e)
++
++    def ppf(self, p: float) -> float:
++        return float(self.ppf_array(p))
++
++    def spec(self) -> dict:
++        return {"family": "jf_skew_t", "a": self.a, "b": self.b}
++
++
++@functools.lru_cache(maxsize=64)
++def _shape(family: str, p: float, q: float):
++    return SkewTShape(p, q) if family == "jf_skew_t" else NoiseShape(p, q)
++
++
++def make_shape(spec: dict) -> _Shape:
++    """The noise shape a spec names: {"family": "jf_skew_t", "a", "b"}, or a GaussExp
++    {"kL", "kR"} (family "gaussexp" or none). Cached: a skew-t's table is built once."""
++    if spec.get("family", "gaussexp") == "jf_skew_t":
++        return _shape("jf_skew_t", float(spec["a"]), float(spec["b"]))
++    return _shape("gaussexp", float(spec["kL"]), float(spec["kR"]))
 +
 +
 +def _phi_cdf(x):
@@ -318,7 +401,7 @@ diff -ruN a/xopt/generators/bayesian/noise_shape.py b/xopt/generators/bayesian/n
 +    return z.detach().cpu().numpy().ravel()
 +
 +
-+def shape_check(z: np.ndarray, shape: NoiseShape):
++def shape_check(z: np.ndarray, shape: _Shape):
 +    """Anderson-Darling A^2 of the residuals z against the standardized shape (> 3.857:
 +    p < 0.01), and the residuals' excess kurtosis, to compare with the shape's
 +    (shape.excess_kurtosis): higher means heavier tails than the shape says."""

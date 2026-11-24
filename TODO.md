@@ -533,8 +533,9 @@ exists and what it would touch.
       shape keeps a tolerance honest"): with the noise's size right, skew-t is the most
       honest at 1 % (e.g. overshooting fits 0.05 vs Gaussian 0.60 for t3 noise; 0.30 vs
       0.85 skewed), GaussExp close; symmetric Student-t fails on skewed noise.
-    - [ ] Skew-t (Jones-Faddy) as a profile family in the xopt patch (tabulated CDF for
-      torch), chosen per device by held-out fit; profiles written by `noise_shape_fit.py`.
+    - [x] Skew-t (Jones-Faddy) as a profile family in the xopt patch (2026-11-24, user's
+      go-ahead): CDF tabulated for torch (16001 points in asinh(e), log F and log(1 - F));
+      chosen per device by held-out 1 % tail calibration; `noise_shape_fit.py --profiles`.
     - [ ] Spikes more frequent than the tolerance: a mixture (outlier rate and size).
     - [ ] The residual overshoot from the GP itself (15-30 % of fits even with Gaussian
       noise): a safety factor or recalibration from the run's residuals.
@@ -563,6 +564,15 @@ exists and what it would touch.
   reading; if not there, look for a central home (the ACNET device database, or another
   shared place). Long-standing wish: front ends declaring each device's known
   resolution up front.
+  - [ ] **A central repository of fitted noise profiles** (user, 2026-11-24): profiles
+    for chosen devices (the format of `plugins/noise_profiles/*.yaml`: family GaussExp or
+    skew-t, fit date, source, held-out calibration), pulled when needed, above all at the
+    start of a run, when the run's own data say little about the noise (the staleness
+    check needs about 50 points). Today the profiles live in this repo.
+  - [ ] **Archived Badger runs as noise history** (user, 2026-11-24): production has many
+    archived runs; their readings (and the GP residuals of each run) are a second source
+    for fitting and refreshing profiles, beside the data logger, and for testing the
+    calibration on real runs rather than the mock-up.
 
 - [ ] **Better GP visualizations.** Revisit how the model (objective and
   constraints, with uncertainty) is shown during a run.

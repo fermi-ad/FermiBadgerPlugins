@@ -20,12 +20,13 @@ diff -ruN a/badger/gui/components/con_table.py b/badger/gui/components/con_table
          return (relation_combo, threshold_spinbox, critical_checkbox, risk_spinbox)
 diff -ruN a/badger/gui/components/noise_profiles.py b/badger/gui/components/noise_profiles.py
 --- a/badger/gui/components/noise_profiles.py	1969-12-31 18:00:00
-+++ b/badger/gui/components/noise_profiles.py	2026-11-19 17:08:41
-@@ -0,0 +1,26 @@
++++ b/badger/gui/components/noise_profiles.py	2026-11-24 14:00:00
+@@ -0,0 +1,32 @@
 +"""Noise profiles (FermiBadgerPlugins patch badger-1.6.0-noise-shapes): for each
 +constraint whose device has <plugin root>/noise_profiles/<device>.yaml (':' written '_'),
-+its noise shape {kL, kR}, for the generator's measured-value risk tolerance
-+(xopt-3.2.2-noise-shapes). Profiles are written by scripts/noise_shape_fit.py."""
++its noise shape, for the generator's measured-value risk tolerance (xopt-3.2.2-noise-shapes):
++the profile's family, a GaussExp {kL, kR} (the default) or a Jones-Faddy skew-t
++{family: jf_skew_t, a, b}. Profiles are written by scripts/noise_shape_fit.py."""
 +import logging
 +import os
 +
@@ -43,7 +44,12 @@ diff -ruN a/badger/gui/components/noise_profiles.py b/badger/gui/components/nois
 +        try:
 +            with open(path) as f:
 +                profile = yaml.safe_load(f)
-+            shapes[name] = {"kL": float(profile["kL"]), "kR": float(profile["kR"])}
++            if profile.get("family", "gaussexp") == "jf_skew_t":
++                skew_t = profile["jf_skew_t"]
++                shapes[name] = {"family": "jf_skew_t", "a": float(skew_t["a"]),
++                                "b": float(skew_t["b"])}
++            else:
++                shapes[name] = {"kL": float(profile["kL"]), "kR": float(profile["kR"])}
 +        except Exception as error:  # a bad profile must not stop composing a routine
 +            logger.warning("Noise profile %s unreadable (%s); %s noise taken as Gaussian.",
 +                           path, error, name)

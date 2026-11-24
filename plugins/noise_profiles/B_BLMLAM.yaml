@@ -1,12 +1,25 @@
 device: B:BLMLAM
 family: gaussexp
+family_choice: the family whose more optimistic 1 % tail is lower held out (exceedance/alpha),
+  skew-t on a tie unless its a or b < 1.05
 kL: 8.0
 kR: 0.5953
 unit_mean: 0.73362
 unit_std: 1.83395
 note: 'noise = sigma(level) * (Z - unit_mean) / unit_std, Z ~ GaussExp(kL, kR): Gaussian core,
-  exponential tails beyond -kL and +kR sigmas. Xopt''s measured-value risk takes only the
-  shape (kL, kR); the scale comes from the run''s own GP.'
+  exponential tails beyond -kL and +kR sigmas; or, with family jf_skew_t, Z ~ the Jones-Faddy
+  skew-t(a, b) below (power-law tails). Xopt''s measured-value risk takes only the shape;
+  the scale comes from the run''s own GP.'
+jf_skew_t:
+  a: 2.7747
+  b: 1.0025
+  unit_mean: 2.13004
+  unit_std: 32.42176
+  heldout_exceedance_over_alpha:
+    lo 0.01: 1.829
+    lo 0.05: 2.661
+    hi 0.01: 0.353
+    hi 0.05: 0.694
 source: B_BLMLAM_2026-11-18_1d.csv.gz
 logged_every_s: 0.067
 steady_readings: 783300
@@ -32,5 +45,5 @@ heldout_exceedance_over_alpha:
   lo 0.05: 2.534
   hi 0.01: 1.057
   hi 0.05: 0.954
-fitted: '2026-11-19'
+fitted: '2026-11-24'
 by: scripts/noise_shape_fit.py

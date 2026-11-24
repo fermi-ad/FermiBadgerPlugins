@@ -2021,4 +2021,12 @@ Fixes (main):
 - Noise shapes vs risk calibration (`--shapes`): with the noise's size right, skew-t is
   the most honest shape at a 1 % tolerance, GaussExp close, Student-t fails on skewed
   noise; spikes more frequent than the tolerance defeat every shape (user's preference
-  for heavier tails confirmed; skew-t not yet in the patch).
+  for heavier tails confirmed).
+- Skew-t profiles (user's go-ahead): `SkewTShape` and `make_shape` in the xopt
+  noise-shapes patch (CDF tabulated for torch, 16001 points); Badger reads a profile's
+  `family`; `noise_shape_fit.py` fits both families and picks safety first (the lower
+  most-optimistic 1 % tail held out; never a skew-t with a or b below 1.05). Profiles
+  refitted: skew-t for L:D7TOR, L:TK1RAD, G:LINEFF; GaussExp for B:BOOEFF, B:BLMLAM. A
+  `diff` exit status of 1 stopped an `&&` chain once, so a patch was not copied: use `;`.
+- User: a central repository of fitted profiles (pulled at run start), and archived
+  Badger runs as noise history in production; both in the TODO.

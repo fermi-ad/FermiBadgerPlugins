@@ -162,6 +162,40 @@ class GaussExp:
         return f"mu {self.mu:.3g}, sigma {self.sig:.3g}, kL {self.kl:.3g}, kR {self.kr:.3g}"
 
 
+class SkewT:
+    """Jones-Faddy skew-t with loc and scale, a and b kept above 1 (finite variance, which
+    the measured-value risk needs: it standardizes the shape); maximum likelihood truncated
+    to cut robust sigmas, as GaussExp's."""
+    name = "jf_skew_t"
+
+    def fit(self, x, cut=None):
+        med = np.median(x)
+        mad = 1.4826 * np.median(np.abs(x - med))
+        lo, hi = (med - cut * mad, med + cut * mad) if cut else (-np.inf, np.inf)
+        x = x[(x >= lo) & (x <= hi)]
+
+        def unpack(p):
+            return 1 + np.exp(np.clip(p[2], -6, 4)), 1 + np.exp(np.clip(p[3], -6, 4)), p[0], np.exp(p[1])
+
+        def nll(p):
+            a, b, loc, sc = unpack(p)
+            d = stats.jf_skew_t(a, b, loc, sc)
+            mass = d.cdf(hi) - d.cdf(lo) if cut else 1.0
+            return -np.sum(d.logpdf(x)) + len(x) * np.log(max(mass, 1e-300))
+        p = optimize.minimize(nll, [med, np.log(mad), np.log(2.0), np.log(2.0)],
+                              method="Nelder-Mead",
+                              options={"maxiter": 4000, "xatol": 1e-5, "fatol": 1e-3}).x
+        self.a, self.b, self.loc, self.scale = unpack(p)
+        self.dist = stats.jf_skew_t(self.a, self.b, self.loc, self.scale)
+        return self
+
+    def cdf(self, x):
+        return self.dist.cdf(x)
+
+    def describe(self):
+        return f"a {self.a:.3g}, b {self.b:.3g}, loc {self.loc:.3g}, scale {self.scale:.3g}"
+
+
 class Scipy:
     def __init__(self, dist):
         self.dist, self.name = dist, dist.name
@@ -261,12 +295,25 @@ def write_profile(directory, device, path, df, z, w, eta_min, table):
     gh = GaussExp().fit(train, cut=CUT)
     test = test[np.abs(test - med) <= CUT * mad]
     a, b = med - CUT * mad, med + CUT * mad
-    mass_lo, mass = gh.cdf(a), gh.cdf(b) - gh.cdf(a)
 
-    def q(p):  # quantile of the fit truncated to [a, b]
-        return optimize.brentq(lambda x: (gh.cdf(x) - mass_lo) / mass - p, a, b)
-    heldout = {f"lo {p:g}": round(float(np.mean(test < q(p)) / p), 3) for p in (0.01, 0.05)}
-    heldout |= {f"hi {p:g}": round(float(np.mean(test > q(1 - p)) / p), 3) for p in (0.01, 0.05)}
+    def held_out(fit):  # exceedance / alpha of the fit truncated to [a, b], on test
+        m_lo, m = fit.cdf(a), fit.cdf(b) - fit.cdf(a)
+
+        def q(p):
+            return optimize.brentq(lambda x: (fit.cdf(x) - m_lo) / m - p, a, b)
+        out = {f"lo {p:g}": round(float(np.mean(test < q(p)) / p), 3) for p in (0.01, 0.05)}
+        return out | {f"hi {p:g}": round(float(np.mean(test > q(1 - p)) / p), 3) for p in (0.01, 0.05)}
+
+    def worst_1pct(h):  # the more optimistic 1 % tail (exceedance / alpha; > 1 understates risk)
+        return max(h["lo 0.01"], h["hi 0.01"])
+    heldout = held_out(gh)
+    skt = SkewT().fit(sub, cut=CUT)
+    st_heldout = held_out(SkewT().fit(train, cut=CUT))
+    # safety first: a risk tolerance is broken by an optimistic tail, not a cautious one;
+    # a skew-t with a or b near 1 (variance near infinite) cannot be standardized reliably
+    family = ("jf_skew_t" if min(skt.a, skt.b) >= 1.05
+              and worst_1pct(st_heldout) <= worst_1pct(heldout) else "gaussexp")
+    st_mean, st_var = (float(v) for v in stats.jf_skew_t(skt.a, skt.b).stats(moments="mv"))
     mean, std = gaussexp_moments(kl, kr)
     win = windows(df.t_s, df.value, w, eta_min)
     st = win[win.steady]
@@ -274,13 +321,19 @@ def write_profile(directory, device, path, df, z, w, eta_min, table):
     sig = st.groupby(level, observed=True).agg(level=("mean", "median"), std=("std", "median"))
     profile = {
         "device": device,
-        "family": "gaussexp",
+        "family": family,
+        "family_choice": "the family whose more optimistic 1 % tail is lower held out "
+                         "(exceedance/alpha), skew-t on a tie unless its a or b < 1.05",
         "kL": round(float(kl), 4), "kR": round(float(kr), 4),
         "unit_mean": round(float(mean), 5), "unit_std": round(float(std), 5),
         "note": "noise = sigma(level) * (Z - unit_mean) / unit_std, Z ~ GaussExp(kL, kR): "
-                "Gaussian core, exponential tails beyond -kL and +kR sigmas. Xopt's "
-                "measured-value risk takes only the shape (kL, kR); the scale comes from "
-                "the run's own GP.",
+                "Gaussian core, exponential tails beyond -kL and +kR sigmas; or, with "
+                "family jf_skew_t, Z ~ the Jones-Faddy skew-t(a, b) below (power-law "
+                "tails). Xopt's measured-value risk takes only the shape; the scale comes "
+                "from the run's own GP.",
+        "jf_skew_t": {"a": round(float(skt.a), 4), "b": round(float(skt.b), 4),
+                      "unit_mean": round(st_mean, 5), "unit_std": round(float(np.sqrt(st_var)), 5),
+                      "heldout_exceedance_over_alpha": st_heldout},
         "source": os.path.basename(path),
         "logged_every_s": round(float(np.median(np.diff(df.t_s))), 3),
         "steady_readings": int(z.size),
