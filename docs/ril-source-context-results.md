@@ -19,3 +19,15 @@ Top predictors (active source + turns + beam cycles; drop in held-out R2 when sh
 - L:TK1RAD: active_EXTSV 0.629, turn_weighted_rate 0.446, $1D 0.257, active_VTEMP 0.032, G:TURN1D 0.029, active_STEMP 0.019, $10 0.018, active_CTEMP 0.014
 - L:D7TOR: active_EXTSV 0.322, src_B 0.287, active_CTEMP 0.063, G:TURN15 0.037, turn_weighted_rate 0.027, active_TTEMP 0.023, active_LCC 0.017, active_BOILI 0.013
 - G:LINEFF: active_EXTV 5.024, active_IG 1.815, active_BOILI 1.067, active_TOR 0.386, active_CTEMP 0.236, G:TURN16 0.215, active_ARCI 0.214, active_VLVI 0.143
+
+## Do the knobs' effects depend on the context? (trees)
+
+Held-out R2 / quantile skill of trees on RIL knobs + context (source in use, turns, beam cycles): knob and context features only adding up (interaction_cst) vs free to interact; ratio: the interacting model's unexplained variance over the additive one's (well below 1: the context changes the knobs' effect).
+
+| target | additive | interacting | ratio |
+|---|---|---|---|
+| L:TK4RAD | -0.50 / -0.09 | -0.54 / -0.05 | 1.03 |
+| L:TUNRAD | 0.79 / 0.54 | 0.76 / 0.55 | 1.11 |
+| L:TK1RAD | 0.73 / 0.54 | 0.73 / 0.52 | 1.00 |
+| L:D7TOR | 0.64 / 0.00 | 0.87 / 0.06 | 0.36 |
+| G:LINEFF | -0.30 / 0.29 | -0.31 / 0.34 | 1.01 |

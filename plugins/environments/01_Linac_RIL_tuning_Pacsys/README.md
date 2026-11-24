@@ -29,6 +29,19 @@ tab PWR_SUP.
 - `BulkPS_<group>`: the summed |current| of the trims on one bulk power supply; for source A's supply, `BulkPS_SourceATrims_Pos` (sum of the positive currents) and `BulkPS_SourceATrims_Neg` (magnitude of the sum of the negative ones) instead (see `BulkPS_Limit`)
 - `MultOOB_<name>`: how much of the last mult step was lost to a member quad's limits (0 good, 1 = could not move)
 
+## Context: the ion source changes how the knobs act
+
+A study of 90 days of logged history (2026-08-22 to 11-20; `docs/ril-source-context.md`)
+found that how `L:D7TOR` responds to the RIL knobs depends on the settings of the ion source
+in use (parameter page L48, sub-page <1>, tabs SRC_A and SRC_B): letting the knobs combine
+with the source parameters cuts the unexplained variance of held-out weeks to about a
+third. The extractor-voltage setting of the source in use (`L:AEXTSV`, or `L:BEXTSV`)
+matters most. The losses `L:TUNRAD` and `L:TK1RAD` follow the source settings and the beam
+rate in level only; `L:TK4RAD` follows none of them. Record the source settings with each
+run. Badger's Context column (never moved; read and modeled every step) can carry them
+once they are variables of this environment (not yet). Correlation in logged history, not a
+designed test.
+
 ## Parameters (Machine Interface)
 
 The loaded template sets these; change them here before a run if needed.

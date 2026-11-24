@@ -60,14 +60,62 @@ Held-out R2, by predictor group (full table with quantile skill: the results fil
   rose from about 14 to 19 in week 40 and to 23 by week 47; `L:D7TOR` rose from 19 mA
   (source B, weeks 34-37) to 23-25 mA (source A, from week 38, the swap).
 
-## Results (GP kernels: level shift or changed response)
+## Does the context change how the knobs act? (trees)
 
-(pending: `docs/ril-source-context-gp.md`)
+The same held-out weeks, trees on the RIL knobs plus the context (source in use, turns,
+beam cycles), two ways: knob and context features may only add up (scikit-learn
+`interaction_cst`: interactions inside each group, none across), or may combine freely.
+Ratio: the free model's unexplained variance over the additive one's; well below 1 means
+the context changes how the target responds to the knobs (self-check on synthetic data:
+1.10 for additive data, 0.02 for interacting).
+
+| target | additive R2 | free R2 | ratio |
+|---|---|---|---|
+| L:D7TOR | 0.64 | 0.87 | 0.36 |
+| L:TUNRAD | 0.79 | 0.76 | 1.11 |
+| L:TK1RAD | 0.73 | 0.73 | 1.00 |
+| L:TK4RAD | -0.50 | -0.54 | 1.03 |
+| G:LINEFF | -0.30 | -0.31 | 1.01 |
+
+- **L:D7TOR: yes.** Letting the knobs combine with the context removes about two thirds of
+  the unexplained variance. Located: knobs x the parameters of the source in use gives R2
+  0.864 (ratio 0.39), nearly all of it; knobs x beam rate 0.778 (0.63); knobs x which
+  source alone 0.642 (1.00: nothing); source x beam with the knobs kept apart 0.642. So it
+  is the source settings, not the swap itself or the beam rate, that change how L:D7TOR
+  responds to the RIL knobs.
+- **L:TUNRAD, L:TK1RAD: no.** Their levels follow the context, but not their response to
+  the knobs.
+- Sensitivity: learning rate 0.05 / 0.1 / 0.2 gives ratios 0.38 / 0.36 / 0.32 for
+  L:D7TOR and 1.10 / 1.11 / 1.02 for L:TUNRAD: the conclusion does not depend on it.
+
+## GP kernels (additive vs interacting)
+
+`docs/ril-source-context-gp.md`: exact GPs (RBF-ARD, 1000 training bins per fold, top 10
+context features) predict held-out weeks poorly (best R2 0.36 for L:D7TOR, against 0.86
+for the trees) and give inconsistent answers between the additive and interacting
+kernels. The week-scale steps in this history (the source swap, operating periods) suit
+trees better than a smooth kernel; the GP comparison is inconclusive here, not negative.
+
+## What it means for RIL tuning
+
+- The best RIL knob settings for throughput (L:D7TOR) can shift when the ion source
+  settings do, the extractor voltage of the source in use most of all. Record the source
+  settings (L48 <1>, tabs SRC_A and SRC_B) with each run, and compare runs within a source
+  state.
+- Badger's Context column (never moved; read every step and modeled) is the way to give
+  the optimizer these settings; the RIL environment does not list them as variables yet.
+- For the loss objectives, context explains level, not response: comparing runs needs the
+  context, but the optimizer gains less from it. L:TK4RAD (the operations loss objective)
+  follows none of it.
 
 ## Caveats
 
 - Correlation, not cause: operators retune sources and the RIL together; the source swap
   and operating periods move many predictors at once (week-scale regimes).
 - The RIL knobs move only in tuning sessions; their effect is poorly sampled by history.
-- Model settings (boosted-tree defaults, the GP context size and training-sample size) are
-  untested choices; a sensitivity check is planned.
+- Model settings: the trees' learning rate was varied (above) without changing the
+  conclusions; their other defaults, the GP context size and training-sample size, are
+  untested.
+- History is not an experiment: operators may retune the RIL after source changes, which
+  also looks like an interaction. A designed test (scan a knob at two source settings)
+  would settle it.

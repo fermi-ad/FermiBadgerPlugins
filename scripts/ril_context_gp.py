@@ -138,7 +138,8 @@ def main():
     knobs = GROUPS["RIL knobs"]
     ctx_all = GROUPS["active source"] + GROUPS["turns"] + GROUPS["beam cycles"]
     src = [d for g in ("source A", "source B") for d in GROUPS[g]] + ["L:SRCNOW"]
-    df = load_all(a.series, a.events, a.targets + knobs + src + [c for c in ctx_all if ":" in c])
+    df = load_all(a.series, a.events, list(dict.fromkeys(  # L:D7TOR always: the beam-on cut
+        ["L:D7TOR"] + a.targets + knobs + src + [c for c in ctx_all if ":" in c])))
     df = df[df["L:D7TOR"] > BEAM_ON]
     knobs = [k for k in knobs if k in df and df[k].notna().mean() > 0.9]
     ctx_all = [c for c in ctx_all if c in df and df[c].notna().mean() > 0.9]
