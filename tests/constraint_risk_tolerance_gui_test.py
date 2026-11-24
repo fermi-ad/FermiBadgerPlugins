@@ -5,8 +5,8 @@ constraint_risk_tolerance (xopt-3.2.2-constraint-risk-tolerance.patch).
 
 - A template loads with every constraint at 100 %.
 - A constraint whose device has plugins/noise_profiles/<device>.yaml (L:D7TOR) carries its
-  noise shape {kL, kR} into the composed generator (badger-1.6.0-noise-shapes); one
-  without a profile (L:D34LM) does not.
+  noise shape (its family: GaussExp {kL, kR} or skew-t {family, a, b}) into the composed
+  generator (badger-1.6.0-noise-shapes); one without a profile (L:D34LM) does not.
 - 5 % typed for one constraint reaches the composed routine's generator as 0.05; a 0
   typed in becomes 0.01 % on screen.
 - A template that carries constraint_risk_tolerance shows it in the column, and the
@@ -83,7 +83,8 @@ def main():
         raise AssertionError(f"{name} not in the constraint table")
 
     profile = yaml.safe_load(open("plugins/noise_profiles/L_D7TOR.yaml"))
-    d7tor_shape = {"kL": profile["kL"], "kR": profile["kR"]}
+    d7tor_shape = ({"family": "jf_skew_t", "a": profile["jf_skew_t"]["a"], "b": profile["jf_skew_t"]["b"]}
+                   if profile.get("family") == "jf_skew_t" else {"kL": profile["kL"], "kR": profile["kR"]})
 
     def check(window_cls):
         window = window_cls()
