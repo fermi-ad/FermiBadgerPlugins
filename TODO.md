@@ -524,6 +524,15 @@ exists and what it would touch.
   - [ ] Before trusting low risk tolerances: try a safety factor, recalibration from the
     run's residuals, or a heavier-tailed/transformed noise model; extend the study to
     two or more variables.
+    - [x] Heavier tails (user prefers them; 2026-11-24, `docs/noise-shapes.md`, "Which
+      shape keeps a tolerance honest"): with the noise's size right, skew-t is the most
+      honest at 1 % (e.g. overshooting fits 0.05 vs Gaussian 0.60 for t3 noise; 0.30 vs
+      0.85 skewed), GaussExp close; symmetric Student-t fails on skewed noise.
+    - [ ] Skew-t (Jones-Faddy) as a profile family in the xopt patch (tabulated CDF for
+      torch), chosen per device by held-out fit; profiles written by `noise_shape_fit.py`.
+    - [ ] Spikes more frequent than the tolerance: a mixture (outlier rate and size).
+    - [ ] The residual overshoot from the GP itself (15-30 % of fits even with Gaussian
+      noise): a safety factor or recalibration from the run's residuals.
   - [x] Machine check, first look (2026-11-18; `scripts/logger_noise.py`, findings in
     `docs/logger-read-noise.md`): Linac noise 0.5-0.6 % of level; cores near Gaussian,
     4-sigma tails 1.1-6.5 times Gaussian; B:BOOEFF skewed low; consecutive L:D7TOR

@@ -39,6 +39,26 @@ Measured over 101 test settings, against 4000 simulated fresh recorded values ea
 Run from the repo root (a few minutes at the defaults):
     pixi run python scripts/heteroskd_calibration.py [--seeds 20] [--out docs/heteroskd-calibration]
 writes <out>.csv (one row per fit) and <out>.md (median over seeds).
+
+--shapes: does a heavier-tailed noise shape keep a risk tolerance honest? Each scenario's
+noise profile is fitted to HISTORY draws of its recorded-value noise in units of its scale
+(as the device profiles are fitted to logged readings): Gaussian (no profile), GaussExp
+(truncated at 8 robust sigmas, as the profiles are), Student-t, and Jones-Faddy skew-t
+(scipy, untruncated). The risk on the measured value is P(f + sigma_n e < 0.8), f the GP's
+latent value, sigma_n its noise, e the shape standardized to mean 0 and variance 1 (as in
+the xopt noise-shapes patch); computed exactly over f and by Monte Carlo over M_SHAPE
+draws of e. Cases: one reading per setting with the standard GP (templates today,
+average_events 1), and 5-reading means with the standard and heteroskedastic GPs; 50
+points. Scenarios: as above, plus t3_c, lognormal_c, spikes_c: the same shapes at the
+constant scale 0.1, so the noise's size is right for the standard GP and only its shape
+is at stake. At tolerances 5 % and 1 %:
+  edge_viol   actual violation share of the settings predicted at the tolerance's edge
+              (P(ok) in [1 - alpha, 1 - alpha/5)); honest if <= alpha
+  over        share of fits whose edge violates more than alpha (the number to drive down)
+  viol_sel    actual violation share over all settings predicted >= 1 - alpha safe
+  n_sel       how many settings qualified
+    pixi run python scripts/heteroskd_calibration.py --shapes [--seeds 20]
+        [--out docs/heteroskd-shapes-calibration]
 """
 import argparse
 import contextlib
@@ -50,6 +70,8 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
+from scipy import stats
+from scipy.special import ndtr
 from scipy.stats import norm
 from xopt import VOCS
 from xopt.generators.bayesian.expected_improvement import ExpectedImprovementGenerator
@@ -69,7 +91,7 @@ def g(x):
 
 
 def sigma(scenario, x):
-    if scenario == "constant":
+    if scenario == "constant" or scenario.endswith("_c"):
         return 0.1 + 0 * x
     if scenario == "bump":
         return 0.03 + 0.3 * np.exp(-(((x - 0.6) / 0.08) ** 2))
@@ -85,6 +107,7 @@ def draws(scenario, x, n_draws, rng):
     """Noise for n_draws readings at each x: array (len(x), n_draws)."""
     s = sigma(scenario, x)[:, None]
     shape = (len(x), n_draws)
+    scenario = scenario.removesuffix("_c")  # the same shapes at a constant scale
     if scenario == "t3":
         return s * rng.standard_t(3, shape) / np.sqrt(3.0)  # unit variance
     if scenario == "lognormal":
@@ -150,6 +173,115 @@ def evaluate(model, truth_fresh):
     return row
 
 
+HISTORY = 20_000   # 'logged' noise draws each profile is fitted to
+M_SHAPE = 50_000   # standardized draws of each fitted shape (Monte Carlo over the noise)
+SHAPE_SCENARIOS = ("constant", "t3", "lognormal", "spikes", "t3_c", "lognormal_c", "spikes_c")
+SHAPE_CASES = ((1, "standard"), (5, "standard"), (5, "heteroskd"))
+ALPHAS = (0.05, 0.01)
+
+
+def fit_shapes(scenario, n_draws, rng):
+    """{shape: standardized noise draws (mean 0, variance 1), None for Gaussian, or a
+    reason}: each family fitted to HISTORY draws of the recorded-value noise / its scale."""
+    import sys
+    sys.path.insert(0, "scripts")
+    from noise_shape_fit import GaussExp, gaussexp_moments, gaussexp_sample
+    x = rng.random(HISTORY)
+    z = draws(scenario, x, n_draws, rng).mean(axis=1) / sigma(scenario, x)
+    out = {"gaussian": None}
+    ge = GaussExp().fit(z, cut=8)
+    m, sd = gaussexp_moments(ge.kl, ge.kr)
+    out["gaussexp"] = (gaussexp_sample(ge.kl, ge.kr, M_SHAPE, rng) - m) / sd
+    for name, dist in (("t", stats.t), ("skew_t", stats.jf_skew_t)):
+        par = dist.fit(z)
+        mean, var = (float(v) for v in dist.stats(*par, moments="mv"))
+        out[name] = ((dist.rvs(*par, size=M_SHAPE, random_state=rng) - mean) / np.sqrt(var)
+                     if np.isfinite(var) else "infinite variance")
+    return out
+
+
+def p_ok(mu, sf, sn, e):
+    """P(f + sn e < BOUND), f ~ N(mu, sf^2): Gaussian e in closed form, else exact over f
+    and Monte Carlo over the draws e."""
+    if e is None:
+        return ndtr((BOUND - mu) / np.sqrt(sf ** 2 + sn ** 2))
+    return np.array([ndtr((BOUND - m - n * e) / max(f, 1e-12)).mean() for m, f, n in zip(mu, sf, sn)])
+
+
+def shape_rows(model, truth_fresh, shapes):
+    X = torch.tensor(XT, dtype=torch.double).unsqueeze(-1)
+    with torch.no_grad():
+        lat, meas = model.posterior(X), model.posterior(X, observation_noise=True)
+    mu = lat.mean.detach().squeeze(-1).numpy()
+    sf = lat.variance.detach().clamp_min(1e-15).sqrt().squeeze(-1).numpy()
+    sn = np.sqrt(np.clip(meas.variance.detach().squeeze(-1).numpy() - sf ** 2, 1e-15, None))
+    actual_bad = np.mean(truth_fresh > BOUND, axis=1)
+    rows = []
+    for name, e in shapes.items():
+        if isinstance(e, str):
+            continue
+        p = p_ok(mu, sf, sn, e)
+        for alpha in ALPHAS:
+            sel, edge = p >= 1 - alpha, (p >= 1 - alpha) & (p < 1 - alpha / 5)
+            ev = float(np.mean(actual_bad[edge])) if edge.any() else np.nan
+            rows.append({"shape": name, "alpha": alpha, "n_sel": int(sel.sum()),
+                         "viol_sel": float(np.mean(actual_bad[sel])) if sel.any() else np.nan,
+                         "edge_viol": ev, "over": float(ev > alpha) if edge.any() else np.nan})
+    return rows
+
+
+def shapes_main(seeds, out):
+    # check: Monte Carlo over Gaussian draws matches the closed form
+    rng = np.random.default_rng(0)
+    e = rng.standard_normal(M_SHAPE)
+    mu, sf, sn = np.array([0.5, 0.7, 0.75]), np.array([0.01, 0.05, 0.2]), np.array([0.1, 0.05, 0.02])
+    assert np.allclose(p_ok(mu, sf, sn, e), p_ok(mu, sf, sn, None), atol=0.004)
+    rows, t0, fitted = [], time.time(), []
+    for scenario in SHAPE_SCENARIOS:
+        for n_draws, model_name in SHAPE_CASES:
+            rng = np.random.default_rng(7)
+            shapes = fit_shapes(scenario, n_draws, rng)
+            fitted.append(f"- {scenario}, N = {n_draws}: " + ", ".join(
+                f"{k} {v}" for k, v in shapes.items() if isinstance(v, str)) if any(
+                isinstance(v, str) for v in shapes.values()) else "")
+            truth_fresh = fresh(scenario, n_draws, np.random.default_rng(1000 + n_draws))
+            for seed in range(seeds):
+                rng = np.random.default_rng(seed)
+                x = rng.random(50)
+                d = draws(scenario, x, n_draws, rng)
+                data = pd.DataFrame({"x": x, "c": g(x) + d.mean(axis=1),
+                                     "c_var": d.var(axis=1, ddof=1) / n_draws if n_draws > 1 else np.nan})
+                torch.manual_seed(seed)
+                try:
+                    model = fit(data, model_name == "heteroskd")
+                except Exception as error:  # noqa: BLE001  a failed fit is reported
+                    rows.append({"scenario": scenario, "N": n_draws, "model": model_name,
+                                 "seed": seed, "error": f"{type(error).__name__}"})
+                    continue
+                for r in shape_rows(model, truth_fresh, shapes):
+                    rows.append({"scenario": scenario, "N": n_draws, "model": model_name,
+                                 "seed": seed, **r})
+            print(f"{scenario:10s} N={n_draws} {model_name:9s} done ({time.time() - t0:4.0f} s)", flush=True)
+    df = pd.DataFrame(rows)
+    df.to_csv(out + ".csv", index=False)
+    summary = (df.dropna(subset=["shape"]).groupby(["scenario", "N", "model", "alpha", "shape"], sort=False)
+               .agg(edge_viol=("edge_viol", "median"), over=("over", "mean"),
+                    viol_sel=("viol_sel", "median"), n_sel=("n_sel", "median"))
+               .round(3).reset_index())
+    with open(out + ".md", "w") as f:
+        f.write(f"# Noise shapes and risk-tolerance calibration: {seeds} seeds, 50 points\n\n"
+                "Generated by `scripts/heteroskd_calibration.py --shapes`; column meanings in its "
+                "docstring. edge_viol, viol_sel, n_sel: medians over seeds; over: share of fits "
+                "whose edge violates more than alpha (lower is better).\n\n")
+        f.write(markdown_table(summary))
+        notes = [n for n in fitted if n]
+        if notes:
+            f.write("\nShapes not used:\n\n" + "\n".join(notes) + "\n")
+        if "error" in df:
+            f.write(f"\nFailed fits: {int(df['error'].notna().sum())}\n")
+    print(f"wrote {out}.csv and {out}.md ({time.time() - t0:.0f} s)")
+
+
 def markdown_table(df):
     """A pipe table (pandas' to_markdown needs tabulate, not installed here)."""
     cells = [[str(c) for c in df.columns]] + [
@@ -163,8 +295,12 @@ def markdown_table(df):
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--seeds", type=int, default=20)
-    ap.add_argument("--out", default="docs/heteroskd-calibration")
+    ap.add_argument("--out", default=None)
+    ap.add_argument("--shapes", action="store_true", help="noise shapes vs risk calibration")
     a = ap.parse_args()
+    if a.shapes:
+        return shapes_main(a.seeds, a.out or "docs/heteroskd-shapes-calibration")
+    a.out = a.out or "docs/heteroskd-calibration"
     rows, t0 = [], time.time()
     for scenario in SCENARIOS:
         for n_draws in NS:

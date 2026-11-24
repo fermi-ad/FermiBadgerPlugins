@@ -104,6 +104,36 @@ staleness check says so, or after a long shutdown.
   seeds each) it flagged all 80-point runs with 10 % gross outliers and no clean run, but
   none at 30 points: it needs about 50 points or more to say anything.
 
+## Which shape keeps a tolerance honest (calibration, 2026-11-24)
+
+`scripts/heteroskd_calibration.py --shapes` (tables: `docs/heteroskd-shapes-calibration.md`):
+the one-variable mock-up, 50 points, 20 seeds; each shape fitted to 20,000 draws of the
+scenario's noise (GaussExp cut at 8 robust sigmas, as the profiles are; Student-t and
+Jones-Faddy skew-t untruncated); the measured-value risk computed with that shape. Share
+of fits whose tolerance edge (settings predicted 1 - alpha to 1 - alpha/5 safe) violates
+more than alpha, noise of constant size, so only its shape is at stake:
+
+| noise | readings, GP | alpha | Gaussian | GaussExp | Student-t | skew-t |
+|---|---|---|---|---|---|---|
+| Student-t, 3 dof | 1, standard | 1 % | 0.60 | 0.50 | 0.10 | 0.05 |
+| lognormal (skewed) | 1, standard | 1 % | 0.85 | 0.75 | 0.90 | 0.30 |
+| lognormal | 1, standard | 5 % | 0.50 | 0.20 | 0.90 | 0.35 |
+| lognormal | 5-mean, standard | 1 % | 0.95 | 0.10 | 0.70 | 0.15 |
+| spikes (3 %, +8 sigma) | 5-mean, heteroskd | 1 % | 1.00 | 0.40 | 0.80 | 0.25 |
+| spikes | 1, standard | 1 % | 1.00 | 1.00 | 1.00 | 1.00 |
+
+- Skew-t is the best or tied-best shape at a 1 % tolerance; GaussExp is close behind and
+  best in some 5-reading cases; symmetric Student-t fails on skewed noise (worse than
+  Gaussian there). Both skew-t and GaussExp clearly beat Gaussian.
+- Spikes more frequent than the tolerance (3 % spikes at 1 %): no shape is honest. That
+  needs a mixture (a stated outlier rate at a stated size), not a smooth tail.
+- What a shape cannot fix: with Gaussian noise and the Gaussian shape, 15-30 % of fits
+  still overshoot at the edge (the GP's own uncertainty); and where the noise's size
+  varies across the range, a standard GP on single readings misjudges it (the original
+  scenarios: lognormal single readings overshoot in all fits at 1 % whatever the shape).
+  A safety factor or recalibration from the run's residuals is still needed for those.
+- The skew-t is not yet in the xopt patch (its CDF needs tabulating for torch).
+
 ## Limits and open avenues
 
 - Shapes are of single readings. Templates read one event per reading (`average_events`
