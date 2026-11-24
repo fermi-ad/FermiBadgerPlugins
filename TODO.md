@@ -264,12 +264,17 @@ it to paste in.
   variable exogenous (a GUI column), compose it as a `ContextualVariable`, never write
   it, and have the environment return its reading. Candidates: the L48 source
   parameters, Booster turns, if the study finds they change the knobs' response.
-- [ ] **RIL: source parameters as context variables** (user, 2026-11-24, after the study
-  found the source parameters change how `L:D7TOR` responds to the knobs,
-  `docs/ril-source-context.md`): only the conclusively important ones (forward selection on
-  held-out weeks, `scripts/ril_context_study.py --select`), Context checked in the RIL
-  templates, ranges from the last months' logged values with beam on. Read by their
-  reading (`L:AEXTSV.SETTING` reads about 0), never written.
+- [ ] **RIL: source parameters as context variables** (user, 2026-11-24): only the
+  conclusively important ones, Context checked in the RIL templates, ranges from the last
+  months' logged values with beam on.
+  - [x] Mechanism (2026-11-24): a `.READING` variable in the RIL environment is read as a
+    reading (`L:AEXTSV.SETTING` reads about 0) and refused on write; safe-badger skips it.
+    Context variables: no outside-limits warning, never recentered, and a reading outside
+    the range widens it (user), at load, at Go, and each step (`docs/plans/context-variables.md`).
+  - [x] Selection (`scripts/ril_context_study.py --select`): none passed (best: `L:AARCI`
+    for `L:D7TOR`, better in 10 of 14 held-out weeks; 13 needed). The list is empty.
+  - [ ] User's call: add none, or loosen the test (e.g. most weeks rather than nearly all).
+  - [ ] A designed test on the machine would settle it: one knob scanned at two source states.
 - [ ] **Source A and Source B versions of the RIL templates** (user, 2026-11-24), and of
   any Linac template that uses or consults ion-source devices. Today: the four RIL
   templates (`01_Linac_RIL_tuning.yaml`, `01_Linac_LossObjective_RIL_tuning.yaml`,

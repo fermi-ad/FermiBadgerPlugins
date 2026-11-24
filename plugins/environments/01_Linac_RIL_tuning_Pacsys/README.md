@@ -29,18 +29,26 @@ tab PWR_SUP.
 - `BulkPS_<group>`: the summed |current| of the trims on one bulk power supply; for source A's supply, `BulkPS_SourceATrims_Pos` (sum of the positive currents) and `BulkPS_SourceATrims_Neg` (magnitude of the sum of the negative ones) instead (see `BulkPS_Limit`)
 - `MultOOB_<name>`: how much of the last mult step was lost to a member quad's limits (0 good, 1 = could not move)
 
-## Context: the ion source changes how the knobs act
+## Context: the ion source and the knobs (suggestive, not established)
 
 A study of 90 days of logged history (2026-08-22 to 11-20; `docs/ril-source-context.md`)
-found that how `L:D7TOR` responds to the RIL knobs depends on the settings of the ion source
-in use (parameter page L48, sub-page <1>, tabs SRC_A and SRC_B): letting the knobs combine
-with the source parameters cuts the unexplained variance of held-out weeks to about a
-third. The extractor power-supply voltage of the source in use (`L:AEXTSV`, or `L:BEXTSV`: a
-reading, about 39 kV) matters most. The losses `L:TUNRAD` and `L:TK1RAD` follow the source settings and the beam
-rate in level only; `L:TK4RAD` follows none of them. Record the source settings with each
-run. Badger's Context column (never moved; read and modeled every step) can carry them
-once they are variables of this environment (not yet). Correlation in logged history, not a
-designed test.
+asked whether the ion source in use (parameter page L48, sub-page <1>, tabs SRC_A and
+SRC_B) changes what the RIL objectives reach, or how they respond to the knobs.
+
+- Level: which source is in use and its parameters, with the beam rate, predict the level
+  of `L:D7TOR`, `L:TUNRAD`, and `L:TK1RAD` in held-out weeks (`L:D7TOR` rose from about
+  19 to 24 mA with the swap from source B to A on 2026-09-15). `L:TK4RAD` follows none of
+  it.
+- Response to the knobs: pooled over held-out weeks, letting the knobs combine with the
+  source parameters cuts `L:D7TOR`'s unexplained variance to about a third, but most of
+  that comes from one week (2026-11-02 to 11-08). Week by week, combining helps in 11 of
+  14 weeks (one-sided sign test p 0.03), and no single source parameter helps
+  consistently. Suggestive only.
+
+Record the source settings with each run. Badger's Context column (never moved; read and
+modeled every step) can carry a source parameter as a read-only `.READING` variable of
+this environment; none is listed, since none passed the study's week-by-week test.
+Correlation in logged history, not a designed test.
 
 ## Parameters (Machine Interface)
 

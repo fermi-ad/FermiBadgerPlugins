@@ -27,19 +27,18 @@ description: |
   L:AVTEMP, L:ABTEMP, L:ARACKT; heaters L:ASRCI, L:ATUBEI, L:AVLVI, L:ABOILI, boiler loop
   L:ABSP (G:PIDPV[8] on L:ABTEMP; B: G:PIDPV[9]); spark counters L:AEVS, L:AEIS. Read
   from two screenshots by exact glyph matching, checked by eye.
-  Context (2026-11 study of 90 days of logged history, docs/ril-source-context.md): how
-  L:D7TOR responds to these knobs depends on the ion source settings. On held-out weeks,
-  boosted trees predict L:D7TOR far better when the RIL knobs may combine with the
-  parameters of the source in use than when the two only add (R2 0.87 vs 0.64; unexplained
-  variance down to 0.36 of the additive model, 0.32-0.38 across learning rates); the beam
-  rate adds less, and which source alone adds nothing. The extractor power-supply voltage of
-  the source in use (L:AEXTSV, or L:BEXTSV on source B: a reading, about 39 kV) is the
-  strongest single predictor. So
-  the best knob settings can shift when the source settings do: record them (L48 <1>, tabs
-  SRC_A and SRC_B) with each run. Correlation in logged history, not a designed test.
+  Context (2026-11 study of 90 days of logged history, docs/ril-source-context.md): which
+  ion source is in use and its parameters, with the beam rate, predict the level of
+  L:D7TOR in held-out weeks (about 19 mA on source B, 24 on source A). Whether they also
+  change how L:D7TOR responds to these knobs is suggestive, not established: the pooled
+  gain from letting knobs and source parameters combine comes mostly from one week, and
+  week by week it helps in 11 of 14 (sign test p 0.03); no single source parameter helps
+  consistently. Record the source settings (L48 <1>, tabs SRC_A and SRC_B) with each run,
+  and compare runs within one source state. Correlation in logged history, not a designed
+  test.
   Context (same study): the levels of L:TUNRAD and L:TK1RAD follow the settings of the
   source in use and the beam rate (held-out R2 0.84 and 0.75), but how they respond to the
-  knobs does not (no interaction); L:TK4RAD is predicted by none of it (its level changes
+  knobs does not (no interaction found); L:TK4RAD is predicted by none of it (its level changes
   little from week to week).
   Notes: acquisition search limited to 0.5 s with 5 restarts (on the DR simulation: MOBO steps
     4.1 s -> 0.8 s, same quality over 3 seeds; untested on RIL). No TuRBO controller (MOBO).

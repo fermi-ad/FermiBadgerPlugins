@@ -7,7 +7,8 @@ B:MV1, objective B:BOOEFF:
 - evaluating them and three optimizer steps never writes B:MV1, and every data row carries
   B:MV1's reading at that step (it drifts between steps);
 - the generator saw a ContextualVariable, and its candidates leave it out;
-- recomputing the variable ranges at Go keeps it contextual;
+- a reading outside the domain widens the domain to take it in (each step, and at Go);
+  the domain is never recentered on the reading;
 - the helpers (context_names, settable_vocs, without_context, template_context_names) and
   the bounds rounding the mini GUI uses accept it.
 
@@ -86,20 +87,38 @@ for step in range(3):
     quiet(routine.evaluate_data, pd.DataFrame(cand))
     assert routine.data["B:MV1"].iloc[-1] == MV1[0], (routine.data["B:MV1"].iloc[-1], MV1[0])
 
+# a context reading outside its domain widens the domain to take it in; no error
+MV1[0] = 420.0
+readings(mh1=float(routine.data["B:MH1"].iloc[-1]))
+cand = quiet(routine.generator.generate, 1)
+quiet(routine.evaluate_data, pd.DataFrame(cand))
+assert routine.data["B:MV1"].iloc[-1] == 420.0 and "B:MV1" not in cand[0], routine.data
+assert list(routine.vocs.variables["B:MV1"].domain) == [365.0, 420.0], routine.vocs.variables["B:MV1"]
+assert isinstance(routine.vocs.variables["B:MV1"], ContextualVariable)
+cand = quiet(routine.generator.generate, 1)  # the model now holds B:MV1 at 420
+
 written = [d for d, _ in fb.writes]
 assert not any(d.startswith("B:MV1") for d in written), written
 assert any(d.startswith("B:MH1") for d in written), written
-assert len(routine.data) == 6 and routine.data["B:MV1"].notna().all(), routine.data
+assert len(routine.data) == 7 and routine.data["B:MV1"].notna().all(), routine.data
 assert isinstance(routine.generator.vocs.variables["B:MV1"], ContextualVariable)
 
-# range recomputation at Go keeps the type (and drops nothing)
+# range recomputation at Go: a context variable keeps its domain, never recentered, even
+# with a limit option; a reading outside it (430) widens it; the knobs are recentered
+MV1[0] = 430.0
+readings()
+fresh = VOCS(variables={"B:MH1": [345.0, 360.0], "B:MV1": ContextualVariable(domain=[365.0, 387.0])},
+             objectives={"B:BOOEFF": "MAXIMIZE"})
 updated = calculate_variable_bounds({"B:MH1": {"limit_option_idx": 1, "ratio_full": 0.1, "ratio_curr": 0.1},
                                      "B:MV1": {"limit_option_idx": 1, "ratio_full": 0.1, "ratio_curr": 0.1}},
-                                    vocs, env)
+                                    fresh, env)
 assert isinstance(updated["B:MV1"], ContextualVariable) and isinstance(updated["B:MH1"], list), updated
+assert list(updated["B:MV1"].domain) == [365.0, 430.0], updated["B:MV1"]
+MV1[0] = 380.0
+readings()
 updated = calculate_variable_bounds({"B:MH1": {"limit_option_idx": 1, "ratio_full": 0.1, "ratio_curr": 0.1}},
-                                    vocs, env)
-assert updated["B:MV1"] is vocs.variables["B:MV1"], updated  # no limit option: kept as is
+                                    fresh, env)
+assert updated["B:MV1"] is fresh.variables["B:MV1"], updated  # reading inside: kept as is
 print(f"context: B:MV1 read at every step ({routine.data['B:MV1'].tolist()}), never written; "
       f"{len(written)} writes, all B:MH1")
 print("CONTEXT VARIABLES TEST PASSED")

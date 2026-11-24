@@ -24,6 +24,15 @@ _BULK_PS = {
     'MEBTQ2trims':  {'limit': 7.0, 'devices': ['L:MUQ2H', 'L:MUQ2V', 'L:MDQ2H', 'L:MDQ2V']},
 }
 
+# Context variables, for Badger's Context column (read every step and modeled, never moved):
+# ion-source parameters that matter to the RIL objectives. Each is a reading, named with its
+# property (e.g. "L:AEXTSV.READING"): set_variables refuses a .READING name and
+# safe-badger's snapshot skips it, so nothing here can write an ion-source device. Range:
+# the 0.5th-99.5th percentiles of logged 5-minute medians with beam, while that source fed
+# the RIL (scripts/ril_context_study.py --ranges); a reading outside it widens it. Empty: no
+# source parameter passed the week-by-week test (docs/ril-source-context.md).
+_CONTEXT = {}
+
 
 class Environment(environment.Environment):
     name = "01_Linac_RIL_tuning_Pacsys"
@@ -79,7 +88,8 @@ class Environment(environment.Environment):
         "L:D73TMV": [-4.5, 4.0],
         "L:D74TMH": [-4.5, 4.0],
         "L:D74TMV": [-4.5, 4.0],
-         
+
+        **_CONTEXT,
     }
     observables = [ # Also used as Constraints and Observables
         "L:TUNRAD",
@@ -169,9 +179,12 @@ class Environment(environment.Environment):
         mult_vars = [n for n in variable_names if is_mult(n)]
         self._capture_as_found(mult_vars)
         values = {v: float(self._mult_steps.get(mult_name(v), 0)) for v in mult_vars}
-        device_names = [n for n in variable_names if not is_mult(n)]
+        readings = [n for n in variable_names if n.endswith('.READING')]  # context variables
+        device_names = [n for n in variable_names if not is_mult(n) and n not in readings]
         if device_names:
             values.update(self.interface.get_settings(device_names, debug=self.debug))
+        if readings:
+            values.update(self.interface.get_values(readings, debug=self.debug))
         # A periodic setting may be reported on another branch (e.g. -179 for 181);
         # move it onto the branch nearest the middle of the declared bounds.
         for name in variable_names:
@@ -184,6 +197,11 @@ class Environment(environment.Environment):
         if not self.interface:
             if self.debug: print ("not self.interface: {self.interface}.")
             raise BadgerNoInterfaceError
+        refused = [n for n in settable_devices if n.endswith('.READING')]
+        if refused:
+            # RuntimeError, not BadgerError: that one opens a Qt dialog, which a run worker lacks
+            raise RuntimeError(f"{', '.join(refused)}: readings, never written; tick Context "
+                               "for them in the variable table.")
         mult_vars = [n for n in settable_devices if is_mult(n)]
         if mult_vars:
             self._capture_as_found(mult_vars)

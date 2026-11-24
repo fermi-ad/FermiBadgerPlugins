@@ -8,7 +8,10 @@ FakeBackend (nothing reaches ACNET). In each GUI:
 - checking it for B:MV1 composes a routine whose VOCS has B:MV1 as a ContextualVariable,
   its domain the row's range; the initial-points table drops B:MV1;
 - the template written from the GUI marks it, and loading that template checks it again;
-- a past run reopened (refresh_ui, as History does) shows it checked.
+- a past run reopened (refresh_ui, as History does) shows it checked;
+- a context variable reading outside its range raises no warning and stays checked at Go
+  (the outside-limits check exempts it: it is never moved); loading a template then widens
+  the range to take in the reading, never recentering it.
 
 Run from the repo root:
     pixi run python tests/context_variables_gui_test.py
@@ -48,6 +51,7 @@ def main():
     from badger.gui.mini.windows.main_window import BadgerMiniWindow
     from badger.gui.windows.main_window import BadgerMainWindow
     from xopt.vocs import ContextualVariable
+    from badger.gui.components.outside_limits import check_at_go
 
     sys.path.insert(0, "plugins")
     env = importlib.import_module("environments.03_Booster_Pacsys").Environment
@@ -102,6 +106,13 @@ def main():
         assert not isinstance(routine.vocs.variables["B:MH1"], ContextualVariable)
         assert "B:MV1" not in editor.get_init_table_header(), editor.get_init_table_header()
 
+        # reading outside its range: no warning (QMessageBox.warning fails the test), still checked
+        for drf in ("B:MV1", "B:MV1.READING", "B:MV1.SETTING"):
+            fb.set_reading(drf, hi + 10 * (hi - lo))
+        assert check_at_go(editor) and context_box(table, "B:MV1").isChecked()
+        for drf in ("B:MV1", "B:MV1.READING", "B:MV1.SETTING"):
+            fb.set_reading(drf, (lo + hi) / 2)
+
         # the template written from the GUI marks it; loading that template checks it again
         saved = editor.generate_template_dict_from_gui()
         entry = saved["vocs"]["variables"]["B:MV1"]
@@ -113,6 +124,22 @@ def main():
         editor.load_template_yaml(False, template_path=str(path))
         assert context_box(table, "B:MV1").isChecked()
         assert isinstance(editor._compose_routine().vocs.variables["B:MV1"], ContextualVariable)
+
+        # loaded again with its reading far outside the range, ranges relative to current:
+        # no warning, still checked, the template's domain widened to take in the reading
+        rel = dict(saved, relative_to_current=True)
+        path.write_text(yaml.safe_dump(rel))
+        for drf in ("B:MV1", "B:MV1.READING", "B:MV1.SETTING"):
+            fb.set_reading(drf, hi + 10 * (hi - lo))
+        editor.load_template_yaml(False, template_path=str(path))
+        assert context_box(table, "B:MV1").isChecked()
+        var = editor._compose_routine().vocs.variables["B:MV1"]
+        far = hi + 10 * (hi - lo)
+        assert isinstance(var, ContextualVariable) and all(  # the mini GUI rounds inward
+            abs(x - y) < 1e-6 * abs(y) for x, y in zip(var.domain, [entry["domain"][0], far])), (var, far)
+        assert check_at_go(editor)
+        for drf in ("B:MV1", "B:MV1.READING", "B:MV1.SETTING"):
+            fb.set_reading(drf, (lo + hi) / 2)
 
         # a past run reopened shows it
         editor.load_template_yaml(False, template_path=TEMPLATE)

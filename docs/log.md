@@ -1999,3 +1999,17 @@ Fixes (main):
 - Correction: `L:AEXTSV`, the top predictor, is the extractor power supply's voltage
   reading (about 39 kV; ad-tools: "A Source Extractor PS V"); its `.SETTING` reads about
   0. The docs had called it a setting. A context variable for it must read the reading.
+- Second correction, larger: checked week by week (leave-one-week-out), the `L:D7TOR`
+  interaction is suggestive, not established. Combining knobs with all context helps in
+  7 of 14 held-out weeks; with source parameters only, 11 of 14 (p 0.03); the pooled gain
+  comes mostly from week 45 (2026-11-02 to 11-08). Forward selection of single source
+  parameters (sign test over weeks, Bonferroni): none passed for `L:D7TOR`, `L:TUNRAD`,
+  or `L:TK1RAD`. README, template notes, and write-up rewritten to match.
+- Context variables in the RIL environment (user): read-only `.READING` variables (the
+  environment refuses writes; safe-badger's snapshot skips them, which also avoids an
+  invalid `.READING.SETTING` read at every load and Go). Found and fixed while answering
+  the user's question about spurious errors: the outside-limits check unticked context
+  rows; ranges relative to current recentered them, and a reading outside the range
+  made Go fail. Then (user): a reading outside the range widens it, at load, at Go, and
+  each step. Patch `badger-1.6.0-context-variables` regenerated; tests extended. No
+  source parameter listed (selection found none).

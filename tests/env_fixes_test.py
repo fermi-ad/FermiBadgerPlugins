@@ -7,7 +7,8 @@ control network, no pacsys needed.
   undefined name; W_SumLosses is computed (the name was removed, then tested).
 - 01_Linac_MinD7LMSM_using_Tank5Phase: uses the interfaces' current calls
   (get_settings, get_values with sample_events, bare names to set_values).
-- 01_Linac_RIL_tuning (2026-11-04): W_SumLosses is computed; same list rules.
+- 01_Linac_RIL_tuning (2026-11-04): W_SumLosses is computed; same list rules. Context
+  variables (2026-11-24): a .READING name is read as a reading and never written.
 - 01_Linac_QuadTuning (2026-11-04): W_SumLosses only when asked (it raised KeyError).
 - All: the caller's list of names is left alone, and only the requested names
   come back (not the inputs read for a calculation).
@@ -105,6 +106,20 @@ assert names == ["W_SumLosses", "VTrajError_SumSqBPM_calc", "G:LINEFF"], names
 assert sorted(out) == sorted(names), sorted(out)  # not the loss monitors or BPM errors
 assert out["VTrajError_SumSqBPM_calc"] == 0.75, out  # three -SETPOINT inputs at 0.25
 assert np.isclose(out["W_SumLosses"], len(e.w_sumsq) * (1.0 * (1 + 1.0)) ** 2), out
+# context variables (2026-11-24): a .READING name is read as a reading, never written
+ctx = "L:AEXTSV.READING"
+if ctx not in E.variables:  # a stand-in until the environment lists it
+    E = type("RILWithContext", (E,), {"variables": {**E.variables, ctx: [38.0, 40.0]}})
+    e = E(interface=stub)
+stub.calls.clear()
+assert e.get_variables(["L:ASOL", ctx]) == {"L:ASOL": -33.0, ctx: 1.0}
+assert ("get_settings", ["L:ASOL"]) in stub.calls and stub.calls[-1][:2] == ("get_values", [ctx]), stub.calls
+try:
+    e.set_variables({"L:ASOL": 400.0, ctx: 39.0})
+    raise AssertionError("a .READING variable was written")
+except RuntimeError:
+    pass
+assert not [c for c in stub.calls if c[0] == "set_values"], stub.calls
 
 # --- QuadTuning (fixed 2026-11-04): W_SumLosses only when asked, inputs not returned
 E = env("01_Linac_QuadTuning_Pacsys")

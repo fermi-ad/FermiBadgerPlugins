@@ -42,7 +42,9 @@ ril = env_class('01_Linac_RIL_tuning_Pacsys')
 devices = ss.devices_for(ril.variables, 'ril_tuning')
 assert 'L:MUQ1' in devices and devices['L:MUQ1'] == 'ril_tuning'
 assert not any(d.startswith('mult:') for d in devices), devices
-assert len(devices) == len(ril.variables) - 2
+readings = [n for n in ril.variables if n.endswith('.READING')]  # context variables
+assert len(devices) == len(ril.variables) - 2 - len(readings)
+assert ss.devices_for({'L:X': [0, 1], 'L:AEXTSV.READING': [38, 40]}, 'r') == {'L:X': 'r'}
 
 es = env_class('01_Linac_EnergyStabilization_Pacsys')
 assert ss.devices_for(es.variables, 'nosettings') == {}

@@ -31,3 +31,13 @@ Held-out R2 / quantile skill of trees on RIL knobs + context (source in use, tur
 | L:TK1RAD | 0.73 / 0.54 | 0.73 / 0.52 | 1.00 |
 | L:D7TOR | 0.64 / 0.00 | 0.87 / 0.06 | 0.36 |
 | G:LINEFF | -0.30 / 0.29 | -0.31 / 0.34 | 1.01 |
+
+## Which source parameters matter? (forward selection, trees)
+
+Leave-one-week-out; base: RIL knobs, turns, beam cycles, and which source. Candidates (parameters of the source in use that vary within a source): EXTI, EXTV, EXTSV, TOR, ARCV, ARCI, ARCZ, GASV, IG, LCC, CTEMP, STEMP, TTEMP, VTEMP, BTEMP, RACKT, SRCI, TUBEI, VLVI, BOILI, BSP, EVS, EIS. A candidate is added if it lowers the error in enough held-out weeks (one-sided sign test, Bonferroni over the candidates left, 0.05).
+
+| target | step | added | R2 before | R2 after | weeks better | p | kept |
+|---|---|---|---|---|---|---|---|
+| L:D7TOR | 1 | ARCI | 0.668 | 0.846 | 10/14 | 0.0898 | no |
+| L:TUNRAD | 1 | EXTSV | 0.669 | 0.786 | 8/14 | 0.3953 | no |
+| L:TK1RAD | 1 | BSP | 0.729 | 0.732 | 7/14 | 0.6047 | no |

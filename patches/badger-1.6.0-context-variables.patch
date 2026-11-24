@@ -1,12 +1,6 @@
-Binary files a/badger/__pycache__/routine.cpython-312.pyc and b/badger/__pycache__/routine.cpython-312.pyc differ
-Binary files a/badger/__pycache__/utils.cpython-312.pyc and b/badger/__pycache__/utils.cpython-312.pyc differ
-Binary files a/badger/gui/components/__pycache__/env_cbox.cpython-312.pyc and b/badger/gui/components/__pycache__/env_cbox.cpython-312.pyc differ
-Binary files a/badger/gui/components/__pycache__/routine_page.cpython-312.pyc and b/badger/gui/components/__pycache__/routine_page.cpython-312.pyc differ
-Binary files a/badger/gui/components/__pycache__/run_monitor.cpython-312.pyc and b/badger/gui/components/__pycache__/run_monitor.cpython-312.pyc differ
-Binary files a/badger/gui/components/__pycache__/var_table.cpython-312.pyc and b/badger/gui/components/__pycache__/var_table.cpython-312.pyc differ
 diff -ruN a/badger/gui/components/env_cbox.py b/badger/gui/components/env_cbox.py
---- a/badger/gui/components/env_cbox.py	2026-11-20 16:49:27
-+++ b/badger/gui/components/env_cbox.py	2026-11-20 16:49:27
+--- a/badger/gui/components/env_cbox.py	2026-11-24 08:58:57
++++ b/badger/gui/components/env_cbox.py	2026-11-24 08:58:57
 @@ -22,7 +22,7 @@
  from importlib import resources
  from typing import Any
@@ -31,9 +25,31 @@ diff -ruN a/badger/gui/components/env_cbox.py b/badger/gui/components/env_cbox.p
                  for k, v in variables.items()
              }
              vocs = VOCS(
+diff -ruN a/badger/gui/components/outside_limits.py b/badger/gui/components/outside_limits.py
+--- a/badger/gui/components/outside_limits.py	2026-11-24 08:58:57
++++ b/badger/gui/components/outside_limits.py	2026-11-24 08:58:57
+@@ -32,13 +32,16 @@
+ 
+ def untick_outside_limits(page, values, at_go=False):
+     """Untick the checked variables whose value in `values` is outside its hard
+-    limits, and say so; returns {name: (value, limits)} of those unticked."""
++    limits, and say so; returns {name: (value, limits)} of those unticked.
++    Context variables are exempt: never moved, so a reading outside the expected
++    span only means the model extrapolates (badger-1.6.0-context-variables)."""
+     table = page.env_box.var_table
+     limits = hard_limits(page)
+     bad = {
+         n: (v, limits[n])
+         for n, v in values.items()
+-        if n in limits and table.is_checked(n) and is_outside(v, limits[n])
++        if n in limits and table.is_checked(n) and not table.context.get(n)
++        and is_outside(v, limits[n])
+     }
+     if not bad:
+         return bad
 diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routine_page.py
---- a/badger/gui/components/routine_page.py	2026-11-20 16:49:27
-+++ b/badger/gui/components/routine_page.py	2026-11-20 16:49:27
+--- a/badger/gui/components/routine_page.py	2026-11-24 08:58:57
++++ b/badger/gui/components/routine_page.py	2026-11-24 09:12:36
 @@ -96,6 +96,9 @@
  from datetime import datetime
  from badger.utils import (
@@ -53,15 +69,17 @@ diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routin
          # set vocs
          vocs = VOCS(
              variables=template_dict["vocs"]["variables"],
-@@ -516,6 +521,7 @@
+@@ -516,6 +521,9 @@
          self.env_box.var_table.update_variables(all_variables)
          self.env_box.var_table.set_selected(vocs.variables)
          self.env_box.var_table.addtl_vars = additional_variables
 +        self.env_box.var_table.set_context(context)
++        for name in context:  # a context row keeps the template's range, never recentered
++            self.env_box.var_table.bounds[name] = list(vocs.variables[name].domain)
  
          flag_relative = relative_to_current
          self.env_box.relative_to_curr.blockSignals(True)
-@@ -888,6 +894,7 @@
+@@ -888,6 +896,7 @@
          with BlockSignalsContext(self.env_box.var_table):
              self.env_box.var_table.update_variables(variables=all_variables, filtered=2)
          self.env_box.var_table.set_selected(variables)
@@ -69,7 +87,7 @@ diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routin
          self.env_box.var_table.addtl_vars = routine.additional_variables
  
          flag_relative = routine.relative_to_current
-@@ -1354,6 +1361,7 @@
+@@ -1354,6 +1363,7 @@
  
          n_point = add_rand_config["n_points"]
          fraction = add_rand_config["fraction"]
@@ -77,7 +95,16 @@ diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routin
          random_sample_region = get_local_region(vocs, var_curr, fraction=fraction)
          with warnings.catch_warnings(record=True) as caught_warnings:
              try:
-@@ -1633,7 +1641,8 @@
+@@ -1500,6 +1510,8 @@
+ 
+         for var in _variables:
+             name = next(iter(var))
++            if self.env_box.var_table.context.get(name):
++                continue  # context: keeps its range, never recentered
+             # Set vrange no matter if selected or not
+             # if set_all or self.env_box.var_table.is_checked(name):
+             vname_selected.append(name)
+@@ -1633,7 +1645,8 @@
      def update_init_table(self, force=False):
          logger.info(f"Updating init table (force={force})")
          selected = self.env_box.var_table.selected
@@ -87,9 +114,21 @@ diff -ruN a/badger/gui/components/routine_page.py b/badger/gui/components/routin
          update_init_data_table(self.env_box.init_table, variable_names)
  
          if (not force) and (not self.env_box.relative_to_curr.isChecked()):
+@@ -1667,6 +1680,11 @@
+         untick_outside_limits(self, var_curr)
+ 
+         for name in vname_selected:
++            if self.env_box.var_table.context.get(name):
++                # context: keeps its range, never recentered; a reading outside widens it
++                lo, hi = self.env_box.var_table.bounds.get(name, vrange[name])
++                vrange[name] = [min(lo, var_curr[name]), max(hi, var_curr[name])]
++                continue
+             if is_outside(var_curr[name], vrange[name]):
+                 continue  # no window fits: shown at its limits, unticked above if ticked
+             try:
 diff -ruN a/badger/gui/components/run_monitor.py b/badger/gui/components/run_monitor.py
---- a/badger/gui/components/run_monitor.py	2026-11-20 16:49:27
-+++ b/badger/gui/components/run_monitor.py	2026-11-20 16:49:27
+--- a/badger/gui/components/run_monitor.py	2026-11-24 08:58:57
++++ b/badger/gui/components/run_monitor.py	2026-11-24 08:58:57
 @@ -9,6 +9,7 @@
  
  import os
@@ -132,8 +171,8 @@ diff -ruN a/badger/gui/components/run_monitor.py b/badger/gui/components/run_mon
          x_range = self.plot_var.getViewBox().viewRange()[0]
          delta = (x_range[1] - x_range[0]) / 2
 diff -ruN a/badger/gui/components/var_table.py b/badger/gui/components/var_table.py
---- a/badger/gui/components/var_table.py	2026-11-20 16:49:27
-+++ b/badger/gui/components/var_table.py	2026-11-20 16:49:27
+--- a/badger/gui/components/var_table.py	2026-11-24 08:58:57
++++ b/badger/gui/components/var_table.py	2026-11-24 08:58:57
 @@ -91,7 +91,7 @@
          # self.setDragDropOverwriteMode(False)
  
@@ -221,11 +260,9 @@ diff -ruN a/badger/gui/components/var_table.py b/badger/gui/components/var_table
  
      def handle_config_button(self, var_name: str):
          self.sig_var_config.emit(var_name)
-Binary files a/badger/gui/mini/components/__pycache__/env_cbox.cpython-312.pyc and b/badger/gui/mini/components/__pycache__/env_cbox.cpython-312.pyc differ
-Binary files a/badger/gui/mini/components/__pycache__/var_table.cpython-312.pyc and b/badger/gui/mini/components/__pycache__/var_table.cpython-312.pyc differ
 diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/env_cbox.py
---- a/badger/gui/mini/components/env_cbox.py	2026-11-20 16:49:27
-+++ b/badger/gui/mini/components/env_cbox.py	2026-11-20 16:49:27
+--- a/badger/gui/mini/components/env_cbox.py	2026-11-24 08:58:57
++++ b/badger/gui/mini/components/env_cbox.py	2026-11-24 08:58:57
 @@ -44,7 +44,7 @@
      NoHoverFocusComboBox,
  )
@@ -251,8 +288,8 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
              }
              vocs = VOCS(
 diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components/var_table.py
---- a/badger/gui/mini/components/var_table.py	2026-11-20 16:49:27
-+++ b/badger/gui/mini/components/var_table.py	2026-11-20 16:49:27
+--- a/badger/gui/mini/components/var_table.py	2026-11-24 08:58:57
++++ b/badger/gui/mini/components/var_table.py	2026-11-24 08:58:57
 @@ -305,7 +305,7 @@
          # self.setDragDropOverwriteMode(False)
  
@@ -356,10 +393,9 @@ diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components
  
      def handle_config_button(self, var_name: str):
          self.sig_var_config.emit(var_name)
-Binary files a/badger/gui/mini/pages/__pycache__/routine_page.cpython-312.pyc and b/badger/gui/mini/pages/__pycache__/routine_page.cpython-312.pyc differ
 diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routine_page.py
---- a/badger/gui/mini/pages/routine_page.py	2026-11-20 16:49:27
-+++ b/badger/gui/mini/pages/routine_page.py	2026-11-20 16:49:27
+--- a/badger/gui/mini/pages/routine_page.py	2026-11-24 08:58:57
++++ b/badger/gui/mini/pages/routine_page.py	2026-11-24 09:09:10
 @@ -76,6 +76,9 @@
  from datetime import datetime
  from badger.utils import (
@@ -379,15 +415,17 @@ diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routin
          # set vocs
          vocs = VOCS(
              variables={
-@@ -503,6 +508,7 @@
+@@ -503,6 +508,9 @@
          self.env_box.var_table.update_variables(all_variables)
  
          self.env_box.var_table.set_selected(vocs.variables)
 +        self.env_box.var_table.set_context(context)
++        for name in context:  # a context row keeps the template's range, never recentered
++            self.env_box.var_table.bounds[name] = list(vocs.variables[name].domain)
          self.env_box.var_table.addtl_vars = additional_variables
  
          # self.env_box.relative_to_curr.isChecked().setChecked(flag_relative)
-@@ -912,6 +918,7 @@
+@@ -912,6 +920,7 @@
          with BlockSignalsContext(self.env_box.var_table):
              self.env_box.var_table.update_variables(variables=all_variables, filtered=2)
          self.env_box.var_table.set_selected(variables)
@@ -395,7 +433,7 @@ diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routin
          self.env_box.var_table.addtl_vars = routine.additional_variables
  
          flag_relative = routine.relative_to_current
-@@ -1352,6 +1359,7 @@
+@@ -1352,6 +1361,7 @@
  
          n_point = add_rand_config["n_points"]
          fraction = add_rand_config["fraction"]
@@ -403,7 +441,16 @@ diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routin
          random_sample_region = get_local_region(vocs, var_curr, fraction=fraction)
          with warnings.catch_warnings(record=True) as caught_warnings:
              try:
-@@ -1683,7 +1691,8 @@
+@@ -1482,6 +1492,8 @@
+ 
+         for var in _variables:
+             name = next(iter(var))
++            if self.env_box.var_table.context.get(name):
++                continue  # context: keeps its range, never recentered
+             # Set vrange no matter if selected or not
+             # if set_all or self.env_box.var_table.is_checked(name):
+             vname_selected.append(name)
+@@ -1683,7 +1695,8 @@
      def update_init_table(self, force=False):
          logger.info(f"Updating init table (force={force})")
          selected = self.env_box.var_table.selected
@@ -413,20 +460,33 @@ diff -ruN a/badger/gui/mini/pages/routine_page.py b/badger/gui/mini/pages/routin
          update_init_data_table(self.env_box.init_table, variable_names)
  
          if (not force) and (not self.env_box.relative_to_curr.isChecked()):
+@@ -1718,6 +1731,12 @@
+         untick_outside_limits(self, var_curr)
+ 
+         for name in vname_selected:
++            if self.env_box.var_table.context.get(name):
++                # context: keeps its range, never recentered; a reading outside widens it
++                lo, hi = self.env_box.var_table.bounds.get(name, vrange[name])
++                vrange[name] = [min(lo, var_curr[name]), max(hi, var_curr[name])]
++                clipped[name] = False
++                continue
+             if is_outside(var_curr[name], vrange[name]):
+                 # no window fits: shown at its limits, and unticked above if it was ticked
+                 clipped[name] = False
 diff -ruN a/badger/routine.py b/badger/routine.py
---- a/badger/routine.py	2026-11-20 16:49:27
-+++ b/badger/routine.py	2026-11-20 16:50:48
+--- a/badger/routine.py	2026-11-24 08:58:57
++++ b/badger/routine.py	2026-11-24 09:09:10
 @@ -30,7 +30,8 @@
  from xopt.generators import get_generator
  from xopt.vocs import get_local_region
  from xopt.generators.sequential import SequentialGenerator
 -from badger.utils import curr_ts
-+from badger.utils import context_names, curr_ts, settable_vocs
-+from xopt.vocs import ContextualVariable, random_inputs
++from badger.utils import context_names, curr_ts, settable_vocs, widened
++from xopt.vocs import random_inputs
  from badger.environment import BaseEnvironment, instantiate_env
  from badger.factory import get_env
  
-@@ -141,8 +142,12 @@
+@@ -141,8 +142,19 @@
              def evaluate_point(point: dict):
                  logger.debug(f"Evaluating point: {point}")
                  point = pd.Series(point).explode().to_dict()
@@ -437,19 +497,24 @@ diff -ruN a/badger/routine.py b/badger/routine.py
                  obs = env.get_observables(data["generator"].vocs.output_names)
 +                if ctx:
 +                    obs.update(env.get_variables(ctx))
++                    vocs = data["generator"].vocs
++                    for name in ctx:  # a reading outside its range widens the range
++                        var = widened(vocs.variables[name], obs[name])
++                        if var is not vocs.variables[name]:
++                            logger.info(f"Context variable {name} read {obs[name]}, outside "
++                                        f"{vocs.variables[name].domain}: range now {var.domain}")
++                            vocs.variables[name] = var
                  ts = curr_ts()
                  obs["timestamp"] = ts.timestamp()
                  obs["live"] = 1
-@@ -241,11 +246,18 @@
+@@ -241,11 +253,16 @@
              logger.debug(f"Updated bounds for {name} (curr): {bounds}")
              variables_updated[name] = bounds
  
-+    # context variables keep their type (badger-1.6.0-context-variables)
++    # context variables keep their domain, the expected span, never recentered on the
++    # current reading; one outside it widens it (badger-1.6.0-context-variables)
 +    for name in context_names(vocs):
-+        bounds = variables_updated.get(name)
-+        variables_updated[name] = (
-+            ContextualVariable(domain=list(bounds)) if bounds is not None else vocs.variables[name]
-+        )
++        variables_updated[name] = widened(vocs.variables[name], var_curr[name])
      return variables_updated
  
  
@@ -459,7 +524,7 @@ diff -ruN a/badger/routine.py b/badger/routine.py
      vnames = vocs.variable_names
      init_points = {k: [] for k in vnames}
  
-@@ -260,8 +272,10 @@
+@@ -260,8 +277,10 @@
              n_point = action["config"]["n_points"]
              fraction = action["config"]["fraction"]
              random_sample_region = get_local_region(vocs, var_curr, fraction=fraction)
@@ -473,8 +538,8 @@ diff -ruN a/badger/routine.py b/badger/routine.py
              for point in random_points:
                  for name in vnames:
 diff -ruN a/badger/utils.py b/badger/utils.py
---- a/badger/utils.py	2026-11-20 16:49:27
-+++ b/badger/utils.py	2026-11-20 16:49:27
+--- a/badger/utils.py	2026-11-24 08:58:57
++++ b/badger/utils.py	2026-11-24 09:09:10
 @@ -415,7 +415,7 @@
      Round numeric bounds to a set number of significant figures.
      This avoids unexpected bounds errors due to inconsistent rounding, defaulting to 10 sig-figs
@@ -484,7 +549,7 @@ diff -ruN a/badger/utils.py b/badger/utils.py
          raise BadgerLoadConfigError(
              f"invalid bounds type {type(bounds)}. Must be tuple, dict, or ContinuousVariable"
          )
-@@ -428,3 +428,41 @@
+@@ -428,3 +428,56 @@
      lower = _round_to_sigfig(float(bounds[0]), sigfigs, mode="ceil")
      upper = _round_to_sigfig(float(bounds[1]), sigfigs, mode="floor")
      return [lower, upper]
@@ -513,6 +578,21 @@ diff -ruN a/badger/utils.py b/badger/utils.py
 +    """values minus the VOCS's context variables: what Badger may write."""
 +    ctx = set(context_names(vocs))
 +    return {k: v for k, v in values.items() if k not in ctx}
++
++
++def widened(variable, value):
++    """A context variable whose domain takes in `value`, a reading outside its range (the
++    expected span), or the variable itself if the value is inside or not a number."""
++    from xopt.vocs import ContextualVariable
++
++    try:
++        value = float(value)
++    except (TypeError, ValueError):
++        return variable
++    lo, hi = variable.domain
++    if value != value or lo <= value <= hi:  # NaN, or inside
++        return variable
++    return ContextualVariable(domain=[min(lo, value), max(hi, value)])
 +
 +
 +def template_context_names(variables: dict) -> list[str]:

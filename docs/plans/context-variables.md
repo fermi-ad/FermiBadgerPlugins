@@ -54,7 +54,17 @@ One patch, `patches/badger-1.6.0-context-variables.patch`, appended last in
 
 ## Open
 
-- A context variable that drifts outside its domain: Xopt validates inputs only, so it
-  is modeled (normalization extrapolates); untested how well.
+- A context variable read outside its domain (user, 2026-11-24: the range must expand):
+  the domain widens to take in the reading, just to it, with no margin (`widened()` in
+  `badger/utils.py`): at each run step (the evaluator; logged at INFO), at Go
+  (`calculate_variable_bounds`), and at template load with ranges relative to current
+  (both GUIs). It is never recentered on the reading. No warning: the outside-limits
+  check exempts context rows. Not covered: the run archive is written by the GUI, whose
+  copy of the VOCS may keep the starting range (unchecked); a later Continue widens again
+  at Go and at its first step.
+- Writes: the run loop, Reset, checkpoints, and jump-to-optimum all drop context
+  variables before `set_variables`; an environment may still refuse them (the RIL
+  environment's `.READING` variables), which only fires when one is ticked without
+  Context.
 - Which environments get context candidates as variables (e.g. the RIL source settings)
   waits for the RIL source study.

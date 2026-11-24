@@ -33,6 +33,8 @@ sources changes many predictors at once.
 Run from the repo root, after the pull:
     pixi run python scripts/ril_context_study.py [--series logs/logger_series]
         [--out docs/ril-source-context-results.md] [--learning-rate 0.1]
+    pixi run python scripts/ril_context_study.py --select [--targets ...]  # see select()
+    pixi run python scripts/ril_context_study.py --ranges EXTSV ...  # context-variable ranges
     pixi run python scripts/ril_context_study.py --selftest   # offline, synthetic
 """
 import argparse
@@ -42,7 +44,8 @@ import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.inspection import permutation_importance
-from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupKFold, LeaveOneGroupOut
+from math import comb
 
 import os
 import sys
@@ -159,6 +162,64 @@ def interaction_test(X, y, weeks, knob_cols, q):
     return out
 
 
+def week_errors(X, y, weeks):
+    """Leave-one-week-out: the mean squared error on each held-out week, and the pooled R2."""
+    pred, mse = np.full(len(y), np.nan), []
+    for tr, te in LeaveOneGroupOut().split(X, y, weeks):
+        m = HistGradientBoostingRegressor(learning_rate=LEARNING_RATE, random_state=0)
+        pred[te] = m.fit(X.iloc[tr], y.iloc[tr]).predict(X.iloc[te])
+        mse.append(float(np.mean((y.iloc[te] - pred[te]) ** 2)))
+    return np.array(mse), float(1 - np.sum((y - pred) ** 2) / np.sum((y - y.mean()) ** 2))
+
+
+def sign_p(wins, n):
+    """One-sided sign test: P(at least `wins` of `n` weeks better by chance)."""
+    return sum(comb(n, k) for k in range(wins, n + 1)) / 2 ** n
+
+
+def interaction_weeks(X, y, weeks, knob_cols):
+    """The interaction test week by week: leave-one-week-out mean squared error of free
+    trees over that of additive ones (interaction_cst), per held-out week."""
+    cst = [[i for i, c in enumerate(X.columns) if c in knob_cols],
+           [i for i, c in enumerate(X.columns) if c not in knob_cols]]
+    mse = {}
+    for name, c in (("additive", cst), ("free", None)):
+        e = []
+        for tr, te in LeaveOneGroupOut().split(X, y, weeks):
+            m = HistGradientBoostingRegressor(learning_rate=LEARNING_RATE, random_state=0,
+                                              interaction_cst=c).fit(X.iloc[tr], y.iloc[tr])
+            e.append(float(np.mean((y.iloc[te] - m.predict(X.iloc[te])) ** 2)))
+        mse[name] = np.array(e)
+    return mse["free"] / mse["additive"]
+
+
+def select(X, y, weeks, base, candidates, max_steps=4, alpha=0.05):
+    """Forward selection of context features that predict y on held-out weeks beyond `base`.
+    Each step adds the candidate with the best pooled R2, if it lowers the error in enough
+    held-out weeks: a one-sided sign test over the weeks at alpha / (candidates left)
+    (Bonferroni: the best of many is picked). Stops at the first step that fails.
+    Returns (chosen, rows of (candidate, R2 before, R2 after, weeks better, weeks, p))."""
+    chosen, rows, left = [], [], list(candidates)
+    mse0, r20 = week_errors(X[base], y, weeks)
+    n = len(mse0)
+    for _ in range(max_steps):
+        if not left:
+            break
+        res = {c: week_errors(X[base + chosen + [c]], y, weeks) for c in left}
+        best = max(res, key=lambda c: res[c][1])
+        wins = int(np.sum(res[best][0] < mse0))
+        p = sign_p(wins, n)
+        rows.append((best, r20, res[best][1], wins, n, p))
+        print(f"  {best}: R2 {r20:.3f} -> {res[best][1]:.3f}, better in {wins}/{n} weeks, "
+              f"p {p:.4f} (needs <= {alpha / len(left):.4f})", flush=True)
+        if p > alpha / len(left):
+            break
+        chosen.append(best)
+        left.remove(best)
+        mse0, r20 = res[best]
+    return chosen, rows
+
+
 def importance(X, y, weeks):
     """Permutation importance on held-out weeks, averaged over folds."""
     folds = GroupKFold(n_splits=min(6, len(np.unique(weeks))))
@@ -193,6 +254,12 @@ def selftest():
         print(f"interaction test, {name}: additive R2 {r['additive'][0]:.3f}, interacting "
               f"{r['interacting'][0]:.3f}, unexplained ratio {ratio:.2f}")
         assert (ratio < 0.5) if name == "interacting" else (0.7 < ratio < 1.3), (name, r)
+    # selection: y depends on knob k through context c1; c2 is noise. 14 'weeks'.
+    m = 2800
+    S = pd.DataFrame(rng.random((m, 3)), columns=["k", "c1", "c2"])
+    ys = pd.Series(np.sin(6 * S.k) * (1 + 2 * S.c1) + 0.05 * rng.standard_normal(m))
+    chosen, _ = select(S, ys, np.repeat(np.arange(14), m // 14), ["k"], ["c1", "c2"])
+    assert chosen == ["c1"], chosen
     print("ril_context_study selftest ok")
 
 
@@ -206,6 +273,16 @@ def main():
     ap.add_argument("--targets", nargs="+", default=list(TARGETS))
     ap.add_argument("--interactions", action="store_true",
                     help="only the knobs-x-context interaction test (trees), appended to --out")
+    ap.add_argument("--weekly", action="store_true",
+                    help="with --interactions: leave-one-week-out, each held-out week's error "
+                         "ratio (free / additive), for all context and for source parameters only")
+    ap.add_argument("--select", action="store_true",
+                    help="forward selection of the in-use source's parameters (select()), "
+                         "beyond the knobs, beam rate, and which source; appended to --out")
+    ap.add_argument("--ranges", nargs="+", metavar="PARAM",
+                    help="for each source parameter (e.g. EXTSV), L:A<p> and L:B<p>: min and max "
+                         "of the 5-minute medians over the bins with beam while that source fed "
+                         "the RIL (the context variables' ranges)")
     ap.add_argument("--selftest", action="store_true")
     a = ap.parse_args()
     if a.selftest:
@@ -215,8 +292,65 @@ def main():
     df = load_all(a.series, a.events, devices)
     span = f"{pd.to_datetime(df.index.min(), unit='s'):%Y-%m-%d} to {pd.to_datetime(df.index.max(), unit='s'):%Y-%m-%d}"
     df = df[df["L:D7TOR"] > BEAM_ON]
+    if a.ranges:
+        med = load(a.series, [f"L:{s}{x}" for x in a.ranges for s in "AB"], stat="median").reindex(df.index)
+        print(f"{span}; 5-minute medians, bins with beam, source in use")
+        for x in a.ranges:
+            for src, b in (("A", 0), ("B", 1)):
+                v = med.loc[df["src_B"] == b, f"L:{src}{x}"].dropna()
+                print(f"L:{src}{x}: [{v.min():.6g}, {v.max():.6g}]  p0.5 {v.quantile(0.005):.6g}, "
+                      f"p50 {v.median():.6g}, p99.5 {v.quantile(0.995):.6g}, bins {len(v)}")
+        return
     weeks = pd.to_datetime(df.index, unit="s").isocalendar().week.to_numpy()
     groups = {k: [d for d in v if d in df and df[d].notna().mean() > 0.5] for k, v in GROUPS.items()}
+    if a.select:
+        base = groups["RIL knobs"] + groups["turns"] + groups["beam cycles"] + ["src_B"]
+        # candidates: parameters that vary while one source is in use (the others only
+        # say which source, which src_B already does)
+        cands = [c for c in groups["active source"] if c != "src_B"
+                 and any(np.ptp(df.loc[df.src_B == b, c].dropna().quantile([0.01, 0.99])) > 0
+                         for b in (0, 1))]
+        lines = ["", "## Which source parameters matter? (forward selection, trees)", "",
+                 "Leave-one-week-out; base: RIL knobs, turns, beam cycles, and which source. "
+                 f"Candidates (parameters of the source in use that vary within a source): "
+                 + ", ".join(c.removeprefix("active_") for c in cands) + ". A candidate is "
+                 "added if it lowers the error in enough held-out weeks (one-sided sign test, "
+                 "Bonferroni over the candidates left, 0.05).", "",
+                 "| target | step | added | R2 before | R2 after | weeks better | p | kept |",
+                 "|---|---|---|---|---|---|---|---|"]
+        for t in a.targets:
+            print(t, flush=True)
+            ok = df[t].notna()
+            chosen, rows = select(df.loc[ok], df.loc[ok, t], weeks[ok.to_numpy()], base, cands)
+            for i, (c, r0, r1, w, n, p) in enumerate(rows, 1):
+                lines.append(f"| {t} | {i} | {c.removeprefix('active_')} | {r0:.3f} | {r1:.3f} | "
+                             f"{w}/{n} | {p:.4f} | {'yes' if c in chosen else 'no'} |")
+        with open(a.out, "a") as f:
+            f.write("\n".join(lines) + "\n")
+        return
+    if a.interactions and a.weekly:
+        knobs = groups["RIL knobs"]
+        sets = {"all context": [d for g in ("active source", "turns", "beam cycles") for d in groups[g]],
+                "source parameters": [c for c in groups["active source"] if c != "src_B"]}
+        wk = np.unique(weeks)
+        lines = ["", "## The interaction test week by week (trees)", "",
+                 "Leave-one-week-out; each held-out week's mean squared error, trees free to "
+                 "combine knobs and context over trees where they only add (below 1: combining "
+                 "helped that week). Weeks better: of " + str(len(wk)) + ", with a one-sided "
+                 "sign-test p.", "",
+                 "| target | context | weeks better | p | " + " | ".join(f"w{k}" for k in wk) + " |",
+                 "|---|---|---|---|" + "---|" * len(wk)]
+        for t in a.targets:
+            ok = df[t].notna()
+            for label, ctx in sets.items():
+                r = interaction_weeks(df.loc[ok, knobs + ctx], df.loc[ok, t], weeks[ok.to_numpy()], knobs)
+                wins = int(np.sum(r < 1))
+                lines.append(f"| {t} | {label} | {wins}/{len(r)} | {sign_p(wins, len(r)):.3f} | "
+                             + " | ".join(f"{x:.2f}" for x in r) + " |")
+                print(lines[-1], flush=True)
+        with open(a.out, "a") as f:
+            f.write("\n".join(lines) + "\n")
+        return
     if a.interactions:
         knobs = groups["RIL knobs"]
         cols = knobs + [d for g in ("active source", "turns", "beam cycles") for d in groups[g]]

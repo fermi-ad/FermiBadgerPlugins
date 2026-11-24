@@ -52,8 +52,8 @@ def devices_for(variables, role) -> dict[str, str]:
         return {}
     devices = {}
     for name in variables:
-        if name.startswith('mult:') or '-SETPOINT' in name:
-            continue  # virtual knob (its member devices are plain variables) / observable
+        if name.startswith('mult:') or '-SETPOINT' in name or name.endswith('.READING'):
+            continue  # virtual knob (its member devices are plain variables) / observable / context reading
         device = name.split(',')[1] if _PAIR.fullmatch(name) else name
         devices[device] = role
     return devices
