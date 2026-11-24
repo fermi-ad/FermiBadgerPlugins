@@ -2043,6 +2043,9 @@ Fixes (main):
 - Mini GUI bug (user): the range-scaling (+/-10 %) header buttons were drawn over the
   Context header: they were placed over the last column, which the Context column had
   become. Now over the rows' range buttons (column 5); GUI test checks the geometry.
+- Pushed 85c9915 (full suite 42 of 42). gmpsai2 pulled and set up (user); it still
+  launches through `config.local.yaml` (safe-badger's `-cf`), kept by `setup --yes` and
+  synced into Badger's per-user config, which the Go subprocess reads.
 - Open, from this session: a designed test of knob response at two source states;
   whether the RIL GP uses the context variables (on the machine); the GP's own
   overshoot at the tolerance edge (15-30 % of fits); spikes above the tolerance (a

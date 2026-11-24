@@ -136,8 +136,9 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
-- [x] (user: up to date, 2026-11-24; pull again for the L:RFQPAH limit and the mini
-  GUI's Context header fix) **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the
+- [x] (user: up to date, 2026-11-24, through 85c9915: the L:RFQPAH limit and the mini
+  GUI's Context header fix included; `config.local.yaml` kept, synced to the per-user
+  config) **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the
   last pull there (51aebab): risk tolerance (f5ad771), noise shapes (d0a8b73; skew-t
   added in cd02b16), the Context column (98f51a8; read-only `.READING` context variables,
   ranges that widen, 9fedf98). The pull also brings the Booster-wide environment
@@ -280,8 +281,9 @@ it to paste in.
     `SRCI`, `EXTV` for `L:D7TOR` (the 4th, `LCC`, gains R2 0.001); `EXTV`'s chance of being
     a fluke 0.02 alone, at most 0.34 as the best of 21. Added as `L:A/B...READING` context
     variables, ticked (source A) in the four RIL templates.
-  - [ ] On the machine: does a RIL run with them ticked behave (reads, no warnings) and
-    does the GP use them (length scales)?
+  - [x] On the machine, loading (user, 2026-11-24): the context variables read fine.
+  - [ ] On the machine, a run: does the GP use them (length scales), and does the mini
+    GUI's Context header read clearly now (fixed in 85c9915)?
   - [ ] A designed test on the machine would settle it: one knob scanned at two source states.
 - [ ] **Source A and Source B versions of the RIL templates** (user, 2026-11-24), and of
   any Linac template that uses or consults ion-source devices. Today: the four RIL
