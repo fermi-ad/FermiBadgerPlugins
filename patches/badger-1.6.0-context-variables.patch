@@ -289,7 +289,7 @@ diff -ruN a/badger/gui/mini/components/env_cbox.py b/badger/gui/mini/components/
              vocs = VOCS(
 diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components/var_table.py
 --- a/badger/gui/mini/components/var_table.py	2026-11-24 08:58:57
-+++ b/badger/gui/mini/components/var_table.py	2026-11-24 08:58:57
++++ b/badger/gui/mini/components/var_table.py	2026-11-24 14:15:47
 @@ -305,7 +305,7 @@
          # self.setDragDropOverwriteMode(False)
  
@@ -333,7 +333,31 @@ diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components
          self.bounds: dict[str, tuple[float, float]] = {}  # track var bounds
          self.clipped: dict[str, bool] = {}
          self.saved_values: dict[str, float] = {}
-@@ -808,6 +812,7 @@
+@@ -426,17 +430,18 @@
+ 
+     def _position_range_header_controls(self, *_args) -> None:
+         """
+-        Position range header controls in the last column of table header
++        Position range header controls above the rows' range buttons (column 5), not the
++        last column: the Context column comes after it (badger-1.6.0-context-variables)
+         """
+         header = self.horizontalHeader()
+ 
+-        last_col = self.columnCount() - 1
+-        if last_col < 0:
++        col = min(5, self.columnCount() - 1)
++        if col < 0:
+             self._range_header_widget.hide()
+             return
+ 
+-        section_width = header.sectionSize(last_col)
+-        x = header.sectionViewportPosition(last_col)
++        section_width = header.sectionSize(col)
++        x = header.sectionViewportPosition(col)
+         y = 0
+         height = header.height()
+         self._range_header_widget.setGeometry(x, y, section_width, height)
+@@ -808,6 +813,7 @@
              self.all_variables = variables or []
              self.variables = self.all_variables[:]  # make a copy
              self.selected = {}
@@ -341,7 +365,7 @@ diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components
              self.bounds = {}
              self.clipped = {}
              self.saved_values = {}
-@@ -890,6 +895,18 @@
+@@ -890,6 +896,18 @@
  
              config_button.clicked.connect(partial(self.handle_config_button, name))
  
@@ -360,7 +384,7 @@ diff -ruN a/badger/gui/mini/components/var_table.py b/badger/gui/mini/components
          # Make extra editable row
          item = QTableWidgetItem(self.PLACEHOLDER_TEXT)
          item.setFlags(item.flags() | Qt.ItemIsEditable)
-@@ -898,13 +915,31 @@
+@@ -898,13 +916,31 @@
          self.setRowHidden(n - 1, True)  # variables are added from the picker, not typed here
  
          self.setHorizontalHeaderLabels(

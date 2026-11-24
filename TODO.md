@@ -136,7 +136,8 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
-- [ ] **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the
+- [x] (user: up to date, 2026-11-24; pull again for the L:RFQPAH limit and the mini
+  GUI's Context header fix) **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the
   last pull there (51aebab): risk tolerance (f5ad771), noise shapes (d0a8b73; skew-t
   added in cd02b16), the Context column (98f51a8; read-only `.READING` context variables,
   ranges that widen, 9fedf98). The pull also brings the Booster-wide environment

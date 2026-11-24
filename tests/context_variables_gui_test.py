@@ -4,7 +4,8 @@ modeled).
 
 development/03_Booster_InjectionTuning_Pacsys.yaml, every device read from a pacsys
 FakeBackend (nothing reaches ACNET). In each GUI:
-- the column is there (header "Context", with a tooltip), unchecked by default;
+- the column is there (header "Context", with a tooltip), unchecked by default; in the mini
+  GUI the range-scaling buttons sit over the range buttons' column, not over its header;
 - checking it for B:MV1 composes a routine whose VOCS has B:MV1 as a ContextualVariable,
   its domain the row's range; the initial-points table drops B:MV1;
 - the template written from the GUI marks it, and loading that template checks it again;
@@ -91,6 +92,13 @@ def main():
         col = table.columnCount() - 1
         header = table.horizontalHeaderItem(col)
         assert header.text() == "Context" and "never moved" in header.toolTip(), header.text()
+        hw = getattr(table, "_range_header_widget", None)
+        if hw is not None:  # mini GUI: the range-scaling buttons over column 5, clear of Context
+            window.show()
+            table._position_range_header_controls()
+            hh = table.horizontalHeader()
+            assert hw.geometry().x() == hh.sectionViewportPosition(5), (hw.geometry(), hh.sectionViewportPosition(5))
+            assert hw.geometry().right() < hh.sectionViewportPosition(col), (hw.geometry(), hh.sectionViewportPosition(col))
         assert not context_box(table, "B:MV1").isChecked()
         routine = editor._compose_routine()
         assert not isinstance(routine.vocs.variables["B:MV1"], ContextualVariable)

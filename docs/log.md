@@ -2035,6 +2035,14 @@ Fixes (main):
   updated. Full suite 42 of 42 before each push.
 - Pushed: 5000465 (interaction suggestive; read-only context variables), 9fedf98 (study
   options, shape calibration, the three context variables), b54bc24 (skew-t profiles).
+- gmpsai2 updated (user). Loading the loss-objective RIL template there: L:RFQPAH read
+  183.5, below its 185-225 limits, and was unticked. Logged history: moved 193.1 -> 187.5
+  -> 183.5 on 11-20/21 during the 11-19..23 downtime and kept since; 90 days span
+  173.2-219.4. Limits widened to 170-225 (user) in the environment and the four RIL
+  templates' hard limits. Context variables read fine on the machine (user).
+- Mini GUI bug (user): the range-scaling (+/-10 %) header buttons were drawn over the
+  Context header: they were placed over the last column, which the Context column had
+  become. Now over the rows' range buttons (column 5); GUI test checks the geometry.
 - Open, from this session: a designed test of knob response at two source states;
   whether the RIL GP uses the context variables (on the machine); the GP's own
   overshoot at the tolerance edge (15-30 % of fits); spikes above the tolerance (a

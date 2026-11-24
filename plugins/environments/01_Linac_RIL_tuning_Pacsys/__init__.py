@@ -87,8 +87,10 @@ class Environment(environment.Environment):
         "L:MDQ2V" : [-4.0, 4.0],
 
         # RF phases. Periodic (see periodic_devices below) but with deliberate operating limits,
-        # so the bounds stay tight rather than two periods wide.
-        "L:RFQPAH" : [ 185.0, 225.0],
+        # so the bounds stay tight rather than two periods wide. L:RFQPAH widened from 185 on
+        # 2026-11-24 (user): set to 183.5 during the 11-19..23 downtime; 90 days of logged
+        # settings span 173.2-219.4.
+        "L:RFQPAH" : [ 170.0, 225.0],
         "L:RFBPAH" : [ 100.0, 300.0],
         "L:V5QSET": [-40.0, -30.0],
 

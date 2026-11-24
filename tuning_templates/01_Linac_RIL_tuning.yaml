@@ -347,7 +347,7 @@ vrange_hard_limit:
   - 100.0
   - 300.0
   L:RFQPAH:
-  - 185.0
+  - 170.0
   - 225.0
   L:V5QSET:
   - -40.0
