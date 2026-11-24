@@ -2030,3 +2030,12 @@ Fixes (main):
   `diff` exit status of 1 stopped an `&&` chain once, so a patch was not copied: use `;`.
 - User: a central repository of fitted profiles (pulled at run start), and archived
   Badger runs as noise history in production; both in the TODO.
+- Tests that assumed every variable is a setting (`env_smoke`, `pacsys_drf_lint`, the GUI
+  tests' fake readings) and every profile a GaussExp (`constraint_risk_tolerance_gui`)
+  updated. Full suite 42 of 42 before each push.
+- Pushed: 5000465 (interaction suggestive; read-only context variables), 9fedf98 (study
+  options, shape calibration, the three context variables), b54bc24 (skew-t profiles).
+- Open, from this session: a designed test of knob response at two source states;
+  whether the RIL GP uses the context variables (on the machine); the GP's own
+  overshoot at the tolerance edge (15-30 % of fits); spikes above the tolerance (a
+  mixture); gmpsai2 pull and setup.

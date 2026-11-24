@@ -137,8 +137,10 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
 - [ ] **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the
-  last pull there (51aebab): risk tolerance (f5ad771) and noise shapes (d0a8b73); the
-  pull also brings the Booster-wide environment (d5cb46d).
+  last pull there (51aebab): risk tolerance (f5ad771), noise shapes (d0a8b73; skew-t
+  added in cd02b16), the Context column (98f51a8; read-only `.READING` context variables,
+  ranges that widen, 9fedf98). The pull also brings the Booster-wide environment
+  (d5cb46d) and the RIL templates with source A's context variables ticked.
 - [x] (user reported `pixi install` done, 2026-11-17) **On gmpsai2 after the Acsys retirement (2026-11-04):** `git pull && pixi install
   && pixi run setup -- --yes` (the lock changed: acsys gone; grpcio 1.84.0→1.85.1,
   anyio, cython, pyasn1 minor bumps). Then one read-only template load to exercise
@@ -552,7 +554,8 @@ exists and what it would touch.
     staleness check of the run's residuals; `robust_outcomes` (robust GP) for gross
     outliers. Offline-tested only.
   - [ ] Try it on the machine: a RIL run with a risk tolerance on a profiled constraint
-    (L:D7TOR > x), and `robust_outcomes: [L:D7TOR]` (dropouts); watch the staleness log.
+    (L:D7TOR > x; its profile is now a skew-t), and `robust_outcomes: [L:D7TOR]`
+    (dropouts); watch the staleness log.
   - [ ] Refresh profiles from other periods; profiles for L:TK4RAD/L:TUNRAD need a
     quantized shape (they read in steps of about one sigma).
   - [ ] Then: `_var` from `average_events`, corrected for correlated events (batch
