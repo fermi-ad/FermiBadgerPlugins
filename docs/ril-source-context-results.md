@@ -41,3 +41,16 @@ Leave-one-week-out; base: RIL knobs, turns, beam cycles, and which source. Candi
 | L:D7TOR | 1 | ARCI | 0.668 | 0.846 | 10/14 | 0.0898 | no |
 | L:TUNRAD | 1 | EXTSV | 0.669 | 0.786 | 8/14 | 0.3953 | no |
 | L:TK1RAD | 1 | BSP | 0.729 | 0.732 | 7/14 | 0.6047 | no |
+
+## The interaction test week by week (trees)
+
+Leave-one-week-out; each held-out week's mean squared error, trees free to combine knobs and context over trees where they only add (below 1: combining helped that week). Weeks better: of 14, with a one-sided sign-test p.
+
+| target | context | weeks better | p | w34 | w35 | w36 | w37 | w38 | w39 | w40 | w41 | w42 | w43 | w44 | w45 | w46 | w47 |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| L:D7TOR | all context | 7/14 | 0.605 | 0.71 | 1.10 | 0.96 | 0.44 | 0.98 | 2.05 | 1.43 | 1.15 | 0.92 | 1.64 | 0.95 | 0.09 | 2.93 | 1.02 |
+| L:D7TOR | source parameters | 11/14 | 0.029 | 0.82 | 0.63 | 0.72 | 0.79 | 0.86 | 1.21 | 0.83 | 1.47 | 0.88 | 0.85 | 0.86 | 0.12 | 2.40 | 0.74 |
+| L:TUNRAD | all context | 8/14 | 0.395 | 1.59 | 0.38 | 0.99 | 0.87 | 1.13 | 1.06 | 1.78 | 1.43 | 1.46 | 1.00 | 0.87 | 0.84 | 0.88 | 0.90 |
+| L:TUNRAD | source parameters | 8/14 | 0.395 | 0.91 | 0.75 | 0.18 | 0.97 | 0.88 | 0.83 | 1.11 | 1.86 | 1.12 | 0.76 | 1.04 | 1.22 | 0.77 | 1.40 |
+| L:TK1RAD | all context | 7/14 | 0.605 | 1.28 | 0.91 | 0.95 | 1.18 | 0.70 | 1.14 | 0.88 | 1.59 | 0.59 | 0.99 | 1.14 | 1.19 | 0.78 | 1.11 |
+| L:TK1RAD | source parameters | 10/14 | 0.090 | 0.63 | 0.87 | 0.85 | 1.03 | 0.63 | 0.90 | 1.08 | 1.75 | 0.76 | 0.83 | 0.66 | 1.67 | 0.91 | 0.42 |
