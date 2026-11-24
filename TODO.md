@@ -473,6 +473,23 @@ exists and what it would touch.
     (Badger stops a run on a critical violation).
   - Open: risk per constraint or one global number? What to do when no point
     meets the risk (stay put, or shrink the step)?
+- [ ] **Propose gentle range expansions, risk-gated, each approved by the operator**
+  (user's idea, 2026-11-24). When better performance looks out of reach inside the set
+  ranges, propose widening one variable's range a little, but only where the modeled risk
+  of violating any constraint there stays below the run's tolerance; the operator accepts
+  or declines each proposal. First use case: RIL tuning with the loss objective
+  (`01_Linac_LossObjective_RIL_tuning.yaml`).
+  - Exists: Continue widens a range by hand and keeps the data (above); per-constraint
+    Risk Tolerance on the measured value, with GaussExp noise shapes; the environment's
+    hard limits, which no proposal may cross.
+  - Open: the trigger for "out of reach" (incumbent at a range edge, the GP's slope
+    pointing outward, or acquisition value just outside the box beating the best
+    inside); step size (a fraction of the range, or where the constraint risk reaches
+    the tolerance); whether the run pauses for the answer or carries on inside the old
+    ranges; how a declined proposal is remembered.
+  - Prior art, unexplored: safe-set expansion in safe BO (SafeOpt, and its
+    descendants), which grows the explored region only where a constraint model is
+    confident.
 - [ ] **Heteroskedastic noise as the default (planned 2026-11-18).** Xopt fits its
   heteroskedastic GP for any outcome whose data row carries `<outcome>_var` (the variance
   of the recorded value); nothing needs listing in the VOCS (checked: Badger's evaluator
