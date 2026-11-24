@@ -63,6 +63,10 @@ without the class's type hints, so each is one line of YAML text.
   (opened 2026-10-28; branch `docs-back-button` on jasonstjohn/Badger, clone
   `../Badger-docs-back`; fork CI green, its test ran). Once merged and
   released, drop `badger-1.6.0-docs-back-button.patch`.
+- [ ] Badger PR: `badger/tests/utils.get_current_vars` returned `list(dict.values())` in
+  the environment's order, zipped with `vocs.variable_names` by the run monitor: the Apply
+  Solution dialog mispaired values, and Reset wrote each variable another's starting value
+  (user saw "crazy" differences, 2026-11-24). Local fix `badger-1.6.0-current-vars-order.patch`.
 - [ ] Badger: `_compose_routine` resets TuRBO state only for the short
   controller names (the repo's `badger-1.6.0-turbo-state-reset.patch`); worth a
   Badger PR too.
@@ -117,6 +121,9 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 - [ ] Machine test: an ssh connection with X forwarding dropping mid-run (the way
   operators connect): expect Badger to exit, the launcher to restore, and the
   log to say so. Each part already passed (SIGHUP, GUI killed mid-run).
+- [ ] **Revert dialog: a percent-difference column** (user, 2026-11-24): beside Now and
+  Startup, the change reverting would make, 100 (startup - now) / |now| (a dash when now
+  is 0). One function: `format_changes` in `plugins/settings_snapshot.py`.
 - Never `pkill -f badger` (or `pgrep -f badger | kill -9`): it also hits the
   launcher, and a SIGKILLed launcher can't restore. `pixi run safe-badger pids`
   says which PID is which.

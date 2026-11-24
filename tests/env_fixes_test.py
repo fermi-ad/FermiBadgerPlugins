@@ -8,7 +8,8 @@ control network, no pacsys needed.
 - 01_Linac_MinD7LMSM_using_Tank5Phase: uses the interfaces' current calls
   (get_settings, get_values with sample_events, bare names to set_values).
 - 01_Linac_RIL_tuning (2026-11-04): W_SumLosses is computed; same list rules. Context
-  variables (2026-11-24): a .READING name is read as a reading and never written.
+  variables (2026-11-24): a .READING name is read as a reading and never written; Badger's
+  get_current_vars keeps the names' order (badger-1.6.0-current-vars-order).
 - 01_Linac_QuadTuning (2026-11-04): W_SumLosses only when asked (it raised KeyError).
 - All: the caller's list of names is left alone, and only the requested names
   come back (not the inputs read for a calculation).
@@ -120,6 +121,15 @@ try:
 except RuntimeError:
     pass
 assert not [c for c in stub.calls if c[0] == "set_values"], stub.calls
+
+# get_current_vars (badger-1.6.0-current-vars-order): values in the VOCS's order, though this
+# environment returns mult steps first and readings last; the run monitor zips the list with
+# the names (Apply Solution dialog; Reset writes it)
+from types import SimpleNamespace  # noqa: E402
+from badger.tests.utils import get_current_vars  # noqa: E402
+order = ["L:ASOL", "mult:MUQ", ctx]
+assert list(e.get_variables(order)) != order  # the dict really is in another order
+assert get_current_vars(SimpleNamespace(vocs=SimpleNamespace(variable_names=order), environment=e)) == [-33.0, 0.0, 1.0]
 
 # --- QuadTuning (fixed 2026-11-04): W_SumLosses only when asked, inputs not returned
 E = env("01_Linac_QuadTuning_Pacsys")

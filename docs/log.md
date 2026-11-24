@@ -2046,6 +2046,15 @@ Fixes (main):
 - Pushed 85c9915 (full suite 42 of 42). gmpsai2 pulled and set up (user); it still
   launches through `config.local.yaml` (safe-badger's `-cf`), kept by `setup --yes` and
   synced into Badger's per-user config, which the Go subprocess reads.
+- Bug (user: after a run, jump to optimum's confirmation showed "crazy" differences):
+  Badger's `get_current_vars` (in `badger/tests/utils.py`, used by the run monitor)
+  returned the environment's dict values in the dict's order, zipped with the VOCS's
+  names. The RIL environment returns mult steps first and readings last, so values were
+  mispaired: in the Apply Solution dialog, and in Reset, which writes them (each variable
+  given another's starting value; Badger's bounds check stops only out-of-range ones; the
+  safe-badger Revert is by device name and unaffected). Fixed by
+  `badger-1.6.0-current-vars-order.patch`; `tests/env_fixes_test.py`. TODO: a percent
+  column in the Revert dialog (user).
 - Open, from this session: a designed test of knob response at two source states;
   whether the RIL GP uses the context variables (on the machine); the GP's own
   overshoot at the tolerance edge (15-30 % of fits); spikes above the tolerance (a
