@@ -2132,3 +2132,22 @@ environment goes there too, tested in `tests/archetype_test.py`.
   center; a plots-only view.
 - On the machine: a risk tolerance on a profiled constraint and `robust_outcomes:
   [L:D7TOR]`; watch the staleness log.
+
+## 2026-11-24: status
+
+- RIL source context (`docs/ril-source-context.md`): over 90 days of logged history, the
+  in-use ion source's parameters change how `L:D7TOR` responds to the RIL knobs (held-out
+  weeks; unexplained variance 0.36 of the additive model's); the losses `L:TUNRAD` and
+  `L:TK1RAD` follow the source and beam rate in level only; `L:TK4RAD` follows none of it.
+  In the RIL README and the four RIL template descriptions. Correlation, not a designed
+  test.
+- Context column in both GUIs (never moved; read and modeled), offline-tested.
+- Full suite: 42 of 42 (2026-11-24).
+
+### Next
+
+- RIL context variables: the conclusively important source parameters, read-only, with
+  Context checked in the RIL templates (in progress).
+- A designed test on the machine: one knob scanned at two source states.
+- Booster templates (plan set aside: `docs/plans/booster-templates.md`).
+- gmpsai2: `git pull && pixi run setup -- --yes`.

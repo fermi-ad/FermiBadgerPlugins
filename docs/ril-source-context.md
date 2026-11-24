@@ -46,7 +46,8 @@ Held-out R2, by predictor group (full table with quantile skill: the results fil
 | L:TK4RAD (loss) | -0.72 | -1.16 | -0.57 | -1.48 |
 | G:LINEFF (efficiency) | -0.42 | -0.29 | -0.05 | -0.25 |
 
-- The source in use, and above all its extractor-voltage setting (`active_EXTSV`), plus
+- The source in use, and above all its extractor power-supply voltage (`active_EXTSV`: the reading of
+  `L:AEXTSV` or `L:BEXTSV`, about 39 kV; their `.SETTING` reads about 0), plus
   the beam rate (turn-weighted) explain most of the week-to-week variation of the output
   current and of `L:TUNRAD` and `L:TK1RAD`, more than the RIL knobs do. Top predictors:
   `L:D7TOR`: `active_EXTSV`, which source; `L:TUNRAD` and `L:TK1RAD`: `active_EXTSV`,
@@ -99,7 +100,7 @@ trees better than a smooth kernel; the GP comparison is inconclusive here, not n
 ## What it means for RIL tuning
 
 - The best RIL knob settings for throughput (L:D7TOR) can shift when the ion source
-  settings do, the extractor voltage of the source in use most of all. Record the source
+  settings do, the extractor supply voltage of the source in use most of all. Record the source
   settings (L48 <1>, tabs SRC_A and SRC_B) with each run, and compare runs within a source
   state.
 - Badger's Context column (never moved; read every step and modeled) is the way to give

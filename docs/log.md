@@ -1947,7 +1947,6 @@ Fixes (main):
   tooltip). `tests/noise_shapes_test.py`: at a 1 % tolerance with a skewed tail, the
   true violation chance is 3.7 % assuming Gaussian noise, 1.1 % with the shape; the
   robust GP's error at a 150-sigma outlier 0.001 vs 0.34. GUI test extended.
-\n
 - Full suite 40 of 40; pushed d0a8b73. gmpsai2 still needs `git pull && pixi run setup
   -- --yes`.
 - Commit messages from here on end with a bracket tag (`[ClaudeCode:Opus5.5]`) in place
@@ -1973,3 +1972,30 @@ Fixes (main):
 - Docs: `docs/booster-environment.md`; environment README for operators.
 - Full suite 40 of 40; pushed d5cb46d. gmpsai2: `git pull && pixi run setup -- --yes`
   still pending (patches since 51aebab).
+
+## 2026-11-20/24 — RIL source context; the Context column
+
+- L48 <1> tabs SRC_A and SRC_B: device names read from two screenshots by exact glyph
+  matching, noted in the loss-objective RIL templates (5d6639a).
+- Context column in both GUIs (`badger-1.6.0-context-variables.patch`, 98f51a8): a
+  checked variable becomes an Xopt `ContextualVariable`: read every step and modeled,
+  never written. Bayesian generators only. `tests/context_variables_test.py`,
+  `tests/context_variables_gui_test.py`; Badger's `calculate_initial_points` bug
+  (`vocs.random_inputs`) fixed in the same patch.
+- Study (`docs/ril-source-context.md`): 90 days of logged history, 94 devices, 5-minute
+  bins, 14,530 with beam; beam cycles per bin by type (`scripts/event_counts.py`: BNB
+  $1D, NuMI $19, ...). Which source fed the RIL comes from the logbook (B until the swap
+  to A on 2026-09-15), not the larger toroid: the standby source is often run at full
+  current (user). Source history kept as a memory.
+- Findings, boosted trees on held-out weeks: the source in use and the beam rate explain
+  the level of `L:D7TOR`, `L:TUNRAD`, and `L:TK1RAD` (R2 0.87, 0.84, 0.75); `L:TK4RAD`
+  and `G:LINEFF` are not predicted. Interaction test (`interaction_cst`): for `L:D7TOR`,
+  letting the knobs combine with the source parameters leaves 0.36 of the additive
+  model's unexplained variance (0.32-0.38 across learning rates); the losses respond to
+  the knobs the same way in any context (ratio 1.0-1.1). GP kernels: inconclusive.
+- User: "a very significant finding". Written into the RIL README, the four RIL
+  template descriptions, and the write-up (2f67041). TODO: risk-gated range expansion
+  proposed to the operator (user's idea; d842c77). Full suite 42 of 42 after the push.
+- Correction: `L:AEXTSV`, the top predictor, is the extractor power supply's voltage
+  reading (about 39 kV; ad-tools: "A Source Extractor PS V"); its `.SETTING` reads about
+  0. The docs had called it a setting. A context variable for it must read the reading.

@@ -35,8 +35,8 @@ A study of 90 days of logged history (2026-08-22 to 11-20; `docs/ril-source-cont
 found that how `L:D7TOR` responds to the RIL knobs depends on the settings of the ion source
 in use (parameter page L48, sub-page <1>, tabs SRC_A and SRC_B): letting the knobs combine
 with the source parameters cuts the unexplained variance of held-out weeks to about a
-third. The extractor-voltage setting of the source in use (`L:AEXTSV`, or `L:BEXTSV`)
-matters most. The losses `L:TUNRAD` and `L:TK1RAD` follow the source settings and the beam
+third. The extractor power-supply voltage of the source in use (`L:AEXTSV`, or `L:BEXTSV`: a
+reading, about 39 kV) matters most. The losses `L:TUNRAD` and `L:TK1RAD` follow the source settings and the beam
 rate in level only; `L:TK4RAD` follows none of them. Record the source settings with each
 run. Badger's Context column (never moved; read and modeled every step) can carry them
 once they are variables of this environment (not yet). Correlation in logged history, not a

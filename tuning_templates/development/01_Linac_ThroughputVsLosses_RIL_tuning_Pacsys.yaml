@@ -32,8 +32,9 @@ description: |
   boosted trees predict L:D7TOR far better when the RIL knobs may combine with the
   parameters of the source in use than when the two only add (R2 0.87 vs 0.64; unexplained
   variance down to 0.36 of the additive model, 0.32-0.38 across learning rates); the beam
-  rate adds less, and which source alone adds nothing. The extractor-voltage setting of the
-  source in use (L:AEXTSV, or L:BEXTSV on source B) is the strongest single predictor. So
+  rate adds less, and which source alone adds nothing. The extractor power-supply voltage of
+  the source in use (L:AEXTSV, or L:BEXTSV on source B: a reading, about 39 kV) is the
+  strongest single predictor. So
   the best knob settings can shift when the source settings do: record them (L48 <1>, tabs
   SRC_A and SRC_B) with each run. Correlation in logged history, not a designed test.
   Context (same study): the levels of L:TUNRAD and L:TK1RAD follow the settings of the

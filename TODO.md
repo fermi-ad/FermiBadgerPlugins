@@ -264,6 +264,20 @@ it to paste in.
   variable exogenous (a GUI column), compose it as a `ContextualVariable`, never write
   it, and have the environment return its reading. Candidates: the L48 source
   parameters, Booster turns, if the study finds they change the knobs' response.
+- [ ] **RIL: source parameters as context variables** (user, 2026-11-24, after the study
+  found the source parameters change how `L:D7TOR` responds to the knobs,
+  `docs/ril-source-context.md`): only the conclusively important ones (forward selection on
+  held-out weeks, `scripts/ril_context_study.py --select`), Context checked in the RIL
+  templates, ranges from the last months' logged values with beam on. Read by their
+  reading (`L:AEXTSV.SETTING` reads about 0), never written.
+- [ ] **Source A and Source B versions of the RIL templates** (user, 2026-11-24), and of
+  any Linac template that uses or consults ion-source devices. Today: the four RIL
+  templates (`01_Linac_RIL_tuning.yaml`, `01_Linac_LossObjective_RIL_tuning.yaml`,
+  `development/01_Linac_RIL_tuning_Pacsys.yaml`,
+  `development/01_Linac_ThroughputVsLosses_RIL_tuning_Pacsys.yaml`) tune source A's
+  trims and solenoid; source B has its own (`L:BTRM*`, `L:BSOL`) and its own source
+  parameters (context variables). `development/ZZ_Archetype_Pacsys.yaml` also names
+  source devices (a teaching example; probably exempt).
 - [ ] **Booster templates for the other tasks** (plan set aside 2026-11-20, user's call:
   `docs/plans/booster-templates.md`): orbit, RF capture and RF transition (two), extraction,
   notching, tunes, and chromaticity against `03_Booster_Pacsys`, every logbook-named
