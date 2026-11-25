@@ -145,7 +145,9 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
-- [ ] **On gmpsai2 again:** `git pull && pixi run setup -- --yes` for f113503 (Reset and
+- [ ] Constraints also listed as observables (e.g. L:D7TOR, L:D7LMSM in the loss-objective
+  RIL template): redundant like the objective was? User: needs more thought (2026-11-25).
+- [x] (user: done, 2026-11-25) **On gmpsai2 again:** `git pull && pixi run setup -- --yes` for f113503 (Reset and
   Apply Solution mispaired values: `badger-1.6.0-current-vars-order`) and 5761a2b (the
   percent-change tables: `badger-1.6.0-change-tables`). Until then, avoid Reset
   environment in the RIL templates (it can write each variable another's starting

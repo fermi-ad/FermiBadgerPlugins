@@ -101,9 +101,6 @@ vocs:
     qx:
       dtype: null
       type: Observable
-    qx-SETPOINT:
-      dtype: null
-      type: Observable
     qy:
       dtype: null
       type: Observable

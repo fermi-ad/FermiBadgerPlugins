@@ -2062,6 +2062,12 @@ Fixes (main):
   the run monitor's Apply Solution, Reset (was a bare list), and Load Checkpoint (had no
   values). Context variables are left out of those tables (never written).
   `tests/change_tables_test.py`; full suite 43 of 43; pushed 5761a2b.
+- gmpsai2 pulled and set up (user): percent changes shown. Loss-objective RIL template:
+  its initial points are rebuilt from the current values on every load (no stored
+  points; user: fine as is). Its objective L:TK4RAD removed from its observables
+  (redundant, user), and the same in two simulation templates; the template lint now
+  rejects an objective listed as an observable. Constraints listed as observables
+  (L:D7TOR, L:D7LMSM) kept for now (user: needs more thought).
 - Open, from this session: a designed test of knob response at two source states;
   whether the RIL GP uses the context variables (on the machine); the GP's own
   overshoot at the tolerance edge (15-30 % of fits); spikes above the tolerance (a

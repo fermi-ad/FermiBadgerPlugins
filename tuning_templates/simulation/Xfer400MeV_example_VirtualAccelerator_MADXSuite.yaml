@@ -74,9 +74,6 @@ vocs:
     bpvq17.y:
       dtype: null
       type: Observable
-    bpvq17.y-SETPOINT:
-      dtype: null
-      type: Observable
   variables:
     iq2:
       default_value: null

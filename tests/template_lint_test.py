@@ -38,6 +38,9 @@ for path in sorted(glob.glob(os.path.join(REPO, 'tuning_templates', '**', '*.yam
                     constraints=t['vocs']['constraints'], constants={},
                     observables=t['vocs']['observables'])
         filter_generator_config(t['generator']['name'], t['generator'])
+        # an objective is recorded anyway: listing it as an observable too is redundant
+        dup = sorted(set(vocs.objective_names) & set(vocs.observable_names))
+        assert not dup, f'objective(s) also listed as observables: {dup}'
         # README "For Developers": <region>_<task>_<env core>[_Pacsys].yaml,
         # or just <env>.yaml. Core = env name minus region prefix and suffix.
         if t['relative_to_current']:
