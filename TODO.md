@@ -145,6 +145,11 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 
 ## Production migration (plan: `~/.claude/plans/it-s-time-to-move-peppy-sky.md`)
 
+- [ ] **On gmpsai2 again:** `git pull && pixi run setup -- --yes` for f113503 (Reset and
+  Apply Solution mispaired values: `badger-1.6.0-current-vars-order`) and 5761a2b (the
+  percent-change tables: `badger-1.6.0-change-tables`). Until then, avoid Reset
+  environment in the RIL templates (it can write each variable another's starting
+  value); safe-badger's Revert is unaffected.
 - [x] (user: up to date, 2026-11-24, through 85c9915: the L:RFQPAH limit and the mini
   GUI's Context header fix included; `config.local.yaml` kept, synced to the per-user
   config) **On gmpsai2:** `git pull && pixi run setup -- --yes` for the patches since the

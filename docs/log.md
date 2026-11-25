@@ -2061,7 +2061,9 @@ Fixes (main):
   Keep/Revert on close, the safe-badger launcher, and, via `badger-1.6.0-change-tables`,
   the run monitor's Apply Solution, Reset (was a bare list), and Load Checkpoint (had no
   values). Context variables are left out of those tables (never written).
+  `tests/change_tables_test.py`; full suite 43 of 43; pushed 5761a2b.
 - Open, from this session: a designed test of knob response at two source states;
   whether the RIL GP uses the context variables (on the machine); the GP's own
   overshoot at the tolerance edge (15-30 % of fits); spikes above the tolerance (a
-  mixture); gmpsai2 pull and setup.
+  mixture); gmpsai2 pull and setup for f113503 and 5761a2b (until then, no Reset in
+  the RIL templates); Badger PR for `get_current_vars`.
