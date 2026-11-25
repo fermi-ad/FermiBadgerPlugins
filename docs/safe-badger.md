@@ -207,7 +207,9 @@ settle loops, periodic-phase unwrapping or supply-limit clipping.
 - **Revert button:** enabled once the snapshot holds devices, and disabled
   while a run is active.
   1. It reads the live settings and shows the devices that moved, as a
-     fixed-width table (`Device  Now  Startup`) with the snapshot's age.
+     fixed-width table (`Device  Now  Startup  Change`, Change in percent of Now) with the
+     snapshot's age. The run monitor's Apply Solution, Reset, and Load Checkpoint show the same
+     table (`badger-1.6.0-change-tables.patch`).
   2. On Yes, it restores under a wait cursor, refreshes the variable table, and
      reports any device that still differs, with the manual command.
   3. It does not set `resolved`: the session goes on, and later changes are

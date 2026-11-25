@@ -2055,6 +2055,12 @@ Fixes (main):
   safe-badger Revert is by device name and unaffected). Fixed by
   `badger-1.6.0-current-vars-order.patch`; `tests/env_fixes_test.py`. TODO: a percent
   column in the Revert dialog (user).
+- Pushed f113503 (full suite 42 of 42). Then (user): a percent-change column in the
+  Revert dialog, and the same table in every before/after confirmation:
+  `format_changes` gains Change (in percent of now; a dash at 0), shared by Revert,
+  Keep/Revert on close, the safe-badger launcher, and, via `badger-1.6.0-change-tables`,
+  the run monitor's Apply Solution, Reset (was a bare list), and Load Checkpoint (had no
+  values). Context variables are left out of those tables (never written).
 - Open, from this session: a designed test of knob response at two source states;
   whether the RIL GP uses the context variables (on the machine); the GP's own
   overshoot at the tolerance edge (15-30 % of fits); spikes above the tolerance (a

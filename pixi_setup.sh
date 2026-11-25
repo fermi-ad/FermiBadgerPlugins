@@ -145,6 +145,8 @@ print(h.hexdigest())" "$REPO/patches")"
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-context-variables.patch"
         # get_current_vars in the names' order (Apply Solution dialog, Reset writes it)
         apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-current-vars-order.patch"
+        # before/after tables with a percent-change column in the run monitor's dialogs
+        apply_patch "$SP" 1 "$REPO/patches/badger-1.6.0-change-tables.patch"
 
         apply_patch "$SP" 1 "$REPO/patches/xopt-3.2.2-turbo-serialization.patch"
         # must come after turbo-serialization: diffed against that tree

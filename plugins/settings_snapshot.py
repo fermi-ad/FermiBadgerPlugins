@@ -95,11 +95,20 @@ def resolve(path, how: str) -> None:
     _save(path, data)
 
 
-def format_changes(changes) -> str:
-    """[(device, startup, now)] as an aligned table, for a fixed-width font."""
-    width = max([len('Device')] + [len(d) for d, _, _ in changes])
-    rows = [f'{"Device":<{width}}  {"Now":>14}  {"Startup":>14}']
-    rows += [f'{d:<{width}}  {now:>14.6g}  {startup:>14.6g}' for d, startup, now in changes]
+def percent_change(now, target) -> str:
+    """The change from now to target in percent of now; a dash when now is 0."""
+    return f'{100 * (target - now) / abs(now):+.3g} %' if now else '-'
+
+
+def format_changes(changes, now='Now', target='Startup', name='Device') -> str:
+    """[(name, target, now)] as an aligned table for a fixed-width font: the value now,
+    the value the action would set, and the change that makes in percent of now. Used by
+    every before/after confirmation (Revert, Keep/Revert on close, the safe-badger
+    launcher, and the run monitor's Apply Solution, Reset, and Load Checkpoint)."""
+    width = max([len(name)] + [len(d) for d, _, _ in changes])
+    rows = [f'{name:<{width}}  {now:>14}  {target:>14}  {"Change":>11}']
+    rows += [f'{d:<{width}}  {n:>14.6g}  {t:>14.6g}  {percent_change(n, t):>11}'
+             for d, t, n in changes]
     return '\n'.join(rows)
 
 

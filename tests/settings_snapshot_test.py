@@ -89,10 +89,11 @@ assert ss.restore(path, backend=fb, open_writer=writer_for, pause=0) == []
 assert sorted(roles) == ['r1', 'r2']
 assert sorted(drf for drf, _ in fb.writes) == ['L:A.SETTING', 'L:C.SETTING'], fb.writes
 assert ss.diff(path, backend=fb) == []
-assert ss.format_changes([('L:A', 1.0, 5.0), ('L:LONGNAME', 359.5, -0.5)]).splitlines() == [
-    'Device                 Now         Startup',
-    'L:A                      5               1',
-    'L:LONGNAME            -0.5           359.5']
+assert ss.format_changes([('L:A', 1.0, 5.0), ('L:LONGNAME', 359.5, -0.5), ('L:Z', 2.0, 0.0)]).splitlines() == [
+    'Device                 Now         Startup       Change',
+    'L:A                      5               1        -80 %',
+    'L:LONGNAME            -0.5           359.5   +7.2e+04 %',
+    'L:Z                      0               2            -']
 
 # --- restore: retry, then report what still differs ---------------------------------
 fb2 = FakeBackend()

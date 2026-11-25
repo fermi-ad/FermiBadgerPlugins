@@ -121,9 +121,11 @@ exits undecided. Offline tests pass (`settings_snapshot_test.py`,
 - [ ] Machine test: an ssh connection with X forwarding dropping mid-run (the way
   operators connect): expect Badger to exit, the launcher to restore, and the
   log to say so. Each part already passed (SIGHUP, GUI killed mid-run).
-- [ ] **Revert dialog: a percent-difference column** (user, 2026-11-24): beside Now and
-  Startup, the change reverting would make, 100 (startup - now) / |now| (a dash when now
-  is 0). One function: `format_changes` in `plugins/settings_snapshot.py`.
+- [x] **Revert dialog: a percent-difference column** (user, 2026-11-24; done the same day):
+  beside Now and Startup, the change reverting would make, 100 (startup - now) / |now| (a
+  dash when now is 0), in `settings_snapshot.format_changes`; the same table (user: in
+  every before/after confirmation) in the run monitor's Apply Solution, Reset, and Load
+  Checkpoint (`badger-1.6.0-change-tables.patch`; `tests/change_tables_test.py`).
 - Never `pkill -f badger` (or `pgrep -f badger | kill -9`): it also hits the
   launcher, and a SIGKILLed launcher can't restore. `pixi run safe-badger pids`
   says which PID is which.

@@ -1,0 +1,132 @@
+diff -ruN a/badger/gui/components/run_monitor.py b/badger/gui/components/run_monitor.py
+--- a/badger/gui/components/run_monitor.py	2026-11-24 15:09:36
++++ b/badger/gui/components/run_monitor.py	2026-11-24 15:10:03
+@@ -782,15 +782,27 @@
+ 
+         return ts[idx], idx
+ 
++    def _confirm_changes(self, title, intro, target, target_label):
++        """Yes/No over a table of each variable's value now, the value the action would
++        set (target: {name: value}), and the change in percent; context variables, never
++        written, are left out (badger-1.6.0-change-tables)."""
++        import settings_snapshot
++        from badger.gui.components.settings_guard import table_question
++
++        names = list(self.vocs.variable_names)
++        now = dict(zip(names, get_current_vars(self.routine)))
++        settable = without_context(self.vocs, target)
++        rows = [(n, float(settable[n]), float(now[n])) for n in names if n in settable]
++        table = settings_snapshot.format_changes(rows, now="Now", target=target_label,
++                                                 name="Variable")
++        return table_question(self, title, intro, table).exec_() == QMessageBox.Yes
++
+     def reset_env(self):
+-        reply = QMessageBox.question(
+-            self,
++        if not self._confirm_changes(
+             "Reset Environment",
+-            f"Are you sure you want to reset the env vars back to {self.init_vars}?",
+-            QMessageBox.Yes | QMessageBox.No,
+-            QMessageBox.No,
+-        )
+-        if reply != QMessageBox.Yes:
++            "Reset the variables to their values at the start of this run?",
++            dict(zip(self.vocs.variable_names, self.init_vars)), "Run start",
++        ):
+             return
+ 
+         curr_vars = get_current_vars(self.routine)
+@@ -894,13 +906,11 @@
+             )
+             return
+ 
+-        answer = QMessageBox.question(
+-            self,
++        if self._confirm_changes(
+             "Load Checkpoint",
+-            "Are you sure you want to load the stored variables in the checkpoint?",
+-            QMessageBox.Yes | QMessageBox.No,
+-        )
+-        if answer == QMessageBox.Yes:
++            "Load the variable values stored in the checkpoint?",
++            dict(self.checkpoint_data), "Checkpoint",
++        ):
+             self.routine.environment.set_variables(
+                 without_context(self.routine.vocs, self.checkpoint_data))
+             logger.debug(
+@@ -946,22 +956,12 @@
+             pos = idx = int(self.inspector_objective.value())
+         variable_names = self.vocs.variable_names
+         solution = df[variable_names].to_numpy()[idx]
+-        curr_vars = get_current_vars(self.routine)
+ 
+-        reply = QMessageBox.question(
+-            self,
++        if not self._confirm_changes(
+             "Apply Solution",
+-            "Are you sure you want to apply the selected solution:\n"
+-            + "\n".join(
+-                f"{variable_names[i]}: {round(curr_vars[i], 3)} -> {round(solution[i], 3)},"
+-                for i in range(len(variable_names))
+-            )
+-            + "\nto "
+-            + f"{self.routine.environment.name}?",
+-            QMessageBox.Yes | QMessageBox.No,
+-            QMessageBox.No,
+-        )
+-        if reply != QMessageBox.Yes:
++            f"Apply the selected solution to {self.routine.environment.name}?",
++            dict(zip(variable_names, solution)), "Solution",
++        ):
+             return
+ 
+         curr_vars = get_current_vars(self.routine)
+diff -ruN a/badger/gui/components/settings_guard.py b/badger/gui/components/settings_guard.py
+--- a/badger/gui/components/settings_guard.py	2026-11-24 15:09:36
++++ b/badger/gui/components/settings_guard.py	2026-11-24 15:09:51
+@@ -23,6 +23,30 @@
+ logger = logging.getLogger(__name__)
+ 
+ 
++def mono_family():
++    """A fixed-width font family. Named, not left to Qt: its fixed-font lookups can return
++    proportional fonts."""
++    installed = QFontDatabase().families()
++    return next(
++        (f for f in ("DejaVu Sans Mono", "Liberation Mono", "Menlo", "Courier New")
++         if f in installed),
++        QFontDatabase.systemFont(QFontDatabase.FixedFont).family(),
++    )
++
++
++def table_question(parent, title, intro, table):
++    """A Yes/No question box (No by default): intro, then a fixed-width table
++    (settings_snapshot.format_changes), so its columns line up
++    (badger-1.6.0-change-tables)."""
++    box = QMessageBox(QMessageBox.Question, title, "", parent=parent)
++    box.setTextFormat(Qt.RichText)
++    box.setText(f"{html.escape(intro)}<pre style=\"font-family: '{mono_family()}'\">"
++                f"{html.escape(table)}</pre>")
++    box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
++    box.setDefaultButton(QMessageBox.No)
++    return box
++
++
+ class SettingsGuard:
+     # --- capture -------------------------------------------------------------------
+ 
+@@ -122,13 +146,7 @@
+         the columns of numbers line up."""
+         box = QMessageBox(QMessageBox.Question, title, "", parent=self)
+         box.setTextFormat(Qt.RichText)
+-        # Named, not left to Qt: its fixed-font lookups can return proportional fonts.
+-        installed = QFontDatabase().families()
+-        mono = next(
+-            (f for f in ("DejaVu Sans Mono", "Liberation Mono", "Menlo", "Courier New")
+-             if f in installed),
+-            QFontDatabase.systemFont(QFontDatabase.FixedFont).family(),
+-        )
++        mono = mono_family()
+         box.setText(
+             f"{len(changes)} device(s) differ from their settings when the template "
+             f"was loaded ({snap.age(snap.load(path))} ago):"

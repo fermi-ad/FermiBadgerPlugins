@@ -107,7 +107,7 @@ pixi run safe-badger restore logs/snapshots/<file>.json  # write a snapshot back
 
 **What it does.** Each time either GUI loads a template, and again when a run starts (Go), it records the live setting of every device the environment can write, checked in the variable table or not. A device keeps the value it had the first time it was recorded in the session. From then on:
 
-- **Revert** (action bar, next to Reset environment) shows the devices that moved, in a fixed-width `Device / Now / Startup` table with the snapshot's age, and writes the startup values back. The session continues.
+- **Revert** (action bar, next to Reset environment) shows the devices that moved, in a fixed-width `Device / Now / Startup / Change` table (Change: what reverting does, in percent of Now) with the snapshot's age, and writes the startup values back. The session continues.
 - **Closing the window** asks **Keep / Revert / Cancel** when anything differs.
 - If Badger ends **without that answer** (a crash, `kill -9`, Ctrl-C, closing the terminal) **within 2 hours** of the first template load, safe-badger stops Badger and any run process it left behind, then restores every device automatically. The status bar shows the cut-off time after each template load, e.g. `...devices saved; automatic restore if interrupted until 15:05`.
 
